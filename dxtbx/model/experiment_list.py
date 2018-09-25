@@ -702,11 +702,11 @@ class ExperimentListFactory(object):
   @staticmethod
   def from_dict(obj, check_format=True, directory=None):
     ''' Load an experiment list from a dictionary. '''
-      
+
     try:
       experiments = ExperimentList()
       for db in DataBlockFactory.from_dict(
-          obj, 
+          obj,
           check_format=check_format,
           directory=directory):
         experiments.extend(ExperimentListFactory.from_datablock_and_crystal(db, None))
