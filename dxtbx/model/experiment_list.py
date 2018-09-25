@@ -710,7 +710,7 @@ class ExperimentListFactory(object):
           check_format=check_format,
           directory=directory):
         experiments.extend(ExperimentListFactory.from_datablock_and_crystal(db, None))
-    except Exception, e:
+    except Exception:
       experiments = None
 
     # Decode the experiments from the dictionary
