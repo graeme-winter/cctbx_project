@@ -462,6 +462,7 @@ libtbx.scons: Warning: compiling with /MDd:
     env_etc.ccflags_base = """
       /nologo
       /D_SECURE_SCL=0
+      /DNOMINMAX
       /D_CRT_SECURE_NO_DEPRECATE
       /wd4996
       /Zm800
@@ -483,7 +484,7 @@ libtbx.scons: Warning: compiling with /MDd:
     if (libtbx.env.build_options.debug_symbols):
       raise RuntimeError("Debug build not supported.")
     env_etc.ccflags_base.extend(opts)
-    env_etc.shlinkflags = "/nologo /incremental:no /dll".split()
+    env_etc.shlinkflags = ["/nologo", "/incremental:no", "/dll", "/MANIFEST"]
     env_etc.shlinkflags_bpl = list(env_etc.shlinkflags)
     env_etc.libm = []
 
