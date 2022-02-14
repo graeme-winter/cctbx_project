@@ -34,56 +34,69 @@ rx, ry, rz = np.random.uniform(-180, 180, 3)
 RX = x.axis_and_angle_as_r3_rotation_matrix(rx, deg=True)
 RY = y.axis_and_angle_as_r3_rotation_matrix(ry, deg=True)
 RZ = z.axis_and_angle_as_r3_rotation_matrix(rz, deg=True)
-M = RX*RY*RZ
-real_a = M*col((79, 0, 0))
-real_b = M*col((0, 79, 0))
-real_c = M*col((0, 0, 38))
+M = RX * RY * RZ
+real_a = M * col((79, 0, 0))
+real_b = M * col((0, 79, 0))
+real_c = M * col((0, 0, 38))
 # dxtbx crystal description
-cryst_descr = {'__id__': 'crystal',
-               'real_space_a': real_a.elems,
-               'real_space_b': real_b.elems,
-               'real_space_c': real_c.elems,
-               'space_group_hall_symbol': ' P 4nw 2abw'}
+cryst_descr = {
+    "__id__": "crystal",
+    "real_space_a": real_a.elems,
+    "real_space_b": real_b.elems,
+    "real_space_c": real_c.elems,
+    "space_group_hall_symbol": " P 4nw 2abw",
+}
 
 print("Make a beam")
 # make a beam
 ENERGY = 9000
-ENERGY_CONV = 1e10*constants.c*constants.h / constants.electron_volt
-WAVELEN = ENERGY_CONV/ENERGY
+ENERGY_CONV = 1e10 * constants.c * constants.h / constants.electron_volt
+WAVELEN = ENERGY_CONV / ENERGY
 # dxtbx beam model description
-beam_descr = {'direction': (0.0, 0.0, 1.0),
-             'divergence': 0.0,
-             'flux': 1e11,
-             'polarization_fraction': 1.,
-             'polarization_normal': (0.0, 1.0, 0.0),
-             'sigma_divergence': 0.0,
-             'transmission': 1.0,
-             'wavelength': WAVELEN}
+beam_descr = {
+    "direction": (0.0, 0.0, 1.0),
+    "divergence": 0.0,
+    "flux": 1e11,
+    "polarization_fraction": 1.0,
+    "polarization_normal": (0.0, 1.0, 0.0),
+    "sigma_divergence": 0.0,
+    "transmission": 1.0,
+    "wavelength": WAVELEN,
+}
 
 # make a detector panel
 # monolithic camera description
 print("Make a dxtbx detector")
-detdist = 100.
+detdist = 100.0
 pixsize = 0.1
 im_shape = 1536, 1536
-det_descr = {'panels':
-               [{'fast_axis': (1.0, 0.0, 0.0),
-                 'slow_axis': (0.0, -1.0, 0.0),
-                 'gain': 1.0,
-                 'identifier': '',
-                 'image_size': im_shape,
-                 'mask': [],
-                 'material': '',
-                 'mu': 0.0,
-                 'name': 'Panel',
-                 'origin': (-im_shape[0]*pixsize/2., im_shape[1]*pixsize/2., -detdist),
-                 'pedestal': 0.0,
-                 'pixel_size': (pixsize, pixsize),
-                 'px_mm_strategy': {'type': 'SimplePxMmStrategy'},
-                 'raw_image_offset': (0, 0),
-                 'thickness': 0.0,
-                 'trusted_range': (-1e7, 1e7),
-                 'type': ''}]}
+det_descr = {
+    "panels": [
+        {
+            "fast_axis": (1.0, 0.0, 0.0),
+            "slow_axis": (0.0, -1.0, 0.0),
+            "gain": 1.0,
+            "identifier": "",
+            "image_size": im_shape,
+            "mask": [],
+            "material": "",
+            "mu": 0.0,
+            "name": "Panel",
+            "origin": (
+                -im_shape[0] * pixsize / 2.0,
+                im_shape[1] * pixsize / 2.0,
+                -detdist,
+            ),
+            "pedestal": 0.0,
+            "pixel_size": (pixsize, pixsize),
+            "px_mm_strategy": {"type": "SimplePxMmStrategy"},
+            "raw_image_offset": (0, 0),
+            "thickness": 0.0,
+            "trusted_range": (-1e7, 1e7),
+            "type": "",
+        }
+    ]
+}
 
 # make the dxtbx objects
 BEAM = BeamFactory.from_dict(beam_descr)
@@ -98,7 +111,9 @@ sgi = sgtbx.space_group_info(symbol)
 symm = symmetry(unit_cell=CRYSTAL.get_unit_cell(), space_group_info=sgi)
 miller_set = symm.build_miller_set(anomalous_flag=True, d_min=1.6, d_max=999)
 Famp = flex.double(np.ones(len(miller_set.indices())) * DEFAULT_F)
-Famp = miller.array(miller_set=miller_set, data=Famp).set_observation_type_xray_amplitude()
+Famp = miller.array(
+    miller_set=miller_set, data=Famp
+).set_observation_type_xray_amplitude()
 
 Ncells_abc = 20, 20, 20
 oversmaple = 2
@@ -136,5 +151,7 @@ test_cbf.add_nanoBragg_spots()
 
 # verify test_cbf and SIM produce the same Bragg spot image
 print("Check the intensities haven't changed, and that  cbf writing preserved geometry")
-assert np.allclose(SIM.raw_pixels.as_numpy_array(), test_cbf.raw_pixels.as_numpy_array())
+assert np.allclose(
+    SIM.raw_pixels.as_numpy_array(), test_cbf.raw_pixels.as_numpy_array()
+)
 print("OK!")

@@ -27,8 +27,28 @@ atto = 1e-18
 zepto = 1e-21
 yocto = 1e-24
 
-if (__name__ == "__main__"):
-  p = yotta*zetta*exa*peta*tera*giga*mega*kilo*hecto*deca \
-      *deci*centi*milli*micro*nano*pico*femto*atto*zepto*yocto
-  assert abs(p-1) < 1.e-15
-  print("OK")
+if __name__ == "__main__":
+    p = (
+        yotta
+        * zetta
+        * exa
+        * peta
+        * tera
+        * giga
+        * mega
+        * kilo
+        * hecto
+        * deca
+        * deci
+        * centi
+        * milli
+        * micro
+        * nano
+        * pico
+        * femto
+        * atto
+        * zepto
+        * yocto
+    )
+    assert abs(p - 1) < 1.0e-15
+    print("OK")

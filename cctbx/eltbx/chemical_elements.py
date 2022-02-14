@@ -3,9 +3,10 @@ This module can be used to retrieve a list or set of all chemical symbols on the
 periodic table, from hydrogen up to roentgenium.
 """
 from __future__ import absolute_import, division, print_function
-import scitbx.stl.set # import dependency
+import scitbx.stl.set  # import dependency
 
 import boost_adaptbx.boost.python as bp
+
 ext = bp.import_ext("cctbx_eltbx_chemical_elements_ext")
 from cctbx_eltbx_chemical_elements_ext import *
 

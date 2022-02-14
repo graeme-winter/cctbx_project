@@ -1,8 +1,8 @@
-
 from __future__ import absolute_import, division, print_function
 
+
 def exercise_misc():
-  pdb_in = """\
+    pdb_in = """\
 ATOM      2  CA  LYS A   1      10.524   2.575   9.811  1.00 25.81           C
 ATOM     11  CA  VAL A   2      13.845   2.559  11.678  1.00 24.92           C
 ATOM     18  CA  TYR A   3      15.153  -1.021  11.773  1.00 24.62           C
@@ -31,15 +31,16 @@ ATOM    193  CA  LEU A  25      25.085 -10.427   5.048  1.00 23.54           C
 ATOM    201  CA  GLY A  26      27.287  -8.119   7.099  1.00 22.24           C
 ATOM    205  CA  ASN A  27      28.134  -6.159   3.940  1.00 22.17           C
 """
-  from mmtbx.building import make_library
-  import iotbx.pdb.hierarchy
-  inp = iotbx.pdb.hierarchy.input(pdb_string=pdb_in)
-  fragments = make_library.extract_peptide_fragments_by_sequence(
-    pdb_hierarchy=inp.hierarchy,
-    renumber_from=1,
-    sequence='XYRG')
-  assert (len(fragments) == 2)
+    from mmtbx.building import make_library
+    import iotbx.pdb.hierarchy
 
-if (__name__ == "__main__"):
-  exercise_misc()
-  print("OK")
+    inp = iotbx.pdb.hierarchy.input(pdb_string=pdb_in)
+    fragments = make_library.extract_peptide_fragments_by_sequence(
+        pdb_hierarchy=inp.hierarchy, renumber_from=1, sequence="XYRG"
+    )
+    assert len(fragments) == 2
+
+
+if __name__ == "__main__":
+    exercise_misc()
+    print("OK")

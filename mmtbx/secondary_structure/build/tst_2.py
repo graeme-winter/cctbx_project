@@ -1039,219 +1039,215 @@ ATOM     21  CB  ALA A  24      10.842  22.298  12.396  1.00 16.09           C
 TER
 """
 
+
 def get_distances(h, n_neighbours=None):
-  d = flex.double()
-  for i, a in enumerate(h.atoms()):
-    #for j in range(i, min(len(h.atoms()), i+10)):
-    if n_neighbours is not None:
-      r = range(i, min(len(h.atoms()), i+10))
-    else:
-      r = range(i, len(h.atoms()))
-    for j in r:
-      d.append(a.distance(h.atoms()[j]))
-  return d
+    d = flex.double()
+    for i, a in enumerate(h.atoms()):
+        # for j in range(i, min(len(h.atoms()), i+10)):
+        if n_neighbours is not None:
+            r = range(i, min(len(h.atoms()), i + 10))
+        else:
+            r = range(i, len(h.atoms()))
+        for j in r:
+            d.append(a.distance(h.atoms()[j]))
+    return d
+
 
 ssb_params_norot = ssb.master_phil.extract()
-ssb_params_norot.ss_idealization.fix_rotamer_outliers=False
-ssb_params_norot.ss_idealization.enabled=True
+ssb_params_norot.ss_idealization.fix_rotamer_outliers = False
+ssb_params_norot.ss_idealization.enabled = True
+
 
 def exercise_pure_polyala_alpha(prefix="tst_2_ex_ppa_"):
-  """
-  Simple polyala one helix case.
-  """
-  h_records = """\
+    """
+    Simple polyala one helix case.
+    """
+    h_records = """\
 HELIX    1   1 ALA A    1  ALA A   20  1                                  20
 """
-  import sys # import dependency
-  h = ssb.secondary_structure_from_sequence(ssb.alpha_helix_str,"A"*20)
-  h.write_pdb_file(file_name=prefix+'h0.pdb')
-  d1 = get_distances(h)
-  ann = ioss.annotation.from_records(records=h_records.split('\n'))
-  pdb_inp = iotbx.pdb.input(source_info=None,
-        lines=h.as_pdb_string())
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
-  # test_h = pdb_inp.construct_hierarchy()
-  for i in range(3):
-    rm = ssb.substitute_ss(
-      model = model,
-      params = ssb_params_norot.ss_idealization)
-    model.get_hierarchy().write_pdb_file(file_name=prefix+'%d.pdb' % i)
-  model.get_hierarchy().write_pdb_file(file_name=prefix+'h1.pdb')
-  d2 = get_distances(model.get_hierarchy())
-  dist = abs(d2-d1)
-  dmmm = abs(d2-d1).min_max_mean().as_tuple()
-  print("minmaxmean sd", dmmm, abs(d2-d1).standard_deviation_of_the_sample())
-  assert dmmm[1] < 0.65, dmmm[1]
-  assert dmmm[2] < 0.17, dmmm[2]
-  assert dist.standard_deviation_of_the_sample() < 0.15, dist.standard_deviation_of_the_sample()
+    import sys  # import dependency
+
+    h = ssb.secondary_structure_from_sequence(ssb.alpha_helix_str, "A" * 20)
+    h.write_pdb_file(file_name=prefix + "h0.pdb")
+    d1 = get_distances(h)
+    ann = ioss.annotation.from_records(records=h_records.split("\n"))
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=h.as_pdb_string())
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
+    # test_h = pdb_inp.construct_hierarchy()
+    for i in range(3):
+        rm = ssb.substitute_ss(model=model, params=ssb_params_norot.ss_idealization)
+        model.get_hierarchy().write_pdb_file(file_name=prefix + "%d.pdb" % i)
+    model.get_hierarchy().write_pdb_file(file_name=prefix + "h1.pdb")
+    d2 = get_distances(model.get_hierarchy())
+    dist = abs(d2 - d1)
+    dmmm = abs(d2 - d1).min_max_mean().as_tuple()
+    print("minmaxmean sd", dmmm, abs(d2 - d1).standard_deviation_of_the_sample())
+    assert dmmm[1] < 0.65, dmmm[1]
+    assert dmmm[2] < 0.17, dmmm[2]
+    assert (
+        dist.standard_deviation_of_the_sample() < 0.15
+    ), dist.standard_deviation_of_the_sample()
+
 
 def exercise_00(prefix="tst_2_exercise_00"):
-  """
-  2 alpha helices and loop between them
-  seems that this test is bad.
-  """
-  h_records = """\
+    """
+    2 alpha helices and loop between them
+    seems that this test is bad.
+    """
+    h_records = """\
 HELIX    1   1 PRO A    3  ALA A   21  1                                  19
 HELIX    2   2 ARG A   23  GLN A   44  1                                  22
 """
-  pdb_inp = iotbx.pdb.input(source_info=None,
-    lines=tst_00_start_lines)
-  ann = ioss.annotation.from_records(records=h_records.split('\n'))
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
-  d1 = get_distances(model.get_hierarchy())
-  # model.get_hierarchy().write_pdb_file(file_name=prefix+'_initial.pdb')
-  for i in range(1):
-    rm = ssb.substitute_ss(
-      model,
-      )
-  d2 = get_distances(model.get_hierarchy())
-  # model.get_hierarchy().write_pdb_file(file_name=prefix+'_result.pdb')
-  dist = abs(d2-d1)
-  dmmm = abs(d2-d1).min_max_mean().as_tuple()
-  print("minmaxmean sd", dmmm, abs(d2-d1).standard_deviation_of_the_sample())
-  assert dmmm[1] < 1.5, dmmm[1]
-  assert dmmm[2] < 0.2, dmmm[2]
-  assert dist.standard_deviation_of_the_sample() < 0.2
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_00_start_lines)
+    ann = ioss.annotation.from_records(records=h_records.split("\n"))
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
+    d1 = get_distances(model.get_hierarchy())
+    # model.get_hierarchy().write_pdb_file(file_name=prefix+'_initial.pdb')
+    for i in range(1):
+        rm = ssb.substitute_ss(
+            model,
+        )
+    d2 = get_distances(model.get_hierarchy())
+    # model.get_hierarchy().write_pdb_file(file_name=prefix+'_result.pdb')
+    dist = abs(d2 - d1)
+    dmmm = abs(d2 - d1).min_max_mean().as_tuple()
+    print("minmaxmean sd", dmmm, abs(d2 - d1).standard_deviation_of_the_sample())
+    assert dmmm[1] < 1.5, dmmm[1]
+    assert dmmm[2] < 0.2, dmmm[2]
+    assert dist.standard_deviation_of_the_sample() < 0.2
+
 
 def exercise_01(prefix="tst_2_exercise_01"):
-  """
-  Similar to exercise_00. + Side chains.
-  """
-  h_records = """\
+    """
+    Similar to exercise_00. + Side chains.
+    """
+    h_records = """\
 HELIX    1   1 PRO A    3  ALA A   21  1                                  19
 HELIX    2   2 ARG A   23  GLN A   44  1                                  22
 """
-  pdb_inp = iotbx.pdb.input(source_info=None,
-      lines=tst_01_start_lines)
-  ann = ioss.annotation.from_records(records=h_records.split('\n'))
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_01_start_lines)
+    ann = ioss.annotation.from_records(records=h_records.split("\n"))
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
 
-  d1 = get_distances(model.get_hierarchy(), n_neighbours=20)
-  # model.get_hierarchy().write_pdb_file(file_name=prefix+'_initial.pdb')
-  for i in range(1):
-    rm = ssb.substitute_ss(
-      model,
-      params = ssb_params_norot.ss_idealization)
-  d2 = get_distances(model.get_hierarchy(), n_neighbours=20)
-  # model.get_hierarchy().write_pdb_file(file_name=prefix+'_result.pdb')
-  dist = abs(d2-d1)
-  dmmm = abs(d2-d1).min_max_mean().as_tuple()
-  print("minmaxmean sd", dmmm, abs(d2-d1).standard_deviation_of_the_sample())
-  # assert dmmm[1] < 0.8
-  assert dmmm[2] < 0.2, dmmm[2]
-  # print dist.standard_deviation_of_the_sample()
-  assert dist.standard_deviation_of_the_sample() < 0.25, dist.standard_deviation_of_the_sample()
+    d1 = get_distances(model.get_hierarchy(), n_neighbours=20)
+    # model.get_hierarchy().write_pdb_file(file_name=prefix+'_initial.pdb')
+    for i in range(1):
+        rm = ssb.substitute_ss(model, params=ssb_params_norot.ss_idealization)
+    d2 = get_distances(model.get_hierarchy(), n_neighbours=20)
+    # model.get_hierarchy().write_pdb_file(file_name=prefix+'_result.pdb')
+    dist = abs(d2 - d1)
+    dmmm = abs(d2 - d1).min_max_mean().as_tuple()
+    print("minmaxmean sd", dmmm, abs(d2 - d1).standard_deviation_of_the_sample())
+    # assert dmmm[1] < 0.8
+    assert dmmm[2] < 0.2, dmmm[2]
+    # print dist.standard_deviation_of_the_sample()
+    assert (
+        dist.standard_deviation_of_the_sample() < 0.25
+    ), dist.standard_deviation_of_the_sample()
+
 
 def exercise_02(prefix="tst_2_exercise_02"):
-  """
-  Similar to exercise_01. +beta sheets.
-  """
-  h_records = """\
+    """
+    Similar to exercise_01. +beta sheets.
+    """
+    h_records = """\
 HELIX    1   1 ARG A   65  ARG A   71  1                                   7
 SHEET    1  AA 2 PHE A  42  CYS A  47  0
 SHEET    2  AA 2 CYS A  52  GLY A  57 -1  O  LYS A  53   N  TYR A  46
 """
-  pdb_inp = iotbx.pdb.input(source_info=None,
-      lines=tst_02_start_lines)
-  ann = ioss.annotation.from_records(records=h_records.split('\n'))
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
-  d1 = get_distances(model.get_hierarchy(), n_neighbours=20)
-  # h.write_pdb_file(file_name=prefix+'_initial.pdb')
-  for i in range(3):
-    rm = ssb.substitute_ss(
-      model,
-      params = ssb_params_norot.ss_idealization)
-  d2 = get_distances(model.get_hierarchy(), n_neighbours=20)
-  # h.write_pdb_file(file_name=prefix+'_result.pdb')
-  dist = abs(d2-d1)
-  dmmm = abs(d2-d1).min_max_mean().as_tuple()
-  print("minmaxmean sd", dmmm, abs(d2-d1).standard_deviation_of_the_sample())
-  #assert dmmm[1] < 0.8
-  assert dmmm[2] < 0.1
-  assert dist.standard_deviation_of_the_sample() < 0.2, dist.standard_deviation_of_the_sample()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_02_start_lines)
+    ann = ioss.annotation.from_records(records=h_records.split("\n"))
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
+    d1 = get_distances(model.get_hierarchy(), n_neighbours=20)
+    # h.write_pdb_file(file_name=prefix+'_initial.pdb')
+    for i in range(3):
+        rm = ssb.substitute_ss(model, params=ssb_params_norot.ss_idealization)
+    d2 = get_distances(model.get_hierarchy(), n_neighbours=20)
+    # h.write_pdb_file(file_name=prefix+'_result.pdb')
+    dist = abs(d2 - d1)
+    dmmm = abs(d2 - d1).min_max_mean().as_tuple()
+    print("minmaxmean sd", dmmm, abs(d2 - d1).standard_deviation_of_the_sample())
+    # assert dmmm[1] < 0.8
+    assert dmmm[2] < 0.1
+    assert (
+        dist.standard_deviation_of_the_sample() < 0.2
+    ), dist.standard_deviation_of_the_sample()
+
 
 def exercise_03(prefix="tst_2_exercise_03"):
-  """
-  Mixed order of atoms in pdb file
-  """
-  h_records = """\
+    """
+    Mixed order of atoms in pdb file
+    """
+    h_records = """\
 HELIX   13  13 SER A  466  TYR A  472  1                                   7
   """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_03_start_lines)
-  ann = ioss.annotation.from_records(records=h_records.split('\n'))
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
-  # model.get_hierarchy().write_pdb_file(file_name="start.pdb")
-  rm = ssb.substitute_ss(
-      model,
-      params = ssb_params_norot.ss_idealization)
-  rm.run()
-  # model.get_hierarchy().write_pdb_file(file_name="result.pdb")
-  d1 = get_distances(model.get_hierarchy(), 5)
-  answer_h = iotbx.pdb.input(
-      source_info=None,
-      lines=tst_03_answer_lines).construct_hierarchy()
-  # answer_h.write_pdb_file(file_name="answer.pdb")
-  d2 = get_distances(answer_h, 5)
-  dist = abs(d2-d1)
-  dmmm = abs(d2-d1).min_max_mean().as_tuple()
-  print("minmaxmean sd", dmmm, abs(d2-d1).standard_deviation_of_the_sample())
-  assert dmmm[2] < 0.1, dmmm[2]
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_03_start_lines)
+    ann = ioss.annotation.from_records(records=h_records.split("\n"))
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
+    # model.get_hierarchy().write_pdb_file(file_name="start.pdb")
+    rm = ssb.substitute_ss(model, params=ssb_params_norot.ss_idealization)
+    rm.run()
+    # model.get_hierarchy().write_pdb_file(file_name="result.pdb")
+    d1 = get_distances(model.get_hierarchy(), 5)
+    answer_h = iotbx.pdb.input(
+        source_info=None, lines=tst_03_answer_lines
+    ).construct_hierarchy()
+    # answer_h.write_pdb_file(file_name="answer.pdb")
+    d2 = get_distances(answer_h, 5)
+    dist = abs(d2 - d1)
+    dmmm = abs(d2 - d1).min_max_mean().as_tuple()
+    print("minmaxmean sd", dmmm, abs(d2 - d1).standard_deviation_of_the_sample())
+    assert dmmm[2] < 0.1, dmmm[2]
+
 
 def exercise_04(prefix="tst_2_exercise_04"):
-  """
-  Unknown residue in SS structure
-  """
-  h_records = """\
+    """
+    Unknown residue in SS structure
+    """
+    h_records = """\
 HELIX    1  21 ALA A   21  ALA A   24  1                                  5
 """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_04_start_lines)
-  ann = ioss.annotation.from_records(records=h_records.split('\n'))
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
-  # h.write_pdb_file(file_name="%s_start.pdb" % prefix)
-  rm = ssb.substitute_ss(
-      model,
-      params = ssb_params_norot.ss_idealization)
-  rm.run()
-  # h.write_pdb_file(file_name="%s_result.pdb" % prefix)
-  d1 = get_distances(model.get_hierarchy(), 5)
-  answer_h = iotbx.pdb.input(
-      source_info=None,
-      lines=tst_04_answer_lines).construct_hierarchy()
-  # answer_h.write_pdb_file(file_name="answer.pdb")
-  d2 = get_distances(answer_h, 5)
-  dist = abs(d2-d1)
-  dmmm = abs(d2-d1).min_max_mean().as_tuple()
-  print("minmaxmean sd", dmmm, abs(d2-d1).standard_deviation_of_the_sample())
-  assert dmmm[2] < 0.2, dmmm[2]
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_04_start_lines)
+    ann = ioss.annotation.from_records(records=h_records.split("\n"))
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
+    # h.write_pdb_file(file_name="%s_start.pdb" % prefix)
+    rm = ssb.substitute_ss(model, params=ssb_params_norot.ss_idealization)
+    rm.run()
+    # h.write_pdb_file(file_name="%s_result.pdb" % prefix)
+    d1 = get_distances(model.get_hierarchy(), 5)
+    answer_h = iotbx.pdb.input(
+        source_info=None, lines=tst_04_answer_lines
+    ).construct_hierarchy()
+    # answer_h.write_pdb_file(file_name="answer.pdb")
+    d2 = get_distances(answer_h, 5)
+    dist = abs(d2 - d1)
+    dmmm = abs(d2 - d1).min_max_mean().as_tuple()
+    print("minmaxmean sd", dmmm, abs(d2 - d1).standard_deviation_of_the_sample())
+    assert dmmm[2] < 0.2, dmmm[2]
 
 
 def exercise():
-  """  Crashes on chevy, works on marbles. """
-  exercise_pure_polyala_alpha()
-  exercise_00()
-  exercise_01()
-  exercise_02()
-  exercise_03()
-  exercise_04()
-  print("OK")
+    """Crashes on chevy, works on marbles."""
+    exercise_pure_polyala_alpha()
+    exercise_00()
+    exercise_01()
+    exercise_02()
+    exercise_03()
+    exercise_04()
+    print("OK")
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

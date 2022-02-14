@@ -3,9 +3,9 @@ from boost_adaptbx.boost.optional import *
 import warnings
 
 warnings.warn(
-  "importing from boost.optional is deprecated; this module will be removed shortly. "
-  "import from boost_adaptbx.boost.optional instead. "
-  "Please see https://github.com/cctbx/cctbx_project/issues/458 for more information.",
-  FutureWarning,
-  stacklevel=2
+    "importing from boost.optional is deprecated; this module will be removed shortly. "
+    "import from boost_adaptbx.boost.optional instead. "
+    "Please see https://github.com/cctbx/cctbx_project/issues/458 for more information.",
+    FutureWarning,
+    stacklevel=2,
 )

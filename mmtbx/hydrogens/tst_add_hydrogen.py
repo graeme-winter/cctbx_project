@@ -8,155 +8,166 @@ from libtbx.test_utils import approx_equal
 
 # ------------------------------------------------------------------------------
 
+
 def run():
-  test_000()
-  test_001()
-  test_002()
-  test_003()
-  test_004()
-  test_005()
-  test_006()
-  test_007()
-  test_008()
+    test_000()
+    test_001()
+    test_002()
+    test_003()
+    test_004()
+    test_005()
+    test_006()
+    test_007()
+    test_008()
+
 
 # ------------------------------------------------------------------------------
 
-def compare_models(pdb_str,
-                   contains     = None,
-                   not_contains = None):
-  '''
+
+def compare_models(pdb_str, contains=None, not_contains=None):
+    """
     Function to compare model with new H to the known answer (pdb_str)
-  '''
-  #
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model_initial = mmtbx.model.manager(model_input = pdb_inp,
-                                      log         = null_out())
-  ph_initial = model_initial.get_hierarchy()
-  hd_sel_initial = model_initial.get_hd_selection()
-  h_atoms_initial = ph_initial.select(hd_sel_initial).atoms()
-  h_names_initial = list(h_atoms_initial.extract_name())
-  # number of H in pdb string (right answer)
-  number_h_expected = hd_sel_initial.count(True)
+    """
+    #
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model_initial = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    ph_initial = model_initial.get_hierarchy()
+    hd_sel_initial = model_initial.get_hd_selection()
+    h_atoms_initial = ph_initial.select(hd_sel_initial).atoms()
+    h_names_initial = list(h_atoms_initial.extract_name())
+    # number of H in pdb string (right answer)
+    number_h_expected = hd_sel_initial.count(True)
 
-  # get model obj without H atoms
-  model_without_h = model_initial.select(~hd_sel_initial)
-  # make sure model without H indeed has no H atoms
-  hd_sel_without_h = model_without_h.get_hd_selection()
-  assert (hd_sel_without_h is not None)
-  assert (hd_sel_without_h.count(True) == 0)
+    # get model obj without H atoms
+    model_without_h = model_initial.select(~hd_sel_initial)
+    # make sure model without H indeed has no H atoms
+    hd_sel_without_h = model_without_h.get_hd_selection()
+    assert hd_sel_without_h is not None
+    assert hd_sel_without_h.count(True) == 0
 
-  #model_h_added = reduce.add(model = model_without_h)
-  # place H atoms
-  reduce_add_h_obj = reduce_hydrogen.place_hydrogens(model = model_without_h)
-  reduce_add_h_obj.run()
-  model_h_added = reduce_add_h_obj.get_model()
-  hd_sel_h_added = model_h_added.get_hd_selection()
+    # model_h_added = reduce.add(model = model_without_h)
+    # place H atoms
+    reduce_add_h_obj = reduce_hydrogen.place_hydrogens(model=model_without_h)
+    reduce_add_h_obj.run()
+    model_h_added = reduce_add_h_obj.get_model()
+    hd_sel_h_added = model_h_added.get_hd_selection()
 
-  ph_h_added = model_h_added.get_hierarchy()
-  assert ph_initial.is_similar_hierarchy(other=ph_h_added)
+    ph_h_added = model_h_added.get_hierarchy()
+    assert ph_initial.is_similar_hierarchy(other=ph_h_added)
 
-  number_h_added = hd_sel_h_added.count(True)
-  assert(number_h_expected == number_h_added)
+    number_h_added = hd_sel_h_added.count(True)
+    assert number_h_expected == number_h_added
 
-  h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
-  h_names_added = list(h_atoms_added.extract_name())
+    h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
+    h_names_added = list(h_atoms_added.extract_name())
 
-  if not_contains:
-    assert (not_contains not in h_names_added)
+    if not_contains:
+        assert not_contains not in h_names_added
 
-  if contains:
-    assert (contains in h_names_added)
+    if contains:
+        assert contains in h_names_added
 
-  sc_h_initial = model_initial.select(hd_sel_initial).get_sites_cart()
-  sc_h_added = model_h_added.select(hd_sel_h_added).get_sites_cart()
+    sc_h_initial = model_initial.select(hd_sel_initial).get_sites_cart()
+    sc_h_added = model_h_added.select(hd_sel_h_added).get_sites_cart()
 
-  d1 = {h_names_initial[i]: sc_h_initial[i] for i in range(len(h_names_initial))}
-  d2 = {h_names_added[i]: sc_h_added[i] for i in range(len(h_names_added))}
+    d1 = {h_names_initial[i]: sc_h_initial[i] for i in range(len(h_names_initial))}
+    d2 = {h_names_added[i]: sc_h_added[i] for i in range(len(h_names_added))}
 
-  # check that coordinates are correct
-  for name, sc in d2.items():
-    assert(name in d1)
-    assert approx_equal(sc, d1[name], 0.01)
+    # check that coordinates are correct
+    for name, sc in d2.items():
+        assert name in d1
+        assert approx_equal(sc, d1[name], 0.01)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_000():
-  '''
+    """
     Incomplete peptide unit at the N-terminal --> H should not be placed.
-  '''
-  compare_models(pdb_str = pdb_str_000)
+    """
+    compare_models(pdb_str=pdb_str_000)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_001():
-  '''
+    """
     CD1 is missing --> H, HD1, HE1 can't be parameterized --> should not be added.
-  '''
-  compare_models(pdb_str      = pdb_str_001,
-                 not_contains = ' HE1')
+    """
+    compare_models(pdb_str=pdb_str_001, not_contains=" HE1")
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_002():
-  '''
+    """
     If there is a disulfide bond --> don't add H on CYS
-  '''
-  compare_models(pdb_str      = pdb_str_002,
-                 not_contains = ' HG ')
+    """
+    compare_models(pdb_str=pdb_str_002, not_contains=" HG ")
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_003():
-  '''
+    """
     If CYS is not in disulfide or does not coordinate --> place HG
-  '''
-  compare_models(pdb_str  = pdb_str_003,
-                 contains = ' HG ')
+    """
+    compare_models(pdb_str=pdb_str_003, contains=" HG ")
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_004():
-  '''
+    """
     N atom is missing --> make sure peptide H is not placed
-  '''
-  compare_models(pdb_str      = pdb_str_004,
-                 not_contains = ' H  ')
+    """
+    compare_models(pdb_str=pdb_str_004, not_contains=" H  ")
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_005():
-  '''
+    """
     CYS coordinates a metal --> HG should not be placed
-  '''
-  compare_models(pdb_str      = pdb_str_005,
-                 not_contains = ' HG ')
+    """
+    compare_models(pdb_str=pdb_str_005, not_contains=" HG ")
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_006():
-  '''
+    """
     CYS forms a disulfid with symmetry mate --> don't place HG
-  '''
-  compare_models(pdb_str      = pdb_str_006,
-                 not_contains = ' HG ')
+    """
+    compare_models(pdb_str=pdb_str_006, not_contains=" HG ")
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_007():
-  '''
+    """
     CYS forms a disulfid with symmetry mate --> don't place HG
-  '''
-  compare_models(pdb_str      = pdb_str_007,
-                 not_contains = ' HG ')
+    """
+    compare_models(pdb_str=pdb_str_007, not_contains=" HG ")
+
 
 # ------------------------------------------------------------------------------
 
+
 def test_008():
-  '''
+    """
     disulfide bridge between neighboring residues --> don't place HG atoms
-  '''
-  compare_models(pdb_str      = pdb_str_008,
-                 not_contains = ' HG ')
+    """
+    compare_models(pdb_str=pdb_str_008, not_contains=" HG ")
+
 
 # ------------------------------------------------------------------------------
 
@@ -390,7 +401,7 @@ ATOM     20  HB3 CYS A 222     -23.291  10.107   3.773  1.00 11.23           H
 TER
 """
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time: %8.3f" % (time.time() - t0))

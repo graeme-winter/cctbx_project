@@ -8,7 +8,7 @@ from libtbx.test_utils import approx_equal
 from six.moves import range
 from six.moves import zip
 
-test_pdb_1 = '''\
+test_pdb_1 = """\
 CRYST1  577.812  448.715  468.790  90.00  90.00  90.00 P 1
 SCALE1      0.001731  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.002229  0.000000        0.00000
@@ -35,9 +35,9 @@ ATOM      5  CA  THR D   5       9.101   9.421   9.092  1.00 20.00           C
 ATOM      6  CA  THR D   6       9.001  10.343   8.000  1.00 20.00           C
 ATOM      7  CA  THR D   7       8.964   8.000   8.565  1.00 20.00           C
 END
-'''
+"""
 
-test_pdb_2 = '''\
+test_pdb_2 = """\
 CRYST1   41.870   78.240   85.900  90.00  90.00  90.00 P 2 21 21     8
 SCALE1      0.023883  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.012781  0.000000        0.00000
@@ -86,9 +86,9 @@ ATOM     41  CE1 TYR B 155      15.760   7.237 -37.584  1.00 37.04           C
 ATOM     42  CE2 TYR B 155      15.376   5.518 -39.226  1.00 43.21           C
 ATOM     43  CZ  TYR B 155      16.051   6.654 -38.804  1.00 41.97           C
 END
-'''
+"""
 
-test_pdb_3 = '''\
+test_pdb_3 = """\
 CRYST1  203.106   83.279  178.234  90.00 106.67  90.00 C 1 2 1      12
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
@@ -142,9 +142,9 @@ ATOM    355  CA  ALA H  52      80.688 -29.412   1.265  1.00 31.24           C
 ATOM    356  C   ALA H  52      80.477 -27.950   0.892  1.00 32.00           C
 ATOM    357  O   ALA H  52      79.410 -27.556   0.406  1.00 32.53           O
 ATOM    358  CB  ALA H  52      81.455 -30.109   0.148  1.00 27.90           C
-'''
+"""
 
-test_pdb_4 = '''\
+test_pdb_4 = """\
 CRYST1  577.812  448.715  468.790  90.00  90.00  90.00 P 1
 SCALE1      0.001731  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.002229  0.000000        0.00000
@@ -162,9 +162,9 @@ HETATM 3514  O   HOH A2003     -73.597  30.740 -72.170  1.00 33.13           O
 HETATM 3515  O   HOH A2004     -74.933  23.929 -66.597  1.00 26.66           O
 HETATM 3516  O   HOH A2005     -73.036  25.921 -66.605  1.00 23.41
 END
-'''
+"""
 
-test_pdb_5 = '''\
+test_pdb_5 = """\
 CRYST1   42.558  113.820  137.132  90.00  90.00  90.00 P 21 21 21   24
 SCALE1      0.023497  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.008786  0.000000        0.00000
@@ -211,9 +211,9 @@ ATOM   2943  CA  ALA D  30     -18.937  65.524  61.993  1.00 21.15           C
 ATOM   2944  C   ALA D  30     -17.875  66.586  61.555  1.00 20.92           C
 ATOM   2945  O   ALA D  30     -18.026  67.767  61.866  1.00 18.58           O
 ATOM   2946  CB  ALA D  30     -18.461  64.657  63.163  1.00 17.17           C
-'''
+"""
 
-test_pdb_6 = '''\
+test_pdb_6 = """\
 CRYST1  203.106   83.279  178.234  90.00 106.67  90.00 C 1 2 1      12
 ATOM      1  N   ARG H  48      82.680 -29.174   6.224  1.00 40.63           N
 ATOM      2  CA  ARG H  48      81.318 -29.102   5.747  1.00 40.99           C
@@ -235,7 +235,7 @@ ATOM     17  N   GLY H  50      76.527 -31.692   6.695  1.00 39.31           N
 ATOM     18  CA  GLY H  50      77.002 -32.764   5.839  1.00 38.66           C
 ATOM     19  C   GLY H  50      77.149 -32.388   4.377  1.00 38.02           C
 ATOM     20  O   GLY H  50      77.152 -33.261   3.507  1.00 38.89           O
-'''
+"""
 
 test_pdb_7 = """\
 ATOM      1  N   ILE A  14     -14.366 134.691 190.492  1.00 65.50           N
@@ -472,375 +472,488 @@ HETATM   40  OE2 GLU A 301      77.475  24.404  39.651  1.00 30.03           O
 HETATM   41  OXT GLU A 301      75.416  26.080  45.793  1.00 30.21           O
 """
 
+
 def test_get_clean_selection_string():
-  """ Check get_clean_selection_string  """
-  # print sys._getframe().f_code.co_name
-  ch_sel = 'chain A'
-  res_selection1 = ['resid 1:10']
+    """Check get_clean_selection_string"""
+    # print sys._getframe().f_code.co_name
+    ch_sel = "chain A"
+    res_selection1 = ["resid 1:10"]
 
-  res_id = '27c'
-  s = '(resid ' + res_id + ' and (name '
-  atom_name = [x for x in [' CA',' N']]
-  atom_str = ' or name '.join(atom_name)
-  s = s + atom_str + ')'
-  res_selection2 = ['resid 1:10',s]
+    res_id = "27c"
+    s = "(resid " + res_id + " and (name "
+    atom_name = [x for x in [" CA", " N"]]
+    atom_str = " or name ".join(atom_name)
+    s = s + atom_str + ")"
+    res_selection2 = ["resid 1:10", s]
 
-  result1 = get_clean_selection_string(ch_sel,[])
-  result2 = get_clean_selection_string(ch_sel,res_selection1)
-  result3 = get_clean_selection_string(ch_sel,res_selection2)
+    result1 = get_clean_selection_string(ch_sel, [])
+    result2 = get_clean_selection_string(ch_sel, res_selection1)
+    result3 = get_clean_selection_string(ch_sel, res_selection2)
 
-  assert result1 == 'chain A', result1
-  assert result2 == 'chain A and resid 1:10', result2
-  expt = 'chain A and (resid 1:10 or (resid 27c and (name CA or name N))'
-  assert result3 == expt, result3
+    assert result1 == "chain A", result1
+    assert result2 == "chain A and resid 1:10", result2
+    expt = "chain A and (resid 1:10 or (resid 27c and (name CA or name N))"
+    assert result3 == expt, result3
+
 
 def test_selection_string_from_selection():
-  """ Test selection_string_from_selection """
-  pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_1).construct_hierarchy()
-  isel1 = flex.size_t([12, 13, 14, 15, 16, 17, 18])
-  isel2 = flex.size_t([12, 13, 14, 16, 17, 18])
-  isel3 = flex.size_t([12, 13, 14, 15, 16, 17])
-  sel_str1 = selection_string_from_selection(pdb_h,isel1)
-  sel_str2 = selection_string_from_selection(pdb_h,isel2)
-  sel_str3 = selection_string_from_selection(pdb_h,isel3)
-  assert sel_str1 == "chain 'D'", sel_str1
-  assert sel_str2 == "(chain 'D' and (resid 1 through 3 or resid 5 through 7))", sel_str2
-  assert sel_str3 == "(chain 'D' and resid 1 through 6)", sel_str3
-  #
-  asc = pdb_h.atom_selection_cache()
-  sel1 = list(asc.iselection(sel_str1))
-  sel2 = list(asc.iselection(sel_str2))
-  sel3 = list(asc.iselection(sel_str3))
-  #
-  assert sel1 == list(isel1), sel1
-  assert sel2 == list(isel2), sel2
-  assert sel3 == list(isel3), sel3
+    """Test selection_string_from_selection"""
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_1).construct_hierarchy()
+    isel1 = flex.size_t([12, 13, 14, 15, 16, 17, 18])
+    isel2 = flex.size_t([12, 13, 14, 16, 17, 18])
+    isel3 = flex.size_t([12, 13, 14, 15, 16, 17])
+    sel_str1 = selection_string_from_selection(pdb_h, isel1)
+    sel_str2 = selection_string_from_selection(pdb_h, isel2)
+    sel_str3 = selection_string_from_selection(pdb_h, isel3)
+    assert sel_str1 == "chain 'D'", sel_str1
+    assert (
+        sel_str2 == "(chain 'D' and (resid 1 through 3 or resid 5 through 7))"
+    ), sel_str2
+    assert sel_str3 == "(chain 'D' and resid 1 through 6)", sel_str3
+    #
+    asc = pdb_h.atom_selection_cache()
+    sel1 = list(asc.iselection(sel_str1))
+    sel2 = list(asc.iselection(sel_str2))
+    sel3 = list(asc.iselection(sel_str3))
+    #
+    assert sel1 == list(isel1), sel1
+    assert sel2 == list(isel2), sel2
+    assert sel3 == list(isel3), sel3
+
 
 def test_selection_string_from_selection2():
-  """ Test selection_string_from_selection """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_2).construct_hierarchy()
-  l1 = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,
-        26,27,28,29,30,31]
-  l2 = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17      ,20,21,22,23,24,25,
-        26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42]
-  isel1 = flex.size_t(l1)
-  isel2 = flex.size_t(l2)
-  #
-  sel_str1 = selection_string_from_selection(pdb_h,isel1)
-  sel_str2 = selection_string_from_selection(pdb_h,isel2)
-  assert sel_str1 == "chain 'A' or (chain 'B' and resid 153 through 154)", sel_str1
-  s = "(chain 'A' and (resid 151 or (resid 152 and (name N or name CA or "
-  s += "name C or name O or name CB or name CG or name CD or name NE or "
-  s += "name CZ )))) or chain 'B'"
-  assert sel_str2 == s, sel_str2
-  #
-  asc = pdb_h.atom_selection_cache()
-  sel1 = list(asc.iselection(sel_str1))
-  sel2 = list(asc.iselection(sel_str2))
-  #
-  assert sel1 == list(isel1), sel1
-  assert sel2 == list(isel2), sel2
+    """Test selection_string_from_selection"""
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_2).construct_hierarchy()
+    l1 = [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+    ]
+    l2 = [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+    ]
+    isel1 = flex.size_t(l1)
+    isel2 = flex.size_t(l2)
+    #
+    sel_str1 = selection_string_from_selection(pdb_h, isel1)
+    sel_str2 = selection_string_from_selection(pdb_h, isel2)
+    assert sel_str1 == "chain 'A' or (chain 'B' and resid 153 through 154)", sel_str1
+    s = "(chain 'A' and (resid 151 or (resid 152 and (name N or name CA or "
+    s += "name C or name O or name CB or name CG or name CD or name NE or "
+    s += "name CZ )))) or chain 'B'"
+    assert sel_str2 == s, sel_str2
+    #
+    asc = pdb_h.atom_selection_cache()
+    sel1 = list(asc.iselection(sel_str1))
+    sel2 = list(asc.iselection(sel_str2))
+    #
+    assert sel1 == list(isel1), sel1
+    assert sel2 == list(isel2), sel2
+
 
 def test_avoid_chain_selection():
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_2).construct_hierarchy()
-  isel1 = flex.size_t([0,1,2,3,4,5,6,7,8])
-  sel_str1 = selection_string_from_selection(pdb_h,isel1)
-  s = "(chain 'A' and resid 151)"
-  assert sel_str1 == s, sel_str1
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_2).construct_hierarchy()
+    isel1 = flex.size_t([0, 1, 2, 3, 4, 5, 6, 7, 8])
+    sel_str1 = selection_string_from_selection(pdb_h, isel1)
+    s = "(chain 'A' and resid 151)"
+    assert sel_str1 == s, sel_str1
+
 
 def test_avoid_chain_selection2():
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_3).construct_hierarchy()
-  isel1 = flex.size_t(range(6,46))
-  sel_str1 = selection_string_from_selection(pdb_h,isel1)
-  # s = '(chain H and (resid 48 or resid 49 or resid 49A or resid 50:52))'
-  # better way:
-  s = "(chain 'H' and resid 48 through 52)"
-  assert sel_str1 == s, sel_str1
-  #
-  l1 = list(range(6,25)) + list(range(29,46))
-  isel1 = flex.size_t(l1)
-  # s = '(chain H and (resid 48 or resid 49 or resid 50:52))'
-  # better way:
-  s = "(chain 'H' and (resid 48 through 49 or resid 50 through 52))"
-  sel_str1 = selection_string_from_selection(pdb_h,isel1)
-  assert sel_str1 == s, sel_str1
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_3).construct_hierarchy()
+    isel1 = flex.size_t(range(6, 46))
+    sel_str1 = selection_string_from_selection(pdb_h, isel1)
+    # s = '(chain H and (resid 48 or resid 49 or resid 49A or resid 50:52))'
+    # better way:
+    s = "(chain 'H' and resid 48 through 52)"
+    assert sel_str1 == s, sel_str1
+    #
+    l1 = list(range(6, 25)) + list(range(29, 46))
+    isel1 = flex.size_t(l1)
+    # s = '(chain H and (resid 48 or resid 49 or resid 50:52))'
+    # better way:
+    s = "(chain 'H' and (resid 48 through 49 or resid 50 through 52))"
+    sel_str1 = selection_string_from_selection(pdb_h, isel1)
+    assert sel_str1 == s, sel_str1
+
 
 def test_avoid_hoh():
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_4).construct_hierarchy()
-  isel1 = flex.size_t(range(7))
-  sel_str1 = selection_string_from_selection(pdb_h,isel1)
-  s = "(chain 'A' and resid 151 through 157)"
-  assert sel_str1 == s, sel_str1
-  #
-  asc = pdb_h.atom_selection_cache()
-  sel = asc.iselection(s)
-  assert sel.size() == 7, sel.size()
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_4).construct_hierarchy()
+    isel1 = flex.size_t(range(7))
+    sel_str1 = selection_string_from_selection(pdb_h, isel1)
+    s = "(chain 'A' and resid 151 through 157)"
+    assert sel_str1 == s, sel_str1
+    #
+    asc = pdb_h.atom_selection_cache()
+    sel = asc.iselection(s)
+    assert sel.size() == 7, sel.size()
+
 
 def test_include_hoh():
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_4).construct_hierarchy()
-  isel1 = flex.size_t(range(7))
-  sel_str1 = selection_string_from_selection(
-    pdb_h,isel1)
-  s = "(chain 'A' and resid 151 through 157)"
-  assert sel_str1 == s, sel_str1
-  #
-  asc = pdb_h.atom_selection_cache()
-  sel = asc.iselection(s)
-  assert sel.size() == 7, sel.size()
-  #
-  isel1 = flex.size_t(range(12))
-  sel_str1 = selection_string_from_selection(
-    pdb_h,isel1)
-  assert sel_str1 == "chain 'A'", sel_str
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_4).construct_hierarchy()
+    isel1 = flex.size_t(range(7))
+    sel_str1 = selection_string_from_selection(pdb_h, isel1)
+    s = "(chain 'A' and resid 151 through 157)"
+    assert sel_str1 == s, sel_str1
+    #
+    asc = pdb_h.atom_selection_cache()
+    sel = asc.iselection(s)
+    assert sel.size() == 7, sel.size()
+    #
+    isel1 = flex.size_t(range(12))
+    sel_str1 = selection_string_from_selection(pdb_h, isel1)
+    assert sel_str1 == "chain 'A'", sel_str
+
 
 def test_selection_with_alternative_conformers():
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_5).construct_hierarchy(sort_atoms=True)
-  asc = pdb_h.atom_selection_cache()
-  chains_info = get_chains_info(pdb_h)
-  ch_D = chains_info['D']
-  # test conditions verification
-  assert ch_D.no_altloc == [True, True, True, False, True, True]
-  select_all = sorted([x for xi in ch_D.atom_selection for x in xi])
-  test_list = list(asc.iselection("not altloc B"))
-  assert select_all == test_list, "%s" % select_all
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_5).construct_hierarchy(
+        sort_atoms=True
+    )
+    asc = pdb_h.atom_selection_cache()
+    chains_info = get_chains_info(pdb_h)
+    ch_D = chains_info["D"]
+    # test conditions verification
+    assert ch_D.no_altloc == [True, True, True, False, True, True]
+    select_all = sorted([x for xi in ch_D.atom_selection for x in xi])
+    test_list = list(asc.iselection("not altloc B"))
+    assert select_all == test_list, "%s" % select_all
+
 
 def test_insertions():
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_6).construct_hierarchy()
-  isel = flex.size_t(range(15))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'H' and (resid 48 through 49 or (resid 49A and (name N or name CA or name C ))))", tsel
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_6).construct_hierarchy()
+    isel = flex.size_t(range(15))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert (
+        tsel
+        == "(chain 'H' and (resid 48 through 49 or (resid 49A and (name N or name CA or name C ))))"
+    ), tsel
 
-  isel = flex.size_t(range(16))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'H' and resid 48 through 49A)", tsel
+    isel = flex.size_t(range(16))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert tsel == "(chain 'H' and resid 48 through 49A)", tsel
+
 
 def test_2():
-  """
-  behavior with GLY: don't stop selection string:
-  if a user wants only N, CA, C, O atoms, there is no reason to break the
-  selection range just because there is GLY and it doesn't need names.
-  And we even skip the residue range here, tested extensively in test_5
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_7).construct_hierarchy()
-  isel = flex.size_t([0,1,2,3,8,9,10,11,13,14,15,16,17,18,19,20])
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'A' and (name N or name CA or name C or name O ))" , tsel
+    """
+    behavior with GLY: don't stop selection string:
+    if a user wants only N, CA, C, O atoms, there is no reason to break the
+    selection range just because there is GLY and it doesn't need names.
+    And we even skip the residue range here, tested extensively in test_5
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_7).construct_hierarchy()
+    isel = flex.size_t([0, 1, 2, 3, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20])
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert tsel == "(chain 'A' and (name N or name CA or name C or name O ))", tsel
+
 
 def test_3():
-  """
-  single atom selections
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_6).construct_hierarchy()
-  for i, answ in zip(range(20), [
-      "(chain 'H' and (resid 48 and (name N )))",
-      "(chain 'H' and (resid 48 and (name CA )))",
-      "(chain 'H' and (resid 48 and (name C )))",
-      "(chain 'H' and (resid 48 and (name O )))",
-      "(chain 'H' and (resid 49 and (name N )))",
-      "(chain 'H' and (resid 49 and (name CA )))",
-      "(chain 'H' and (resid 49 and (name C )))",
-      "(chain 'H' and (resid 49 and (name O )))",
-      "(chain 'H' and (resid 49 and (name CB )))",
-      "(chain 'H' and (resid 49 and (name CG )))",
-      "(chain 'H' and (resid 49 and (name CD1)))",
-      "(chain 'H' and (resid 49 and (name CD2)))",
-      "(chain 'H' and (resid 49A and (name N )))",
-      "(chain 'H' and (resid 49A and (name CA )))",
-      "(chain 'H' and (resid 49A and (name C )))",
-      "(chain 'H' and (resid 49A and (name O )))",
-      "(chain 'H' and (resid 50 and (name N )))",
-      "(chain 'H' and (resid 50 and (name CA )))",
-      "(chain 'H' and (resid 50 and (name C )))",
-      "(chain 'H' and (resid 50 and (name O )))"]):
-    isel = flex.size_t([i])
-    tsel = selection_string_from_selection(pdb_h, isel)
-    assert tsel == answ, "%s != %s" % (tsel, answ)
+    """
+    single atom selections
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_6).construct_hierarchy()
+    for i, answ in zip(
+        range(20),
+        [
+            "(chain 'H' and (resid 48 and (name N )))",
+            "(chain 'H' and (resid 48 and (name CA )))",
+            "(chain 'H' and (resid 48 and (name C )))",
+            "(chain 'H' and (resid 48 and (name O )))",
+            "(chain 'H' and (resid 49 and (name N )))",
+            "(chain 'H' and (resid 49 and (name CA )))",
+            "(chain 'H' and (resid 49 and (name C )))",
+            "(chain 'H' and (resid 49 and (name O )))",
+            "(chain 'H' and (resid 49 and (name CB )))",
+            "(chain 'H' and (resid 49 and (name CG )))",
+            "(chain 'H' and (resid 49 and (name CD1)))",
+            "(chain 'H' and (resid 49 and (name CD2)))",
+            "(chain 'H' and (resid 49A and (name N )))",
+            "(chain 'H' and (resid 49A and (name CA )))",
+            "(chain 'H' and (resid 49A and (name C )))",
+            "(chain 'H' and (resid 49A and (name O )))",
+            "(chain 'H' and (resid 50 and (name N )))",
+            "(chain 'H' and (resid 50 and (name CA )))",
+            "(chain 'H' and (resid 50 and (name C )))",
+            "(chain 'H' and (resid 50 and (name O )))",
+        ],
+    ):
+        isel = flex.size_t([i])
+        tsel = selection_string_from_selection(pdb_h, isel)
+        assert tsel == answ, "%s != %s" % (tsel, answ)
+
 
 def test_4():
-  """
-  double atoms selections
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_6).construct_hierarchy()
-  for i, answ in zip(range(0,20,2), [
-      "(chain 'H' and (resid 48 and (name N or name CA )))",
-      "(chain 'H' and (resid 48 and (name C or name O )))",
-      "(chain 'H' and (resid 49 and (name N or name CA )))",
-      "(chain 'H' and (resid 49 and (name C or name O )))",
-      "(chain 'H' and (resid 49 and (name CB or name CG )))",
-      "(chain 'H' and (resid 49 and (name CD1 or name CD2)))",
-      "(chain 'H' and (resid 49A and (name N or name CA )))",
-      "(chain 'H' and (resid 49A and (name C or name O )))",
-      "(chain 'H' and (resid 50 and (name N or name CA )))",
-      "(chain 'H' and (resid 50 and (name C or name O )))"]):
-    isel = flex.size_t([i,i+1])
-    tsel = selection_string_from_selection(pdb_h, isel)
-    assert tsel == answ, "%s != %s" % (tsel, answ)
-  # and now odd:
-  for i, answ in zip(range(1,19,2), [
-      "(chain 'H' and (resid 48 and (name CA or name C )))",
-      "(chain 'H' and ((resid 48 and (name O )) or (resid 49 and (name N ))))",
-      "(chain 'H' and (resid 49 and (name CA or name C )))",
-      "(chain 'H' and (resid 49 and (name O or name CB )))",
-      "(chain 'H' and (resid 49 and (name CG or name CD1)))",
-      "(chain 'H' and ((resid 49 and (name CD2)) or (resid 49A and (name N ))))",
-      "(chain 'H' and (resid 49A and (name CA or name C )))",
-      "(chain 'H' and ((resid 49A and (name O )) or (resid 50 and (name N ))))",
-      "(chain 'H' and (resid 50 and (name CA or name C )))"]):
-    isel = flex.size_t([i,i+1])
-    tsel = selection_string_from_selection(pdb_h, isel)
-    assert tsel == answ, "%s != %s" % (tsel, answ)
+    """
+    double atoms selections
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_6).construct_hierarchy()
+    for i, answ in zip(
+        range(0, 20, 2),
+        [
+            "(chain 'H' and (resid 48 and (name N or name CA )))",
+            "(chain 'H' and (resid 48 and (name C or name O )))",
+            "(chain 'H' and (resid 49 and (name N or name CA )))",
+            "(chain 'H' and (resid 49 and (name C or name O )))",
+            "(chain 'H' and (resid 49 and (name CB or name CG )))",
+            "(chain 'H' and (resid 49 and (name CD1 or name CD2)))",
+            "(chain 'H' and (resid 49A and (name N or name CA )))",
+            "(chain 'H' and (resid 49A and (name C or name O )))",
+            "(chain 'H' and (resid 50 and (name N or name CA )))",
+            "(chain 'H' and (resid 50 and (name C or name O )))",
+        ],
+    ):
+        isel = flex.size_t([i, i + 1])
+        tsel = selection_string_from_selection(pdb_h, isel)
+        assert tsel == answ, "%s != %s" % (tsel, answ)
+    # and now odd:
+    for i, answ in zip(
+        range(1, 19, 2),
+        [
+            "(chain 'H' and (resid 48 and (name CA or name C )))",
+            "(chain 'H' and ((resid 48 and (name O )) or (resid 49 and (name N ))))",
+            "(chain 'H' and (resid 49 and (name CA or name C )))",
+            "(chain 'H' and (resid 49 and (name O or name CB )))",
+            "(chain 'H' and (resid 49 and (name CG or name CD1)))",
+            "(chain 'H' and ((resid 49 and (name CD2)) or (resid 49A and (name N ))))",
+            "(chain 'H' and (resid 49A and (name CA or name C )))",
+            "(chain 'H' and ((resid 49A and (name O )) or (resid 50 and (name N ))))",
+            "(chain 'H' and (resid 50 and (name CA or name C )))",
+        ],
+    ):
+        isel = flex.size_t([i, i + 1])
+        tsel = selection_string_from_selection(pdb_h, isel)
+        assert tsel == answ, "%s != %s" % (tsel, answ)
+
 
 def test_5():
-  """
-  Don't output the residue range if it covers whole chain, even if
-  there is atom name selection
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_7).construct_hierarchy()
-  isel = flex.size_t(range(25))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "chain 'A'", tsel
-  isel = flex.size_t([0,8,13,17])
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'A' and (name N ))", tsel
-  isel = flex.size_t([0,1,8,9,13,14,17,18])
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'A' and (name N or name CA ))", tsel
-  isel = flex.size_t([0,1,2,8,9,13,14,17,18])
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'A' and ((resid 14 and (name N or name CA or name C )) or (resid 15 through 17 and (name N or name CA ))))", tsel
+    """
+    Don't output the residue range if it covers whole chain, even if
+    there is atom name selection
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_7).construct_hierarchy()
+    isel = flex.size_t(range(25))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert tsel == "chain 'A'", tsel
+    isel = flex.size_t([0, 8, 13, 17])
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert tsel == "(chain 'A' and (name N ))", tsel
+    isel = flex.size_t([0, 1, 8, 9, 13, 14, 17, 18])
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert tsel == "(chain 'A' and (name N or name CA ))", tsel
+    isel = flex.size_t([0, 1, 2, 8, 9, 13, 14, 17, 18])
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert (
+        tsel
+        == "(chain 'A' and ((resid 14 and (name N or name CA or name C )) or (resid 15 through 17 and (name N or name CA ))))"
+    ), tsel
+
 
 def test_6():
-  """
-  previous range is all atoms selected, next residue is not, but selected
-  atoms are the same as for the last residue. In this case the range with all
-  atoms should be dumped.
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_8).construct_hierarchy()
-  isel = flex.size_t(range(21))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  # print "tsel", tsel
-  assert tsel == "(chain 'A' and (resid 125 through 127 or (resid 128 and (name N or name CA or name C or name O or name CB ))))" , tsel
+    """
+    previous range is all atoms selected, next residue is not, but selected
+    atoms are the same as for the last residue. In this case the range with all
+    atoms should be dumped.
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_8).construct_hierarchy()
+    isel = flex.size_t(range(21))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    # print "tsel", tsel
+    assert (
+        tsel
+        == "(chain 'A' and (resid 125 through 127 or (resid 128 and (name N or name CA or name C or name O or name CB ))))"
+    ), tsel
+
 
 def test_7():
-  """
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_9).construct_hierarchy()
-  isel = flex.size_t([0,1,2,3,4]+list(range(11,27)))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'A' and ((resid 124 through 125 and (name N or name CA or name C or name O or name CB )) or resid 126 through 127))", tsel
-  # print "tsel", tsel
+    """ """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_9).construct_hierarchy()
+    isel = flex.size_t([0, 1, 2, 3, 4] + list(range(11, 27)))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert (
+        tsel
+        == "(chain 'A' and ((resid 124 through 125 and (name N or name CA or name C or name O or name CB )) or resid 126 through 127))"
+    ), tsel
+    # print "tsel", tsel
+
 
 def test_8():
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_10).construct_hierarchy()
-  isel = flex.size_t(list(range(8))+[8,9,10,11,12]+list(range(19,35)))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'A' and (resid 117 or (resid 124 through 125 and (name N or name CA or name C or name O or name CB )) or resid 126 through 127))", tsel
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_10).construct_hierarchy()
+    isel = flex.size_t(list(range(8)) + [8, 9, 10, 11, 12] + list(range(19, 35)))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert (
+        tsel
+        == "(chain 'A' and (resid 117 or (resid 124 through 125 and (name N or name CA or name C or name O or name CB )) or resid 126 through 127))"
+    ), tsel
 
 
 def test_11():
-  """
-  outputting name selection at the end of hierarchy?..
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_11).construct_hierarchy()
-  isel = flex.size_t(list(range(5))+[6])
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'A' and (resid 480 through 482 or (resid 483 through 484 and (name CA ))))", tsel
+    """
+    outputting name selection at the end of hierarchy?..
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_11).construct_hierarchy()
+    isel = flex.size_t(list(range(5)) + [6])
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert (
+        tsel
+        == "(chain 'A' and (resid 480 through 482 or (resid 483 through 484 and (name CA ))))"
+    ), tsel
+
 
 def test_12():
-  """
-  Not the first range in hierarchy, some atoms are absent for the first residue
-  in the range, but atoms of the several next residues are coniside with
-  present atoms of the first residue. And hierarchy ends. Make sure list
-  of atoms is outputted for the last range.
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_12).construct_hierarchy()
-  isel = flex.size_t(list(range(26))+list(range(30,45)))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  assert tsel == "(chain 'A' and (resid 279 through 281 or (resid 282 through 285 and (name N or name CA or name C or name O or name CB ))))", tsel
+    """
+    Not the first range in hierarchy, some atoms are absent for the first residue
+    in the range, but atoms of the several next residues are coniside with
+    present atoms of the first residue. And hierarchy ends. Make sure list
+    of atoms is outputted for the last range.
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_12).construct_hierarchy()
+    isel = flex.size_t(list(range(26)) + list(range(30, 45)))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    assert (
+        tsel
+        == "(chain 'A' and (resid 279 through 281 or (resid 282 through 285 and (name N or name CA or name C or name O or name CB ))))"
+    ), tsel
+
 
 def test_13():
-  """
-  Test correct handling of portion of a chain at the end of the pdb file.
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None, lines=test_pdb_13).construct_hierarchy()
-  isel = flex.size_t(list(range(20))+list(range(31,41)))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  # print tsel
-  assert tsel == "chain 'A'"
-  isel = flex.size_t(list(range(19))+list(range(31,41)))
-  tsel = selection_string_from_selection(pdb_h, isel)
-  # print tsel
-  assert tsel == "(chain 'A' and (resid 260 through 261 or (resid 262 and (name N or name CA or name C or name O )) or resid 301))"
+    """
+    Test correct handling of portion of a chain at the end of the pdb file.
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=test_pdb_13).construct_hierarchy()
+    isel = flex.size_t(list(range(20)) + list(range(31, 41)))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    # print tsel
+    assert tsel == "chain 'A'"
+    isel = flex.size_t(list(range(19)) + list(range(31, 41)))
+    tsel = selection_string_from_selection(pdb_h, isel)
+    # print tsel
+    assert (
+        tsel
+        == "(chain 'A' and (resid 260 through 261 or (resid 262 and (name N or name CA or name C or name O )) or resid 301))"
+    )
+
 
 def test_14():
-  """
-  Test correct handling of altloc upper and lower cases.
-  """
-  lines = """
+    """
+    Test correct handling of altloc upper and lower cases.
+    """
+    lines = """
 CRYST1   45.640   40.754   30.275  90.00  90.00  90.00 P 21 21 21
 ATOM      2  CA AVAL A   1      -4.890   1.653  12.849  0.50 13.49           C
 ATOM      9  CA aVAL A   1      -4.195   1.706  13.326  0.50 16.74           C
   """
-  h = iotbx.pdb.input(source_info=None, lines=lines).construct_hierarchy()
-  asc = h.atom_selection_cache()
-  # case 1
-  isel = asc.selection("chain A resseq 1 and altloc a").iselection()
-  assert isel.size()==1
-  h0 = h.select(isel)
-  assert approx_equal(h0.atoms().extract_xyz()[0][0], -4.195)
-  # case 2
-  isel = asc.selection("chain A resseq 1 and altloc A").iselection()
-  assert isel.size()==1
-  h0 = h.select(isel)
-  assert approx_equal(h0.atoms().extract_xyz()[0][0], -4.890)
-  ###
-  # case 1
-  isel = asc.selection("chain A resseq 1 and altid a").iselection()
-  assert isel.size()==1
-  h0 = h.select(isel)
-  assert approx_equal(h0.atoms().extract_xyz()[0][0], -4.195)
-  # case 2
-  isel = asc.selection("chain A resseq 1 and altid A").iselection()
-  assert isel.size()==1
-  h0 = h.select(isel)
-  assert approx_equal(h0.atoms().extract_xyz()[0][0], -4.890)
+    h = iotbx.pdb.input(source_info=None, lines=lines).construct_hierarchy()
+    asc = h.atom_selection_cache()
+    # case 1
+    isel = asc.selection("chain A resseq 1 and altloc a").iselection()
+    assert isel.size() == 1
+    h0 = h.select(isel)
+    assert approx_equal(h0.atoms().extract_xyz()[0][0], -4.195)
+    # case 2
+    isel = asc.selection("chain A resseq 1 and altloc A").iselection()
+    assert isel.size() == 1
+    h0 = h.select(isel)
+    assert approx_equal(h0.atoms().extract_xyz()[0][0], -4.890)
+    ###
+    # case 1
+    isel = asc.selection("chain A resseq 1 and altid a").iselection()
+    assert isel.size() == 1
+    h0 = h.select(isel)
+    assert approx_equal(h0.atoms().extract_xyz()[0][0], -4.195)
+    # case 2
+    isel = asc.selection("chain A resseq 1 and altid A").iselection()
+    assert isel.size() == 1
+    h0 = h.select(isel)
+    assert approx_equal(h0.atoms().extract_xyz()[0][0], -4.890)
 
-if __name__=='__main__':
-  test_get_clean_selection_string()
-  test_selection_string_from_selection()
-  test_selection_string_from_selection2()
-  test_avoid_chain_selection()
-  test_avoid_chain_selection2()
-  test_avoid_hoh()
-  test_include_hoh()
-  test_selection_with_alternative_conformers()
-  test_insertions()
-  test_2()
-  test_3()
-  test_4()
-  test_5()
-  test_6()
-  test_7()
-  test_8()
-  test_11()
-  test_12()
-  test_13()
-  test_14()
-  print("OK")
+
+if __name__ == "__main__":
+    test_get_clean_selection_string()
+    test_selection_string_from_selection()
+    test_selection_string_from_selection2()
+    test_avoid_chain_selection()
+    test_avoid_chain_selection2()
+    test_avoid_hoh()
+    test_include_hoh()
+    test_selection_with_alternative_conformers()
+    test_insertions()
+    test_2()
+    test_3()
+    test_4()
+    test_5()
+    test_6()
+    test_7()
+    test_8()
+    test_11()
+    test_12()
+    test_13()
+    test_14()
+    print("OK")

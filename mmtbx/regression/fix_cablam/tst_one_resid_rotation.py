@@ -55,29 +55,34 @@ ATOM   2370  CG1 VAL A 323     168.912 113.310  76.710  1.00151.93           C
 ATOM   2371  CG2 VAL A 323     169.721 112.603  74.534  1.00121.07           C
 """
 
+
 def exercise_no_sidechains(prefix="tst_one_resid_rotation_no_sidechains"):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split('\n'), source_info=None)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  with open("%s_start.pdb" % prefix, 'w') as f:
-    f.write(model.model_as_pdb())
-  s = model.selection("name N or name CA or name C or name O")
-  model = model.select(s)
-  ci = cablam_idealization(model = model, params=master_phil.extract().cablam_idealization, log=sys.stdout)
-  pdb_txt = model.model_as_pdb()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    with open("%s_start.pdb" % prefix, "w") as f:
+        f.write(model.model_as_pdb())
+    s = model.selection("name N or name CA or name C or name O")
+    model = model.select(s)
+    ci = cablam_idealization(
+        model=model, params=master_phil.extract().cablam_idealization, log=sys.stdout
+    )
+    pdb_txt = model.model_as_pdb()
+
 
 def exercise_yes_sidechains(prefix="tst_one_resid_rotation_yes_sidechains"):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split('\n'), source_info=None)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  with open("%s_start.pdb" % prefix, 'w') as f:
-    f.write(model.model_as_pdb())
-  ci = cablam_idealization(model = model, params=master_phil.extract().cablam_idealization, log=sys.stdout)
-  pdb_txt = model.model_as_pdb()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    with open("%s_start.pdb" % prefix, "w") as f:
+        f.write(model.model_as_pdb())
+    ci = cablam_idealization(
+        model=model, params=master_phil.extract().cablam_idealization, log=sys.stdout
+    )
+    pdb_txt = model.model_as_pdb()
 
-if __name__ == '__main__':
-  if (not libtbx.env.has_module(name="probe")):
-    print("Skipping: probe not configured")
-  else:
-    exercise_no_sidechains()
-    exercise_yes_sidechains()
+
+if __name__ == "__main__":
+    if not libtbx.env.has_module(name="probe"):
+        print("Skipping: probe not configured")
+    else:
+        exercise_no_sidechains()
+        exercise_yes_sidechains()

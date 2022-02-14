@@ -1014,300 +1014,381 @@ d_min   rmsFc
 0.9998  1206.6
 """
 
+
 def get_expected_ssqr_list(
-      n_bins = None,
-      d_min = None, # minimum resolution of data to use
-      expected_ssqr_list_rms = None,
-      map_model_manager = None,
-      out = sys.stdout):
+    n_bins=None,
+    d_min=None,  # minimum resolution of data to use
+    expected_ssqr_list_rms=None,
+    map_model_manager=None,
+    out=sys.stdout,
+):
 
-  assert n_bins is not None
-  assert d_min is not None
-  assert expected_ssqr_list_rms is not None
+    assert n_bins is not None
+    assert d_min is not None
+    assert expected_ssqr_list_rms is not None
 
-  if str(expected_ssqr_list_rms) == 'Auto':
-    expected_ssqr_list_rms = 0.25 * d_min
+    if str(expected_ssqr_list_rms) == "Auto":
+        expected_ssqr_list_rms = 0.25 * d_min
 
-  # Estimate E**2 vs resolution based on rms error expected_ssqr_list_rms
-  # Assume constant total error, amplitudes fall off exp(-b_eff sthol2)
-  #  b_eff = (8 * 3.14159**2/3.) * expected_ssqr_list_rms**2
-  #  sigmaa = exp(-b_eff sthol2)
-  #  E**2 = 1/(1-sigmaa**2)
+    # Estimate E**2 vs resolution based on rms error expected_ssqr_list_rms
+    # Assume constant total error, amplitudes fall off exp(-b_eff sthol2)
+    #  b_eff = (8 * 3.14159**2/3.) * expected_ssqr_list_rms**2
+    #  sigmaa = exp(-b_eff sthol2)
+    #  E**2 = 1/(1-sigmaa**2)
 
-  map_coeffs = map_model_manager.get_any_map_manager(
-     ).map_as_fourier_coefficients(d_min = d_min)
-  from iotbx.map_model_manager import get_map_coeffs_as_fp_phi
-  f_array_info = get_map_coeffs_as_fp_phi(
-    map_coeffs, d_min= d_min, n_bins = n_bins)
-  f_array = f_array_info.f_array
-  # Approx fall-off with resolution based on rms in A ...as in sigmaa
-  b_eff = (8 * 3.14159**2/3.) * expected_ssqr_list_rms**2
+    map_coeffs = map_model_manager.get_any_map_manager().map_as_fourier_coefficients(
+        d_min=d_min
+    )
+    from iotbx.map_model_manager import get_map_coeffs_as_fp_phi
 
-  dsd = f_array.d_spacings().data()
-  ssqr_list = flex.double()
-  for i_bin in f_array.binner().range_used():
-    sel       = f_array.binner().selection(i_bin)
-    d         = dsd.select(sel)
-    d_avg     = flex.mean(d)
+    f_array_info = get_map_coeffs_as_fp_phi(map_coeffs, d_min=d_min, n_bins=n_bins)
+    f_array = f_array_info.f_array
+    # Approx fall-off with resolution based on rms in A ...as in sigmaa
+    b_eff = (8 * 3.14159 ** 2 / 3.0) * expected_ssqr_list_rms ** 2
 
-    sthol2 = 0.25/d_avg**2
-    sigmaa = math.exp(max(-20.,min(20., -b_eff * sthol2)))
-    ssqr = (1-sigmaa**2)/max(1.e-10,sigmaa**2)
-    ssqr_list.append(ssqr)
-  return ssqr_list
+    dsd = f_array.d_spacings().data()
+    ssqr_list = flex.double()
+    for i_bin in f_array.binner().range_used():
+        sel = f_array.binner().selection(i_bin)
+        d = dsd.select(sel)
+        d_avg = flex.mean(d)
+
+        sthol2 = 0.25 / d_avg ** 2
+        sigmaa = math.exp(max(-20.0, min(20.0, -b_eff * sthol2)))
+        ssqr = (1 - sigmaa ** 2) / max(1.0e-10, sigmaa ** 2)
+        ssqr_list.append(ssqr)
+    return ssqr_list
+
 
 class approx_amplitude_vs_resolution:
-  def __init__(self,
-      n_bins = 1000,
-      d_min = None, # minimum resolution of data to use
-      resolution = None,  # nominal resolution
-      map_model_manager = None,
-      model = None,
-      generate_mock_rms_fc_list = True,
-      k_sol = None,
-      b_sol = None,
-      find_k_sol_b_sol = True,
-      map_id_for_optimization = 'map_manager',
-      out = sys.stdout):
-    #  If d_min and map_model_manager supplied and generate_mock_rms_fc_list,
-    #  generate a  model-based map in that cell and calculate binned values
-    # If model, use it to generate fc instead of mock.  Set B-iso = 0
+    def __init__(
+        self,
+        n_bins=1000,
+        d_min=None,  # minimum resolution of data to use
+        resolution=None,  # nominal resolution
+        map_model_manager=None,
+        model=None,
+        generate_mock_rms_fc_list=True,
+        k_sol=None,
+        b_sol=None,
+        find_k_sol_b_sol=True,
+        map_id_for_optimization="map_manager",
+        out=sys.stdout,
+    ):
+        #  If d_min and map_model_manager supplied and generate_mock_rms_fc_list,
+        #  generate a  model-based map in that cell and calculate binned values
+        # If model, use it to generate fc instead of mock.  Set B-iso = 0
 
-    self.rms_fc_list = None
-    if generate_mock_rms_fc_list:
-      if model:
-        model = model.deep_copy()
-        model.set_b_iso(flex.double(model.get_b_iso().size(),0.)) # XXX
-        u_cart=model.get_xray_structure().scatterers().extract_u_cart(model.get_xray_structure().crystal_symmetry().unit_cell())
-        model.get_xray_structure().set_u_cart(u_cart)
-        model.set_xray_structure(model.get_xray_structure())
+        self.rms_fc_list = None
+        if generate_mock_rms_fc_list:
+            if model:
+                model = model.deep_copy()
+                model.set_b_iso(flex.double(model.get_b_iso().size(), 0.0))  # XXX
+                u_cart = (
+                    model.get_xray_structure()
+                    .scatterers()
+                    .extract_u_cart(
+                        model.get_xray_structure().crystal_symmetry().unit_cell()
+                    )
+                )
+                model.get_xray_structure().set_u_cart(u_cart)
+                model.set_xray_structure(model.get_xray_structure())
 
-      assert d_min and map_model_manager
-      if find_k_sol_b_sol and map_model_manager.get_map_manager_by_id(
-         map_id_for_optimization):
-        from cctbx.maptbx.refine_sharpening import get_effective_b
-        rms_fo_info = map_model_manager.get_rms_f_list(
-          map_id = map_id_for_optimization,
-          n_bins = n_bins,
-          resolution = resolution,
-          d_min = d_min)
-        n_bins_use = rms_fo_info.n_bins_use
+            assert d_min and map_model_manager
+            if find_k_sol_b_sol and map_model_manager.get_map_manager_by_id(
+                map_id_for_optimization
+            ):
+                from cctbx.maptbx.refine_sharpening import get_effective_b
 
-        # Figure out k_sol and b_sol so that rms_f vs resolution from model
-        #  is related by simple Wilson B to rms_f vs resolution from map
-        #  Use grid search to not take very long and get approx answer
-        if (k_sol is None) and (b_sol is None):
-          kb_list= [ [0,0], [0.1,20], [0.1,50],
-                      [0.2,20], [0.2,50],
-                      [0.3,20], [0.3,50],
-                   ]
+                rms_fo_info = map_model_manager.get_rms_f_list(
+                    map_id=map_id_for_optimization,
+                    n_bins=n_bins,
+                    resolution=resolution,
+                    d_min=d_min,
+                )
+                n_bins_use = rms_fo_info.n_bins_use
 
-          best_rms = None
-          best_kb = None
-          best_rms_fc_list = None
-          for k_sol,b_sol in kb_list:
-            self.generate_mock_rms_fc_list(n_bins, d_min , map_model_manager,
-              model = model,
-              k_sol = k_sol,
-              b_sol = b_sol,)
+                # Figure out k_sol and b_sol so that rms_f vs resolution from model
+                #  is related by simple Wilson B to rms_f vs resolution from map
+                #  Use grid search to not take very long and get approx answer
+                if (k_sol is None) and (b_sol is None):
+                    kb_list = [
+                        [0, 0],
+                        [0.1, 20],
+                        [0.1, 50],
+                        [0.2, 20],
+                        [0.2, 50],
+                        [0.3, 20],
+                        [0.3, 50],
+                    ]
 
-            ratio_list = rms_fo_info.rms_f_list/self.rms_fc_list
-            info = get_effective_b(values = ratio_list,
-              sthol2_values = rms_fo_info.sthol2_list)
-            scaled_fc_list = self.rms_fc_list * info.calc_values
-            rms = ((flex.pow2(rms_fo_info.rms_f_list[:n_bins_use] -
-              scaled_fc_list[:n_bins_use])).min_max_mean().mean)**0.5
-            if best_rms is None or rms < best_rms:
-              best_rms_fc_list = rms_fc_list
-              best_rms = rms
-              best_kb = [k_sol,b_sol]
-          k_sol, b_sol = best_kb
-          if len(kb_list) > 1:  # redo calculation
-            self.generate_mock_rms_fc_list(n_bins, d_min , map_model_manager,
-              model = model,
-              k_sol = k_sol,
-              b_sol = b_sol,)
-          print("Overall approximate B-value: "+
-             "%.2f A**2 \n(rms = %.1f, k_sol=%.2f  b_sol=%.2f)" %(
-             info.effective_b, rms,k_sol,b_sol,
-              ), file = out)
-          self.k_sol = k_sol
-          self.b_sol = b_sol
-          self.rms_fc_list = best_rms_fc_list
+                    best_rms = None
+                    best_kb = None
+                    best_rms_fc_list = None
+                    for k_sol, b_sol in kb_list:
+                        self.generate_mock_rms_fc_list(
+                            n_bins,
+                            d_min,
+                            map_model_manager,
+                            model=model,
+                            k_sol=k_sol,
+                            b_sol=b_sol,
+                        )
 
-      # Othewise just generate the list
-      self.generate_mock_rms_fc_list(n_bins, d_min , map_model_manager,
-        model = model,
-        k_sol = k_sol,
-        b_sol = b_sol,
-        n_bins_use = n_bins_use)
-      self.k_sol = k_sol
-      self.b_sol = b_sol
+                        ratio_list = rms_fo_info.rms_f_list / self.rms_fc_list
+                        info = get_effective_b(
+                            values=ratio_list, sthol2_values=rms_fo_info.sthol2_list
+                        )
+                        scaled_fc_list = self.rms_fc_list * info.calc_values
+                        rms = (
+                            (
+                                flex.pow2(
+                                    rms_fo_info.rms_f_list[:n_bins_use]
+                                    - scaled_fc_list[:n_bins_use]
+                                )
+                            )
+                            .min_max_mean()
+                            .mean
+                        ) ** 0.5
+                        if best_rms is None or rms < best_rms:
+                            best_rms_fc_list = rms_fc_list
+                            best_rms = rms
+                            best_kb = [k_sol, b_sol]
+                    k_sol, b_sol = best_kb
+                    if len(kb_list) > 1:  # redo calculation
+                        self.generate_mock_rms_fc_list(
+                            n_bins,
+                            d_min,
+                            map_model_manager,
+                            model=model,
+                            k_sol=k_sol,
+                            b_sol=b_sol,
+                        )
+                    print(
+                        "Overall approximate B-value: "
+                        + "%.2f A**2 \n(rms = %.1f, k_sol=%.2f  b_sol=%.2f)"
+                        % (
+                            info.effective_b,
+                            rms,
+                            k_sol,
+                            b_sol,
+                        ),
+                        file=out,
+                    )
+                    self.k_sol = k_sol
+                    self.b_sol = b_sol
+                    self.rms_fc_list = best_rms_fc_list
+
+            # Othewise just generate the list
+            self.generate_mock_rms_fc_list(
+                n_bins,
+                d_min,
+                map_model_manager,
+                model=model,
+                k_sol=k_sol,
+                b_sol=b_sol,
+                n_bins_use=n_bins_use,
+            )
+            self.k_sol = k_sol
+            self.b_sol = b_sol
+
+        else:
+            self.set_up_bins(n_bins=n_bins)
+
+    def generate_mock_rms_fc_list(
+        self,
+        n_bins=None,
+        d_min=None,
+        map_model_manager=None,
+        model=None,
+        k_sol=None,
+        b_sol=None,
+        n_bins_use=None,
+        out=null_out(),
+    ):
+        mmm = map_model_manager
+        if not model:
+            from cctbx.development.create_models_or_maps import generate_model
+
+            model = generate_model(n_residues=100, b_iso=0, log=null_out())
+        # shift the model and return it with new crystal_symmetry
+        from cctbx.maptbx.box import shift_and_box_model
+
+        model = shift_and_box_model(
+            model=model, crystal_symmetry=mmm.crystal_symmetry()
+        )
+        model.set_shift_cart((0, 0, 0))
+        model = mmm.remove_model_outside_map(
+            model=model, boundary=0, return_as_new_model=True
+        )
+        map_id_model_map = "map_for_mock_data"
+        out_sav = mmm.log
+        mmm.set_log(null_out())
+        mmm.generate_map(
+            model=model,
+            gridding=mmm.get_any_map_manager().map_data().all(),
+            d_min=d_min,
+            k_sol=k_sol,
+            b_sol=b_sol,
+            map_id=map_id_model_map,
+        )
+
+        self.rms_fc_list = mmm.get_rms_f_list(
+            map_id=map_id_model_map, d_min=d_min, n_bins=n_bins
+        ).rms_f_list
+        self.n_bins_use = n_bins_use  # just save it
+        mmm.remove_map_manager_by_id(map_id=map_id_model_map)
+        mmm.set_log(out_sav)
+
+    def set_up_bins(self, n_bins=None):
+
+        d_min_input_values = []
+        rms_fc_values = []
+
+        found = False
+        for line in rms_fc_list.splitlines():
+            if found:  # read the data
+                spl = line.strip().split()
+                if len(spl) != 2:
+                    continue
+                d_min_input_values.append(float(spl[0]))
+                rms_fc_values.append(float(spl[1]))
+
+            elif line.strip().startswith("d_min"):
+                found = True
+
+        d_min_input_values.reverse()
+        rms_fc_values.reverse()
+        self.d_min_input_values = flex.double(d_min_input_values)
+        self.rms_fc_values = flex.double(rms_fc_values)
+
+        # Make a little table of values we can just use
+        self.d_min = self.d_min_input_values.min_max_mean().min
+        self.d_max = self.d_min_input_values.min_max_mean().max
+        self.n_bins = n_bins
+        self.delta_d = (self.d_max - self.d_min) / (n_bins - 1)
+        self.d_min_values = flex.double()
+        self.values = flex.double()
+        for i in range(self.n_bins):
+            self.d_min_values.append(self.d_min + i * self.delta_d)
+            self.values.append(0)  # no value yet
+
+        for d_min_1, value_1, d_min_2, value_2 in zip(
+            d_min_input_values,
+            rms_fc_values,
+            d_min_input_values[1:],
+            rms_fc_values[1:],
+        ):
+
+            i_bin_real_1 = self.get_i_bin_real(d_min_1)  # goes with value_1
+            i_bin_real_2 = self.get_i_bin_real(d_min_2)  # goes with value_2
+            for i_bin in range(
+                self.get_i_bin_below(d_min_1), self.get_i_bin_above(d_min_2) + 1
+            ):
+                x = (i_bin - i_bin_real_1) / max(1.0e-10, i_bin_real_2 - i_bin_real_1)
+                if x < -1.0e-6:
+                    continue  # outside range
+                if x > 1 + 1.0e-6:
+                    continue  #
+                value = value_1 + (value_2 - value_1) * x
+                self.values[i_bin] = value
+        assert self.values.min_max_mean().min > 0
+
+    def maximum_d_value(self):
+        return self.d_min_values[-1]
+
+    def get_k_sol_b_sol(self):
+        if not hasattr(self, "k_sol"):
+            return None, None
+        else:
+            return self.k_sol, self.b_sol
+
+    def get_target_scale_factors(self, f_array=None):
+        if self.rms_fc_list:
+            return self.rms_fc_list
+
+        target_scale_factors = flex.double()
+        for i_bin in f_array.binner().range_used():
+            d_1, d_2 = f_array.binner().bin_d_range(i_bin)
+            if d_1 < 0:
+                d_1 = max(d_2 + 10, self.maximum_d_value())
+            assert d_1 >= d_2
+            shell_scale = self.get_expected_value_in_bin(d_2, d_1)
+            target_scale_factors.append(shell_scale)
+        target_scale_factors = target_scale_factors * (
+            1000.0 / max(1.0e-10, target_scale_factors.min_max_mean().max)
+        )
+        return target_scale_factors
+
+    def get_expected_value_in_bin(self, d_min=None, d_max=None):
+        # Return the expected value for a bin from d_min to d_max
+        #  d_max = -1 for infinity
+        if d_max < 0:
+            d_max = self.d_max
+        values = flex.double()
+        for i in range(101):
+            d_value = d_min + (i / 100) * (d_max - d_min)
+            values.append(self.get_value(d_value))
+        return values.min_max_mean().mean
+
+    def get_value(self, d_value):
+        value_below = self.values[self.get_i_bin_below(d_value)]
+        value_above = self.values[self.get_i_bin_above(d_value)]
+        d_value_below = self.get_d_value_below(d_value)
+        d_value_above = self.get_d_value_above(d_value)
+        x = max(
+            0.0,
+            min(
+                1.0,
+                (d_value - d_value_below) / max(1.0e-10, d_value_above - d_value_below),
+            ),
+        )
+        value = value_below + (value_above - value_below) * x
+        return value
+
+    def get_d_value_below(self, d_value):
+        i_bin = self.get_i_bin_below(d_value)
+        return self.d_min_values[i_bin]
+
+    def get_d_value_above(self, d_value):
+        i_bin = self.get_i_bin_above(d_value)
+        return self.d_min_values[i_bin]
+
+    def get_i_bin_real(self, d_value):
+        return max(
+            0,
+            min(
+                self.n_bins - 1,
+                (self.n_bins - 1) * (d_value - self.d_min) / (self.d_max - self.d_min),
+            ),
+        )
+
+    def get_i_bin_below(self, d_value):
+        return max(0, min(self.n_bins - 2, int(self.get_i_bin_real(d_value))))
+
+    def get_i_bin_above(self, d_value):
+        return max(1, min(self.n_bins - 1, 1 + self.get_i_bin_below(d_value)))
+
+    def exercise(self):
+        print("Exercising approx_amplitude_vs_resolution")
+
+        for d_value in range(20):
+            print("D-min %s  rms FC  %s " % (d_value, aavr.get_value(d_value)))
+
+        for d_min, d_max in ((1.1, 1.3), (2.7, 3.0), (3.5, 3.6), (10, 18)):
+            print(
+                "D_min %s D_max %s  RMS FC: %s "
+                % (d_min, d_max, self.get_expected_value_in_bin(d_min, d_max))
+            )
 
 
-    else:
-      self.set_up_bins(n_bins=n_bins)
-
-  def generate_mock_rms_fc_list(self, n_bins = None, d_min =None,
-       map_model_manager = None, model = None,
-       k_sol = None,
-       b_sol = None,
-       n_bins_use = None,
-       out = null_out()):
-    mmm = map_model_manager
-    if not model:
-      from cctbx.development.create_models_or_maps import generate_model
-      model = generate_model(n_residues = 100, b_iso = 0, log = null_out())
-    # shift the model and return it with new crystal_symmetry
-    from cctbx.maptbx.box import shift_and_box_model
-    model = shift_and_box_model(model = model,
-       crystal_symmetry = mmm.crystal_symmetry())
-    model.set_shift_cart((0,0,0))
-    model = mmm.remove_model_outside_map(model = model,
-       boundary = 0,  return_as_new_model=True)
-    map_id_model_map = 'map_for_mock_data'
-    out_sav = mmm.log
-    mmm.set_log(null_out())
-    mmm.generate_map(model=model,
-       gridding=mmm.get_any_map_manager().map_data().all(),
-       d_min=d_min,
-       k_sol = k_sol,
-       b_sol = b_sol,
-       map_id = map_id_model_map)
-
-    self.rms_fc_list = mmm.get_rms_f_list(map_id = map_id_model_map,
-       d_min = d_min,
-       n_bins = n_bins).rms_f_list
-    self.n_bins_use = n_bins_use  # just save it
-    mmm.remove_map_manager_by_id(map_id = map_id_model_map)
-    mmm.set_log(out_sav)
-
-  def set_up_bins(self, n_bins = None):
-
-    d_min_input_values = []
-    rms_fc_values = []
-
-    found=False
-    for line in rms_fc_list.splitlines():
-      if found:  # read the data
-        spl=line.strip().split()
-        if len(spl) != 2: continue
-        d_min_input_values.append(float(spl[0]))
-        rms_fc_values.append(float(spl[1]))
-
-      elif line.strip().startswith("d_min"):
-        found=True
-
-    d_min_input_values.reverse()
-    rms_fc_values.reverse()
-    self.d_min_input_values=flex.double(d_min_input_values)
-    self.rms_fc_values=flex.double(rms_fc_values)
-
-    # Make a little table of values we can just use
-    self.d_min = self.d_min_input_values.min_max_mean().min
-    self.d_max = self.d_min_input_values.min_max_mean().max
-    self.n_bins = n_bins
-    self.delta_d = (self.d_max - self.d_min)/(n_bins - 1)
-    self.d_min_values = flex.double()
-    self.values = flex.double()
-    for i in range(self.n_bins):
-      self.d_min_values.append(self.d_min + i*self.delta_d)
-      self.values.append(0)  # no value yet
-
-    for d_min_1,value_1,d_min_2,value_2 in zip(
-        d_min_input_values,rms_fc_values,
-        d_min_input_values[1:],rms_fc_values[1:],):
-
-      i_bin_real_1 = self.get_i_bin_real(d_min_1) # goes with value_1
-      i_bin_real_2 = self.get_i_bin_real(d_min_2) # goes with value_2
-      for i_bin in range(self.get_i_bin_below(d_min_1),
-        self.get_i_bin_above(d_min_2)+1):
-        x = (i_bin - i_bin_real_1)/max(1.e-10,i_bin_real_2 - i_bin_real_1)
-        if x < -1.e-6: continue  # outside range
-        if x > 1+1.e-6: continue  #
-        value = value_1 + (value_2 - value_1) * x
-        self.values[i_bin] = value
-    assert self.values.min_max_mean().min > 0
-
-  def maximum_d_value(self):
-    return self.d_min_values[-1]
-
-  def get_k_sol_b_sol(self):
-    if not hasattr(self,'k_sol'):
-      return None,None
-    else:
-      return self.k_sol,self.b_sol
-
-  def get_target_scale_factors(self, f_array = None):
-    if self.rms_fc_list:
-      return self.rms_fc_list
-
-    target_scale_factors = flex.double()
-    for i_bin in f_array.binner().range_used():
-      d_1, d_2 = f_array.binner().bin_d_range(i_bin)
-      if d_1 < 0: d_1 = max(d_2 + 10, self.maximum_d_value())
-      assert d_1 >= d_2
-      shell_scale = self.get_expected_value_in_bin(d_2,d_1)
-      target_scale_factors.append( shell_scale)
-    target_scale_factors = target_scale_factors * (
-        1000./max(1.e-10,target_scale_factors.min_max_mean().max))
-    return target_scale_factors
-
-  def get_expected_value_in_bin(self,d_min = None, d_max = None):
-    # Return the expected value for a bin from d_min to d_max
-    #  d_max = -1 for infinity
-    if d_max < 0:
-      d_max = self.d_max
-    values = flex.double()
-    for i in range(101):
-      d_value = d_min + (i/100)*(d_max - d_min)
-      values.append(self.get_value(d_value))
-    return values.min_max_mean().mean
-
-  def get_value(self,d_value):
-    value_below = self.values[self.get_i_bin_below(d_value)]
-    value_above = self.values[self.get_i_bin_above(d_value)]
-    d_value_below = self.get_d_value_below(d_value)
-    d_value_above = self.get_d_value_above(d_value)
-    x = max(0., min(1.,(
-      d_value - d_value_below)/max(1.e-10,d_value_above - d_value_below)))
-    value = value_below + (value_above - value_below) * x
-    return value
-
-  def get_d_value_below(self,d_value):
-    i_bin = self.get_i_bin_below(d_value)
-    return self.d_min_values[i_bin]
-
-  def get_d_value_above(self,d_value):
-    i_bin = self.get_i_bin_above(d_value)
-    return self.d_min_values[i_bin]
-
-  def get_i_bin_real(self,d_value):
-    return  max(0, min(self.n_bins-1,
-       (self.n_bins - 1) * (d_value-self.d_min)/(self.d_max - self.d_min)))
-
-  def get_i_bin_below(self,d_value):
-    return max(0,min(self.n_bins-2, int(self.get_i_bin_real(d_value))))
-
-  def get_i_bin_above(self,d_value):
-    return max(1,min(self.n_bins-1,1 + self.get_i_bin_below(d_value)))
-
-  def exercise(self):
-    print("Exercising approx_amplitude_vs_resolution")
-
-    for d_value in range(20):
-      print ("D-min %s  rms FC  %s " %(d_value,aavr.get_value(d_value)))
-
-    for d_min,d_max in ( (1.1,1.3), (2.7,3.0), (3.5,3.6), (10,18)):
-      print ("D_min %s D_max %s  RMS FC: %s " %(
-        d_min,d_max,self.get_expected_value_in_bin(d_min,d_max)))
 if __name__ == "__main__":
-  aavr = approx_amplitude_vs_resolution()
-  aavr.exercise()
+    aavr = approx_amplitude_vs_resolution()
+    aavr.exercise()
 
-  from iotbx.map_model_manager import map_model_manager
-  mmm = map_model_manager()
-  mmm.generate_map()
-  new_aavr = approx_amplitude_vs_resolution(d_min = 3, n_bins = 20,
-    map_model_manager = mmm)
-  print(list(new_aavr.get_target_scale_factors()))
+    from iotbx.map_model_manager import map_model_manager
+
+    mmm = map_model_manager()
+    mmm.generate_map()
+    new_aavr = approx_amplitude_vs_resolution(d_min=3, n_bins=20, map_model_manager=mmm)
+    print(list(new_aavr.get_target_scale_factors()))

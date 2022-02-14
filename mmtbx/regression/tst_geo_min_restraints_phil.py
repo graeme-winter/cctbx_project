@@ -1,12 +1,12 @@
-
 from __future__ import absolute_import, division, print_function
 from libtbx.utils import null_out
 from libtbx.test_utils import show_diff
 from six.moves import cStringIO as StringIO
 from six.moves import zip
 
+
 def exercise_metal_coordination():
-  pdb_in = """\
+    pdb_in = """\
 HETATM    6  PA  ANP A   1      -2.347   2.100 -17.803  1.00 10.27           P
 HETATM    7  PB  ANP A   1       0.438   2.937 -18.222  1.00 10.85           P
 HETATM    8  PG  ANP A   1       1.125   2.500 -21.112  1.00 10.56           P
@@ -46,8 +46,8 @@ HETATM    4  O   HOH A   6      -1.791   4.005 -20.881  1.00  7.86           O
 HETATM   39  O   HOH A   7      -1.518  -0.155 -21.151  1.00 13.31           O
 HETATM   40  O   HOH A   8      -0.256   6.271 -22.179  1.00 12.97           O
 HETATM   41  O   HOH A   9       0.913   6.863 -19.633  1.00 13.62           O  """
-  open("tst_geo_min_metal_coord.pdb", "w").write(pdb_in)
-  params1 = """\
+    open("tst_geo_min_metal_coord.pdb", "w").write(pdb_in)
+    params1 = """\
 geometry_restraints.edits {
   bond {
     action = *add
@@ -127,61 +127,71 @@ geometry_restraints.edits {
     sigma = 0.050
   }
 }"""
-  params2 = "refinement {\n%s\n}" % params1
-  open("tst_geo_min_metal_coord_1.phil", "w").write(params1)
-  open("tst_geo_min_metal_coord_2.phil", "w").write(params2)
-  # phenix.geometry_minimization
-  from mmtbx.command_line import geometry_minimization
-  args = [
-    "file_name=tst_geo_min_metal_coord.pdb",
-    "output_file_name_prefix=tst_geo_min_metal_coord_1",
-    "write_geo_file=True",
-    "tst_geo_min_metal_coord_1.phil",
-  ]
-  geometry_minimization.run(args=args, log=null_out())
-  geo_file_1 = open("tst_geo_min_metal_coord_1.geo").read()
-  args = [
-    "file_name=tst_geo_min_metal_coord.pdb",
-    "output_file_name_prefix=tst_geo_min_metal_coord_2",
-    "write_geo_file=True",
-    "tst_geo_min_metal_coord_2.phil",
-  ]
-  geometry_minimization.run(args=args, log=null_out())
-  geo_file_2 = open("tst_geo_min_metal_coord_2.geo").read()
-  show_diff(geo_file_1, geo_file_2)
-  # phenix.pdbtools
-  from mmtbx import pdbtools
-  args = [
-    "tst_geo_min_metal_coord.pdb",
-    "tst_geo_min_metal_coord_1.phil",
-    "model_statistics=True",
-  ]
-  out1 = StringIO()
-  pdbtools.run(args=args, out=out1, replace_stderr=False)
-  args = [
-    "tst_geo_min_metal_coord.pdb",
-    "tst_geo_min_metal_coord_2.phil",
-    "model_statistics=True",
-  ]
-  out2 = StringIO()
-  pdbtools.run(args=args, out=out2, replace_stderr=False)
-  assert ("""      atom 1: \"HETATM   37 MG   MG  A   2 .*.    Mg  \"""" in
-    out1.getvalue())
-  assert ("""      atom 1: \"HETATM   37 MG   MG  A   2 .*.    Mg  \"""" in
-    out2.getvalue())
-  for line1, line2 in zip(out1.getvalue().splitlines(),
-                          out2.getvalue().splitlines()):
-    line1 = line1.strip()
-    line2 = line2.strip()
-    if (line1.startswith("Date") or line1.startswith("PID") or
-        line1.startswith("Command line") or line1.startswith("Time")):
-      continue
-    else :
-      assert not show_diff(line1, line2)
+    params2 = "refinement {\n%s\n}" % params1
+    open("tst_geo_min_metal_coord_1.phil", "w").write(params1)
+    open("tst_geo_min_metal_coord_2.phil", "w").write(params2)
+    # phenix.geometry_minimization
+    from mmtbx.command_line import geometry_minimization
+
+    args = [
+        "file_name=tst_geo_min_metal_coord.pdb",
+        "output_file_name_prefix=tst_geo_min_metal_coord_1",
+        "write_geo_file=True",
+        "tst_geo_min_metal_coord_1.phil",
+    ]
+    geometry_minimization.run(args=args, log=null_out())
+    geo_file_1 = open("tst_geo_min_metal_coord_1.geo").read()
+    args = [
+        "file_name=tst_geo_min_metal_coord.pdb",
+        "output_file_name_prefix=tst_geo_min_metal_coord_2",
+        "write_geo_file=True",
+        "tst_geo_min_metal_coord_2.phil",
+    ]
+    geometry_minimization.run(args=args, log=null_out())
+    geo_file_2 = open("tst_geo_min_metal_coord_2.geo").read()
+    show_diff(geo_file_1, geo_file_2)
+    # phenix.pdbtools
+    from mmtbx import pdbtools
+
+    args = [
+        "tst_geo_min_metal_coord.pdb",
+        "tst_geo_min_metal_coord_1.phil",
+        "model_statistics=True",
+    ]
+    out1 = StringIO()
+    pdbtools.run(args=args, out=out1, replace_stderr=False)
+    args = [
+        "tst_geo_min_metal_coord.pdb",
+        "tst_geo_min_metal_coord_2.phil",
+        "model_statistics=True",
+    ]
+    out2 = StringIO()
+    pdbtools.run(args=args, out=out2, replace_stderr=False)
+    assert (
+        """      atom 1: \"HETATM   37 MG   MG  A   2 .*.    Mg  \""""
+        in out1.getvalue()
+    )
+    assert (
+        """      atom 1: \"HETATM   37 MG   MG  A   2 .*.    Mg  \""""
+        in out2.getvalue()
+    )
+    for line1, line2 in zip(out1.getvalue().splitlines(), out2.getvalue().splitlines()):
+        line1 = line1.strip()
+        line2 = line2.strip()
+        if (
+            line1.startswith("Date")
+            or line1.startswith("PID")
+            or line1.startswith("Command line")
+            or line1.startswith("Time")
+        ):
+            continue
+        else:
+            assert not show_diff(line1, line2)
+
 
 def exercise_secondary_structure():
-  # what is tested here? Not a single assert or check.
-  pdb_in_p1 = """\
+    # what is tested here? Not a single assert or check.
+    pdb_in_p1 = """\
 CRYST1   21.348   25.003   18.365  90.00  90.00  90.00 P 1
 ATOM      1  N   SER A   1      10.914   5.773  13.123  1.00  0.00
 ATOM      2  CA  SER A   1      12.373   5.809  13.123  1.00  0.00
@@ -241,26 +251,29 @@ ATOM     55  CB  ASN A  11       5.780  16.740   5.000  1.00  0.00
 TER
 END
   """
-  open("tst_geo_min_ss_phil.pdb", "w").write(pdb_in_p1)
-  from mmtbx.command_line import secondary_structure_restraints
-  out = StringIO()
-  args = [
-    "tst_geo_min_ss_phil.pdb",
-    # "use_ksdssp=False",
-  ]
-  secondary_structure_restraints.run(args, out=out, log=null_out())
-  # phenix.geometry_minimization
-  from mmtbx.command_line import geometry_minimization
-  open("tst_geo_min_ss_phil.phil", "w").write(out.getvalue())
-  args = [
-    "tst_geo_min_ss_phil.pdb",
-    "tst_geo_min_ss_phil.phil",
-    "secondary_structure.enabled=True",
-  ]
-  geometry_minimization.run(args=args, log=null_out())
-  # TODO phenix.pdbtools?
+    open("tst_geo_min_ss_phil.pdb", "w").write(pdb_in_p1)
+    from mmtbx.command_line import secondary_structure_restraints
 
-if (__name__ == "__main__"):
-  # exercise_metal_coordination()
-  exercise_secondary_structure()
-  print("OK")
+    out = StringIO()
+    args = [
+        "tst_geo_min_ss_phil.pdb",
+        # "use_ksdssp=False",
+    ]
+    secondary_structure_restraints.run(args, out=out, log=null_out())
+    # phenix.geometry_minimization
+    from mmtbx.command_line import geometry_minimization
+
+    open("tst_geo_min_ss_phil.phil", "w").write(out.getvalue())
+    args = [
+        "tst_geo_min_ss_phil.pdb",
+        "tst_geo_min_ss_phil.phil",
+        "secondary_structure.enabled=True",
+    ]
+    geometry_minimization.run(args=args, log=null_out())
+    # TODO phenix.pdbtools?
+
+
+if __name__ == "__main__":
+    # exercise_metal_coordination()
+    exercise_secondary_structure()
+    print("OK")

@@ -6,9 +6,9 @@ import unittest
 import os
 from six.moves import map
 
-__author__ = 'Youval'
+__author__ = "Youval"
 
-test_pdb_str = '''\
+test_pdb_str = """\
 CRYST1   80.020   97.150   49.850  90.00  90.00  90.00 C 2 2 21      8
 SCALE1      0.012497  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.010293  0.000000        0.00000
@@ -179,62 +179,63 @@ HETATM 1071  O   HOH A3004      29.928  13.873 -41.695  1.00 54.90           O
 HETATM 1072  O   HOH A3005      32.870  14.371 -39.386  1.00 43.83           O
 HETATM 1073  O   HOH A3006      33.981  15.263 -42.437  1.00 51.87           O
 HETATM 1074  O   HOH A3007      49.639  13.800 -48.775  1.00 78.70           O
-'''
+"""
 
 
 class MyTestCase(unittest.TestCase):
+    def setUp(self):
+        self.file_to_delete = []
+        # import files used in tests
+        self.file_name = "test_pdb_file.pdb"
+        open(self.file_name, "w").write(test_pdb_str)
+        self.file_to_delete.append(self.file_name)
 
-  def setUp(self):
-    self.file_to_delete = []
-    # import files used in tests
-    self.file_name = 'test_pdb_file.pdb'
-    open(self.file_name,'w').write(test_pdb_str)
-    self.file_to_delete.append(self.file_name)
+    def test_identifying_and_addition_of_hydrogen(self):
+        """test identifying and addition of hydrogen"""
+        has_reduce = libtbx.env.has_module(name="reduce")
+        if has_reduce:
+            pdb_inp = iotbx.pdb.input(file_name=self.file_name)
+            pdb_hierarchy = pdb_inp.construct_hierarchy()
+            elements = pdb_hierarchy.atoms().extract_element()
+            h_count_0 = elements.count(" H") + elements.count(" D")
+            new_pdb_str, _ = check_and_add_hydrogen(
+                file_name=self.file_name, verbose=False
+            )
 
-  def test_identifying_and_addition_of_hydrogen(self):
-    """ test identifying and addition of hydrogen """
-    has_reduce = libtbx.env.has_module(name="reduce")
-    if has_reduce:
-      pdb_inp = iotbx.pdb.input(file_name=self.file_name)
-      pdb_hierarchy = pdb_inp.construct_hierarchy()
-      elements = pdb_hierarchy.atoms().extract_element()
-      h_count_0 = elements.count(' H') + elements.count(' D')
-      new_pdb_str,_ = check_and_add_hydrogen(
-        file_name=self.file_name,
-        verbose=False)
+            pdb_inp = iotbx.pdb.input(source_info=None, lines=new_pdb_str)
+            pdb_hierarchy = pdb_inp.construct_hierarchy()
+            elements = pdb_hierarchy.atoms().extract_element()
+            h_count_1 = elements.count(" H") + elements.count(" D")
 
-      pdb_inp = iotbx.pdb.input(source_info=None, lines=new_pdb_str)
-      pdb_hierarchy = pdb_inp.construct_hierarchy()
-      elements = pdb_hierarchy.atoms().extract_element()
-      h_count_1 = elements.count(' H') + elements.count(' D')
+            self.assertEqual(h_count_0, 0)
+            self.assertTrue(h_count_1 > 0)
+        else:
+            # Skip test if reduce is not present
+            pass
 
-      self.assertEqual(h_count_0,0)
-      self.assertTrue(h_count_1>0)
-    else:
-      # Skip test if reduce is not present
-      pass
+    def tearDown(self):
+        """delete files created in during testing"""
+        if self.file_to_delete:
+            for fn in self.file_to_delete:
+                if os.path.isfile(fn):
+                    os.remove(fn)
 
-  def tearDown(self):
-    """ delete files created in during testing"""
-    if self.file_to_delete:
-      for fn in self.file_to_delete:
-        if os.path.isfile(fn): os.remove(fn)
 
 def run_selected_tests():
-  """  Run selected tests
+    """Run selected tests
 
-  1) List in "tests" the names of the particular test you want to run
-  2) Comment out unittest.main()
-  3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
-  """
-  tests = ['test_something']
-  suite = unittest.TestSuite(list(map(MyTestCase, tests)))
-  return suite
+    1) List in "tests" the names of the particular test you want to run
+    2) Comment out unittest.main()
+    3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
+    """
+    tests = ["test_something"]
+    suite = unittest.TestSuite(list(map(MyTestCase, tests)))
+    return suite
 
 
-if __name__ == '__main__':
-  # use for individual tests
-  # unittest.TextTestRunner().run(run_selected_tests())
+if __name__ == "__main__":
+    # use for individual tests
+    # unittest.TextTestRunner().run(run_selected_tests())
 
-  # Use to run all tests
-  unittest.main(verbosity=0)
+    # Use to run all tests
+    unittest.main(verbosity=0)

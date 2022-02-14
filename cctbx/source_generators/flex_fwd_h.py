@@ -65,8 +65,10 @@ namespace cctbx { namespace boost_python {
 
 """
 
-def run(target_dir):
-  write(this, target_dir, common_code, full_code)
 
-if (__name__ == "__main__"):
-  run(".")
+def run(target_dir):
+    write(this, target_dir, common_code, full_code)
+
+
+if __name__ == "__main__":
+    run(".")

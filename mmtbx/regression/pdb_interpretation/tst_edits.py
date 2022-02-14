@@ -9,6 +9,7 @@ from libtbx.test_utils import approx_equal
 import iotbx
 import sys
 from cctbx.geometry_restraints.linking_class import linking_class
+
 origin_ids = linking_class()
 
 
@@ -34,30 +35,32 @@ END
 
 """.splitlines()
 
+
 def make_initial_grm(mon_lib_srv, ener_lib, records, params_edits):
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv    = mon_lib_srv,
-    ener_lib       = ener_lib,
-    # params         = params,
-    raw_records    = records,
-    force_symmetry = True,
-    # log = sys.stdout,
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        # params         = params,
+        raw_records=records,
+        force_symmetry=True,
+        # log = sys.stdout,
     )
 
-  geometry = processed_pdb_file.geometry_restraints_manager(
-    show_energies      = True,
-    params_edits       = params_edits,
-    plain_pairs_radius = 5.0,
+    geometry = processed_pdb_file.geometry_restraints_manager(
+        show_energies=True,
+        params_edits=params_edits,
+        plain_pairs_radius=5.0,
     )
-  xrs = processed_pdb_file.xray_structure()
-  return geometry, xrs
+    xrs = processed_pdb_file.xray_structure()
+    return geometry, xrs
+
 
 def exercise_user_edits(mon_lib_srv, ener_lib):
-  """
-  exercise functions for managing geometry_restraints.edits scope for
-  user-supplied restraints.
-  """
-  params_edits_str = """
+    """
+    exercise functions for managing geometry_restraints.edits scope for
+    user-supplied restraints.
+    """
+    params_edits_str = """
     excessive_bond_distance_limit = 10
     bond {
       action = *add delete change
@@ -98,58 +101,66 @@ def exercise_user_edits(mon_lib_srv, ener_lib):
       sigma = 0.027
       target_angle_deg = 0
     }  """
-  master_phil = iotbx.phil.parse(
-      mmtbx.monomer_library.pdb_interpretation.geometry_restraints_edits_str)
-  user_phil = iotbx.phil.parse(params_edits_str)
-  working_phil = master_phil.fetch(sources=[user_phil])
-  # working_phil.show()
+    master_phil = iotbx.phil.parse(
+        mmtbx.monomer_library.pdb_interpretation.geometry_restraints_edits_str
+    )
+    user_phil = iotbx.phil.parse(params_edits_str)
+    working_phil = master_phil.fetch(sources=[user_phil])
+    # working_phil.show()
 
-  wp_extract = working_phil.extract()
-  # print wp_extract.bond[0].atom_selection_1
-  # STOP()
-  # edits = None
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1, wp_extract)
-  # initial
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 9
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0
-  assert geometry.angle_proxies.size() == 9
-  assert geometry.dihedral_proxies.size() == 7
-  assert geometry.planarity_proxies.size() == 1
-  assert geometry.parallelity_proxies.size() == 1
+    wp_extract = working_phil.extract()
+    # print wp_extract.bond[0].atom_selection_1
+    # STOP()
+    # edits = None
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1, wp_extract)
+    # initial
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 9
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0
+    assert geometry.angle_proxies.size() == 9
+    assert geometry.dihedral_proxies.size() == 7
+    assert geometry.planarity_proxies.size() == 1
+    assert geometry.parallelity_proxies.size() == 1
 
-  ubonds_simpe, ubonds_asu, uangles, udihedrals, uplanarity, uparallelity = \
-      geometry.get_user_supplied_restraints()
-  assert ubonds_simpe.size() == 1
-  assert ubonds_asu.size() == 0
-  assert uangles.size() == 1
-  assert udihedrals.size() == 1
-  assert uplanarity.size() == 1
-  assert uparallelity.size() == 1
-  # make sure geometry stays the same
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 9
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0
-  assert geometry.angle_proxies.size() == 9
-  assert geometry.dihedral_proxies.size() == 7
-  assert geometry.planarity_proxies.size() == 1
-  assert geometry.parallelity_proxies.size() == 1
-  # test functions one by one
-  simple, asu = geometry.get_bond_proxies_without_user_supplied()
-  assert simple.size() == 8
-  assert asu.size() == 0
-  angle = geometry.get_angle_proxies_without_user_supplied()
-  assert angle.size() == 8
-  dihed = geometry.get_dihedral_proxies_without_user_supplied()
-  assert dihed.size() == 6
-  plan = geometry.get_planarity_proxies_without_user_supplied()
-  assert plan.size() == 0
-  par = geometry.get_parallelity_proxies_without_user_supplied()
-  assert par.size() == 0
-  # make sure geometry stays the same
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 9
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0
-  assert geometry.angle_proxies.size() == 9
-  assert geometry.planarity_proxies.size() == 1
-  assert geometry.parallelity_proxies.size() == 1
+    (
+        ubonds_simpe,
+        ubonds_asu,
+        uangles,
+        udihedrals,
+        uplanarity,
+        uparallelity,
+    ) = geometry.get_user_supplied_restraints()
+    assert ubonds_simpe.size() == 1
+    assert ubonds_asu.size() == 0
+    assert uangles.size() == 1
+    assert udihedrals.size() == 1
+    assert uplanarity.size() == 1
+    assert uparallelity.size() == 1
+    # make sure geometry stays the same
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 9
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0
+    assert geometry.angle_proxies.size() == 9
+    assert geometry.dihedral_proxies.size() == 7
+    assert geometry.planarity_proxies.size() == 1
+    assert geometry.parallelity_proxies.size() == 1
+    # test functions one by one
+    simple, asu = geometry.get_bond_proxies_without_user_supplied()
+    assert simple.size() == 8
+    assert asu.size() == 0
+    angle = geometry.get_angle_proxies_without_user_supplied()
+    assert angle.size() == 8
+    dihed = geometry.get_dihedral_proxies_without_user_supplied()
+    assert dihed.size() == 6
+    plan = geometry.get_planarity_proxies_without_user_supplied()
+    assert plan.size() == 0
+    par = geometry.get_parallelity_proxies_without_user_supplied()
+    assert par.size() == 0
+    # make sure geometry stays the same
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 9
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0
+    assert geometry.angle_proxies.size() == 9
+    assert geometry.planarity_proxies.size() == 1
+    assert geometry.parallelity_proxies.size() == 1
+
 
 raw_records2 = """\
 CRYST1   17.963   15.643   19.171  90.00  90.00  90.00 P 1
@@ -174,8 +185,9 @@ HETATM   27  CB  ALA A   3       5.630   9.338   7.836  1.00 20.00      A    C
 HETATM   28  OXT ALA A   3       6.921   9.231   5.000  1.00 20.00      A    O1-
 """.splitlines()
 
+
 def exercise_angle_edits_change(mon_lib_srv, ener_lib):
-  edits = """\
+    edits = """\
 refinement.geometry_restraints.edits {
   n_2_selection = chain A and resname ALA and resid 2 and name N
   ca_2_selection = chain A and resname ALA and resid 2 and name CA
@@ -189,56 +201,67 @@ refinement.geometry_restraints.edits {
     sigma = 5
   }
 }"""
-  gm_phil = iotbx.phil.parse(
-      monomer_library.pdb_interpretation.grand_master_phil_str,
-      process_includes=True)
-  edits_phil = iotbx.phil.parse(edits)
-  working_phil = gm_phil.fetch(edits_phil)
-  params = working_phil.extract()
-  # print params.geometry_restraints.edits.parallelity[0].atom_selection_1
-  assert params.geometry_restraints.edits.angle[0].atom_selection_1.find("name N")
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-      mon_lib_srv=mon_lib_srv,
-      ener_lib=ener_lib,
-      file_name=None,
-      raw_records=raw_records2,
-      params = params.pdb_interpretation,
-      log=None)
-  grm = processed_pdb_file.geometry_restraints_manager(
-      params_edits=params.geometry_restraints.edits,
-      params_remove=params.geometry_restraints.remove)
-  assert grm.angle_proxies.size() == 20
-  user_defined = grm.angle_proxies.proxy_select(origin_id=origin_ids.get_origin_id('edits'))
-  assert user_defined.size() == 1
-  udp = user_defined[0]
-  assert list(udp.i_seqs) == [5,6,7]
-  assert approx_equal(udp.angle_ideal, 100, eps=1e-4)
-  assert approx_equal(udp.weight, 0.04, eps=1e-4)
+    gm_phil = iotbx.phil.parse(
+        monomer_library.pdb_interpretation.grand_master_phil_str, process_includes=True
+    )
+    edits_phil = iotbx.phil.parse(edits)
+    working_phil = gm_phil.fetch(edits_phil)
+    params = working_phil.extract()
+    # print params.geometry_restraints.edits.parallelity[0].atom_selection_1
+    assert params.geometry_restraints.edits.angle[0].atom_selection_1.find("name N")
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        file_name=None,
+        raw_records=raw_records2,
+        params=params.pdb_interpretation,
+        log=None,
+    )
+    grm = processed_pdb_file.geometry_restraints_manager(
+        params_edits=params.geometry_restraints.edits,
+        params_remove=params.geometry_restraints.remove,
+    )
+    assert grm.angle_proxies.size() == 20
+    user_defined = grm.angle_proxies.proxy_select(
+        origin_id=origin_ids.get_origin_id("edits")
+    )
+    assert user_defined.size() == 1
+    udp = user_defined[0]
+    assert list(udp.i_seqs) == [5, 6, 7]
+    assert approx_equal(udp.angle_ideal, 100, eps=1e-4)
+    assert approx_equal(udp.weight, 0.04, eps=1e-4)
 
-  from libtbx.test_utils import open_tmp_file
-  from libtbx import easy_run
-  pdb_file = open_tmp_file(suffix="aaa.pdb")
-  pdb_file.write('\n'.join(raw_records2))
-  pdb_file.close()
-  edits_file = open_tmp_file(suffix="tau.edits")
-  edits_file.write(edits)
-  edits_file.close()
-  cmd = "phenix.pdb_interpretation \"%s\" \"%s\" write_geo_files=True" %(
-    pdb_file.name, edits_file.name)
-  result = easy_run.fully_buffered(cmd).raise_if_errors()
-  geo_file = open(pdb_file.name+'.geo', "r")
-  # geo_file = open(pdb_file.name.replace(".pdb", '_minimized.geo'), "r")
-  geo_file_str = geo_file.read()
-  assert '''User supplied angle restraints: 1
+    from libtbx.test_utils import open_tmp_file
+    from libtbx import easy_run
+
+    pdb_file = open_tmp_file(suffix="aaa.pdb")
+    pdb_file.write("\n".join(raw_records2))
+    pdb_file.close()
+    edits_file = open_tmp_file(suffix="tau.edits")
+    edits_file.write(edits)
+    edits_file.close()
+    cmd = 'phenix.pdb_interpretation "%s" "%s" write_geo_files=True' % (
+        pdb_file.name,
+        edits_file.name,
+    )
+    result = easy_run.fully_buffered(cmd).raise_if_errors()
+    geo_file = open(pdb_file.name + ".geo", "r")
+    # geo_file = open(pdb_file.name.replace(".pdb", '_minimized.geo'), "r")
+    geo_file_str = geo_file.read()
+    assert (
+        """User supplied angle restraints: 1
 Sorted by residual:
 angle pdb=" N   ALA A   2 " segid="A   "
       pdb=" CA  ALA A   2 " segid="A   "
       pdb=" C   ALA A   2 " segid="A   "
     ideal   model   delta    sigma   weight residual
-   100.00''' in geo_file_str
+   100.00"""
+        in geo_file_str
+    )
+
 
 def exercise_dihedral_edits_change():
-  edits = """\
+    edits = """\
 geometry_restraints.edits {
   dihedral {
     action = *change
@@ -252,61 +275,62 @@ geometry_restraints.edits {
     periodicity = 2
   }
 }"""
-  def_params = mmtbx.model.manager.get_default_pdb_interpretation_scope()
-  edits_phil = iotbx.phil.parse(edits)
-  working_phil = def_params.fetch(edits_phil)
-  params = working_phil.extract()
-  inp = iotbx.pdb.input(lines=raw_records2, source_info=None)
-  model = mmtbx.model.manager(model_input = inp)
-  model.process(make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  assert grm.dihedral_proxies.size() == 9
-  dih1 = grm.dihedral_proxies.proxy_select(
-      n_seq=model.get_number_of_atoms(),
-      iselection=flex.size_t([1,2,5,6]))
-  assert dih1.size() == 1
-  dp1 = dih1[0]
-  assert approx_equal(dp1.angle_ideal, 180)
-  assert dp1.alt_angle_ideals == None
-  assert dp1.origin_id == 0
-  assert dp1.periodicity == 0
-  assert dp1.slack == 0
-  assert not dp1.top_out
-  assert approx_equal(dp1.weight, 0.04)
+    def_params = mmtbx.model.manager.get_default_pdb_interpretation_scope()
+    edits_phil = iotbx.phil.parse(edits)
+    working_phil = def_params.fetch(edits_phil)
+    params = working_phil.extract()
+    inp = iotbx.pdb.input(lines=raw_records2, source_info=None)
+    model = mmtbx.model.manager(model_input=inp)
+    model.process(make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    assert grm.dihedral_proxies.size() == 9
+    dih1 = grm.dihedral_proxies.proxy_select(
+        n_seq=model.get_number_of_atoms(), iselection=flex.size_t([1, 2, 5, 6])
+    )
+    assert dih1.size() == 1
+    dp1 = dih1[0]
+    assert approx_equal(dp1.angle_ideal, 180)
+    assert dp1.alt_angle_ideals == None
+    assert dp1.origin_id == 0
+    assert dp1.periodicity == 0
+    assert dp1.slack == 0
+    assert not dp1.top_out
+    assert approx_equal(dp1.weight, 0.04)
 
-  # Now with modifications
-  inp = iotbx.pdb.input(lines=raw_records2, source_info=None)
-  model2 = mmtbx.model.manager(model_input = inp)
-  model2.process(pdb_interpretation_params=params,
-    make_restraints=True)
-  grm2 = model2.get_restraints_manager().geometry
-  assert grm2.dihedral_proxies.size() == 9
-  dih2 = grm2.dihedral_proxies.proxy_select(
-      n_seq=model2.get_number_of_atoms(),
-      iselection=flex.size_t([1,2,5,6]))
-  assert dih2.size() == 1
-  dp2 = dih2[0]
-  assert approx_equal(dp2.angle_ideal, 100)
-  assert dp2.alt_angle_ideals == (90,110)
-  assert dp2.origin_id == origin_ids.get_origin_id('edits')
-  assert dp2.periodicity == 2
-  assert dp2.slack == 0
-  assert not dp2.top_out
-  assert approx_equal(dp2.weight, 0.25)
+    # Now with modifications
+    inp = iotbx.pdb.input(lines=raw_records2, source_info=None)
+    model2 = mmtbx.model.manager(model_input=inp)
+    model2.process(pdb_interpretation_params=params, make_restraints=True)
+    grm2 = model2.get_restraints_manager().geometry
+    assert grm2.dihedral_proxies.size() == 9
+    dih2 = grm2.dihedral_proxies.proxy_select(
+        n_seq=model2.get_number_of_atoms(), iselection=flex.size_t([1, 2, 5, 6])
+    )
+    assert dih2.size() == 1
+    dp2 = dih2[0]
+    assert approx_equal(dp2.angle_ideal, 100)
+    assert dp2.alt_angle_ideals == (90, 110)
+    assert dp2.origin_id == origin_ids.get_origin_id("edits")
+    assert dp2.periodicity == 2
+    assert dp2.slack == 0
+    assert not dp2.top_out
+    assert approx_equal(dp2.weight, 0.25)
+
 
 def exercise():
-  mon_lib_srv = None
-  ener_lib = None
-  try:
-    mon_lib_srv = monomer_library.server.server()
-    ener_lib = monomer_library.server.ener_lib()
-  except: # intentional
-    print("Can not initialize monomer_library, skipping test.")
-  if mon_lib_srv is not None and ener_lib is not None:
-    exercise_user_edits(mon_lib_srv, ener_lib)
-    exercise_angle_edits_change(mon_lib_srv, ener_lib)
-    exercise_dihedral_edits_change()
+    mon_lib_srv = None
+    ener_lib = None
+    try:
+        mon_lib_srv = monomer_library.server.server()
+        ener_lib = monomer_library.server.ener_lib()
+    except:  # intentional
+        print("Can not initialize monomer_library, skipping test.")
+    if mon_lib_srv is not None and ener_lib is not None:
+        exercise_user_edits(mon_lib_srv, ener_lib)
+        exercise_angle_edits_change(mon_lib_srv, ener_lib)
+        exercise_dihedral_edits_change()
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

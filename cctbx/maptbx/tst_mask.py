@@ -262,44 +262,53 @@ ATOM     80  CB  ALA E  16      12.157   9.577  14.337  1.00 50.00           C
 TER
 """
 
-def exercise():
-  """ Compare simple mask (maptbx/mask.h) with classic mask. Does not account
-      for site multiplicity due to symmetry. Also, this is an alternative
-      exercise for asu mask.
-  """
-  for i_pdb, pdb_str in enumerate([pdb_str_1, pdb_str_2, pdb_str_3]):
-    for solvent_radius in [0, 1.0]:
-      print("file %d solvent_raius: %3.1f"%(i_pdb, solvent_radius))
-      xrs = iotbx.pdb.input(source_info = None,
-        lines = pdb_str).xray_structure_simple()
-      mp = mmtbx.masks.mask_master_params.extract()
-      mp.solvent_radius=solvent_radius
-      mp.shrink_truncation_radius=0.0
-      mp.grid_step_factor=4
-      mmtbx_masks_asu_mask_obj = mmtbx.masks.asu_mask(
-        xray_structure = xrs.expand_to_p1(sites_mod_positive=True), # Must be P1
-        d_min          = 1,
-        mask_params    = mp)
-      mask_data = mmtbx_masks_asu_mask_obj.mask_data_whole_uc()
-      c1o,c0o,s,csf = mask_data.count(1), mask_data.count(0), mask_data.size(),\
-        mmtbx_masks_asu_mask_obj.asu_mask.contact_surface_fraction
-      assert c1o+c0o==s
-      f1o, f0o = c1o*100./s, c0o*100./s
-      print("  old", f1o, f0o, csf)
-      mask_data = maptbx.mask(
-        xray_structure = xrs, # Expanded to P1 internally
-        n_real         = mask_data.focus(),
-        solvent_radius = solvent_radius)
-      c1n, c0n, s = mask_data.count(1), mask_data.count(0), mask_data.size()
-      assert c1n+c0n==s
-      f1n, f0n = c1n*100./s, c0n*100./s
-      print("  new:", f1n, f0n)
-      assert approx_equal(f1o, f1n, 1)
-      assert approx_equal(f0o, f0n, 1)
-      assert approx_equal(f1o, csf*100, 1)
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("Total time: %-8.4f"%(time.time()-t0))
-  print("OK")
+def exercise():
+    """Compare simple mask (maptbx/mask.h) with classic mask. Does not account
+    for site multiplicity due to symmetry. Also, this is an alternative
+    exercise for asu mask.
+    """
+    for i_pdb, pdb_str in enumerate([pdb_str_1, pdb_str_2, pdb_str_3]):
+        for solvent_radius in [0, 1.0]:
+            print("file %d solvent_raius: %3.1f" % (i_pdb, solvent_radius))
+            xrs = iotbx.pdb.input(
+                source_info=None, lines=pdb_str
+            ).xray_structure_simple()
+            mp = mmtbx.masks.mask_master_params.extract()
+            mp.solvent_radius = solvent_radius
+            mp.shrink_truncation_radius = 0.0
+            mp.grid_step_factor = 4
+            mmtbx_masks_asu_mask_obj = mmtbx.masks.asu_mask(
+                xray_structure=xrs.expand_to_p1(sites_mod_positive=True),  # Must be P1
+                d_min=1,
+                mask_params=mp,
+            )
+            mask_data = mmtbx_masks_asu_mask_obj.mask_data_whole_uc()
+            c1o, c0o, s, csf = (
+                mask_data.count(1),
+                mask_data.count(0),
+                mask_data.size(),
+                mmtbx_masks_asu_mask_obj.asu_mask.contact_surface_fraction,
+            )
+            assert c1o + c0o == s
+            f1o, f0o = c1o * 100.0 / s, c0o * 100.0 / s
+            print("  old", f1o, f0o, csf)
+            mask_data = maptbx.mask(
+                xray_structure=xrs,  # Expanded to P1 internally
+                n_real=mask_data.focus(),
+                solvent_radius=solvent_radius,
+            )
+            c1n, c0n, s = mask_data.count(1), mask_data.count(0), mask_data.size()
+            assert c1n + c0n == s
+            f1n, f0n = c1n * 100.0 / s, c0n * 100.0 / s
+            print("  new:", f1n, f0n)
+            assert approx_equal(f1o, f1n, 1)
+            assert approx_equal(f0o, f0n, 1)
+            assert approx_equal(f1o, csf * 100, 1)
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Total time: %-8.4f" % (time.time() - t0))
+    print("OK")

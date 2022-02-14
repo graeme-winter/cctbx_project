@@ -3,8 +3,10 @@ import sys, os
 
 buf_size = 1000000
 
+
 def perl_header(selfx, command):
-  print("""\
+    print(
+        """\
 #! /usr/bin/env perl
 #
 # This is a self-extracting tar.gz file.
@@ -50,44 +52,51 @@ binmode TAR_PIPE;
 while (read(SELF, $buf, %d) != 0) {
   syswrite(TAR_PIPE, $buf, length($buf));
 }
-close(TAR_PIPE);""" % buf_size, file=selfx)
-  if (command != None):
-    print('$cmd = join(" ", ("%s", @ARGV));' % command, file=selfx)
-    print('print "Running command: $cmd\\n";', file=selfx)
-    print('system("$cmd");', file=selfx)
-  print("__END__", file=selfx)
-  selfx.write("@")
+close(TAR_PIPE);"""
+        % buf_size,
+        file=selfx,
+    )
+    if command != None:
+        print('$cmd = join(" ", ("%s", @ARGV));' % command, file=selfx)
+        print('print "Running command: $cmd\\n";', file=selfx)
+        print('system("$cmd");', file=selfx)
+    print("__END__", file=selfx)
+    selfx.write("@")
+
 
 def create(tar_file_name, command):
-  assert tar_file_name.endswith(".tar.gz") or tar_file_name.endswith(".tgz")
-  assert command == None or isinstance(command, str)
-  assert command.startswith("./")
-  tar_file = open(tar_file_name, "rb")
-  selfx_file_name = os.path.split(tar_file_name)[-1]
-  if (selfx_file_name.endswith(".tar.gz")):
-    selfx_file_name = selfx_file_name[:-7]
-  else:
-    selfx_file_name = selfx_file_name[:-4]
-  selfx_file_name += ".selfx"
-  selfx = open(selfx_file_name, "wb")
-  perl_header(selfx, command)
-  while True:
-    buf = tar_file.read(buf_size)
-    if (buf == ""): break
-    selfx.write(buf)
-  tar_file.close()
-  selfx.close()
+    assert tar_file_name.endswith(".tar.gz") or tar_file_name.endswith(".tgz")
+    assert command == None or isinstance(command, str)
+    assert command.startswith("./")
+    tar_file = open(tar_file_name, "rb")
+    selfx_file_name = os.path.split(tar_file_name)[-1]
+    if selfx_file_name.endswith(".tar.gz"):
+        selfx_file_name = selfx_file_name[:-7]
+    else:
+        selfx_file_name = selfx_file_name[:-4]
+    selfx_file_name += ".selfx"
+    selfx = open(selfx_file_name, "wb")
+    perl_header(selfx, command)
+    while True:
+        buf = tar_file.read(buf_size)
+        if buf == "":
+            break
+        selfx.write(buf)
+    tar_file.close()
+    selfx.close()
+
 
 def run(args):
-  "usage: libtbx.create_selfx tar_file_name [command]"
-  if (not len(args) in (1,2) or "-h" in args or "--help" in args):
-    print(run.__doc__)
-    return
-  tar_file_name = args[0]
-  command = None
-  if (len(args) == 2):
-    command = args[1]
-  create(tar_file_name, command)
+    "usage: libtbx.create_selfx tar_file_name [command]"
+    if not len(args) in (1, 2) or "-h" in args or "--help" in args:
+        print(run.__doc__)
+        return
+    tar_file_name = args[0]
+    command = None
+    if len(args) == 2:
+        command = args[1]
+    create(tar_file_name, command)
 
-if (__name__ == "__main__"):
-  run(sys.argv[1:])
+
+if __name__ == "__main__":
+    run(sys.argv[1:])

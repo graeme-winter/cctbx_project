@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from libtbx import easy_run
 from mmtbx.command_line import cif_as_mtz
@@ -6,8 +5,9 @@ from iotbx import mtz
 from iotbx import file_reader
 from libtbx.test_utils import approx_equal
 
+
 def exercise1():
-  cif_in = """\
+    cif_in = """\
 data_r2etdsf
 #
 _cell.entry_id      2etd
@@ -186,21 +186,23 @@ _refln.intensity_sigma
 1 2 1    0   -2  -16  o     307.6     69.9
 1 2 1    0    2  -16  o     265.4     71.5
 """
-  open("r2etd-sf.cif", "w").write(cif_in)
-  args = ["phenix.cif_as_mtz", "r2etd-sf.cif", "--merge"]
-  rc = easy_run.fully_buffered(" ".join(args)).raise_if_errors().return_code
-  assert (rc == 0)
-  hkl_in = file_reader.any_file("r2etd-sf.mtz")
-  l_w = []
-  for array in hkl_in.file_server.miller_arrays :
-    l_w.append((array.info().label_string(), "%.4f" % array.info().wavelength))
-  assert (sorted(l_w) == sorted([
-    ('FOBS,SIGFOBS', '1.0163'),
-    ('FC,PHIFC', '1.0163'),
-    ('R-free-flags', '1.0163'),
-    ('I(+),SIGI(+),I(-),SIGI(-)', '1.0163'),
-    ('I2(+),SIGI2(+),I2(-),SIGI2(-)', '0.9797')
-  ]) )
+    open("r2etd-sf.cif", "w").write(cif_in)
+    args = ["phenix.cif_as_mtz", "r2etd-sf.cif", "--merge"]
+    rc = easy_run.fully_buffered(" ".join(args)).raise_if_errors().return_code
+    assert rc == 0
+    hkl_in = file_reader.any_file("r2etd-sf.mtz")
+    l_w = []
+    for array in hkl_in.file_server.miller_arrays:
+        l_w.append((array.info().label_string(), "%.4f" % array.info().wavelength))
+    assert sorted(l_w) == sorted(
+        [
+            ("FOBS,SIGFOBS", "1.0163"),
+            ("FC,PHIFC", "1.0163"),
+            ("R-free-flags", "1.0163"),
+            ("I(+),SIGI(+),I(-),SIGI(-)", "1.0163"),
+            ("I2(+),SIGI2(+),I2(-),SIGI2(-)", "0.9797"),
+        ]
+    )
 
 
 r1vjzsf_cif_snip = """
@@ -508,70 +510,182 @@ _refln.pdbx_HL_D_iso
 #END OF REFLECTIONS
 """
 
+
 def exercise2():
-  """
-  Check individual unit cell dimensions and wavelengths of cif datasets are retained when
-  reading an mtz file originating from a cif file
-  """
-  open("r1vjzsf_snip.cif", "w").write(r1vjzsf_cif_snip)
-  args = ["phenix.cif_as_mtz", "r1vjzsf_snip.cif", "--merge"]
-  rc = easy_run.fully_buffered(" ".join(args)).raise_if_errors().return_code
-  assert (rc == 0)
-  hkl_in = file_reader.any_file("r1vjzsf_snip.mtz")
-  l_w = []
-  for array in hkl_in.file_server.miller_arrays:
-    uc = array.unit_cell().parameters()
-    l_w.append((array.info().label_string(),
-                "%.5f"%array.info().wavelength, "%.4f"%uc[0], "%.4f"%uc[1], "%.4f"%uc[2], "%.3f"%uc[3], "%.3f"%uc[4], "%.3f"%uc[5]))
-  assert (sorted(l_w) == sorted([
-    ('R-free-flags',                  '0.98050', '64.6840', '64.6840', '202.1890', '90.000', '90.000', '90.000'),
-    ('FOBS,SIGFOBS',                  '0.98050', '64.6840', '64.6840', '202.1890', '90.000', '90.000', '90.000'),
-    ('FC,PHIFC',                      '0.98050', '64.6840', '64.6840', '202.1890', '90.000', '90.000', '90.000'),
-    ('I(+),SIGI(+),I(-),SIGI(-)',     '0.98050', '64.6840', '64.6840', '202.1890', '90.000', '90.000', '90.000'),
-    ('I2(+),SIGI2(+),I2(-),SIGI2(-)', '0.96406', '64.2990', '64.2990', '201.9300', '90.000', '90.000', '90.000'),
-    ('I3(+),SIGI3(+),I3(-),SIGI3(-)', '0.97929', '64.6350', '64.6350', '202.2700', '90.000', '90.000', '90.000'),
-    ('R-free-flags2',                 '0.96406', '64.2990', '64.2990', '201.9300', '90.000', '90.000', '90.000'),
-    ('HLA,HLB,HLC,HLD',               '0.96406', '64.2990', '64.2990', '201.9300', '90.000', '90.000', '90.000')
-  ]) )
+    """
+    Check individual unit cell dimensions and wavelengths of cif datasets are retained when
+    reading an mtz file originating from a cif file
+    """
+    open("r1vjzsf_snip.cif", "w").write(r1vjzsf_cif_snip)
+    args = ["phenix.cif_as_mtz", "r1vjzsf_snip.cif", "--merge"]
+    rc = easy_run.fully_buffered(" ".join(args)).raise_if_errors().return_code
+    assert rc == 0
+    hkl_in = file_reader.any_file("r1vjzsf_snip.mtz")
+    l_w = []
+    for array in hkl_in.file_server.miller_arrays:
+        uc = array.unit_cell().parameters()
+        l_w.append(
+            (
+                array.info().label_string(),
+                "%.5f" % array.info().wavelength,
+                "%.4f" % uc[0],
+                "%.4f" % uc[1],
+                "%.4f" % uc[2],
+                "%.3f" % uc[3],
+                "%.3f" % uc[4],
+                "%.3f" % uc[5],
+            )
+        )
+    assert sorted(l_w) == sorted(
+        [
+            (
+                "R-free-flags",
+                "0.98050",
+                "64.6840",
+                "64.6840",
+                "202.1890",
+                "90.000",
+                "90.000",
+                "90.000",
+            ),
+            (
+                "FOBS,SIGFOBS",
+                "0.98050",
+                "64.6840",
+                "64.6840",
+                "202.1890",
+                "90.000",
+                "90.000",
+                "90.000",
+            ),
+            (
+                "FC,PHIFC",
+                "0.98050",
+                "64.6840",
+                "64.6840",
+                "202.1890",
+                "90.000",
+                "90.000",
+                "90.000",
+            ),
+            (
+                "I(+),SIGI(+),I(-),SIGI(-)",
+                "0.98050",
+                "64.6840",
+                "64.6840",
+                "202.1890",
+                "90.000",
+                "90.000",
+                "90.000",
+            ),
+            (
+                "I2(+),SIGI2(+),I2(-),SIGI2(-)",
+                "0.96406",
+                "64.2990",
+                "64.2990",
+                "201.9300",
+                "90.000",
+                "90.000",
+                "90.000",
+            ),
+            (
+                "I3(+),SIGI3(+),I3(-),SIGI3(-)",
+                "0.97929",
+                "64.6350",
+                "64.6350",
+                "202.2700",
+                "90.000",
+                "90.000",
+                "90.000",
+            ),
+            (
+                "R-free-flags2",
+                "0.96406",
+                "64.2990",
+                "64.2990",
+                "201.9300",
+                "90.000",
+                "90.000",
+                "90.000",
+            ),
+            (
+                "HLA,HLB,HLC,HLD",
+                "0.96406",
+                "64.2990",
+                "64.2990",
+                "201.9300",
+                "90.000",
+                "90.000",
+                "90.000",
+            ),
+        ]
+    )
 
 
 def exercise3():
-  """
-  Check individual unit cell dimensions and wavelengths of cif datasets are retained in
-  mtz crystals within the same mtz file
-  """
-  open("r1vjzsf_snip.cif", "w").write(r1vjzsf_cif_snip)
-  args = ["phenix.cif_as_mtz", "r1vjzsf_snip.cif", "--merge"]
-  rc = easy_run.fully_buffered(" ".join(args)).raise_if_errors().return_code
-  assert (rc == 0)
-  m = mtz.object(file_name="r1vjzsf_snip.mtz")
-  assert (len(m.crystals()) == 5)
-  eps = 1.e-5
-  assert approx_equal(m.crystals()[1].datasets()[0].wavelength(), 0.98049998, eps)
-  assert approx_equal(m.crystals()[2].datasets()[0].wavelength(), 0.96406001, eps)
-  assert approx_equal(m.crystals()[3].datasets()[0].wavelength(), 0.97929000, eps)
-  assert approx_equal(m.crystals()[4].datasets()[0].wavelength(), 0.96406000, eps)
+    """
+    Check individual unit cell dimensions and wavelengths of cif datasets are retained in
+    mtz crystals within the same mtz file
+    """
+    open("r1vjzsf_snip.cif", "w").write(r1vjzsf_cif_snip)
+    args = ["phenix.cif_as_mtz", "r1vjzsf_snip.cif", "--merge"]
+    rc = easy_run.fully_buffered(" ".join(args)).raise_if_errors().return_code
+    assert rc == 0
+    m = mtz.object(file_name="r1vjzsf_snip.mtz")
+    assert len(m.crystals()) == 5
+    eps = 1.0e-5
+    assert approx_equal(m.crystals()[1].datasets()[0].wavelength(), 0.98049998, eps)
+    assert approx_equal(m.crystals()[2].datasets()[0].wavelength(), 0.96406001, eps)
+    assert approx_equal(m.crystals()[3].datasets()[0].wavelength(), 0.97929000, eps)
+    assert approx_equal(m.crystals()[4].datasets()[0].wavelength(), 0.96406000, eps)
 
-  uc = m.crystals()[1].unit_cell_parameters()
-  fuc = "%.4f"%uc[0], "%.4f"%uc[1], "%.4f"%uc[2], "%.3f"%uc[3], "%.3f"%uc[4], "%.3f"%uc[5]
-  assert (('64.6840', '64.6840', '202.1890', '90.000', '90.000', '90.000') == fuc)
+    uc = m.crystals()[1].unit_cell_parameters()
+    fuc = (
+        "%.4f" % uc[0],
+        "%.4f" % uc[1],
+        "%.4f" % uc[2],
+        "%.3f" % uc[3],
+        "%.3f" % uc[4],
+        "%.3f" % uc[5],
+    )
+    assert ("64.6840", "64.6840", "202.1890", "90.000", "90.000", "90.000") == fuc
 
-  uc = m.crystals()[2].unit_cell_parameters()
-  fuc = "%.4f"%uc[0], "%.4f"%uc[1], "%.4f"%uc[2], "%.3f"%uc[3], "%.3f"%uc[4], "%.3f"%uc[5]
-  assert (('64.2990', '64.2990', '201.9300', '90.000', '90.000', '90.000') == fuc)
+    uc = m.crystals()[2].unit_cell_parameters()
+    fuc = (
+        "%.4f" % uc[0],
+        "%.4f" % uc[1],
+        "%.4f" % uc[2],
+        "%.3f" % uc[3],
+        "%.3f" % uc[4],
+        "%.3f" % uc[5],
+    )
+    assert ("64.2990", "64.2990", "201.9300", "90.000", "90.000", "90.000") == fuc
 
-  uc = m.crystals()[3].unit_cell_parameters()
-  fuc = "%.4f"%uc[0], "%.4f"%uc[1], "%.4f"%uc[2], "%.3f"%uc[3], "%.3f"%uc[4], "%.3f"%uc[5]
-  assert (('64.6350', '64.6350', '202.2700', '90.000', '90.000', '90.000') == fuc)
+    uc = m.crystals()[3].unit_cell_parameters()
+    fuc = (
+        "%.4f" % uc[0],
+        "%.4f" % uc[1],
+        "%.4f" % uc[2],
+        "%.3f" % uc[3],
+        "%.3f" % uc[4],
+        "%.3f" % uc[5],
+    )
+    assert ("64.6350", "64.6350", "202.2700", "90.000", "90.000", "90.000") == fuc
 
-  uc = m.crystals()[4].unit_cell_parameters()
-  fuc = "%.4f"%uc[0], "%.4f"%uc[1], "%.4f"%uc[2], "%.3f"%uc[3], "%.3f"%uc[4], "%.3f"%uc[5]
-  assert (('64.2990', '64.2990', '201.9300', '90.000', '90.000', '90.000') == fuc)
+    uc = m.crystals()[4].unit_cell_parameters()
+    fuc = (
+        "%.4f" % uc[0],
+        "%.4f" % uc[1],
+        "%.4f" % uc[2],
+        "%.3f" % uc[3],
+        "%.3f" % uc[4],
+        "%.3f" % uc[5],
+    )
+    assert ("64.2990", "64.2990", "201.9300", "90.000", "90.000", "90.000") == fuc
 
 
-
-if (__name__ == "__main__"):
-  exercise1()
-  exercise2()
-  exercise3()
-  print("OK")
+if __name__ == "__main__":
+    exercise1()
+    exercise2()
+    exercise3()
+    print("OK")

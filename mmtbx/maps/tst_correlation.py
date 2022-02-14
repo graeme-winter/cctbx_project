@@ -1,13 +1,14 @@
 from __future__ import absolute_import, division, print_function
 from scitbx.array_family import flex
 import boost_adaptbx.boost.python as bp
+
 asu_map_ext = bp.import_ext("cctbx_asymmetric_map_ext")
 import iotbx.pdb
 from mmtbx.maps import correlation
 from libtbx.test_utils import approx_equal
 from cctbx import maptbx
 
-pdb_str="""
+pdb_str = """
 CRYST1   60.410   44.706   51.507  90.00  90.00  90.00 P 1
 SCALE1      0.016554  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.022368  0.000000        0.00000
@@ -74,46 +75,56 @@ ATOM     59  OXT TYR A   7      40.410  23.093  28.703  1.00 20.00           O
 END
 """
 
+
 def exercise_d99():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  ph = pdb_inp.construct_hierarchy()
-  xrs = ph.extract_xray_structure(crystal_symmetry = pdb_inp.crystal_symmetry())
-  crystal_gridding = maptbx.crystal_gridding(
-    unit_cell         = xrs.unit_cell(),
-    space_group_info  = xrs.space_group_info(),
-    resolution_factor = 0.25,
-    d_min             = 2.,
-    symmetry_flags    = maptbx.use_space_group_symmetry)
-  fc = xrs.structure_factors(d_min=2.).f_calc()
-  fft_map = fc.fft_map(crystal_gridding=crystal_gridding)
-  map = fft_map.real_map_unpadded()
-  #
-  o = maptbx.d99(map=map, crystal_symmetry=xrs.crystal_symmetry())
-  assert approx_equal(o.result.d99, 2.13, 0.03)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph = pdb_inp.construct_hierarchy()
+    xrs = ph.extract_xray_structure(crystal_symmetry=pdb_inp.crystal_symmetry())
+    crystal_gridding = maptbx.crystal_gridding(
+        unit_cell=xrs.unit_cell(),
+        space_group_info=xrs.space_group_info(),
+        resolution_factor=0.25,
+        d_min=2.0,
+        symmetry_flags=maptbx.use_space_group_symmetry,
+    )
+    fc = xrs.structure_factors(d_min=2.0).f_calc()
+    fft_map = fc.fft_map(crystal_gridding=crystal_gridding)
+    map = fft_map.real_map_unpadded()
+    #
+    o = maptbx.d99(map=map, crystal_symmetry=xrs.crystal_symmetry())
+    assert approx_equal(o.result.d99, 2.13, 0.03)
+
 
 def exercise_five_cc():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  ph = pdb_inp.construct_hierarchy()
-  #ph.write_pdb_file(file_name="m1.pdb")
-  xrs = ph.extract_xray_structure(crystal_symmetry = pdb_inp.crystal_symmetry())
-  f_calc = xrs.structure_factors(d_min=2.0).f_calc()#.resolution_filter(d_max=6)
-  fft_map = f_calc.fft_map(resolution_factor=0.25)
-  m1 = fft_map.real_map_unpadded()
-  #
-  #xrs = xrs.set_b_iso(value=50)
-  sc = xrs.sites_cart()
-  #sc = sc + flex.vec3_double(sc.size(), [.5,.5,.5])
-  xrs = xrs.replace_sites_cart(new_sites=sc)
-  ph.adopt_xray_structure(xrs)
-  #ph.write_pdb_file(file_name="m2.pdb")
-  o = correlation.five_cc(map=m1, xray_structure=xrs, d_min=2.0,
-    compute_cc_box=True, compute_cc_image=True, box=False).result
-  assert approx_equal(o.cc_box, 1.0)
-  assert approx_equal(o.cc_image  , 1.0)
-  assert approx_equal(o.cc_mask   , 1.0)
-  assert approx_equal(o.cc_peaks  , 1.0)
-  assert approx_equal(o.cc_volume , 1.0)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph = pdb_inp.construct_hierarchy()
+    # ph.write_pdb_file(file_name="m1.pdb")
+    xrs = ph.extract_xray_structure(crystal_symmetry=pdb_inp.crystal_symmetry())
+    f_calc = xrs.structure_factors(d_min=2.0).f_calc()  # .resolution_filter(d_max=6)
+    fft_map = f_calc.fft_map(resolution_factor=0.25)
+    m1 = fft_map.real_map_unpadded()
+    #
+    # xrs = xrs.set_b_iso(value=50)
+    sc = xrs.sites_cart()
+    # sc = sc + flex.vec3_double(sc.size(), [.5,.5,.5])
+    xrs = xrs.replace_sites_cart(new_sites=sc)
+    ph.adopt_xray_structure(xrs)
+    # ph.write_pdb_file(file_name="m2.pdb")
+    o = correlation.five_cc(
+        map=m1,
+        xray_structure=xrs,
+        d_min=2.0,
+        compute_cc_box=True,
+        compute_cc_image=True,
+        box=False,
+    ).result
+    assert approx_equal(o.cc_box, 1.0)
+    assert approx_equal(o.cc_image, 1.0)
+    assert approx_equal(o.cc_mask, 1.0)
+    assert approx_equal(o.cc_peaks, 1.0)
+    assert approx_equal(o.cc_volume, 1.0)
 
-if (__name__ == "__main__"):
-  exercise_d99()
-  exercise_five_cc()
+
+if __name__ == "__main__":
+    exercise_d99()
+    exercise_five_cc()

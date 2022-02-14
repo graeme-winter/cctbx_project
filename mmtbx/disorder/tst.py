@@ -1,12 +1,12 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx import disorder
 import iotbx.pdb.hierarchy
 from libtbx.test_utils import approx_equal
 from libtbx.utils import null_out
 
+
 def exercise():
-  pdb_str = """\
+    pdb_str = """\
 MODEL        1
 ATOM      1  CA  ALA A  73      40.400   8.490  10.792  0.01 13.69           C
 ATOM      2  CA  ARG A  74      36.672   7.864  11.359  0.01 13.55           C
@@ -58,23 +58,20 @@ ATOM      2  CA  ARG A  74      35.915   7.291  10.970  0.01 13.55           C
 ATOM      3  CA  LYS A  75      37.173   3.719  10.662  0.01 13.28           C
 ENDMDL
 """
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_str)
-  hierarchy = pdb_in.hierarchy
-  disorder.set_ensemble_b_factors_to_xyz_displacement(
-    pdb_hierarchy=hierarchy,
-    method="rmsf",
-    log=null_out())
-  model = hierarchy.models()[0]
-  assert approx_equal(list(model.atoms().extract_b()),
-    [0.480574, 0.478505, 0.616683])
-  disorder.set_ensemble_b_factors_to_xyz_displacement(
-    pdb_hierarchy=hierarchy,
-    method="mcs",
-    log=null_out())
-  model = hierarchy.models()[0]
-  assert approx_equal(list(model.atoms().extract_b()),
-    [0.684434, 0.779022, 0.881886])
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_str)
+    hierarchy = pdb_in.hierarchy
+    disorder.set_ensemble_b_factors_to_xyz_displacement(
+        pdb_hierarchy=hierarchy, method="rmsf", log=null_out()
+    )
+    model = hierarchy.models()[0]
+    assert approx_equal(list(model.atoms().extract_b()), [0.480574, 0.478505, 0.616683])
+    disorder.set_ensemble_b_factors_to_xyz_displacement(
+        pdb_hierarchy=hierarchy, method="mcs", log=null_out()
+    )
+    model = hierarchy.models()[0]
+    assert approx_equal(list(model.atoms().extract_b()), [0.684434, 0.779022, 0.881886])
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

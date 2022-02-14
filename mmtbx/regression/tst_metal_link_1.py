@@ -93,36 +93,41 @@ END"""
 
 
 def run():
-  """
-  Check metal linking (make sure CE1 is not included).
-  """
-  pdb_inp = iotbx.pdb.input(lines=pdb_str, source_info=None)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.automatic_linking.link_metals=True
-  m = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  m.process(pdb_interpretation_params=params, make_restraints=True)
-  grm = m.get_restraints_manager()
-  ph = m.get_hierarchy()
-  atoms = list(ph.atoms())
-  assert atoms[73].element.strip().upper() == "FE"
-  bond_proxies_simple, asu = grm.geometry.get_all_bond_proxies(
-    sites_cart = ph.atoms().extract_xyz())
-  expected_link_atoms = ['NE2', "NE2", "OE1", "OE2", "O", "O", "O"]
-  expected_link_atoms.sort()
-  linked_atoms_found = []
-  for p in bond_proxies_simple:
-    if(73 in p.i_seqs):
-      i,j = p.i_seqs
-      a1 = atoms[i].name.strip().upper()
-      a2 = atoms[j].name.strip().upper()
-      if(i!=73): linked_atoms_found.append(a1)
-      else:      linked_atoms_found.append(a2)
-  linked_atoms_found.sort()
-  assert expected_link_atoms == linked_atoms_found, '%s != %s' % (expected_link_atoms, linked_atoms_found)
+    """
+    Check metal linking (make sure CE1 is not included).
+    """
+    pdb_inp = iotbx.pdb.input(lines=pdb_str, source_info=None)
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.automatic_linking.link_metals = True
+    m = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    m.process(pdb_interpretation_params=params, make_restraints=True)
+    grm = m.get_restraints_manager()
+    ph = m.get_hierarchy()
+    atoms = list(ph.atoms())
+    assert atoms[73].element.strip().upper() == "FE"
+    bond_proxies_simple, asu = grm.geometry.get_all_bond_proxies(
+        sites_cart=ph.atoms().extract_xyz()
+    )
+    expected_link_atoms = ["NE2", "NE2", "OE1", "OE2", "O", "O", "O"]
+    expected_link_atoms.sort()
+    linked_atoms_found = []
+    for p in bond_proxies_simple:
+        if 73 in p.i_seqs:
+            i, j = p.i_seqs
+            a1 = atoms[i].name.strip().upper()
+            a2 = atoms[j].name.strip().upper()
+            if i != 73:
+                linked_atoms_found.append(a1)
+            else:
+                linked_atoms_found.append(a2)
+    linked_atoms_found.sort()
+    assert expected_link_atoms == linked_atoms_found, "%s != %s" % (
+        expected_link_atoms,
+        linked_atoms_found,
+    )
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("Time: %6.3f"%(time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("Time: %6.3f" % (time.time() - t0))

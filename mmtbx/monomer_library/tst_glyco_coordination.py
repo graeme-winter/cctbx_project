@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 from libtbx import easy_run
 
 pdbs = {
-  'linking_BDP.pdb' : '''
+    "linking_BDP.pdb": """
 CRYST1   30.794   82.051   32.278  90.00 117.89  90.00 P 1 21 1
 SCALE1      0.032474  0.000000  0.017187        0.00000
 SCALE2      0.000000  0.012188  0.000000        0.00000
@@ -55,8 +55,8 @@ HETATM   44  H1  NAG A1177       8.740 -13.896  12.428  1.00 13.21           H
 HETATM   45  H2  NAG A1177       9.424 -10.949  12.357  1.00 12.00           H
 HETATM   46  H82 NAG A1177       5.243 -11.105  10.751  1.00 10.52           H
 HETATM   47  HN2 NAG A1177       7.399 -12.601  11.034  1.00 11.60           H
-''',
-  'linking_FUC.pdb' : '''
+""",
+    "linking_FUC.pdb": """
 CRYST1   72.333   98.984  152.019  90.00  90.00  90.00 P 21 21 21
 SCALE1      0.013825  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.010103  0.000000        0.00000
@@ -85,8 +85,8 @@ HETATM   11  O4  FUC E 210     -49.187  -4.308  36.634  0.90 47.16           O
 ANISOU   11  O4  FUC E 210     3538   8928   5451  -2181      3  -3117       O
 HETATM   12  O5  FUC E 210     -49.036  -3.825  39.759  0.90 43.21           O
 ANISOU   12  O5  FUC E 210     5470   4074   6872   -230   -266  -1185       O
-''',
-  'linking_FUL.pdb' : '''
+""",
+    "linking_FUL.pdb": """
 CRYST1   65.168   79.104   68.912  90.00  99.54  90.00 P 1 21 1
 SCALE1      0.015345  0.000000  0.002579        0.00000
 SCALE2      0.000000  0.012642  0.000000        0.00000
@@ -121,8 +121,8 @@ HETATM   48  O3  NAG A   3      -1.258   2.696  40.294  1.00 31.55           O
 HETATM   49  O4  NAG A   3       0.912   4.638  40.032  1.00 25.82           O
 HETATM   50  O5  NAG A   3      -0.838   4.866  36.859  1.00 26.45           O
 HETATM   51  O6  NAG A   3       2.039   4.148  36.747  1.00 24.74           O
-''',
-'linking_BMA.pdb' : '''
+""",
+    "linking_BMA.pdb": """
 CRYST1   54.153   75.989   80.970 105.69 107.32 106.93 P 1
 SCALE1      0.018466  0.005621  0.008645        0.00000
 SCALE2      0.000000  0.013756  0.005844        0.00000
@@ -242,29 +242,29 @@ HETATM  238  H61 MAN A 605      16.400   2.486  13.416  1.00 38.21           H
 HETATM  239  H62 MAN A 605      17.393   1.167  14.102  1.00 38.21           H
 HETATM  240  HO3 MAN A 605      19.304   2.723   8.654  1.00 20.14           H
 HETATM  241  HO4 MAN A 605      16.415   2.497  10.530  1.00 20.76           H
-''',
-  }
+""",
+}
 
 links = {
-  'linking_BDP.pdb' : '''
+    "linking_BDP.pdb": '''
   Links applied
     BETA1-3
       " NAG A1175 " - " BDP A1176 "
     BETA1-4
       " BDP A1176 " - " NAG A1177 "''',
-  'linking_FUC.pdb' : '''
+    "linking_FUC.pdb": """
   Links applied
     BETA1-2
       " GAL E 207 " - " FUC E 210 "
-       ~> Even though FUC is an alpha isomer, a beta linkage is required...''',
-  'linking_FUL.pdb' : '''
+       ~> Even though FUC is an alpha isomer, a beta linkage is required...""",
+    "linking_FUL.pdb": '''
   Links applied
     ALPHA1-2
       " FUL A   1 " - " GAL A   2 "
        ~> Even though GAL is a beta isomer, an alpha linkage is required...
     BETA1-4
       " GAL A   2 " - " NAG A   3 "''',
-  'linking_BMA.pdb' : '''
+    "linking_BMA.pdb": '''
   Links applied
     ALPHA1-3
       " BMA A 603 " - " MAN A 605 "
@@ -273,38 +273,48 @@ links = {
     BETA1-4
       " NAG A 601 " - " NAG A 602 "
       " NAG A 602 " - " BMA A 603 "''',
-  }
+}
+
 
 def run(only_i=None):
-  try: only_i=int(only_i)
-  except ValueError: only_i=None
-  except TypeError: only_i=None
-  cifs = ""
-  for pdb in pdbs:
-    f=open(pdb, "w")
-    f.write(pdbs[pdb])
-    f.close()
-    if pdb.endswith(".cif"): cifs += " %s" % pdb
-    links[pdb] = links[pdb].splitlines()
-  j=0
-  for pdb in sorted(pdbs):
-    #break
-    if pdb.endswith(".cif"): continue
-    if pdb.endswith(".params"): continue
-    print('pdb',pdb)
-    j+=1
-    if only_i is not None and only_i!=j: continue
-    # log_filename = "%s.log" % (pdb)
-    cmd = "phenix.pdb_interpretation %s write_geo_file=False" % pdb
-    result = easy_run.fully_buffered(cmd).raise_if_errors()
-    assert (result.return_code == 0)
-    for line in result.stdout_lines:
-      if (line in links[pdb]):
-        links[pdb].remove(line)
-    if links[pdb]:
-      raise RuntimeError("Missing expected log output %s" % pdb)
-    print("OK")
+    try:
+        only_i = int(only_i)
+    except ValueError:
+        only_i = None
+    except TypeError:
+        only_i = None
+    cifs = ""
+    for pdb in pdbs:
+        f = open(pdb, "w")
+        f.write(pdbs[pdb])
+        f.close()
+        if pdb.endswith(".cif"):
+            cifs += " %s" % pdb
+        links[pdb] = links[pdb].splitlines()
+    j = 0
+    for pdb in sorted(pdbs):
+        # break
+        if pdb.endswith(".cif"):
+            continue
+        if pdb.endswith(".params"):
+            continue
+        print("pdb", pdb)
+        j += 1
+        if only_i is not None and only_i != j:
+            continue
+        # log_filename = "%s.log" % (pdb)
+        cmd = "phenix.pdb_interpretation %s write_geo_file=False" % pdb
+        result = easy_run.fully_buffered(cmd).raise_if_errors()
+        assert result.return_code == 0
+        for line in result.stdout_lines:
+            if line in links[pdb]:
+                links[pdb].remove(line)
+        if links[pdb]:
+            raise RuntimeError("Missing expected log output %s" % pdb)
+        print("OK")
 
-if __name__=="__main__":
-  import sys
-  run(*tuple(sys.argv[1:]))
+
+if __name__ == "__main__":
+    import sys
+
+    run(*tuple(sys.argv[1:]))

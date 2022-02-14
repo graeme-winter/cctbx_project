@@ -78,42 +78,39 @@ HETATM   67  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 END
 """
 
-def run(prefix="tst_model_map"):
-  """
-  Exercise phenix.model_map
-  """
-  # original (zero-origin) map and model
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  pdb_inp.write_pdb_file(file_name="%s.pdb"%prefix)
-  ph = pdb_inp.construct_hierarchy()
-  xrs = pdb_inp.xray_structure_simple()
-  fc0 = xrs.structure_factors(d_min=3.0).f_calc()
-  #
-  easy_run.call("phenix.model_map %s.pdb output_file_name_prefix=%s"%(
-    prefix, prefix))
-  m1 = iotbx.mrcfile.map_reader(file_name="%s.ccp4"%prefix).data.as_double()
-  m2 = iotbx.xplor.map.reader(file_name="%s.xplor"%prefix).data
-  #
-  fc1 = fc0.structure_factors_from_map(
-    map            = m1,
-    use_scale      = True,
-    anomalous_flag = False,
-    use_sg         = False)
-  fc2 = fc0.structure_factors_from_map(
-    map            = m2,
-    use_scale      = True,
-    anomalous_flag = False,
-    use_sg         = False)
-  cc1 = flex.linear_correlation(
-    x=abs(fc0).data(), y=abs(fc1).data()).coefficient()
-  cc2 = flex.linear_correlation(
-    x=abs(fc0).data(), y=abs(fc2).data()).coefficient()
-  print(cc1, cc2)
-  assert cc1>0.9999
-  assert cc2>0.97 # WHY?
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("Time: %6.3f"%(time.time()-t0))
-  print("OK")
+def run(prefix="tst_model_map"):
+    """
+    Exercise phenix.model_map
+    """
+    # original (zero-origin) map and model
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    pdb_inp.write_pdb_file(file_name="%s.pdb" % prefix)
+    ph = pdb_inp.construct_hierarchy()
+    xrs = pdb_inp.xray_structure_simple()
+    fc0 = xrs.structure_factors(d_min=3.0).f_calc()
+    #
+    easy_run.call(
+        "phenix.model_map %s.pdb output_file_name_prefix=%s" % (prefix, prefix)
+    )
+    m1 = iotbx.mrcfile.map_reader(file_name="%s.ccp4" % prefix).data.as_double()
+    m2 = iotbx.xplor.map.reader(file_name="%s.xplor" % prefix).data
+    #
+    fc1 = fc0.structure_factors_from_map(
+        map=m1, use_scale=True, anomalous_flag=False, use_sg=False
+    )
+    fc2 = fc0.structure_factors_from_map(
+        map=m2, use_scale=True, anomalous_flag=False, use_sg=False
+    )
+    cc1 = flex.linear_correlation(x=abs(fc0).data(), y=abs(fc1).data()).coefficient()
+    cc2 = flex.linear_correlation(x=abs(fc0).data(), y=abs(fc2).data()).coefficient()
+    print(cc1, cc2)
+    assert cc1 > 0.9999
+    assert cc2 > 0.97  # WHY?
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("Time: %6.3f" % (time.time() - t0))
+    print("OK")

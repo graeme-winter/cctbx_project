@@ -4,8 +4,8 @@ from __future__ import division, print_function
 from iotbx.cli_parser import run_program
 from mmtbx.programs import nonbonded_overlaps
 
-if __name__ == '__main__':
-  run_program(program_class=nonbonded_overlaps.Program)
+if __name__ == "__main__":
+    run_program(program_class=nonbonded_overlaps.Program)
 
 
 # from __future__ import division

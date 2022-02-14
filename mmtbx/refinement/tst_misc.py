@@ -2,9 +2,12 @@ from __future__ import absolute_import, division, print_function
 
 
 def exercise():
-  from mmtbx.refinement.print_statistics import coordinate_shifts
-  import iotbx.pdb
-  hierarchy_start = iotbx.pdb.input(source_info=None, lines="""\
+    from mmtbx.refinement.print_statistics import coordinate_shifts
+    import iotbx.pdb
+
+    hierarchy_start = iotbx.pdb.input(
+        source_info=None,
+        lines="""\
 ATOM      1  N   GLY A   1      -9.009  14.612   6.102  1.00 16.77           N
 ATOM      2  CA  GLY A   1      -9.052  14.207   4.651  1.00 16.57           C
 ATOM      3  C   GLY A   1      -8.015  13.140   4.419  1.00 16.16           C
@@ -25,8 +28,11 @@ ATOM     17  CB  ASN A   3      -3.259  11.378   6.042  1.00 12.15           C
 ATOM     18  CG  ASN A   3      -2.006  11.739   6.861  1.00 12.82           C
 ATOM     19  OD1 ASN A   3      -1.702  12.925   7.072  1.00 15.05           O
 ATOM     20  ND2 ASN A   3      -1.271  10.715   7.306  1.00 13.48           N
-END""").construct_hierarchy()
-  hierarchy_end = iotbx.pdb.input(source_info=None, lines="""\
+END""",
+    ).construct_hierarchy()
+    hierarchy_end = iotbx.pdb.input(
+        source_info=None,
+        lines="""\
 ATOM      1  N   GLY A   1      -9.009   4.612   6.102  1.00 16.77           N
 ATOM      2  CA  GLY A   1      -9.052   4.207   4.651  1.00 16.57           C
 ATOM      3  C   GLY A   1      -8.015   3.140   4.419  1.00 16.16           C
@@ -51,18 +57,21 @@ TER
 HETATM   60  O   HOH     8      -6.471   5.227   7.124  1.00 20.00           O
 HETATM   61  O   HOH     9      10.431   1.858   3.216  1.00 20.00           O
 HETATM   62  O   HOH    10     -11.286   1.756  -1.468  1.00 20.00           O
-END""").construct_hierarchy()
-  cs = coordinate_shifts(hierarchy_start, hierarchy_end)
-  #hierarchy_shifted = cs.get_shifts()
-  mmm = cs.min_max_mean()
-  assert (mmm.min==10) and (mmm.max==10) and (mmm.mean==10)
-  cs.save_pdb_file("shifted.pdb")
-  h3 = iotbx.pdb.input(source_info=None,
-    lines=open("shifted.pdb").readlines()).construct_hierarchy()
-  a3 = h3.atoms()
-  shifts = a3.extract_b()
-  assert (shifts[-1] == -1.0)
+END""",
+    ).construct_hierarchy()
+    cs = coordinate_shifts(hierarchy_start, hierarchy_end)
+    # hierarchy_shifted = cs.get_shifts()
+    mmm = cs.min_max_mean()
+    assert (mmm.min == 10) and (mmm.max == 10) and (mmm.mean == 10)
+    cs.save_pdb_file("shifted.pdb")
+    h3 = iotbx.pdb.input(
+        source_info=None, lines=open("shifted.pdb").readlines()
+    ).construct_hierarchy()
+    a3 = h3.atoms()
+    shifts = a3.extract_b()
+    assert shifts[-1] == -1.0
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

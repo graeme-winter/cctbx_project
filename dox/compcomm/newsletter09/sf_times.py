@@ -6,6 +6,7 @@ from libtbx import easy_pickle
 from libtbx.path import full_command_path
 import platform
 import sys, os
+
 op = os.path
 
 __this_script__ = "cctbx_project/compcomm/newsletter09/sf_times.py"
@@ -262,184 +263,189 @@ typedef dim2<float> real2d;
     }
 """
 
+
 def compare_with_cctbx_structure_factors(n_scatt, n_refl, output_lines):
-  from cctbx import xray
-  from cctbx import miller
-  from cctbx import crystal
-  from cctbx.array_family import flex
-  crystal_symmetry = crystal.symmetry(
-    unit_cell=(11,12,13,90,90,90),
-    space_group_symbol="P1")
-  scatterers = flex.xray_scatterer()
-  miller_indices = flex.miller_index()
-  f_calc = flex.complex_double()
-  for line in output_lines:
-    flds = line.split()
-    assert len(flds) in [4,5]
-    if (len(flds) == 4):
-      x,y,z,b_iso = [float(s) for s in flds]
-      scatterers.append(
-        xray.scatterer(site=(x,y,z), b=b_iso, scattering_type="const"))
-    else:
-      miller_indices.append([int(s) for s in flds[:3]])
-      f_calc.append(complex(float(flds[3]), float(flds[4])))
-  assert scatterers.size() == n_scatt
-  assert miller_indices.size() == n_refl
-  xs = xray.structure(
-    crystal_symmetry=crystal_symmetry,
-    scatterers=scatterers)
-  fc = miller_array = miller.set(
-    crystal_symmetry=crystal_symmetry,
-    indices=miller_indices,
-    anomalous_flag=False).array(data=f_calc)
-  fc2 = fc.structure_factors_from_scatterers(
-    xray_structure=xs,
-    algorithm="direct",
-    cos_sin_table=False).f_calc()
-  for f1,f2 in zip(fc.data(), fc2.data()):
-    assert approx_equal(f1, f2, eps=1e-5)
+    from cctbx import xray
+    from cctbx import miller
+    from cctbx import crystal
+    from cctbx.array_family import flex
+
+    crystal_symmetry = crystal.symmetry(
+        unit_cell=(11, 12, 13, 90, 90, 90), space_group_symbol="P1"
+    )
+    scatterers = flex.xray_scatterer()
+    miller_indices = flex.miller_index()
+    f_calc = flex.complex_double()
+    for line in output_lines:
+        flds = line.split()
+        assert len(flds) in [4, 5]
+        if len(flds) == 4:
+            x, y, z, b_iso = [float(s) for s in flds]
+            scatterers.append(
+                xray.scatterer(site=(x, y, z), b=b_iso, scattering_type="const")
+            )
+        else:
+            miller_indices.append([int(s) for s in flds[:3]])
+            f_calc.append(complex(float(flds[3]), float(flds[4])))
+    assert scatterers.size() == n_scatt
+    assert miller_indices.size() == n_refl
+    xs = xray.structure(crystal_symmetry=crystal_symmetry, scatterers=scatterers)
+    fc = miller_array = miller.set(
+        crystal_symmetry=crystal_symmetry, indices=miller_indices, anomalous_flag=False
+    ).array(data=f_calc)
+    fc2 = fc.structure_factors_from_scatterers(
+        xray_structure=xs, algorithm="direct", cos_sin_table=False
+    ).f_calc()
+    for f1, f2 in zip(fc.data(), fc2.data()):
+        assert approx_equal(f1, f2, eps=1e-5)
+
 
 def build_run(a_out, n_scatt, n_refl, build_cmd, check_max_a_b):
-  if (op.isfile("a.out")):
-    os.remove("a.out")
-  assert not op.isfile("a.out")
-  if (a_out is None):
-    easy_run.fully_buffered(command=build_cmd).raise_if_errors_or_output()
-  else:
-    open("a.out", "w").write(a_out)
-    os.chmod("a.out", 0o755)
-  assert op.isfile("a.out")
-  run_cmd = "/usr/bin/time  -p ./a.out"
-  buffers = easy_run.fully_buffered(command=run_cmd)
-  assert len(buffers.stderr_lines) == 3
-  if (n_scatt <= 10 and n_refl <= 100):
-    assert len(buffers.stdout_lines) == n_scatt + n_refl
-  else:
-    assert len(buffers.stdout_lines) == 1
-    max_a, max_b = [float(s) for s in buffers.stdout_lines[0].split()]
-  if (check_max_a_b):
-    if (n_scatt == 2000 and n_refl == 20000):
-      assert approx_equal(max_a, 35.047157, eps=1e-4)
-      assert approx_equal(max_b, 25.212738, eps=1e-4)
-    elif (n_scatt == 100 and n_refl == 1000):
-      assert approx_equal(max_a,  4.493645, eps=1e-4)
-      assert approx_equal(max_b, 10.515532, eps=1e-4)
-    elif (n_scatt <= 10 and n_refl <= 100):
-      compare_with_cctbx_structure_factors(
-        n_scatt=n_scatt,
-        n_refl=n_refl,
-        output_lines=buffers.stdout_lines)
+    if op.isfile("a.out"):
+        os.remove("a.out")
+    assert not op.isfile("a.out")
+    if a_out is None:
+        easy_run.fully_buffered(command=build_cmd).raise_if_errors_or_output()
     else:
-      raise RuntimeError(max_a, max_b)
-  utime = float(buffers.stderr_lines[1].split()[1])
-  return utime
+        open("a.out", "w").write(a_out)
+        os.chmod("a.out", 0o755)
+    assert op.isfile("a.out")
+    run_cmd = "/usr/bin/time  -p ./a.out"
+    buffers = easy_run.fully_buffered(command=run_cmd)
+    assert len(buffers.stderr_lines) == 3
+    if n_scatt <= 10 and n_refl <= 100:
+        assert len(buffers.stdout_lines) == n_scatt + n_refl
+    else:
+        assert len(buffers.stdout_lines) == 1
+        max_a, max_b = [float(s) for s in buffers.stdout_lines[0].split()]
+    if check_max_a_b:
+        if n_scatt == 2000 and n_refl == 20000:
+            assert approx_equal(max_a, 35.047157, eps=1e-4)
+            assert approx_equal(max_b, 25.212738, eps=1e-4)
+        elif n_scatt == 100 and n_refl == 1000:
+            assert approx_equal(max_a, 4.493645, eps=1e-4)
+            assert approx_equal(max_b, 10.515532, eps=1e-4)
+        elif n_scatt <= 10 and n_refl <= 100:
+            compare_with_cctbx_structure_factors(
+                n_scatt=n_scatt, n_refl=n_refl, output_lines=buffers.stdout_lines
+            )
+        else:
+            raise RuntimeError(max_a, max_b)
+    utime = float(buffers.stderr_lines[1].split()[1])
+    return utime
+
 
 def fortran_write_build_run(
-      a_out, n_scatt, n_refl, real, build_cmd, replace_cos, replace_exp):
-  if (a_out is None):
-    this_script = __this_script__
-    srctxt = fortran_template % vars()
-    if (replace_cos):
-      srctxt = srctxt.replace(
-        "COS(arg)",
-        "arg / (abs(arg)+1.0)")
-    if (replace_exp):
-      srctxt = srctxt.replace(
-        "EXP(arg)",
-        "max(0.0, 1.0 - arg*arg)")
-    srctxt = srctxt.replace("REAL", real)
-    open("tmp.f", "w").write(srctxt)
-    if (not op.isfile("sf_f.f")):
-      open("sf_f.f", "w").write(srctxt)
-  return build_run(
-    a_out=a_out,
-    n_scatt=n_scatt,
-    n_refl=n_refl,
-    build_cmd=build_cmd+" tmp.f",
-    check_max_a_b=(not (replace_cos or replace_exp)))
+    a_out, n_scatt, n_refl, real, build_cmd, replace_cos, replace_exp
+):
+    if a_out is None:
+        this_script = __this_script__
+        srctxt = fortran_template % vars()
+        if replace_cos:
+            srctxt = srctxt.replace("COS(arg)", "arg / (abs(arg)+1.0)")
+        if replace_exp:
+            srctxt = srctxt.replace("EXP(arg)", "max(0.0, 1.0 - arg*arg)")
+        srctxt = srctxt.replace("REAL", real)
+        open("tmp.f", "w").write(srctxt)
+        if not op.isfile("sf_f.f"):
+            open("sf_f.f", "w").write(srctxt)
+    return build_run(
+        a_out=a_out,
+        n_scatt=n_scatt,
+        n_refl=n_refl,
+        build_cmd=build_cmd + " tmp.f",
+        check_max_a_b=(not (replace_cos or replace_exp)),
+    )
+
 
 def cpp_write_build_run(
-      a_out, n_scatt, n_refl, real, build_cmd, replace_cos, replace_exp):
-  if (a_out is None):
-    this_script = __this_script__
-    srctxt = cpp_template % vars()
-    if (replace_cos):
-      srctxt = srctxt.replace(
-        "std::cos(arg)",
-        "arg / (std::abs(arg)+1.0f)")
-    if (replace_exp):
-      srctxt = srctxt.replace(
-        "std::exp(arg)",
-        "std::max(float(0), 1.0f - arg*arg)")
-    srctxt = srctxt.replace("float", real)
-    open("tmp.cpp", "w").write(srctxt)
-    if (not op.isfile("sf_cpp.cpp")):
-      open("sf_cpp.cpp", "w").write(srctxt)
-  return build_run(
-    a_out=a_out,
-    n_scatt=n_scatt,
-    n_refl=n_refl,
-    build_cmd=build_cmd+" tmp.cpp",
-    check_max_a_b=(not (replace_cos or replace_exp)))
+    a_out, n_scatt, n_refl, real, build_cmd, replace_cos, replace_exp
+):
+    if a_out is None:
+        this_script = __this_script__
+        srctxt = cpp_template % vars()
+        if replace_cos:
+            srctxt = srctxt.replace("std::cos(arg)", "arg / (std::abs(arg)+1.0f)")
+        if replace_exp:
+            srctxt = srctxt.replace(
+                "std::exp(arg)", "std::max(float(0), 1.0f - arg*arg)"
+            )
+        srctxt = srctxt.replace("float", real)
+        open("tmp.cpp", "w").write(srctxt)
+        if not op.isfile("sf_cpp.cpp"):
+            open("sf_cpp.cpp", "w").write(srctxt)
+    return build_run(
+        a_out=a_out,
+        n_scatt=n_scatt,
+        n_refl=n_refl,
+        build_cmd=build_cmd + " tmp.cpp",
+        check_max_a_b=(not (replace_cos or replace_exp)),
+    )
+
 
 def run_combinations(
-      compiler_versions,
-      all_utimes,
-      a_out_archive,
-      write_a_out_archive,
-      n_scatt,
-      n_refl,
-      compiler_build_opts_list,
-      real_list,
-      write_build_run):
-  for compiler,build_opts in compiler_build_opts_list:
-    if (write_a_out_archive):
-      have_compiler = (full_command_path(command=compiler) is not None)
-      if (not have_compiler):
-        compiler_version = "n/a"
-      else:
-        compiler_version = easy_run.fully_buffered(
-          command=compiler+" --version",
-          join_stdout_stderr=True).stdout_lines[0]
-      compiler_versions.append(compiler_version)
-      a_out = None
-    build_cmd = " ".join([compiler, build_opts])
-    print(build_cmd)
-    utimes = []
-    for real in real_list:
-      print("  %s" % real)
-      for replace_cos in [False, True]:
-        print("    replace_cos", replace_cos)
-        for replace_exp in [False, True]:
-          print("      replace_exp", replace_exp)
-          sys.stdout.flush()
-          a_out_key = (build_cmd, replace_cos, replace_exp)
-          if (not write_a_out_archive):
-            compiler_version, a_out = a_out_archive.get(a_out_key, (
-              "n/a", None))
-          if (compiler_version != "n/a"):
-            utime = write_build_run(
-              a_out=a_out,
-              n_scatt=n_scatt,
-              n_refl=n_refl,
-              real=real,
-              build_cmd=build_cmd,
-              replace_cos=replace_cos,
-              replace_exp=replace_exp)
-            print("        %4.2f" % utime)
-            if (write_a_out_archive):
-              a_out_archive[a_out_key] = (
-                compiler_version,
-                open("a.out", "rb").read())
-          else:
-            utime = -1.0
-            print("        n/a")
-          utimes.append(utime)
-          sys.stdout.flush()
-    all_utimes.append(utimes)
+    compiler_versions,
+    all_utimes,
+    a_out_archive,
+    write_a_out_archive,
+    n_scatt,
+    n_refl,
+    compiler_build_opts_list,
+    real_list,
+    write_build_run,
+):
+    for compiler, build_opts in compiler_build_opts_list:
+        if write_a_out_archive:
+            have_compiler = full_command_path(command=compiler) is not None
+            if not have_compiler:
+                compiler_version = "n/a"
+            else:
+                compiler_version = easy_run.fully_buffered(
+                    command=compiler + " --version", join_stdout_stderr=True
+                ).stdout_lines[0]
+            compiler_versions.append(compiler_version)
+            a_out = None
+        build_cmd = " ".join([compiler, build_opts])
+        print(build_cmd)
+        utimes = []
+        for real in real_list:
+            print("  %s" % real)
+            for replace_cos in [False, True]:
+                print("    replace_cos", replace_cos)
+                for replace_exp in [False, True]:
+                    print("      replace_exp", replace_exp)
+                    sys.stdout.flush()
+                    a_out_key = (build_cmd, replace_cos, replace_exp)
+                    if not write_a_out_archive:
+                        compiler_version, a_out = a_out_archive.get(
+                            a_out_key, ("n/a", None)
+                        )
+                    if compiler_version != "n/a":
+                        utime = write_build_run(
+                            a_out=a_out,
+                            n_scatt=n_scatt,
+                            n_refl=n_refl,
+                            real=real,
+                            build_cmd=build_cmd,
+                            replace_cos=replace_cos,
+                            replace_exp=replace_exp,
+                        )
+                        print("        %4.2f" % utime)
+                        if write_a_out_archive:
+                            a_out_archive[a_out_key] = (
+                                compiler_version,
+                                open("a.out", "rb").read(),
+                            )
+                    else:
+                        utime = -1.0
+                        print("        n/a")
+                    utimes.append(utime)
+                    sys.stdout.flush()
+        all_utimes.append(utimes)
+
 
 def gcc_static_is_available():
-  tmp_cpp = r"""\
+    tmp_cpp = r"""\
 #include <iostream>
 #include <cmath>
 int
@@ -449,93 +455,109 @@ main()
   return 0;
 }
 """
-  open("tmp.cpp", "w").write(tmp_cpp)
-  buffers = easy_run.fully_buffered(command="g++ -O tmp.cpp")
-  buffers.raise_if_errors_or_output()
-  buffers = easy_run.fully_buffered(command="g++ -static -O tmp.cpp")
-  if (len(buffers.stderr_lines) != 0):
-    return False
-  return True
+    open("tmp.cpp", "w").write(tmp_cpp)
+    buffers = easy_run.fully_buffered(command="g++ -O tmp.cpp")
+    buffers.raise_if_errors_or_output()
+    buffers = easy_run.fully_buffered(command="g++ -static -O tmp.cpp")
+    if len(buffers.stderr_lines) != 0:
+        return False
+    return True
+
 
 def usage():
-  raise Usage(
-    "cctbx.python sf_times.py unit_test|quick|production|a_out_archive.pickle")
+    raise Usage(
+        "cctbx.python sf_times.py unit_test|quick|production|a_out_archive.pickle"
+    )
+
 
 def run(args):
-  if (len(args) != 1): usage()
-  build_platform = platform.platform()
-  build_node = platform.node()
-  compiler_versions = []
-  gcc_static = "-static "
-  a_out_archive = {}
-  write_a_out_archive = True
-  if (args[0] == "unit_test"):
-    n_scatt, n_refl = 10, 100
-  elif (args[0] == "quick"):
-    n_scatt, n_refl = 100, 1000
-  elif (args[0] == "production"):
-    n_scatt, n_refl = 2000, 20000
-  elif (op.isfile(args[0])):
-    n_scatt, n_refl, \
-    build_platform, build_node, \
-    compiler_versions, gcc_static, a_out_archive = easy_pickle.load(
-      file_name=args[0])
-    write_a_out_archive = False
-  else:
-    usage()
-  if (write_a_out_archive and not gcc_static_is_available()):
-    gcc_static = ""
-  all_utimes = []
-  if (1):
-    run_combinations(
-      compiler_versions,
-      all_utimes,
-      a_out_archive=a_out_archive,
-      write_a_out_archive=write_a_out_archive,
-      n_scatt=n_scatt,
-      n_refl=n_refl,
-      compiler_build_opts_list=[
-        ("ifort", "-O"),
-        ("gfortran", gcc_static+"-O -ffast-math"),
-        ("g77", gcc_static+"-O -ffast-math")],
-      real_list=["real*4", "real*8"],
-      write_build_run=fortran_write_build_run)
-  if (1):
-    run_combinations(
-      compiler_versions,
-      all_utimes,
-      a_out_archive=a_out_archive,
-      write_a_out_archive=write_a_out_archive,
-      n_scatt=n_scatt,
-      n_refl=n_refl,
-      compiler_build_opts_list=[
-        ("icpc", "-static -O"),
-        ("g++", gcc_static+"-O -ffast-math")],
-      real_list=["float", "double"],
-      write_build_run=cpp_write_build_run)
-  if (write_a_out_archive and len(a_out_archive) != 0):
-    print("Writing file: a_out_archive.pickle")
-    easy_pickle.dump(
-      file_name="a_out_archive.pickle",
-      obj=(
-        n_scatt,
-        n_refl,
-        build_platform,
-        build_node,
-        compiler_versions,
-        gcc_static,
-        a_out_archive))
-  print()
-  print("current_platform:", platform.platform())
-  print("current_node:", platform.node())
-  print("build_platform:", build_platform)
-  print("build_node:", build_node)
-  print('gcc_static: "%s"' % gcc_static)
-  for compiler_version in compiler_versions:
-    print("compiler:", compiler_version)
-  print("n_scatt * n_refl: %d * %d" % (n_scatt, n_refl))
-  for utimes in all_utimes:
-    print(" ".join(["%6.2f" % u for u in utimes]))
+    if len(args) != 1:
+        usage()
+    build_platform = platform.platform()
+    build_node = platform.node()
+    compiler_versions = []
+    gcc_static = "-static "
+    a_out_archive = {}
+    write_a_out_archive = True
+    if args[0] == "unit_test":
+        n_scatt, n_refl = 10, 100
+    elif args[0] == "quick":
+        n_scatt, n_refl = 100, 1000
+    elif args[0] == "production":
+        n_scatt, n_refl = 2000, 20000
+    elif op.isfile(args[0]):
+        (
+            n_scatt,
+            n_refl,
+            build_platform,
+            build_node,
+            compiler_versions,
+            gcc_static,
+            a_out_archive,
+        ) = easy_pickle.load(file_name=args[0])
+        write_a_out_archive = False
+    else:
+        usage()
+    if write_a_out_archive and not gcc_static_is_available():
+        gcc_static = ""
+    all_utimes = []
+    if 1:
+        run_combinations(
+            compiler_versions,
+            all_utimes,
+            a_out_archive=a_out_archive,
+            write_a_out_archive=write_a_out_archive,
+            n_scatt=n_scatt,
+            n_refl=n_refl,
+            compiler_build_opts_list=[
+                ("ifort", "-O"),
+                ("gfortran", gcc_static + "-O -ffast-math"),
+                ("g77", gcc_static + "-O -ffast-math"),
+            ],
+            real_list=["real*4", "real*8"],
+            write_build_run=fortran_write_build_run,
+        )
+    if 1:
+        run_combinations(
+            compiler_versions,
+            all_utimes,
+            a_out_archive=a_out_archive,
+            write_a_out_archive=write_a_out_archive,
+            n_scatt=n_scatt,
+            n_refl=n_refl,
+            compiler_build_opts_list=[
+                ("icpc", "-static -O"),
+                ("g++", gcc_static + "-O -ffast-math"),
+            ],
+            real_list=["float", "double"],
+            write_build_run=cpp_write_build_run,
+        )
+    if write_a_out_archive and len(a_out_archive) != 0:
+        print("Writing file: a_out_archive.pickle")
+        easy_pickle.dump(
+            file_name="a_out_archive.pickle",
+            obj=(
+                n_scatt,
+                n_refl,
+                build_platform,
+                build_node,
+                compiler_versions,
+                gcc_static,
+                a_out_archive,
+            ),
+        )
+    print()
+    print("current_platform:", platform.platform())
+    print("current_node:", platform.node())
+    print("build_platform:", build_platform)
+    print("build_node:", build_node)
+    print('gcc_static: "%s"' % gcc_static)
+    for compiler_version in compiler_versions:
+        print("compiler:", compiler_version)
+    print("n_scatt * n_refl: %d * %d" % (n_scatt, n_refl))
+    for utimes in all_utimes:
+        print(" ".join(["%6.2f" % u for u in utimes]))
 
-if (__name__ == "__main__"):
-  run(args=sys.argv[1:])
+
+if __name__ == "__main__":
+    run(args=sys.argv[1:])

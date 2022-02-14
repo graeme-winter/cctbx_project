@@ -433,110 +433,105 @@ END
 """
 
 ncs_pars = iotbx.ncs.input.get_default_params()
-ncs_pars.ncs_search.chain_max_rmsd=0.1
+ncs_pars.ncs_search.chain_max_rmsd = 0.1
+
 
 def test_1():
-  h = iotbx.pdb.input(source_info=None, lines=test_pdb_1).construct_hierarchy()
-  asc = h.atom_selection_cache()
-  ncs_inp = iotbx.ncs.input(
-      hierarchy=h,
-      params=ncs_pars.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  # group 1
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain B").iselection())
+    h = iotbx.pdb.input(source_info=None, lines=test_pdb_1).construct_hierarchy()
+    asc = h.atom_selection_cache()
+    ncs_inp = iotbx.ncs.input(hierarchy=h, params=ncs_pars.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    # group 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain B").iselection())
+
 
 def test_2():
-  """ Testing TYR both CD and CE flips"""
-  h = iotbx.pdb.input(source_info=None, lines=test_pdb_2).construct_hierarchy()
-  asc = h.atom_selection_cache()
-  ncs_inp = iotbx.ncs.input(
-      hierarchy=h,
-      params=ncs_pars.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  # group 1
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain B").iselection())
+    """Testing TYR both CD and CE flips"""
+    h = iotbx.pdb.input(source_info=None, lines=test_pdb_2).construct_hierarchy()
+    asc = h.atom_selection_cache()
+    ncs_inp = iotbx.ncs.input(hierarchy=h, params=ncs_pars.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    # group 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain B").iselection())
+
 
 def test_3():
-  """ Testing TYR only CD and flip. Not sure if such flip is valid.
-      This test is not working when we use torsion angles because in this
-      procedure we don't flip only one atom out of two like in this case"""
-  h = iotbx.pdb.input(source_info=None, lines=test_pdb_3).construct_hierarchy()
-  asc = h.atom_selection_cache()
-  ncs_inp = iotbx.ncs.input(
-      hierarchy=h,
-      params=ncs_pars.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  # group 1
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain B").iselection())
+    """Testing TYR only CD and flip. Not sure if such flip is valid.
+    This test is not working when we use torsion angles because in this
+    procedure we don't flip only one atom out of two like in this case"""
+    h = iotbx.pdb.input(source_info=None, lines=test_pdb_3).construct_hierarchy()
+    asc = h.atom_selection_cache()
+    ncs_inp = iotbx.ncs.input(hierarchy=h, params=ncs_pars.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    # group 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain B").iselection())
+
 
 def test_4():
-  """ HIS is interesting because of different atoms can be flipped """
-  h = iotbx.pdb.input(source_info=None, lines=test_pdb_4).construct_hierarchy()
-  asc = h.atom_selection_cache()
-  ncs_inp = iotbx.ncs.input(
-      hierarchy=h,
-      params=ncs_pars.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  # group 1
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain B").iselection())
+    """HIS is interesting because of different atoms can be flipped"""
+    h = iotbx.pdb.input(source_info=None, lines=test_pdb_4).construct_hierarchy()
+    asc = h.atom_selection_cache()
+    ncs_inp = iotbx.ncs.input(hierarchy=h, params=ncs_pars.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    # group 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain B").iselection())
+
 
 def test_5():
-  """ Testing all possible residues at once. All flipped wherever possible
-  in chain B """
-  h = iotbx.pdb.input(source_info=None, lines=test_pdb_5).construct_hierarchy()
-  asc = h.atom_selection_cache()
-  ncs_inp = iotbx.ncs.input(
-      hierarchy=h,
-      params=ncs_pars.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  # group 1
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain B").iselection())
+    """Testing all possible residues at once. All flipped wherever possible
+    in chain B"""
+    h = iotbx.pdb.input(source_info=None, lines=test_pdb_5).construct_hierarchy()
+    asc = h.atom_selection_cache()
+    ncs_inp = iotbx.ncs.input(hierarchy=h, params=ncs_pars.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    # group 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain B").iselection())
+
 
 def test_6():
-  "Actually making flips for test_pdb_1"
-  h = iotbx.pdb.input(source_info=None, lines=test_pdb_1_1).construct_hierarchy()
-  asc = h.atom_selection_cache()
-  ncs_inp = iotbx.ncs.input(
-      hierarchy=h,
-      params=ncs_pars.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    "Actually making flips for test_pdb_1"
+    h = iotbx.pdb.input(source_info=None, lines=test_pdb_1_1).construct_hierarchy()
+    asc = h.atom_selection_cache()
+    ncs_inp = iotbx.ncs.input(hierarchy=h, params=ncs_pars.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
 
-  nu.flip_atoms_in_ncs_groups(h, ncs_groups)
-  h.write_pdb_file("test_6_result.pdb")
+    nu.flip_atoms_in_ncs_groups(h, ncs_groups)
+    h.write_pdb_file("test_6_result.pdb")
+
 
 def test_7():
-  "Actually making flips for test_pdb_2"
-  answer_pdb_str = """
+    "Actually making flips for test_pdb_2"
+    answer_pdb_str = """
 ATOM      1  N   TYR A   1      30.440   8.711   1.306  1.00 64.98           N
 ATOM      2  CA  TYR A   1      29.117   9.171   1.763  1.00 67.34           C
 ATOM      3  C   TYR A   1      28.007   8.102   1.965  1.00 65.79           C
@@ -564,24 +559,25 @@ ATOM     23  CZ  TYR B   1      30.988  13.916   7.161  1.00 69.15           C
 ATOM     24  OH  TYR B   1      31.560  15.146   6.892  1.00 61.93           O
 TER
   """
-  h = iotbx.pdb.input(source_info=None, lines=test_pdb_2).construct_hierarchy()
-  anwer_h = iotbx.pdb.input(source_info=None, lines=answer_pdb_str).construct_hierarchy()
-  h.write_pdb_file("test_7_before.pdb")
+    h = iotbx.pdb.input(source_info=None, lines=test_pdb_2).construct_hierarchy()
+    anwer_h = iotbx.pdb.input(
+        source_info=None, lines=answer_pdb_str
+    ).construct_hierarchy()
+    h.write_pdb_file("test_7_before.pdb")
 
-  ncs_inp = iotbx.ncs.input(
-      hierarchy=h,
-      params=ncs_pars.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    ncs_inp = iotbx.ncs.input(hierarchy=h, params=ncs_pars.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
 
-  nu.flip_atoms_in_ncs_groups(h, ncs_groups)
-  h.write_pdb_file("test_7_result.pdb")
-  rmsd_smart = calculate_rmsd_smart(anwer_h, h)
-  print(rmsd_smart)
-  assert rmsd_smart < 0.01
+    nu.flip_atoms_in_ncs_groups(h, ncs_groups)
+    h.write_pdb_file("test_7_result.pdb")
+    rmsd_smart = calculate_rmsd_smart(anwer_h, h)
+    print(rmsd_smart)
+    assert rmsd_smart < 0.01
+
 
 def test_8():
-  """ Actually making flips for test_pdb_5"""
-  answer_pdb_str = """
+    """Actually making flips for test_pdb_5"""
+    answer_pdb_str = """
 ATOM      1  N   ARG A   1      26.061  12.824   1.988  1.00  0.00           N
 ATOM      2  CA  ARG A   1      27.253  12.525   2.773  1.00  0.00           C
 ATOM      3  C   ARG A   1      28.520  12.882   2.003  1.00  0.00           C
@@ -881,30 +877,29 @@ ATOM    295  O   ALA B  22      98.421   7.153   7.222  1.00  0.00           O
 ATOM    296  CB  ALA B  22      97.050   7.197   4.636  1.00  0.00           C
 TER
   """
-  h = iotbx.pdb.input(source_info=None, lines=test_pdb_5).construct_hierarchy()
-  anwer_h = iotbx.pdb.input(source_info=None,
-                            lines=answer_pdb_str).construct_hierarchy()
-  h.write_pdb_file("test_8_before.pdb")
+    h = iotbx.pdb.input(source_info=None, lines=test_pdb_5).construct_hierarchy()
+    anwer_h = iotbx.pdb.input(
+        source_info=None, lines=answer_pdb_str
+    ).construct_hierarchy()
+    h.write_pdb_file("test_8_before.pdb")
 
-  ncs_inp = iotbx.ncs.input(
-    hierarchy=h,
-    params=ncs_pars.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    ncs_inp = iotbx.ncs.input(hierarchy=h, params=ncs_pars.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
 
-  nu.flip_atoms_in_ncs_groups(h, ncs_groups)
-  h.write_pdb_file("test_8_result.pdb")
-  rmsd_smart = calculate_rmsd_smart(anwer_h, h)
-  print(rmsd_smart)
-  assert rmsd_smart < 0.01
+    nu.flip_atoms_in_ncs_groups(h, ncs_groups)
+    h.write_pdb_file("test_8_result.pdb")
+    rmsd_smart = calculate_rmsd_smart(anwer_h, h)
+    print(rmsd_smart)
+    assert rmsd_smart < 0.01
 
 
-if __name__=='__main__':
-  test_1()
-  test_2()
-  # test_3() intentional, see docstring in the test.
-  test_4()
-  test_5()
-  test_6()
-  test_7()
-  test_8()
-  print("OK")
+if __name__ == "__main__":
+    test_1()
+    test_2()
+    # test_3() intentional, see docstring in the test.
+    test_4()
+    test_5()
+    test_6()
+    test_7()
+    test_8()
+    print("OK")

@@ -3,26 +3,32 @@ from libtbx.test_utils import show_diff
 from libtbx import easy_run
 import sys
 
+
 def run_and_compare(commands, expected_output):
-  def digest(lines):
-    result = []
-    for line in lines:
-      if (line.strip().startswith("Change of basis: ")): continue
-      if (line.strip().startswith("Inverse: ")): continue
-      result.append(line)
-    result.sort()
-    return "\n".join(result)+"\n"
-  for command in commands:
-    lines = easy_run.fully_buffered(
-      command=command).raise_if_errors().stdout_lines
-    assert not show_diff(digest(lines), digest(expected_output.splitlines()))
+    def digest(lines):
+        result = []
+        for line in lines:
+            if line.strip().startswith("Change of basis: "):
+                continue
+            if line.strip().startswith("Inverse: "):
+                continue
+            result.append(line)
+        result.sort()
+        return "\n".join(result) + "\n"
+
+    for command in commands:
+        lines = easy_run.fully_buffered(command=command).raise_if_errors().stdout_lines
+        assert not show_diff(digest(lines), digest(expected_output.splitlines()))
+
 
 def exercise(args):
-  assert len(args) == 0
-  run_and_compare(
-    ['iotbx.lattice_symmetry'
-       ' --unit_cell="12.7923,12.8923,29.4356,102.846,103.846,22.7475"'],
-    """\
+    assert len(args) == 0
+    run_and_compare(
+        [
+            "iotbx.lattice_symmetry"
+            ' --unit_cell="12.7923,12.8923,29.4356,102.846,103.846,22.7475"'
+        ],
+        """\
 
 Input
 =====
@@ -53,12 +59,15 @@ Symmetry in minimum-lengths cell: P -1 (No. 2)
                          Inverse: x+y+z,-x,z
       Maximal angular difference: 0.000 degrees
 
-""")
-  #
-  run_and_compare(
-    ['iotbx.lattice_symmetry --unit_cell=12,12.2,12.1,89,90,92 F',
-     'cctbx.lattice_symmetry'],
-    """\
+""",
+    )
+    #
+    run_and_compare(
+        [
+            "iotbx.lattice_symmetry --unit_cell=12,12.2,12.1,89,90,92 F",
+            "cctbx.lattice_symmetry",
+        ],
+        """\
 
 Input
 =====
@@ -269,12 +278,15 @@ Symmetry in minimum-lengths cell: P -1 (No. 2)
                          Inverse: -1/2*x-1/2*z,-1/2*x-1/2*y,1/2*y+1/2*z
       Maximal angular difference: 0.000 degrees
 
-""")
-  #
-  run_and_compare(
-    ['iotbx.lattice_symmetry --unit_cell="22.54 22.64 6.35 90.1 89.9 90.3" I',
-     'cctbx.lattice_symmetry 1'],
-    """\
+""",
+    )
+    #
+    run_and_compare(
+        [
+            'iotbx.lattice_symmetry --unit_cell="22.54 22.64 6.35 90.1 89.9 90.3" I',
+            "cctbx.lattice_symmetry 1",
+        ],
+        """\
 
 Input
 =====
@@ -368,12 +380,15 @@ Symmetry in minimum-lengths cell: P -1 (No. 2)
                          Inverse: 1/2*y-1/2*z,1/2*y+1/2*z,x+1/2*y+1/2*z
       Maximal angular difference: 0.000 degrees
 
-""")
-  #
-  run_and_compare(
-    ['iotbx.lattice_symmetry'
-       ' --unit_cell="78.9 82.3 57.0 90 93.4 90.1" C --delta=1.4'],
-    """\
+""",
+    )
+    #
+    run_and_compare(
+        [
+            "iotbx.lattice_symmetry"
+            ' --unit_cell="78.9 82.3 57.0 90 93.4 90.1" C --delta=1.4'
+        ],
+        """\
 
 Input
 =====
@@ -431,47 +446,59 @@ Symmetry in minimum-lengths cell: P -1 (No. 2)
                          Inverse: 1/2*x+1/2*z,1/2*x-1/2*z,y
       Maximal angular difference: 0.000 degrees
 
-""")
-  assert tst_instability_on_the_lepage_tolerance()
-  print("OK")
+""",
+    )
+    assert tst_instability_on_the_lepage_tolerance()
+    print("OK")
+
 
 def tst_instability_on_the_lepage_tolerance():
-  """Basic idea:  we introduced the Lepage tolerance to solve the problem
-     that numerically-determined or experimentally-determined twofolds do
-     not fall at exact positions.  However, when the input is exact, we
-     expect to be able to reduce the tolerance to zero."""
+    """Basic idea:  we introduced the Lepage tolerance to solve the problem
+    that numerically-determined or experimentally-determined twofolds do
+    not fall at exact positions.  However, when the input is exact, we
+    expect to be able to reduce the tolerance to zero."""
 
-  def give_cases():
-    from cctbx import crystal
-    from cctbx.uctbx import unit_cell
-    from cctbx.sgtbx import space_group_info
-    pdb =["1vjg/P 32 2 1/(56.192, 56.192, 129.318, 90, 90, 120)/16",
-          "1vjz/P 43 21 2/(64.684, 64.684, 202.189, 90, 90, 90)/10",
-          "1vl6/P 65/(143.963, 143.963, 163.428, 90, 90, 120)/16",
-          "1vlc/P 3 2 1/(118.78, 118.78, 56.699, 90, 90, 120)/16",
-          "2ash/C 1 2 1/(169.467, 99.422, 124.163, 90, 123.8, 90)/2",
-          "2etj/P 31/(51.821, 51.821, 76.293, 90, 90, 120)/16",
-          "2qyv/P 21 21 2/(173.922, 84.293, 123.204, 90, 90, 90)/5"]
-    for header in pdb:
-      tokens=header.split("/")
-      case = {"pdb_code":tokens[0],"centring_type":tokens[1][0],
-              "unit_cell":unit_cell(eval(tokens[2])),
-              "expected_centrosymmetric_subgroups_of_metric":int(tokens[3])}
-      case["symmetry"]=crystal.symmetry(space_group_info=
-                         space_group_info(tokens[1]),
-                         unit_cell=case["unit_cell"])
-      yield case
+    def give_cases():
+        from cctbx import crystal
+        from cctbx.uctbx import unit_cell
+        from cctbx.sgtbx import space_group_info
 
-  from cctbx.sgtbx.lattice_symmetry import metric_subgroups
-  for small_max_delta in [1.E-6, 0.0]:
-    for case in give_cases():
-      G = metric_subgroups(case["symmetry"],
-                         max_delta=small_max_delta,bravais_types_only=False)
-    assert len(G.result_groups)==case["expected_centrosymmetric_subgroups_of_metric"]
+        pdb = [
+            "1vjg/P 32 2 1/(56.192, 56.192, 129.318, 90, 90, 120)/16",
+            "1vjz/P 43 21 2/(64.684, 64.684, 202.189, 90, 90, 90)/10",
+            "1vl6/P 65/(143.963, 143.963, 163.428, 90, 90, 120)/16",
+            "1vlc/P 3 2 1/(118.78, 118.78, 56.699, 90, 90, 120)/16",
+            "2ash/C 1 2 1/(169.467, 99.422, 124.163, 90, 123.8, 90)/2",
+            "2etj/P 31/(51.821, 51.821, 76.293, 90, 90, 120)/16",
+            "2qyv/P 21 21 2/(173.922, 84.293, 123.204, 90, 90, 90)/5",
+        ]
+        for header in pdb:
+            tokens = header.split("/")
+            case = {
+                "pdb_code": tokens[0],
+                "centring_type": tokens[1][0],
+                "unit_cell": unit_cell(eval(tokens[2])),
+                "expected_centrosymmetric_subgroups_of_metric": int(tokens[3]),
+            }
+            case["symmetry"] = crystal.symmetry(
+                space_group_info=space_group_info(tokens[1]),
+                unit_cell=case["unit_cell"],
+            )
+            yield case
 
-  return True
+    from cctbx.sgtbx.lattice_symmetry import metric_subgroups
+
+    for small_max_delta in [1.0e-6, 0.0]:
+        for case in give_cases():
+            G = metric_subgroups(
+                case["symmetry"], max_delta=small_max_delta, bravais_types_only=False
+            )
+        assert (
+            len(G.result_groups) == case["expected_centrosymmetric_subgroups_of_metric"]
+        )
+
+    return True
 
 
-
-if (__name__ == "__main__"):
-  exercise(sys.argv[1:])
+if __name__ == "__main__":
+    exercise(sys.argv[1:])

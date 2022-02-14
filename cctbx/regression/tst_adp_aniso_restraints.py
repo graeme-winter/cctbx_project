@@ -29,107 +29,116 @@ ATOM     15  CA  PHE A   1       7.000   7.000   7.000  1.00 87.18           C
 END
 """
 
-def fd(xray_structure, restraints_manager, eps=1.e-2):
+
+def fd(xray_structure, restraints_manager, eps=1.0e-2):
     uc = xray_structure.unit_cell()
     adp_ro = cctbx.adp_restraints.adp_aniso_restraints(
-                                       xray_structure     = xray_structure,
-                                       restraints_manager = restraints_manager,
-                                       use_hd = False)
+        xray_structure=xray_structure,
+        restraints_manager=restraints_manager,
+        use_hd=False,
+    )
     g_aniso = adp_ro.gradients_aniso_cart
     g_iso = adp_ro.gradients_iso
     for i_seq, scatterer in enumerate(xray_structure.scatterers()):
         fl = scatterer.flags
-        #print "scatterer :", i_seq, fl.use_u_iso(), fl.grad_u_iso(), \
+        # print "scatterer :", i_seq, fl.use_u_iso(), fl.grad_u_iso(), \
         #                     fl.use_u_aniso(), fl.grad_u_aniso()
-        if(fl.use_u_aniso()):
-           for i_ind in range(6):
-               xrs1 = xray_structure.deep_copy_scatterers()
-               xrs2 = xray_structure.deep_copy_scatterers()
-               sc1  = xrs1.scatterers()
-               sc2  = xrs2.scatterers()
-               us1 = sc1.extract_u_cart(uc)
-               us2 = sc1.extract_u_cart(uc)
-               m1 = flex.double(us1[i_seq])
-               m2 = flex.double(us2[i_seq])
-               m1[i_ind] = m1[i_ind] - eps
-               m2[i_ind] = m2[i_ind] + eps
-               us1[i_seq] = list(m1)
-               us2[i_seq] = list(m2)
-               sc1.set_u_cart(uc, us1)
-               sc2.set_u_cart(uc, us2)
-               adp_ro1 = cctbx.adp_restraints.adp_aniso_restraints(
-                                       xray_structure     = xrs1,
-                                       restraints_manager = restraints_manager,
-                                       use_hd = False)
-               adp_ro2 = cctbx.adp_restraints.adp_aniso_restraints(
-                                       xray_structure     = xrs2,
-                                       restraints_manager = restraints_manager,
-                                       use_hd = False)
-               g1 = (adp_ro2.target - adp_ro1.target)/(2*eps)
-               g2 = g_aniso[i_seq][i_ind]
-               #print "   fin.diff.= %10.5f anal.= %10.5f diff.= %10.5f"%(g1, g2, g1-g2)
-               assert approx_equal(g1,g2,1.e-4)
-        if(fl.use_u_iso()):
-           sel = xray_structure.use_u_iso()
-           xrs1 = xray_structure.deep_copy_scatterers()
-           xrs2 = xray_structure.deep_copy_scatterers()
-           sc1  = xrs1.scatterers()
-           sc2  = xrs2.scatterers()
-           us1 = sc1.extract_u_iso()
-           us2 = sc1.extract_u_iso()
-           us1[i_seq] = us1[i_seq] - eps
-           us2[i_seq] = us2[i_seq] + eps
-           sc1.set_u_iso(us1, sel, uc)
-           sc2.set_u_iso(us2, sel, uc)
-           adp_ro1 = cctbx.adp_restraints.adp_aniso_restraints(
-                                      xray_structure     = xrs1,
-                                      restraints_manager = restraints_manager,
-                                      use_hd = False)
-           adp_ro2 = cctbx.adp_restraints.adp_aniso_restraints(
-                                      xray_structure     = xrs2,
-                                      restraints_manager = restraints_manager,
-                                      use_hd = False)
-           g1 = (adp_ro2.target - adp_ro1.target)/(2*eps)
-           g2 = g_iso[i_seq]
-           #print "   fin.diff.= %10.5f anal.= %10.5f diff.= %10.5f"%(g1, g2, g1-g2)
-           assert approx_equal(g1,g2,1.e-4)
+        if fl.use_u_aniso():
+            for i_ind in range(6):
+                xrs1 = xray_structure.deep_copy_scatterers()
+                xrs2 = xray_structure.deep_copy_scatterers()
+                sc1 = xrs1.scatterers()
+                sc2 = xrs2.scatterers()
+                us1 = sc1.extract_u_cart(uc)
+                us2 = sc1.extract_u_cart(uc)
+                m1 = flex.double(us1[i_seq])
+                m2 = flex.double(us2[i_seq])
+                m1[i_ind] = m1[i_ind] - eps
+                m2[i_ind] = m2[i_ind] + eps
+                us1[i_seq] = list(m1)
+                us2[i_seq] = list(m2)
+                sc1.set_u_cart(uc, us1)
+                sc2.set_u_cart(uc, us2)
+                adp_ro1 = cctbx.adp_restraints.adp_aniso_restraints(
+                    xray_structure=xrs1,
+                    restraints_manager=restraints_manager,
+                    use_hd=False,
+                )
+                adp_ro2 = cctbx.adp_restraints.adp_aniso_restraints(
+                    xray_structure=xrs2,
+                    restraints_manager=restraints_manager,
+                    use_hd=False,
+                )
+                g1 = (adp_ro2.target - adp_ro1.target) / (2 * eps)
+                g2 = g_aniso[i_seq][i_ind]
+                # print "   fin.diff.= %10.5f anal.= %10.5f diff.= %10.5f"%(g1, g2, g1-g2)
+                assert approx_equal(g1, g2, 1.0e-4)
+        if fl.use_u_iso():
+            sel = xray_structure.use_u_iso()
+            xrs1 = xray_structure.deep_copy_scatterers()
+            xrs2 = xray_structure.deep_copy_scatterers()
+            sc1 = xrs1.scatterers()
+            sc2 = xrs2.scatterers()
+            us1 = sc1.extract_u_iso()
+            us2 = sc1.extract_u_iso()
+            us1[i_seq] = us1[i_seq] - eps
+            us2[i_seq] = us2[i_seq] + eps
+            sc1.set_u_iso(us1, sel, uc)
+            sc2.set_u_iso(us2, sel, uc)
+            adp_ro1 = cctbx.adp_restraints.adp_aniso_restraints(
+                xray_structure=xrs1, restraints_manager=restraints_manager, use_hd=False
+            )
+            adp_ro2 = cctbx.adp_restraints.adp_aniso_restraints(
+                xray_structure=xrs2, restraints_manager=restraints_manager, use_hd=False
+            )
+            g1 = (adp_ro2.target - adp_ro1.target) / (2 * eps)
+            g2 = g_iso[i_seq]
+            # print "   fin.diff.= %10.5f anal.= %10.5f diff.= %10.5f"%(g1, g2, g1-g2)
+            assert approx_equal(g1, g2, 1.0e-4)
+
 
 def exercise():
-  if (not libtbx.env.has_module("mmtbx")):
-    print("Skipping exercise(): mmtbx module not available")
-    return
-  if (libtbx.env.find_in_repositories(relative_path="chem_data") is None):
-    print("Skipping exercise(): chem_data directory not available")
-    return
-  from mmtbx.monomer_library import pdb_interpretation
-  file_name = "phe_tst_adp_aniso_restraints.pdb"
-  open(file_name, "w").write(phe_pdb)
-  out = StringIO()
-  processed_pdb_file = pdb_interpretation.run(
-                                        args                     = [file_name],
-                                        strict_conflict_handling = False,
-                                        log                      = out)
-  geo = processed_pdb_file.geometry_restraints_manager()
-  xray_structure = processed_pdb_file.xray_structure()
-  xray_structure.scatterers().flags_set_grads(state=False)
-  xray_structure.scatterers().flags_set_grad_u_iso(
-    iselection=xray_structure.use_u_iso().iselection())
-  xray_structure.scatterers().flags_set_grad_u_aniso(
-    iselection=xray_structure.use_u_aniso().iselection())
-  adp_rm = cctbx.adp_restraints.adp_aniso_restraints(
-                                           xray_structure     = xray_structure,
-                                           restraints_manager = geo,
-                                           use_hd = False)
-  assert approx_equal(flex.mean(adp_rm.gradients_iso), 0.713756592583)
-  assert approx_equal(flex.mean(adp_rm.gradients_aniso_cart.as_double()), -0.118959432097)
-  assert approx_equal(adp_rm.target, 8.97112989232)
-  fd(xray_structure = xray_structure, restraints_manager = geo, eps=1.e-4)
+    if not libtbx.env.has_module("mmtbx"):
+        print("Skipping exercise(): mmtbx module not available")
+        return
+    if libtbx.env.find_in_repositories(relative_path="chem_data") is None:
+        print("Skipping exercise(): chem_data directory not available")
+        return
+    from mmtbx.monomer_library import pdb_interpretation
+
+    file_name = "phe_tst_adp_aniso_restraints.pdb"
+    open(file_name, "w").write(phe_pdb)
+    out = StringIO()
+    processed_pdb_file = pdb_interpretation.run(
+        args=[file_name], strict_conflict_handling=False, log=out
+    )
+    geo = processed_pdb_file.geometry_restraints_manager()
+    xray_structure = processed_pdb_file.xray_structure()
+    xray_structure.scatterers().flags_set_grads(state=False)
+    xray_structure.scatterers().flags_set_grad_u_iso(
+        iselection=xray_structure.use_u_iso().iselection()
+    )
+    xray_structure.scatterers().flags_set_grad_u_aniso(
+        iselection=xray_structure.use_u_aniso().iselection()
+    )
+    adp_rm = cctbx.adp_restraints.adp_aniso_restraints(
+        xray_structure=xray_structure, restraints_manager=geo, use_hd=False
+    )
+    assert approx_equal(flex.mean(adp_rm.gradients_iso), 0.713756592583)
+    assert approx_equal(
+        flex.mean(adp_rm.gradients_aniso_cart.as_double()), -0.118959432097
+    )
+    assert approx_equal(adp_rm.target, 8.97112989232)
+    fd(xray_structure=xray_structure, restraints_manager=geo, eps=1.0e-4)
+
 
 def run(args):
-  assert len(args) == 0
-  exercise()
-  print("OK")
+    assert len(args) == 0
+    exercise()
+    print("OK")
 
-if (__name__ == "__main__"):
-  import sys
-  run(args=sys.argv[1:])
+
+if __name__ == "__main__":
+    import sys
+
+    run(args=sys.argv[1:])

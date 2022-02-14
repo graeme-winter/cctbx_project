@@ -45,55 +45,55 @@ ATOM      7  CG2 THR C   1       7.417   4.305   7.960  1.00 10.00           C
 TER
 """
 
-def tst_1(prefix="gm_ncs_constr_tst1"):
-  log = sys.stdout
-  pdb_in = iotbx.pdb.input(source_info=None, lines=pdb_string1.split('\n'))
-  # print dir(pdb_in)
-  pdb_int_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  pdb_int_params.pdb_interpretation.ncs_search.enabled = True
-  model = mmtbx.model.manager(model_input = pdb_in)
-  model.process(pdb_interpretation_params=pdb_int_params,
-    make_restraints=True)
-  ncs_obj = iotbx.ncs.input(hierarchy=model.get_hierarchy())
-  ncs_restraints_group_list = ncs_obj.get_ncs_restraints_group_list()
-  ncs_obj.show(format='phil')
-  grm = model.get_restraints_manager()
-  tmp_xrs = model.get_xray_structure().deep_copy_scatterers()
-  refine_selection = flex.size_t(range(model.get_number_of_atoms()))
 
-  # print "refining sites"
-  cycle = 0
-  tfg_obj = mmtbx.refinement.minimization_ncs_constraints.\
-      target_function_and_grads_geometry_minimization(
-          xray_structure=tmp_xrs,
-          ncs_restraints_group_list=ncs_restraints_group_list,
-          refine_selection=refine_selection,
-          restraints_manager=grm.geometry,
-          refine_sites=True,
-          refine_transformations=False,
-          )
-  minimized = mmtbx.refinement.minimization_ncs_constraints.lbfgs(
-    target_and_grads_object      = tfg_obj,
-    xray_structure               = tmp_xrs,
-    ncs_restraints_group_list    = ncs_restraints_group_list,
-    refine_selection             = refine_selection,
-    finite_grad_differences_test = False,
-    max_iterations               = 100,
-    refine_sites                 = True,
-    refine_transformations       = False)
-  refined_pdb_h = model.get_hierarchy().deep_copy()
-  refined_pdb_h.adopt_xray_structure(tmp_xrs)
-  refined_pdb_h.write_pdb_file("refined_%d.pdb" % cycle)
-  new_ncs_obj = iotbx.ncs.input(hierarchy=refined_pdb_h)
-  spec =  new_ncs_obj.get_ncs_info_as_spec()
-  new_nrgl = new_ncs_obj.get_ncs_restraints_group_list()
-  assert ncs_restraints_group_list == new_nrgl
-  overall_rmsd_after = spec.overall_rmsd()
-  assert overall_rmsd_after < 1e-6
+def tst_1(prefix="gm_ncs_constr_tst1"):
+    log = sys.stdout
+    pdb_in = iotbx.pdb.input(source_info=None, lines=pdb_string1.split("\n"))
+    # print dir(pdb_in)
+    pdb_int_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    pdb_int_params.pdb_interpretation.ncs_search.enabled = True
+    model = mmtbx.model.manager(model_input=pdb_in)
+    model.process(pdb_interpretation_params=pdb_int_params, make_restraints=True)
+    ncs_obj = iotbx.ncs.input(hierarchy=model.get_hierarchy())
+    ncs_restraints_group_list = ncs_obj.get_ncs_restraints_group_list()
+    ncs_obj.show(format="phil")
+    grm = model.get_restraints_manager()
+    tmp_xrs = model.get_xray_structure().deep_copy_scatterers()
+    refine_selection = flex.size_t(range(model.get_number_of_atoms()))
+
+    # print "refining sites"
+    cycle = 0
+    tfg_obj = mmtbx.refinement.minimization_ncs_constraints.target_function_and_grads_geometry_minimization(
+        xray_structure=tmp_xrs,
+        ncs_restraints_group_list=ncs_restraints_group_list,
+        refine_selection=refine_selection,
+        restraints_manager=grm.geometry,
+        refine_sites=True,
+        refine_transformations=False,
+    )
+    minimized = mmtbx.refinement.minimization_ncs_constraints.lbfgs(
+        target_and_grads_object=tfg_obj,
+        xray_structure=tmp_xrs,
+        ncs_restraints_group_list=ncs_restraints_group_list,
+        refine_selection=refine_selection,
+        finite_grad_differences_test=False,
+        max_iterations=100,
+        refine_sites=True,
+        refine_transformations=False,
+    )
+    refined_pdb_h = model.get_hierarchy().deep_copy()
+    refined_pdb_h.adopt_xray_structure(tmp_xrs)
+    refined_pdb_h.write_pdb_file("refined_%d.pdb" % cycle)
+    new_ncs_obj = iotbx.ncs.input(hierarchy=refined_pdb_h)
+    spec = new_ncs_obj.get_ncs_info_as_spec()
+    new_nrgl = new_ncs_obj.get_ncs_restraints_group_list()
+    assert ncs_restraints_group_list == new_nrgl
+    overall_rmsd_after = spec.overall_rmsd()
+    assert overall_rmsd_after < 1e-6
 
 
 def tst_2(prefix="gm_ncs_constr_tst2"):
-  pdb_str = """\
+    pdb_str = """\
 CRYST1   18.415   14.419   12.493  90.00  90.00  90.00 P 1
 ATOM      5  O   HOH S   3       5.648   5.054   4.347  1.00 10.00           O
 ATOM      6  O   HOH S   4       2.000   5.459   5.854  1.00 10.00           O
@@ -136,45 +136,52 @@ ATOM      4  O   HOH E   2       4.186   2.319   6.140  1.00 10.00           O
 TER      39      HOH E   2
 END
 """
-  f = open("%s_start.pdb" % prefix, 'w')
-  f.write(pdb_str)
-  f.close()
-  #
-  #  No NCS constraints - big rmsd
-  #
-  cmd = " ".join([
-      "phenix.geometry_minimization",
-      "%s_start.pdb" % prefix,
-      # "ncs_search.enabled=True",
-      "output_file_name_prefix=%s_minimized" % prefix])
-  assert not easy_run.call(cmd)
-  pdb_inp = iotbx.pdb.input(
-      source_info=None, file_name="%s_minimized.pdb" % prefix)
-  h = pdb_inp.construct_hierarchy()
-  new_ncs_obj = iotbx.ncs.input(hierarchy=h)
-  spec =  new_ncs_obj.get_ncs_info_as_spec()
-  overall_rmsd_after = spec.overall_rmsd()
-  assert overall_rmsd_after > 0.1, overall_rmsd_after # big rmsd
-  #
-  # NCS constraints - small rmsd
-  #
-  cmd = " ".join([
-      "phenix.geometry_minimization",
-      "%s_start.pdb" % prefix,
-      "ncs_search.enabled=True",
-      "output_file_name_prefix=%s_minimized_ncs" % prefix])
-  assert not easy_run.call(cmd)
-  pdb_inp = iotbx.pdb.input(
-      source_info=None, file_name="%s_minimized_ncs.pdb" % prefix)
-  h = pdb_inp.construct_hierarchy()
-  new_ncs_obj = iotbx.ncs.input(hierarchy=h)
-  spec =  new_ncs_obj.get_ncs_info_as_spec()
-  overall_rmsd_after = spec.overall_rmsd()
-  assert overall_rmsd_after < 0.001, overall_rmsd_after # small rmsd
+    f = open("%s_start.pdb" % prefix, "w")
+    f.write(pdb_str)
+    f.close()
+    #
+    #  No NCS constraints - big rmsd
+    #
+    cmd = " ".join(
+        [
+            "phenix.geometry_minimization",
+            "%s_start.pdb" % prefix,
+            # "ncs_search.enabled=True",
+            "output_file_name_prefix=%s_minimized" % prefix,
+        ]
+    )
+    assert not easy_run.call(cmd)
+    pdb_inp = iotbx.pdb.input(source_info=None, file_name="%s_minimized.pdb" % prefix)
+    h = pdb_inp.construct_hierarchy()
+    new_ncs_obj = iotbx.ncs.input(hierarchy=h)
+    spec = new_ncs_obj.get_ncs_info_as_spec()
+    overall_rmsd_after = spec.overall_rmsd()
+    assert overall_rmsd_after > 0.1, overall_rmsd_after  # big rmsd
+    #
+    # NCS constraints - small rmsd
+    #
+    cmd = " ".join(
+        [
+            "phenix.geometry_minimization",
+            "%s_start.pdb" % prefix,
+            "ncs_search.enabled=True",
+            "output_file_name_prefix=%s_minimized_ncs" % prefix,
+        ]
+    )
+    assert not easy_run.call(cmd)
+    pdb_inp = iotbx.pdb.input(
+        source_info=None, file_name="%s_minimized_ncs.pdb" % prefix
+    )
+    h = pdb_inp.construct_hierarchy()
+    new_ncs_obj = iotbx.ncs.input(hierarchy=h)
+    spec = new_ncs_obj.get_ncs_info_as_spec()
+    overall_rmsd_after = spec.overall_rmsd()
+    assert overall_rmsd_after < 0.001, overall_rmsd_after  # small rmsd
 
-def tst_3(prefix='gm_ncs_constr_tst3'):
-  "Part of the model not in NCS"
-  pdb_str = """\
+
+def tst_3(prefix="gm_ncs_constr_tst3"):
+    "Part of the model not in NCS"
+    pdb_str = """\
 CRYST1   35.937   25.866   35.477  90.00  90.00  90.00 P 21 21 21
 ATOM      2  N   GLY A   1      -9.803   4.708   5.110  1.00 10.00           N
 ATOM      3  CA  GLY A   1      -9.830   3.946   4.636  1.00 10.00           C
@@ -233,42 +240,49 @@ ATOM     79  OD1 ASN B   3      -2.045   9.966   7.506  1.00 30.00           O
 ATOM     80  ND2 ASN B   3      -1.044   7.966   7.577  1.00 30.00           N
 END
 """
-  f = open("%s_start.pdb" % prefix, 'w')
-  f.write(pdb_str)
-  f.close()
-  #
-  #  No NCS constraints - big rmsd
-  #
-  cmd = " ".join([
-      "phenix.geometry_minimization",
-      "%s_start.pdb" % prefix,
-      "output_file_name_prefix=%s_minimized" % prefix])
-  assert not easy_run.call(cmd)
-  pdb_inp = iotbx.pdb.input(
-      source_info=None, file_name="%s_minimized.pdb" % prefix)
-  h = pdb_inp.construct_hierarchy()
-  new_ncs_obj = iotbx.ncs.input(hierarchy=h)
-  spec =  new_ncs_obj.get_ncs_info_as_spec()
-  overall_rmsd_after = spec.overall_rmsd()
-  assert overall_rmsd_after > 0.01, overall_rmsd_after # big rmsd
-  #
-  # NCS constraints - small rmsd
-  #
-  cmd = " ".join([
-      "phenix.geometry_minimization",
-      "%s_start.pdb" % prefix,
-      "ncs_search.enabled=True",
-      "output_file_name_prefix=%s_minimized_ncs" % prefix])
-  assert not easy_run.call(cmd)
-  pdb_inp = iotbx.pdb.input(
-      source_info=None, file_name="%s_minimized_ncs.pdb" % prefix)
-  h = pdb_inp.construct_hierarchy()
-  new_ncs_obj = iotbx.ncs.input(hierarchy=h)
-  spec =  new_ncs_obj.get_ncs_info_as_spec()
-  overall_rmsd_after = spec.overall_rmsd()
-  assert overall_rmsd_after < 0.001, overall_rmsd_after # small rmsd
+    f = open("%s_start.pdb" % prefix, "w")
+    f.write(pdb_str)
+    f.close()
+    #
+    #  No NCS constraints - big rmsd
+    #
+    cmd = " ".join(
+        [
+            "phenix.geometry_minimization",
+            "%s_start.pdb" % prefix,
+            "output_file_name_prefix=%s_minimized" % prefix,
+        ]
+    )
+    assert not easy_run.call(cmd)
+    pdb_inp = iotbx.pdb.input(source_info=None, file_name="%s_minimized.pdb" % prefix)
+    h = pdb_inp.construct_hierarchy()
+    new_ncs_obj = iotbx.ncs.input(hierarchy=h)
+    spec = new_ncs_obj.get_ncs_info_as_spec()
+    overall_rmsd_after = spec.overall_rmsd()
+    assert overall_rmsd_after > 0.01, overall_rmsd_after  # big rmsd
+    #
+    # NCS constraints - small rmsd
+    #
+    cmd = " ".join(
+        [
+            "phenix.geometry_minimization",
+            "%s_start.pdb" % prefix,
+            "ncs_search.enabled=True",
+            "output_file_name_prefix=%s_minimized_ncs" % prefix,
+        ]
+    )
+    assert not easy_run.call(cmd)
+    pdb_inp = iotbx.pdb.input(
+        source_info=None, file_name="%s_minimized_ncs.pdb" % prefix
+    )
+    h = pdb_inp.construct_hierarchy()
+    new_ncs_obj = iotbx.ncs.input(hierarchy=h)
+    spec = new_ncs_obj.get_ncs_info_as_spec()
+    overall_rmsd_after = spec.overall_rmsd()
+    assert overall_rmsd_after < 0.001, overall_rmsd_after  # small rmsd
+
 
 if __name__ == "__main__":
-  tst_1()
-  tst_2()
-  tst_3()
+    tst_1()
+    tst_2()
+    tst_3()

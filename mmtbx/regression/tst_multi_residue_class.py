@@ -4,7 +4,7 @@ import sys
 from iotbx import pdb
 from six.moves import range
 
-pdb_lines = '''
+pdb_lines = """
 ATOM  18755  N   LYS N  56      48.225  62.706 -53.862  1.00 69.77           N
 ATOM  18756  CA  LYS N  56      47.122  61.816 -53.629  1.00 70.02           C
 ATOM  18757  C   LYS N  56      46.793  61.775 -52.151  1.00 70.49           C
@@ -62,63 +62,79 @@ ATOM  18808  C   SER N  62      60.085  64.721 -50.329  1.00 60.49           C
 ATOM  18809  O   SER N  62      59.168  65.539 -50.236  1.00 60.11           O
 ATOM  18810  CB  SER N  62      60.128  62.434 -51.262  1.00 60.97           C
 ATOM  18811  OG  SER N  62      61.494  62.508 -51.606  1.00 61.00           O
-'''
+"""
+
 
 def run():
-  filename = 'tst_multi.pdb'
-  f=open(filename, 'w')
-  f.write(pdb_lines)
-  f.close()
-  pdb_inp = pdb.input(filename)
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  from mmtbx.conformation_dependent_library.testing_utils import \
-      get_geometry_restraints_manager
-  geometry_restraints_manager = get_geometry_restraints_manager(filename)
-  pdb_hierarchy.reset_i_seq_if_necessary()
-  refine = [False, # -179
-            True,  # -44
-            False, # 86
-            True,  # -22
-            False, # -179
-            ]
-  refine += [True]*5
-  refine += [False]*14
-  omegalyze = [False,
-               False,
-               False,
-               True,
-               False,
-               ]
-  omegalyze += [True]*3
-  omegalyze += [False]*16
-  from mmtbx.conformation_dependent_library import generate_protein_threes
-  for i, threes in enumerate(generate_protein_threes(pdb_hierarchy,
-                                        geometry_restraints_manager,
-                                        cdl_class=True,
-                                        #verbose=verbose,
-                                        )):
-    print(i, threes)
-    print('  omega   %5.1f' % threes.get_omega_value())
-    print("  cis?    %-5s %s" % (threes.cis_group(), threes.cis_group(limit=30)))
-    print("  trans?  %-5s %s" % (threes.trans_group(), threes.trans_group(limit=30)))
-    print("  rama    %s" % threes.get_ramalyze_key())
-    print('  conf    %s' % threes.is_pure_main_conf())
-    assert threes.cis_group()==refine[i], '%s!=%s' % (threes.cis_group(), refine[i])
-    assert threes.cis_group(limit=30)==omegalyze[i]
+    filename = "tst_multi.pdb"
+    f = open(filename, "w")
+    f.write(pdb_lines)
+    f.close()
+    pdb_inp = pdb.input(filename)
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    from mmtbx.conformation_dependent_library.testing_utils import (
+        get_geometry_restraints_manager,
+    )
 
-  for j in range(0,181,10):
-    i+=1
-    print("  %3d %-5s %-8s %-5s" % (
-      j,
-      threes._define_omega_a_la_duke_using_limit(j)=='cis',
-      threes._define_omega_a_la_duke_using_limit(j, limit=30),
-      refine[i],
-    ))
-    assert (threes._define_omega_a_la_duke_using_limit(j)=='cis')==refine[i]
+    geometry_restraints_manager = get_geometry_restraints_manager(filename)
+    pdb_hierarchy.reset_i_seq_if_necessary()
+    refine = [
+        False,  # -179
+        True,  # -44
+        False,  # 86
+        True,  # -22
+        False,  # -179
+    ]
+    refine += [True] * 5
+    refine += [False] * 14
+    omegalyze = [
+        False,
+        False,
+        False,
+        True,
+        False,
+    ]
+    omegalyze += [True] * 3
+    omegalyze += [False] * 16
+    from mmtbx.conformation_dependent_library import generate_protein_threes
+
+    for i, threes in enumerate(
+        generate_protein_threes(
+            pdb_hierarchy,
+            geometry_restraints_manager,
+            cdl_class=True,
+            # verbose=verbose,
+        )
+    ):
+        print(i, threes)
+        print("  omega   %5.1f" % threes.get_omega_value())
+        print("  cis?    %-5s %s" % (threes.cis_group(), threes.cis_group(limit=30)))
+        print(
+            "  trans?  %-5s %s" % (threes.trans_group(), threes.trans_group(limit=30))
+        )
+        print("  rama    %s" % threes.get_ramalyze_key())
+        print("  conf    %s" % threes.is_pure_main_conf())
+        assert threes.cis_group() == refine[i], "%s!=%s" % (
+            threes.cis_group(),
+            refine[i],
+        )
+        assert threes.cis_group(limit=30) == omegalyze[i]
+
+    for j in range(0, 181, 10):
+        i += 1
+        print(
+            "  %3d %-5s %-8s %-5s"
+            % (
+                j,
+                threes._define_omega_a_la_duke_using_limit(j) == "cis",
+                threes._define_omega_a_la_duke_using_limit(j, limit=30),
+                refine[i],
+            )
+        )
+        assert (threes._define_omega_a_la_duke_using_limit(j) == "cis") == refine[i]
 
 
-
-if __name__=="__main__":
-  args = sys.argv[1:]
-  del sys.argv[1:]
-  run()
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    del sys.argv[1:]
+    run()

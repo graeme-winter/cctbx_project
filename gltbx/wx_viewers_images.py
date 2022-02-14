@@ -1,7 +1,11 @@
 from __future__ import absolute_import, division, print_function
 from gltbx.images import img_data
 
-align_a_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+align_a_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 fafafaeaeaeaebebebedededededededededededededededededededededededededededededed\
 ededededededededededededededededededededededededededededededededededededededed\
 edededededededededebebebeaeaeaf8f8f8e6e6e6d1d1d1dbdbdbd0d0d0cfcfcfcfcfcfcfcfcf\
@@ -81,9 +85,14 @@ e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e1e1e1d8d8d8e2e2e2f5f5f5dededee2e2e2e4e4e4e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e1e1e1dededef2f2f2\
-""")
+""",
+)
 
-align_b_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+align_b_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 fafafaebebebebebebedededededededededededededededededededededededededededededed\
 ededededededededededededededededededededededededededededededededededededededed\
 edededededededededecececeaeaeaf8f8f8e8e8e8d0d0d0dcdcdcd1d1d1cfcfcfcfcfcfcfcfcf\
@@ -163,9 +172,14 @@ e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e1e1e1d9d9d9e0e0e0f6f6f6dededee1e1e1e5e5e5e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e1e1e1dededef1f1f1\
-""")
+""",
+)
 
-align_c_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+align_c_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 f8f8f8eaeaeaebebebedededededededededededededededededededededededededededededed\
 ededededededededededededededededededededededededededededededededededededededed\
 edededededededededecececeaeaeaf7f7f7e4e4e4d2d2d2dcdcdcd1d1d1cfcfcfcfcfcfcfcfcf\
@@ -245,9 +259,14 @@ e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0dadadadededef3f3f3dededee2e2e2e5e5e5e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0dededef0f0f0\
-""")
+""",
+)
 
-centre_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+centre_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 f9f9f9e3e3e3e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e4e5e5e5e5e5e8e8e6\
 ecebe8eeede9efeee9efeee9eeeee9ecece8e8e8e6e5e5e5e4e4e5e5e5e5e5e5e5e5e5e5e5e5e5\
 e5e5e5e5e5e5e5e5e5e5e5e5e3e3e3f5f5f5ecececd1d1d1dedededededededededededededede\
@@ -327,9 +346,14 @@ e1e1e1e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e2e2e1e9e9e4d8d9dda2a4c46369a8343d93182387\
 e0e0e0e1e1e1d7d7d7e3e3e3f8f8f8dfdfdfe0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e2e2e1e8e7e4eaeae5e3e3e2d8d9ddd0d1d9cfd0d9d7d7dce2e2e1eae9e5e8e8e4e3e3e1\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e1e1e1dededef3f3f3\
-""")
+""",
+)
 
-fit_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+fit_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 f6f6f6e5e5e5ededededededededededededededededededededededededededededededededed\
 ededededededededededededededededededededededededededededededededededededededed\
 edededededededededededede4e4e4f4f4f4e8e8e8c3c3c39090908a8a8a8a8a8a8a8a8a8a8a8a\
@@ -409,9 +433,14 @@ edededc4c4c4050505a5a5a5eaeaeaf1f1f17b7b7b0000002c2c2c2f2f2f2e2e2e2e2e2e2e2e2e\
 5959596a6a6ac7c7c7e4e4e4f4f4f4e2e2e2eaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaea\
 eaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaea\
 eaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae0e0e0f2f2f2\
-""")
+""",
+)
 
-mark_snap_back_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+mark_snap_back_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 fefefef7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7\
 f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7\
 f7f7f7f7f7f7f7f7f7f7f7f7f6f6f6fdfdfdebebebcfcfcfd7d7d7d7d7d7d9d9d9d1d1d1cdcdcd\
@@ -491,9 +520,14 @@ dfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdf\
 dfdfdfe0e0e0d8d8d8e0e0e0f6f6f6e0e0e0e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2\
 e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2\
 e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e0e0e0f2f2f2\
-""")
+""",
+)
 
-mcs_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+mcs_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 f8f8f8e9e9e9eaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaebebea\
 eeeeecf1f1edf2f2edf2f2edf1f1edefeeecebebeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaea\
 eaeaeaeaeaeaeaeaeaeaeaeae8e8e8f6f6f6e4e4e4d2d2d2dcdcdcdbdbdbdbdbdbdbdbdbdbdbdb\
@@ -573,9 +607,14 @@ e0e0e0dfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfe6e6e2e5e5e2c4c6d38f93bb5f66a6404898\
 dfdfdfdfdfdfd9d9d9dededef4f4f4e0e0e0e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2\
 e2e2e2e2e2e2e5e5e3eaeae6ebebe6e8e8e5e4e4e3e4e4e3e7e7e4ebebe6ebeae6e6e6e4e2e2e2\
 e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e0e0e0f1f1f1\
-""")
+""",
+)
 
-snap_back_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+snap_back_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 fafafaeaeaeaebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebeb\
 ebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebeb\
 ebebebebebebebebebebebebeaeaeaf8f8f8e6e6e6d1d1d1dbdbdbdadadadadadadadadadadada\
@@ -655,9 +694,14 @@ e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e1e1e1d8d8d8e2e2e2f5f5f5dededee1e1e1e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e1e1e1dededef2f2f2\
-""")
+""",
+)
 
-spin_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+spin_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 f8f8f8eaeaeaebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebeb\
 ebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebebeb\
 ebebebebebebebebebebebebeaeaeaf7f7f7e4e4e4d2d2d2dbdbdbdadadadadadadadadadadada\
@@ -737,5 +781,5 @@ e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0dadadadededef3f3f3dededee1e1e1e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0\
 e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0dededef0f0f0\
-""")
-
+""",
+)

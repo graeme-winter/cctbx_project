@@ -10,81 +10,96 @@ import cctbx.geometry_restraints
 from six.moves import cStringIO as StringIO
 import sys
 
+
 def test_manager():
-  xray_structure = smtbx.development.sucrose()
-  xray_structure.scatterers()[10].set_use_u_iso_only()
-  asu_mappings = xray_structure.asu_mappings(buffer_thickness=3.5)
-  pair_asu_table = crystal.pair_asu_table(asu_mappings=asu_mappings)
-  scattering_types = xray_structure.scatterers().extract_scattering_types()
-  pair_asu_table.add_covalent_pairs(
-    scattering_types, exclude_scattering_types=flex.std_string(("H","D")))
-  pair_sym_table = pair_asu_table.extract_pair_sym_table()
-  # setup adp restraint proxies
-  adp_similarity_proxies = \
-    adp_restraints.adp_similarity_restraints(
-      pair_sym_table=pair_sym_table).proxies
-  rigid_bond_proxies = \
-    adp_restraints.rigid_bond_restraints(
-      pair_sym_table=pair_sym_table).proxies
-  rigu_proxies = \
-    adp_restraints.rigu_restraints(
-      pair_sym_table=pair_sym_table).proxies
-  isotropic_adp_proxies = \
-    adp_restraints.isotropic_adp_restraints(
-      xray_structure=xray_structure,
-      pair_sym_table=pair_sym_table).proxies
-  bond_proxies = cctbx.geometry_restraints.shared_bond_simple_proxy()
-  bond_proxies.append(
-    cctbx.geometry_restraints.bond_simple_proxy(
-      i_seqs=(3,23), distance_ideal=1.44, weight=2))
-  bond_proxies.append(
-    cctbx.geometry_restraints.bond_simple_proxy(
-      i_seqs=(5,25), distance_ideal=1.44, weight=2))
-  bond_proxies.append(
-    cctbx.geometry_restraints.bond_simple_proxy(
-      i_seqs=(1,21), distance_ideal=1.44, weight=2))
-  angle_proxies = cctbx.geometry_restraints.shared_angle_proxy()
-  angle_proxies.append(
-    cctbx.geometry_restraints.angle_proxy(
-      i_seqs=(25,28,30),angle_ideal=110,weight=2))
-  angle_proxies.append(
-    cctbx.geometry_restraints.angle_proxy(
-      i_seqs=(23,25,28),angle_ideal=110,weight=2))
-  angle_proxies.append(
-    cctbx.geometry_restraints.angle_proxy(
-      i_seqs=(19,23,25),angle_ideal=110,weight=2))
-  bond_similarity_proxies=cctbx.geometry_restraints.shared_bond_similarity_proxy()
-  bond_similarity_proxies.append(
-    cctbx.geometry_restraints.bond_similarity_proxy(
-      i_seqs=((14,36),(12,38)),
-      weights=(10,10),
-      sym_ops=(sgtbx.rt_mx(),sgtbx.rt_mx())))
-  chirality_proxies=cctbx.geometry_restraints.shared_chirality_proxy()
-  chirality_proxies.append(
-    cctbx.geometry_restraints.chirality_proxy(
-      i_seqs=(14,36,12,38),
-      weight=10**4,
-      volume_ideal=1.2,
-      both_signs=False))
-  # setup restraints manager
-  manager = restraints.manager(
-    bond_proxies=bond_proxies,
-    angle_proxies=angle_proxies,
-    bond_similarity_proxies=bond_similarity_proxies,
-    adp_similarity_proxies=adp_similarity_proxies,
-    rigid_bond_proxies=rigid_bond_proxies,
-    rigu_proxies=rigu_proxies,
-    isotropic_adp_proxies=isotropic_adp_proxies,
-    chirality_proxies=chirality_proxies)
-  sio = StringIO()
-  manager.show_sorted(xray_structure, max_items=1, f=sio)
-  if sys.platform.startswith("win") and sys.version_info[:2] < (2,6):
-    # This appears to be a windows-specific bug with string formatting
-    # for python versions prior to 2.6, where the exponent is printed
-    # with 3 digits rather than 2.
-    pass
-  else:
-    assert sio.getvalue() == """\
+    xray_structure = smtbx.development.sucrose()
+    xray_structure.scatterers()[10].set_use_u_iso_only()
+    asu_mappings = xray_structure.asu_mappings(buffer_thickness=3.5)
+    pair_asu_table = crystal.pair_asu_table(asu_mappings=asu_mappings)
+    scattering_types = xray_structure.scatterers().extract_scattering_types()
+    pair_asu_table.add_covalent_pairs(
+        scattering_types, exclude_scattering_types=flex.std_string(("H", "D"))
+    )
+    pair_sym_table = pair_asu_table.extract_pair_sym_table()
+    # setup adp restraint proxies
+    adp_similarity_proxies = adp_restraints.adp_similarity_restraints(
+        pair_sym_table=pair_sym_table
+    ).proxies
+    rigid_bond_proxies = adp_restraints.rigid_bond_restraints(
+        pair_sym_table=pair_sym_table
+    ).proxies
+    rigu_proxies = adp_restraints.rigu_restraints(pair_sym_table=pair_sym_table).proxies
+    isotropic_adp_proxies = adp_restraints.isotropic_adp_restraints(
+        xray_structure=xray_structure, pair_sym_table=pair_sym_table
+    ).proxies
+    bond_proxies = cctbx.geometry_restraints.shared_bond_simple_proxy()
+    bond_proxies.append(
+        cctbx.geometry_restraints.bond_simple_proxy(
+            i_seqs=(3, 23), distance_ideal=1.44, weight=2
+        )
+    )
+    bond_proxies.append(
+        cctbx.geometry_restraints.bond_simple_proxy(
+            i_seqs=(5, 25), distance_ideal=1.44, weight=2
+        )
+    )
+    bond_proxies.append(
+        cctbx.geometry_restraints.bond_simple_proxy(
+            i_seqs=(1, 21), distance_ideal=1.44, weight=2
+        )
+    )
+    angle_proxies = cctbx.geometry_restraints.shared_angle_proxy()
+    angle_proxies.append(
+        cctbx.geometry_restraints.angle_proxy(
+            i_seqs=(25, 28, 30), angle_ideal=110, weight=2
+        )
+    )
+    angle_proxies.append(
+        cctbx.geometry_restraints.angle_proxy(
+            i_seqs=(23, 25, 28), angle_ideal=110, weight=2
+        )
+    )
+    angle_proxies.append(
+        cctbx.geometry_restraints.angle_proxy(
+            i_seqs=(19, 23, 25), angle_ideal=110, weight=2
+        )
+    )
+    bond_similarity_proxies = cctbx.geometry_restraints.shared_bond_similarity_proxy()
+    bond_similarity_proxies.append(
+        cctbx.geometry_restraints.bond_similarity_proxy(
+            i_seqs=((14, 36), (12, 38)),
+            weights=(10, 10),
+            sym_ops=(sgtbx.rt_mx(), sgtbx.rt_mx()),
+        )
+    )
+    chirality_proxies = cctbx.geometry_restraints.shared_chirality_proxy()
+    chirality_proxies.append(
+        cctbx.geometry_restraints.chirality_proxy(
+            i_seqs=(14, 36, 12, 38), weight=10 ** 4, volume_ideal=1.2, both_signs=False
+        )
+    )
+    # setup restraints manager
+    manager = restraints.manager(
+        bond_proxies=bond_proxies,
+        angle_proxies=angle_proxies,
+        bond_similarity_proxies=bond_similarity_proxies,
+        adp_similarity_proxies=adp_similarity_proxies,
+        rigid_bond_proxies=rigid_bond_proxies,
+        rigu_proxies=rigu_proxies,
+        isotropic_adp_proxies=isotropic_adp_proxies,
+        chirality_proxies=chirality_proxies,
+    )
+    sio = StringIO()
+    manager.show_sorted(xray_structure, max_items=1, f=sio)
+    if sys.platform.startswith("win") and sys.version_info[:2] < (2, 6):
+        # This appears to be a windows-specific bug with string formatting
+        # for python versions prior to 2.6, where the exponent is printed
+        # with 3 digits rather than 2.
+        pass
+    else:
+        assert (
+            sio.getvalue()
+            == """\
 Bond restraints: 3
 Sorted by residual:
 bond O3
@@ -161,3 +176,4 @@ scatterer O3
 ... (remaining 21 not shown)
 
 """
+        )

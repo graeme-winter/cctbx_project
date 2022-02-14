@@ -4,7 +4,7 @@ from iotbx import reflection_file_reader
 import iotbx.pdb
 import mmtbx.f_model
 
-pdb_str="""
+pdb_str = """
 CRYST1   36.359   37.628   51.937  90.00  90.00  90.00 P 1
 ATOM      1  CB  LYS     1       8.386  23.180  19.074  1.00 40.35           C
 ATOM      2  CG  LYS     1       9.247  22.500  18.006  1.00 40.50           C
@@ -1010,37 +1010,43 @@ TER
 END
 """
 
-def run(prefix="tst_fmodel_2"):
-  of = open("%s.pdb"%prefix, "w")
-  print(pdb_str, file=of)
-  xrs = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
-  of.close()
-  #
-  cmd = " ".join([
-    "phenix.fmodel",
-    "%s.pdb"%prefix,
-    "k_sol=0.35",
-    "b_sol=50",
-    "type=real",
-    "high_res=1.0",
-    "> %s.zlog"%prefix])
-  easy_run.call(cmd)
-  miller_arrays = reflection_file_reader.any_reflection_file(file_name =
-    "tst_fmodel_2.pdb.mtz").as_miller_arrays()
-  for ma in miller_arrays:
-    if(ma.info().labels == ['FMODEL']):
-      f_obs = ma
-  #
-  for d_min in [1, 2, 3, 4, 5, 6]:
-    print("d_min:", d_min)
-    fmodel = mmtbx.f_model.manager(
-      f_obs          = f_obs.resolution_filter(d_min=d_min),
-      xray_structure = xrs)
-    r_start = fmodel.r_work()
-    fmodel.update_all_scales(update_f_part1=False,remove_outliers=False)
-    print("  r(before/after): %6.4f %6.4f"%(r_start, fmodel.r_work()))
-    k_sol, b_sol = fmodel.k_sol_b_sol_from_k_mask()
-    print(k_sol, b_sol)
 
-if (__name__ == "__main__"):
-  run()
+def run(prefix="tst_fmodel_2"):
+    of = open("%s.pdb" % prefix, "w")
+    print(pdb_str, file=of)
+    xrs = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
+    of.close()
+    #
+    cmd = " ".join(
+        [
+            "phenix.fmodel",
+            "%s.pdb" % prefix,
+            "k_sol=0.35",
+            "b_sol=50",
+            "type=real",
+            "high_res=1.0",
+            "> %s.zlog" % prefix,
+        ]
+    )
+    easy_run.call(cmd)
+    miller_arrays = reflection_file_reader.any_reflection_file(
+        file_name="tst_fmodel_2.pdb.mtz"
+    ).as_miller_arrays()
+    for ma in miller_arrays:
+        if ma.info().labels == ["FMODEL"]:
+            f_obs = ma
+    #
+    for d_min in [1, 2, 3, 4, 5, 6]:
+        print("d_min:", d_min)
+        fmodel = mmtbx.f_model.manager(
+            f_obs=f_obs.resolution_filter(d_min=d_min), xray_structure=xrs
+        )
+        r_start = fmodel.r_work()
+        fmodel.update_all_scales(update_f_part1=False, remove_outliers=False)
+        print("  r(before/after): %6.4f %6.4f" % (r_start, fmodel.r_work()))
+        k_sol, b_sol = fmodel.k_sol_b_sol_from_k_mask()
+        print(k_sol, b_sol)
+
+
+if __name__ == "__main__":
+    run()

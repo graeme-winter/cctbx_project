@@ -1,4 +1,3 @@
-
 # TODO more tests
 
 from __future__ import absolute_import, division, print_function
@@ -11,7 +10,7 @@ import random
 
 # Deuterium as ligand - formerly crashed real-space correlation
 def exercise_01():
-  pdb_raw = """\
+    pdb_raw = """\
 CRYST1   10.000   15.000   10.000  90.00  90.00  90.00 P 1
 ATOM   6407  N   GLY A 388      -0.783   9.368 -16.436  1.00 51.96           N
 ATOM   6408  CA  GLY A 388      -0.227   9.888 -15.197  1.00 54.04           C
@@ -27,31 +26,33 @@ HETATM 6417  O   DOD A1001      -4.151   4.107 -16.592  1.00 13.40           O
 HETATM 6418  D1  DOD A1001      -4.760   3.026 -11.326  1.00 15.45           D
 HETATM 6419  D2  DOD A1001      -4.625   2.741 -13.845  1.00 14.81           D
 """
-  random.seed(12345)
-  flex.set_random_seed(12345)
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
-  xrs = pdb_in.input.xray_structure_simple()
-  pdb_in.hierarchy.atoms().reset_i_seq()
-  open("tst_validate_experimental.pdb", "w").write(
-    pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs))
-  f_calc =abs( xrs.structure_factors(d_min=2.0).f_calc())
-  f_calc.set_observation_type_xray_amplitude()
-  flags = f_calc.generate_r_free_flags()
-  mtz = f_calc.as_mtz_dataset(column_root_label="F")
-  mtz.add_miller_array(flags, column_root_label="FreeR_flag")
-  mtz.mtz_object().write("tst_validate_experimental.mtz")
-  args = [
-    "tst_validate_experimental.pdb",
-    "tst_validate_experimental.mtz",
-  ]
-  args.append("flags.clashscore=%s" % libtbx.env.has_module("probe"))
-  result = molprobity.run(args=args,
-    ignore_missing_modules=True,
-    out=null_out()).validation
-  assert result.real_space is not None
-  ds = result.data_stats
-  assert (ds.n_free > 0)
+    random.seed(12345)
+    flex.set_random_seed(12345)
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
+    xrs = pdb_in.input.xray_structure_simple()
+    pdb_in.hierarchy.atoms().reset_i_seq()
+    open("tst_validate_experimental.pdb", "w").write(
+        pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs)
+    )
+    f_calc = abs(xrs.structure_factors(d_min=2.0).f_calc())
+    f_calc.set_observation_type_xray_amplitude()
+    flags = f_calc.generate_r_free_flags()
+    mtz = f_calc.as_mtz_dataset(column_root_label="F")
+    mtz.add_miller_array(flags, column_root_label="FreeR_flag")
+    mtz.mtz_object().write("tst_validate_experimental.mtz")
+    args = [
+        "tst_validate_experimental.pdb",
+        "tst_validate_experimental.mtz",
+    ]
+    args.append("flags.clashscore=%s" % libtbx.env.has_module("probe"))
+    result = molprobity.run(
+        args=args, ignore_missing_modules=True, out=null_out()
+    ).validation
+    assert result.real_space is not None
+    ds = result.data_stats
+    assert ds.n_free > 0
 
-if (__name__ == "__main__"):
-  exercise_01()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_01()
+    print("OK")

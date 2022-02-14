@@ -1,4 +1,3 @@
-
 # XXX deprecated
 
 """
@@ -203,40 +202,42 @@ TER
 END
 """
 
+
 def prepare_inputs(prefix="tst_build_alt_confs"):
-  pdb_in = "%s_in.pdb" % prefix
-  open(pdb_in, "w").write(pdb_raw)
-  args = [
-    pdb_in,
-    "high_resolution=1.2",
-    "type=real",
-    "label=F",
-    "add_sigmas=True",
-    "r_free_flags_fraction=0.1",
-    "random_seed=12345",
-    "output.file_name=%s.mtz" % prefix,
-  ]
-  fmodel.run(args=args, log=null_out())
-  pdb_file = file_reader.any_file(pdb_in)
-  hierarchy = pdb_file.file_object.hierarchy
-  xrs = pdb_file.file_object.xray_structure_simple()
-  for chain in hierarchy.only_model().chains():
-    for residue_group in chain.residue_groups():
-      atom_groups = residue_group.atom_groups()
-      if (len(atom_groups) > 1):
-        while (len(atom_groups) > 1):
-          residue_group.remove_atom_group(atom_groups[-1])
-          del atom_groups[-1]
-        for atom in residue_group.atoms():
-          atom.occ = 1.0
-        atom_groups[0].altloc = ''
-  assert hierarchy.atoms().extract_occ().all_eq(1.0)
-  open("%s_start.pdb" % prefix, "w").write(
-    hierarchy.as_pdb_string(crystal_symmetry=xrs))
+    pdb_in = "%s_in.pdb" % prefix
+    open(pdb_in, "w").write(pdb_raw)
+    args = [
+        pdb_in,
+        "high_resolution=1.2",
+        "type=real",
+        "label=F",
+        "add_sigmas=True",
+        "r_free_flags_fraction=0.1",
+        "random_seed=12345",
+        "output.file_name=%s.mtz" % prefix,
+    ]
+    fmodel.run(args=args, log=null_out())
+    pdb_file = file_reader.any_file(pdb_in)
+    hierarchy = pdb_file.file_object.hierarchy
+    xrs = pdb_file.file_object.xray_structure_simple()
+    for chain in hierarchy.only_model().chains():
+        for residue_group in chain.residue_groups():
+            atom_groups = residue_group.atom_groups()
+            if len(atom_groups) > 1:
+                while len(atom_groups) > 1:
+                    residue_group.remove_atom_group(atom_groups[-1])
+                    del atom_groups[-1]
+                for atom in residue_group.atoms():
+                    atom.occ = 1.0
+                atom_groups[0].altloc = ""
+    assert hierarchy.atoms().extract_occ().all_eq(1.0)
+    open("%s_start.pdb" % prefix, "w").write(
+        hierarchy.as_pdb_string(crystal_symmetry=xrs)
+    )
+
 
 def get_rotamers(file_name):
-  pdb_in = file_reader.any_file(file_name)
-  hierarchy = pdb_in.file_object.hierarchy
-  validate = rotalyze.rotalyze(pdb_hierarchy=hierarchy,
-    outliers_only=False)
-  return [ (r.id_str(), r.rotamer_name) for r in validate.results ]
+    pdb_in = file_reader.any_file(file_name)
+    hierarchy = pdb_in.file_object.hierarchy
+    validate = rotalyze.rotalyze(pdb_hierarchy=hierarchy, outliers_only=False)
+    return [(r.id_str(), r.rotamer_name) for r in validate.results]

@@ -4,8 +4,8 @@ from simtbx.diffBragg.refiners.crystal_systems import CrystalSystemManager
 from scitbx.matrix import sqr
 import numpy as np
 
-class TetragonalManager(CrystalSystemManager):
 
+class TetragonalManager(CrystalSystemManager):
     def __init__(self, a=55, c=77):
         self.variables = [a, c]
 
@@ -39,15 +39,15 @@ class TetragonalManager(CrystalSystemManager):
 
     @property
     def al(self):
-        return np.pi/2.
+        return np.pi / 2.0
 
     @property
     def be(self):
-        return np.pi/2
+        return np.pi / 2
 
     @property
     def ga(self):
-        return np.pi/2
+        return np.pi / 2
 
     @property
     def variable_names(self):

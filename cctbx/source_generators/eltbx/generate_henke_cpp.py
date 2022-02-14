@@ -8,19 +8,24 @@ from six.moves import range
 
 this = "cctbx.source_generators.eltbx.generate_henke_cpp"
 
-reference_tables_directory = libtbx.env.under_dist(
-  "cctbx", "reference/henke/tables")
+reference_tables_directory = libtbx.env.under_dist("cctbx", "reference/henke/tables")
+
 
 def print_header(f):
-  write_this_is_auto_generated(f, this)
-  print("""\
+    write_this_is_auto_generated(f, this)
+    print(
+        """\
 #include <cctbx/eltbx/henke.h>
 
 namespace cctbx { namespace eltbx { namespace henke {
-""", file=f)
+""",
+        file=f,
+    )
+
 
 def print_ftp_info(f):
-  print("""\
+    print(
+        """\
 /*
   Henke Tables
 
@@ -41,76 +46,84 @@ def print_ftp_info(f):
   Reference: B. L. Henke, E. M. Gullikson, and J. C. Davis,
   Atomic Data and Nuclear Data Tables Vol. 54 No. 2 (July 1993).
  */
-""", file=f)
+""",
+        file=f,
+    )
+
 
 def collect_tables():
-  nff_files = []
-  for file in os.listdir(reference_tables_directory):
-    fn = file.lower().capitalize()
-    if (fn[-4:] == ".nff"): nff_files.append(file)
-  tables = [0] * 120
-  for file in nff_files:
-    f = join_open(reference_tables_directory, file, "r")
-    header = f.readline()
-    table = f.readlines()
-    f.close()
-    Symbol = header[1:3].strip()
-    Z = int(header[7:9])
-    assert len(Symbol) > 0
-    assert Symbol[0] in 'abcdefghijklmnopqrstuvwxyz'
-    assert Symbol[-1] in 'abcdefghijklmnopqrstuvwxyz'
-    assert Z > 0 and Z < len(tables)
-    assert tables[Z] == 0
-    Symbol = Symbol.capitalize()
-    tables[Z] = (Symbol, table)
-  Z = tables[1:].index(0) + 1
-  rest = tables[Z:]
-  assert rest == [0] * len(rest)
-  tables = tables[:Z]
-  return tables
+    nff_files = []
+    for file in os.listdir(reference_tables_directory):
+        fn = file.lower().capitalize()
+        if fn[-4:] == ".nff":
+            nff_files.append(file)
+    tables = [0] * 120
+    for file in nff_files:
+        f = join_open(reference_tables_directory, file, "r")
+        header = f.readline()
+        table = f.readlines()
+        f.close()
+        Symbol = header[1:3].strip()
+        Z = int(header[7:9])
+        assert len(Symbol) > 0
+        assert Symbol[0] in "abcdefghijklmnopqrstuvwxyz"
+        assert Symbol[-1] in "abcdefghijklmnopqrstuvwxyz"
+        assert Z > 0 and Z < len(tables)
+        assert tables[Z] == 0
+        Symbol = Symbol.capitalize()
+        tables[Z] = (Symbol, table)
+    Z = tables[1:].index(0) + 1
+    rest = tables[Z:]
+    assert rest == [0] * len(rest)
+    tables = tables[:Z]
+    return tables
+
 
 def print_table_block(f, tables, Z_begin, Z_end, define_noval=0):
-  print("namespace table_data {", file=f)
-  print(file=f)
-  print("using anomalous::e_fp_fdp;", file=f)
-  print(file=f)
-  # Visual C++ 7.0 compilation is very slow with define_noval=1
-  if (define_noval): print("#define NOVAL fp_fdp_undefined", file=f)
-  for Z in range(Z_begin, Z_end):
-    tab = tables[Z]
-    print("e_fp_fdp " + tab[0].lower() \
-      + "[] = { /* Z = " + str(Z) + " */", file=f)
-    for line in tab[1]:
-      flds = line.split()
-      assert len(flds) == 3
-      if (define_noval and flds[1] == "-9999.00"): flds[1] = "NOVAL"
-      print("{%s, %s, %s}," % tuple(flds), file=f)
-    print("{0, 0, 0}", file=f)
-    print("};", file=f)
+    print("namespace table_data {", file=f)
     print(file=f)
-  if (define_noval):
-    print("#undef NOVAL", file=f)
+    print("using anomalous::e_fp_fdp;", file=f)
     print(file=f)
-  print("} // namespace table_data", file=f)
-  print(file=f)
-  print("}}} // namespace cctbx::eltbx::henke", file=f)
+    # Visual C++ 7.0 compilation is very slow with define_noval=1
+    if define_noval:
+        print("#define NOVAL fp_fdp_undefined", file=f)
+    for Z in range(Z_begin, Z_end):
+        tab = tables[Z]
+        print("e_fp_fdp " + tab[0].lower() + "[] = { /* Z = " + str(Z) + " */", file=f)
+        for line in tab[1]:
+            flds = line.split()
+            assert len(flds) == 3
+            if define_noval and flds[1] == "-9999.00":
+                flds[1] = "NOVAL"
+            print("{%s, %s, %s}," % tuple(flds), file=f)
+        print("{0, 0, 0}", file=f)
+        print("};", file=f)
+        print(file=f)
+    if define_noval:
+        print("#undef NOVAL", file=f)
+        print(file=f)
+    print("} // namespace table_data", file=f)
+    print(file=f)
+    print("}}} // namespace cctbx::eltbx::henke", file=f)
+
 
 def print_henke_cpp(f, tables):
-  print("namespace table_data {", file=f)
-  print(file=f)
-  print("using anomalous::e_fp_fdp;", file=f)
-  print(file=f)
-  for tab in tables[1:]:
-    print("extern e_fp_fdp " + tab[0].lower() + "[];", file=f)
-  print(file=f)
-  print("static const anomalous::label_z_e_fp_fdp all[] = {", file=f)
-  i = 0
-  for tab in tables[1:]:
-    i += 1
-    print("{\"" + tab[0] + "\", " + str(i) + ", " + tab[0].lower() + "},", file=f)
-  print("{0, 0, 0}", file=f)
-  print("};", file=f)
-  print("""
+    print("namespace table_data {", file=f)
+    print(file=f)
+    print("using anomalous::e_fp_fdp;", file=f)
+    print(file=f)
+    for tab in tables[1:]:
+        print("extern e_fp_fdp " + tab[0].lower() + "[];", file=f)
+    print(file=f)
+    print("static const anomalous::label_z_e_fp_fdp all[] = {", file=f)
+    i = 0
+    for tab in tables[1:]:
+        i += 1
+        print('{"' + tab[0] + '", ' + str(i) + ", " + tab[0].lower() + "},", file=f)
+    print("{0, 0, 0}", file=f)
+    print("};", file=f)
+    print(
+        """
   } // namespace table_data
 
   table::table(
@@ -145,43 +158,51 @@ def print_henke_cpp(f, tables):
     return result;
   }
 
-}}} // namespace cctbx::eltbx::henke""", file=f)
+}}} // namespace cctbx::eltbx::henke""",
+        file=f,
+    )
+
 
 def collect_points(lines):
-  points = []
-  for line in lines:
-    points.append(line.split()[0])
-  return points
+    points = []
+    for line in lines:
+        points.append(line.split()[0])
+    return points
+
 
 def collect_tab_points(tables):
-  tab_points = []
-  for tab in tables[1:]:
-    tab_points.append(collect_points(tab[1]))
-  return tab_points
+    tab_points = []
+    for tab in tables[1:]:
+        tab_points.append(collect_points(tab[1]))
+    return tab_points
+
 
 def compare_points(tables):
-  tab_points = collect_tab_points(tables)
-  for i in range(len(tab_points)-1):
-    for j in range(i+1, len(tab_points)):
-      if (tab_points[i] == tab_points[j]):
-        print("points %d==%d" % (i+1,j+1))
+    tab_points = collect_tab_points(tables)
+    for i in range(len(tab_points) - 1):
+        for j in range(i + 1, len(tab_points)):
+            if tab_points[i] == tab_points[j]:
+                print("points %d==%d" % (i + 1, j + 1))
+
 
 def run(target_dir):
-  tables = collect_tables()
-  compare_points(tables) # establish that each list of data points is unique
-  f = join_open(target_dir, "henke.cpp", "w")
-  print_header(f)
-  print_ftp_info(f)
-  print_henke_cpp(f, tables)
-  f.close()
-  Z_block = 12
-  for Z_begin in range(1, len(tables), Z_block):
-    Z_end = min(len(tables), Z_begin + Z_block)
-    f = join_open(
-      target_dir, "henke_tables_%02d_%02d.cpp" % (Z_begin, Z_end-1), "w")
+    tables = collect_tables()
+    compare_points(tables)  # establish that each list of data points is unique
+    f = join_open(target_dir, "henke.cpp", "w")
     print_header(f)
-    print_table_block(f, tables, Z_begin, Z_end)
+    print_ftp_info(f)
+    print_henke_cpp(f, tables)
     f.close()
+    Z_block = 12
+    for Z_begin in range(1, len(tables), Z_block):
+        Z_end = min(len(tables), Z_begin + Z_block)
+        f = join_open(
+            target_dir, "henke_tables_%02d_%02d.cpp" % (Z_begin, Z_end - 1), "w"
+        )
+        print_header(f)
+        print_table_block(f, tables, Z_begin, Z_end)
+        f.close()
 
-if (__name__ == "__main__"):
-  run(".")
+
+if __name__ == "__main__":
+    run(".")

@@ -10,7 +10,7 @@ import unittest
 import math
 from six.moves import map
 
-__author__ = 'Youval'
+__author__ = "Youval"
 
 pdb_answer_0 = """\
 CRYST1   18.415   14.419   12.493  90.00  90.00  90.00 P 1
@@ -68,164 +68,170 @@ ATOM     21  CG2 THR C   1       7.842   4.986   8.114  1.00 10.00           C
 END
 """
 
+
 class Test_ncs_utils(unittest.TestCase):
-  """
-  Consider R = Rx(alpha)Ry(beta)Rz(gamma)
-
-  Test the conversion of rotation angles to rotation matrix
-  and the rotation matrix to angle
-  """
-  def setUp(self):
-    # set_test_matrix
-    self.rot1 = flex.vec3_double([
-      (-0.317946, -0.173437, 0.932111),
-      ( 0.760735, -0.633422, 0.141629),
-      ( 0.565855,  0.754120, 0.333333)])
-    self.rot2 = flex.vec3_double([
-      (0       ,  0       , 1),
-      (0.784042, -0.620708, 0),
-      (0.620708,  0.784042, 0)])
-    self.rot3 = flex.vec3_double([
-      ( 0       ,  0       , -1),
-      ( 0.097445, -0.995241,  0),
-      (-0.995241, -0.097445,  0)])
-    # Angles for rot, in radians
-    self.rot_angles1 = flex.double(
-      (-0.4017753, 1.2001985, 2.6422171))
-    self.rot_angles2 = flex.double(
-      (-0.4017753, math.pi/2, 2.6422171))
-    self.rot_angles3 = flex.double(
-      (-0.4017753, -math.pi/2, 2.6422171))
-    self.rot_angles1_deg = flex.double(
-      (-0.4017753, 1.2001985, 2.6422171)) * 180/math.pi
-
-  def test_matrix_to_angles(self):
     """
-    Note that there are two possible sets of angles for a rotation
-    matrix.
-    Also note that for the cases where cos(beta)=0, there is no unique
-    answer
+    Consider R = Rx(alpha)Ry(beta)Rz(gamma)
+
+    Test the conversion of rotation angles to rotation matrix
+    and the rotation matrix to angle
     """
-    # print sys._getframe().f_code.co_name
-    r = self.rot1.as_double()
-    expected_angles = self.rot_angles1
-    angles = nu.rotation_to_angles(rotation=r, deg=False)
-    assert approx_equal(expected_angles,angles,1e-3)
-    expected_angles = self.rot_angles1_deg
-    angles = nu.rotation_to_angles(rotation=r, deg=True)
-    assert approx_equal(expected_angles,angles,1e-3)
-    # Test cos(beta)=0
-    # sin(beta) = 1
-    r = self.rot2.as_double()
-    # when sin(beta) = 1 the (alpha + gamma) is the solution
-    expected_angles_sum = self.rot_angles2[0] + self.rot_angles2[2]
-    angles = nu.rotation_to_angles(rotation=r, deg=False)
-    angles_sum = angles[0] + angles[2]
-    assert approx_equal(expected_angles_sum,angles_sum,1e-3)
-    # sin(beta) =  -1
-    # when sin(beta) = -1 the (alpha - gamma) is the solution
-    expected_angles_sum = self.rot_angles2[0] - self.rot_angles2[2]
-    r = self.rot3.as_double()
-    angles = nu.rotation_to_angles(rotation=r, deg=False)
-    angles_sum = angles[0] - angles[2]
-    assert approx_equal(expected_angles_sum,angles_sum,1e-3)
 
-  def test_rotations_are_good(self):
-    """
-    Make sure that our rotation matrices are good
-    """
-    # print sys._getframe().f_code.co_name
-    for rm in [self.rot1,self.rot2,self.rot3]:
-      r = matrix.sqr(rm.as_double())
-      assert r.is_r3_rotation_matrix(rms_tolerance=1e-3)
+    def setUp(self):
+        # set_test_matrix
+        self.rot1 = flex.vec3_double(
+            [
+                (-0.317946, -0.173437, 0.932111),
+                (0.760735, -0.633422, 0.141629),
+                (0.565855, 0.754120, 0.333333),
+            ]
+        )
+        self.rot2 = flex.vec3_double(
+            [(0, 0, 1), (0.784042, -0.620708, 0), (0.620708, 0.784042, 0)]
+        )
+        self.rot3 = flex.vec3_double(
+            [(0, 0, -1), (0.097445, -0.995241, 0), (-0.995241, -0.097445, 0)]
+        )
+        # Angles for rot, in radians
+        self.rot_angles1 = flex.double((-0.4017753, 1.2001985, 2.6422171))
+        self.rot_angles2 = flex.double((-0.4017753, math.pi / 2, 2.6422171))
+        self.rot_angles3 = flex.double((-0.4017753, -math.pi / 2, 2.6422171))
+        self.rot_angles1_deg = (
+            flex.double((-0.4017753, 1.2001985, 2.6422171)) * 180 / math.pi
+        )
 
-  def test_working_with_tuples(self):
-    """
-    When working with scitbx matrix.rec or matrix.sqr
-    (the form rotation matrices are in)
-    the elements of those matrices are available as tuple.
+    def test_matrix_to_angles(self):
+        """
+        Note that there are two possible sets of angles for a rotation
+        matrix.
+        Also note that for the cases where cos(beta)=0, there is no unique
+        answer
+        """
+        # print sys._getframe().f_code.co_name
+        r = self.rot1.as_double()
+        expected_angles = self.rot_angles1
+        angles = nu.rotation_to_angles(rotation=r, deg=False)
+        assert approx_equal(expected_angles, angles, 1e-3)
+        expected_angles = self.rot_angles1_deg
+        angles = nu.rotation_to_angles(rotation=r, deg=True)
+        assert approx_equal(expected_angles, angles, 1e-3)
+        # Test cos(beta)=0
+        # sin(beta) = 1
+        r = self.rot2.as_double()
+        # when sin(beta) = 1 the (alpha + gamma) is the solution
+        expected_angles_sum = self.rot_angles2[0] + self.rot_angles2[2]
+        angles = nu.rotation_to_angles(rotation=r, deg=False)
+        angles_sum = angles[0] + angles[2]
+        assert approx_equal(expected_angles_sum, angles_sum, 1e-3)
+        # sin(beta) =  -1
+        # when sin(beta) = -1 the (alpha - gamma) is the solution
+        expected_angles_sum = self.rot_angles2[0] - self.rot_angles2[2]
+        r = self.rot3.as_double()
+        angles = nu.rotation_to_angles(rotation=r, deg=False)
+        angles_sum = angles[0] - angles[2]
+        assert approx_equal(expected_angles_sum, angles_sum, 1e-3)
 
-    Verify that we process tuple well
-    """
-    # print sys._getframe().f_code.co_name
-    r = tuple(self.rot1.as_double())
-    expected_angles = self.rot_angles1
-    angles = nu.rotation_to_angles(rotation=r, deg=False)
-    assert approx_equal(expected_angles,angles,1e-3)
+    def test_rotations_are_good(self):
+        """
+        Make sure that our rotation matrices are good
+        """
+        # print sys._getframe().f_code.co_name
+        for rm in [self.rot1, self.rot2, self.rot3]:
+            r = matrix.sqr(rm.as_double())
+            assert r.is_r3_rotation_matrix(rms_tolerance=1e-3)
 
-  def test_selected_positions(self):
-    # print sys._getframe().f_code.co_name
+    def test_working_with_tuples(self):
+        """
+        When working with scitbx matrix.rec or matrix.sqr
+        (the form rotation matrices are in)
+        the elements of those matrices are available as tuple.
 
-    a=flex.size_t([1,2,5,6,4])
-    pos={0,3,4}
-    s, d = nu.selected_positions(a,pos)
-    assert list(s) == [1,6,4]
-    assert list(d) == [2,5]
+        Verify that we process tuple well
+        """
+        # print sys._getframe().f_code.co_name
+        r = tuple(self.rot1.as_double())
+        expected_angles = self.rot_angles1
+        angles = nu.rotation_to_angles(rotation=r, deg=False)
+        assert approx_equal(expected_angles, angles, 1e-3)
 
-  def test_remove_items_from_selection(self):
-    # print sys._getframe().f_code.co_name
-    a=flex.size_t([1,2,5,6,4])
-    r = flex.size_t([2,5])
-    s = nu.remove_items_from_selection(a,r)
-    assert list(s) == [1,6,4]
+    def test_selected_positions(self):
+        # print sys._getframe().f_code.co_name
 
-  def test_get_list_of_best_ncs_copy_map_correlation(self):
-    """
-    Verifying that we get a list of chain index for the chain with the best
-    map correlation
-    """
-    # print sys._getframe().f_code.co_name
+        a = flex.size_t([1, 2, 5, 6, 4])
+        pos = {0, 3, 4}
+        s, d = nu.selected_positions(a, pos)
+        assert list(s) == [1, 6, 4]
+        assert list(d) == [2, 5]
 
-    d_min = 1.0
-    pdb_inp = iotbx.pdb.input(lines=pdb_poor_0,source_info=None)
-    ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
-    ncs_restraints_group_list = ncs_inp.get_ncs_restraints_group_list()
+    def test_remove_items_from_selection(self):
+        # print sys._getframe().f_code.co_name
+        a = flex.size_t([1, 2, 5, 6, 4])
+        r = flex.size_t([2, 5])
+        s = nu.remove_items_from_selection(a, r)
+        assert list(s) == [1, 6, 4]
 
-    pdb_inp_poor = iotbx.pdb.input(lines=pdb_poor_0,source_info=None)
-    ph_poor = pdb_inp_poor.construct_hierarchy(sort_atoms=False)
-    ph_poor.atoms().reset_i_seq()
-    xrs_poor = pdb_inp_poor.xray_structure_simple()
+    def test_get_list_of_best_ncs_copy_map_correlation(self):
+        """
+        Verifying that we get a list of chain index for the chain with the best
+        map correlation
+        """
+        # print sys._getframe().f_code.co_name
 
-    pdb_inp_answer = iotbx.pdb.input(lines=pdb_answer_0,source_info=None)
-    ph_answer = pdb_inp_answer.construct_hierarchy()
-    ph_answer.atoms().reset_i_seq()
-    xrs_answer = pdb_inp_answer.xray_structure_simple()
+        d_min = 1.0
+        pdb_inp = iotbx.pdb.input(lines=pdb_poor_0, source_info=None)
+        ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
+        ncs_restraints_group_list = ncs_inp.get_ncs_restraints_group_list()
 
-    fc = xrs_answer.structure_factors(d_min=d_min, algorithm="direct").f_calc()
-    fft_map = fc.fft_map(resolution_factor = 0.25)
-    fft_map.apply_sigma_scaling()
-    map_data = fft_map.real_map_unpadded()
+        pdb_inp_poor = iotbx.pdb.input(lines=pdb_poor_0, source_info=None)
+        ph_poor = pdb_inp_poor.construct_hierarchy(sort_atoms=False)
+        ph_poor.atoms().reset_i_seq()
+        xrs_poor = pdb_inp_poor.xray_structure_simple()
 
-    selections = [flex.size_t([0,1,2,3,4,5,6]),flex.size_t([7,8,9,10,11,12,13]),
-                flex.size_t([14,15,16,17,18,19,20])]
+        pdb_inp_answer = iotbx.pdb.input(lines=pdb_answer_0, source_info=None)
+        ph_answer = pdb_inp_answer.construct_hierarchy()
+        ph_answer.atoms().reset_i_seq()
+        xrs_answer = pdb_inp_answer.xray_structure_simple()
 
-    mp = mmtbx.maps.correlation.from_map_and_xray_structure_or_fmodel(
-      xray_structure = xrs_poor,
-      map_data       = map_data,
-      d_min          = d_min)
+        fc = xrs_answer.structure_factors(d_min=d_min, algorithm="direct").f_calc()
+        fft_map = fc.fft_map(resolution_factor=0.25)
+        fft_map.apply_sigma_scaling()
+        map_data = fft_map.real_map_unpadded()
 
-    cc = mp.cc(selections=selections)
+        selections = [
+            flex.size_t([0, 1, 2, 3, 4, 5, 6]),
+            flex.size_t([7, 8, 9, 10, 11, 12, 13]),
+            flex.size_t([14, 15, 16, 17, 18, 19, 20]),
+        ]
 
-    nu.get_list_of_best_ncs_copy_map_correlation(
-      ncs_groups     = ncs_restraints_group_list,
-      xray_structure = xrs_poor,
-      map_data       = map_data,
-      d_min          = d_min)
+        mp = mmtbx.maps.correlation.from_map_and_xray_structure_or_fmodel(
+            xray_structure=xrs_poor, map_data=map_data, d_min=d_min
+        )
+
+        cc = mp.cc(selections=selections)
+
+        nu.get_list_of_best_ncs_copy_map_correlation(
+            ncs_groups=ncs_restraints_group_list,
+            xray_structure=xrs_poor,
+            map_data=map_data,
+            d_min=d_min,
+        )
+
 
 def run_selected_tests():
-  """  Run selected tests
+    """Run selected tests
 
-  1) List in "tests" the names of the particular test you want to run
-  2) Comment out unittest.main()
-  3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
-  """
-  tests = ['test_transform_update']
-  suite = unittest.TestSuite(list(map(Test_ncs_utils,tests)))
-  return suite
+    1) List in "tests" the names of the particular test you want to run
+    2) Comment out unittest.main()
+    3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
+    """
+    tests = ["test_transform_update"]
+    suite = unittest.TestSuite(list(map(Test_ncs_utils, tests)))
+    return suite
 
-if __name__=='__main__':
-  # use for individual tests
-  # unittest.TextTestRunner().run(run_selected_tests())
 
-  # Use to run all tests
-  unittest.main(verbosity=0)
+if __name__ == "__main__":
+    # use for individual tests
+    # unittest.TextTestRunner().run(run_selected_tests())
+
+    # Use to run all tests
+    unittest.main(verbosity=0)

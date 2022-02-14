@@ -5,7 +5,7 @@ from libtbx.test_utils import approx_equal
 import mmtbx.model
 from six.moves import range
 
-cif_str="""
+cif_str = """
 data_5JUP
 #
 _atom_sites.entry_id                    5JUP
@@ -65,50 +65,55 @@ ATOM   2      P  P     . U   A  1  1    ? 173.022 259.610 224.994 1.00 116.34 1 
 #
 """
 
+
 def run(prefix="tst_iotbx_tst_xray_scale_1"):
-  """
-  Exercise obtaining exactly the same xray structure from pdb and cif.
-  Caveate is SCALE records (fract_transf_matrix). In pdb they explicitly
-  suppressed when crystal_symmetry is supplied, see
-  iotbx/pdb/__init__.py:939 (def xray_structure_simple):
-  if(crystal_symmetry is not None): self._scale_matrix = None
-  """
-  fo = open("%s.cif" % prefix,"w")
-  print(cif_str, file=fo)
-  fo.close()
-  # crystal symmetry from map
-  cs = crystal.symmetry((419., 419., 419., 90.0, 90.0, 90.0), 1)
-  # xrs from mmCIF
-  cif_inp = iotbx.pdb.input(file_name="%s.cif" % prefix)
-  # print "======== doing xrs from cif =============="
-  xrs_cif = cif_inp.xray_structure_simple(crystal_symmetry = cs)
-  # xrs from PDB
-  cif_inp.construct_hierarchy().write_pdb_file(prefix+".pdb")
-  pdb_inp = iotbx.pdb.input(file_name="%s.pdb" % prefix)
-  # print "======== doing xrs from pdb =============="
-  xrs_pdb = pdb_inp.xray_structure_simple(crystal_symmetry = cs)
-  #
-  for i in range(len(xrs_cif.sites_cart())):
-    assert approx_equal(xrs_cif.sites_cart()[i], xrs_pdb.sites_cart()[i])
-  print("OK")
+    """
+    Exercise obtaining exactly the same xray structure from pdb and cif.
+    Caveate is SCALE records (fract_transf_matrix). In pdb they explicitly
+    suppressed when crystal_symmetry is supplied, see
+    iotbx/pdb/__init__.py:939 (def xray_structure_simple):
+    if(crystal_symmetry is not None): self._scale_matrix = None
+    """
+    fo = open("%s.cif" % prefix, "w")
+    print(cif_str, file=fo)
+    fo.close()
+    # crystal symmetry from map
+    cs = crystal.symmetry((419.0, 419.0, 419.0, 90.0, 90.0, 90.0), 1)
+    # xrs from mmCIF
+    cif_inp = iotbx.pdb.input(file_name="%s.cif" % prefix)
+    # print "======== doing xrs from cif =============="
+    xrs_cif = cif_inp.xray_structure_simple(crystal_symmetry=cs)
+    # xrs from PDB
+    cif_inp.construct_hierarchy().write_pdb_file(prefix + ".pdb")
+    pdb_inp = iotbx.pdb.input(file_name="%s.pdb" % prefix)
+    # print "======== doing xrs from pdb =============="
+    xrs_pdb = pdb_inp.xray_structure_simple(crystal_symmetry=cs)
+    #
+    for i in range(len(xrs_cif.sites_cart())):
+        assert approx_equal(xrs_cif.sites_cart()[i], xrs_pdb.sites_cart()[i])
+    print("OK")
+
 
 def run2(prefix="iotbx_tst_xray_scale_2"):
-  """ same as run(), but using mmtbx.model.
-  Not clear why it is failing... Need to ask Pavel to look together."""
-  cs = crystal.symmetry((419., 419., 419., 90.0, 90.0, 90.0), 1)
-  model_cif = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(lines=cif_str.split("\n"), source_info=None),
-      crystal_symmetry=cs)
-  xrs_cif = model_cif.get_xray_structure()
-  txt_pdb = model_cif.model_as_pdb()
-  model_pdb = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(lines=txt_pdb.split("\n"), source_info=None),
-      crystal_symmetry=cs)
-  xrs_pdb = model_pdb.get_xray_structure()
-  for i in range(len(xrs_cif.sites_cart())):
-    assert approx_equal(xrs_cif.sites_cart()[i], xrs_pdb.sites_cart()[i])
-  print("OK")
+    """same as run(), but using mmtbx.model.
+    Not clear why it is failing... Need to ask Pavel to look together."""
+    cs = crystal.symmetry((419.0, 419.0, 419.0, 90.0, 90.0, 90.0), 1)
+    model_cif = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(lines=cif_str.split("\n"), source_info=None),
+        crystal_symmetry=cs,
+    )
+    xrs_cif = model_cif.get_xray_structure()
+    txt_pdb = model_cif.model_as_pdb()
+    model_pdb = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(lines=txt_pdb.split("\n"), source_info=None),
+        crystal_symmetry=cs,
+    )
+    xrs_pdb = model_pdb.get_xray_structure()
+    for i in range(len(xrs_cif.sites_cart())):
+        assert approx_equal(xrs_cif.sites_cart()[i], xrs_pdb.sites_cart()[i])
+    print("OK")
 
-if (__name__ == "__main__"):
-  run()
-  run2()
+
+if __name__ == "__main__":
+    run()
+    run2()

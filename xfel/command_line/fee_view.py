@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 from six.moves import range
+
 # -*- Mode: Python; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 8 -*-
 #
 # LIBTBX_SET_DISPATCHER_NAME cxi.fee_view
@@ -22,7 +23,8 @@ cxi.fee_view params.phil selected_filter=best
 For full output, use:
 psplot SPECTRUM FEE DC_OFFSET ALL_FEE ALL_FEE_RAW &
 """
-phil_scope = parse("""
+phil_scope = parse(
+    """
   selected_filter = None
     .type = str
     .help = Which filter to apply
@@ -36,82 +38,99 @@ phil_scope = parse("""
     .type = int
     .help = Optionally skip N events
   include scope xfel.cxi.spectra_filter.phil_scope
-""", process_includes = True)
+""",
+    process_includes=True,
+)
+
 
 def run(args):
-  user_phil = []
-  for arg in args:
-    if os.path.isfile(arg):
-      try:
-        user_phil.append(parse(file_name=arg))
-      except Exception as e:
-        print(str(e))
-        raise Sorry("Couldn't parse phil file %s"%arg)
+    user_phil = []
+    for arg in args:
+        if os.path.isfile(arg):
+            try:
+                user_phil.append(parse(file_name=arg))
+            except Exception as e:
+                print(str(e))
+                raise Sorry("Couldn't parse phil file %s" % arg)
+        else:
+            try:
+                user_phil.append(parse(arg))
+            except Exception as e:
+                print(str(e))
+                raise Sorry("Couldn't parse argument %s" % arg)
+    params = phil_scope.fetch(sources=user_phil).extract()
+
+    # cxid9114, source fee: FeeHxSpectrometer.0:Opal1000.1, downstream: CxiDg3.0:Opal1000.0
+    # cxig3614, source fee: FeeHxSpectrometer.0:OrcaFl40.0
+
+    src = psana.Source(params.spectra_filter.detector_address)
+    dataset_name = "exp=%s:run=%s:idx" % (params.experiment, params.runs)
+    print("Dataset string:", dataset_name)
+    ds = psana.DataSource(dataset_name)
+    spf = spectra_filter(params)
+
+    if params.selected_filter == None:
+        filter_name = params.spectra_filter.filter[0].name
     else:
-      try:
-        user_phil.append(parse(arg))
-      except Exception as e:
-        print(str(e))
-        raise Sorry("Couldn't parse argument %s"%arg)
-  params = phil_scope.fetch(sources=user_phil).extract()
+        filter_name = params.selected_filter
 
-  # cxid9114, source fee: FeeHxSpectrometer.0:Opal1000.1, downstream: CxiDg3.0:Opal1000.0
-  # cxig3614, source fee: FeeHxSpectrometer.0:OrcaFl40.0
+    rank = 0
+    size = 1
+    max_events = sys.maxsize
 
-  src = psana.Source(params.spectra_filter.detector_address)
-  dataset_name = "exp=%s:run=%s:idx"%(params.experiment, params.runs)
-  print("Dataset string:", dataset_name)
-  ds = psana.DataSource(dataset_name)
-  spf = spectra_filter(params)
+    for run in ds.runs():
+        print("starting run", run.run())
+        # list of all events
+        times = run.times()
 
-  if params.selected_filter == None:
-    filter_name = params.spectra_filter.filter[0].name
-  else:
-    filter_name = params.selected_filter
+        if params.skip_events is not None:
+            times = times[params.skip_events :]
 
-  rank = 0
-  size = 1
-  max_events = sys.maxsize
+        nevents = min(len(times), max_events)
 
-  for run in ds.runs():
-    print("starting run", run.run())
-    # list of all events
-    times = run.times()
+        # chop the list into pieces, depending on rank.  This assigns each process
+        # events such that the get every Nth event where N is the number of processes
+        mytimes = [times[i] for i in range(nevents) if (i + rank) % size == 0]
 
-    if params.skip_events is not None:
-      times = times[params.skip_events:]
+        for i, t in enumerate(mytimes):
+            evt = run.event(t)
+            (
+                accepted,
+                data,
+                spectrum,
+                dc_offset,
+                all_data,
+                all_data_raw,
+            ) = spf.filter_event(evt, filter_name)
 
-    nevents = min(len(times),max_events)
+            if not accepted:
+                continue
 
-    # chop the list into pieces, depending on rank.  This assigns each process
-    # events such that the get every Nth event where N is the number of processes
-    mytimes = [times[i] for i in range(nevents) if (i+rank)%size == 0]
+            print(
+                cspad_tbx.evt_timestamp(cspad_tbx.evt_time(evt)),
+                "Publishing data for event",
+                i,
+            )
 
-    for i, t in enumerate(mytimes):
-      evt = run.event(t)
-      accepted, data, spectrum, dc_offset, all_data, all_data_raw = spf.filter_event(evt, filter_name)
+            # header = "Event %d, m/f: %7.7f, f: %d"%(i, peak_max/flux, flux)
+            header = "Event %d" % (i)
 
-      if not accepted:
-        continue
+            if rank == 0:
+                fee = Image(header, "FEE", data)  # make a 2D plot
+                publish.send("FEE", fee)  # send to the display
 
-      print(cspad_tbx.evt_timestamp(cspad_tbx.evt_time(evt)), "Publishing data for event", i)
+                spectrumplot = XYPlot(
+                    header, "summed 1D trace", list(range(data.shape[1])), spectrum
+                )  # make a 1D plot
+                publish.send("SPECTRUM", spectrumplot)  # send to the display
 
-      #header = "Event %d, m/f: %7.7f, f: %d"%(i, peak_max/flux, flux)
-      header = "Event %d"%(i)
+                fee = Image(header, "DC_OFFSET", dc_offset)  # make a 2D plot
+                publish.send("DC_OFFSET", fee)  # send to the display
+                fee = Image(header, "ALL_FEE", all_data)  # make a 2D plot
+                publish.send("ALL_FEE", fee)  # send to the display
+                fee = Image(header, "ALL_FEE_RAW", all_data_raw)  # make a 2D plot
+                publish.send("ALL_FEE_RAW", fee)  # send to the display
 
-      if rank == 0:
-        fee = Image(header, "FEE", data) # make a 2D plot
-        publish.send("FEE", fee) # send to the display
-
-        spectrumplot = XYPlot(header, 'summed 1D trace', list(range(data.shape[1])), spectrum) # make a 1D plot
-        publish.send("SPECTRUM", spectrumplot) # send to the display
-
-        fee = Image(header, "DC_OFFSET", dc_offset) # make a 2D plot
-        publish.send("DC_OFFSET", fee) # send to the display
-        fee = Image(header, "ALL_FEE", all_data) # make a 2D plot
-        publish.send("ALL_FEE", fee) # send to the display
-        fee = Image(header, "ALL_FEE_RAW", all_data_raw) # make a 2D plot
-        publish.send("ALL_FEE_RAW", fee) # send to the display
 
 if __name__ == "__main__":
-  run(sys.argv[1:])
+    run(sys.argv[1:])

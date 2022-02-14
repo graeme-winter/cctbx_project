@@ -8,25 +8,37 @@ from scitbx import matrix
 from cctbx import sgtbx
 from six.moves import range, zip
 
-class coordinate_frame_information:
-    '''A bucket class to store coordinate frame information.'''
 
-    def __init__(self, detector_origin, detector_fast, detector_slow,
-                 detector_size_fast_slow, detector_pixel_size_fast_slow,
-                 rotation_axis, sample_to_source, wavelength,
-                 real_space_a=None, real_space_b=None,
-                 real_space_c=None, space_group_number=None,
-                 sigma_divergence=None,
-                 mosaicity=None,
-                 starting_angle=None, oscillation_range=None,
-                 starting_frame=None,
-                 original_rotation=None,
-                 data_range=None,
-                 panel_offset=None,
-                 panel_size=None,
-                 panel_origin=None,
-                 panel_fast=None,
-                 panel_slow=None):
+class coordinate_frame_information:
+    """A bucket class to store coordinate frame information."""
+
+    def __init__(
+        self,
+        detector_origin,
+        detector_fast,
+        detector_slow,
+        detector_size_fast_slow,
+        detector_pixel_size_fast_slow,
+        rotation_axis,
+        sample_to_source,
+        wavelength,
+        real_space_a=None,
+        real_space_b=None,
+        real_space_c=None,
+        space_group_number=None,
+        sigma_divergence=None,
+        mosaicity=None,
+        starting_angle=None,
+        oscillation_range=None,
+        starting_frame=None,
+        original_rotation=None,
+        data_range=None,
+        panel_offset=None,
+        panel_size=None,
+        panel_origin=None,
+        panel_fast=None,
+        panel_slow=None,
+    ):
 
         self._detector_origin = detector_origin
         self._detector_fast = detector_fast
@@ -93,16 +105,19 @@ class coordinate_frame_information:
         return self._original_rotation
 
     def get(self, parameter_name):
-        if not hasattr(self, '_%s' % parameter_name):
-            raise RuntimeError('no parameter %s' % parameter_name)
-        return getattr(self, '_%s' % parameter_name)
+        if not hasattr(self, "_%s" % parameter_name):
+            raise RuntimeError("no parameter %s" % parameter_name)
+        return getattr(self, "_%s" % parameter_name)
 
     def R_to_CBF(self):
 
         if not self._R_to_CBF:
             self._R_to_CBF = align_reference_frame(
-                self._rotation_axis, (1.0, 0.0, 0.0),
-                self._sample_to_source, (0.0, 0.0, 1.0))
+                self._rotation_axis,
+                (1.0, 0.0, 0.0),
+                self._sample_to_source,
+                (0.0, 0.0, 1.0),
+            )
 
         return self._R_to_CBF
 
@@ -110,8 +125,11 @@ class coordinate_frame_information:
 
         if not self._R_to_Rossmann:
             self._R_to_Rossmann = align_reference_frame(
-                self._sample_to_source, (0.0, 0.0, - 1.0),
-                self._rotation_axis, (0.0, 1.0, 0.0))
+                self._sample_to_source,
+                (0.0, 0.0, -1.0),
+                self._rotation_axis,
+                (0.0, 1.0, 0.0),
+            )
 
         return self._R_to_Rossmann
 
@@ -119,27 +137,33 @@ class coordinate_frame_information:
 
         if not self._R_to_Mosflm:
             self._R_to_Mosflm = align_reference_frame(
-                self._sample_to_source, (- 1.0, 0.0, 0.0),
-                self._rotation_axis, (0.0, 0.0, 1.0))
+                self._sample_to_source,
+                (-1.0, 0.0, 0.0),
+                self._rotation_axis,
+                (0.0, 0.0, 1.0),
+            )
 
         return self._R_to_Mosflm
 
+
 def orthogonal_component(reference, changing):
-    '''Return unit vector corresponding to component of changing orthogonal to
-    reference.'''
+    """Return unit vector corresponding to component of changing orthogonal to
+    reference."""
 
     r = reference.normalize()
     c = changing.normalize()
 
     return (c - c.dot(r) * r).normalize()
 
-def align_reference_frame(primary_axis, primary_target,
-                          secondary_axis, secondary_target):
-    '''Compute a rotation matrix R: R x primary_axis = primary_target and
+
+def align_reference_frame(
+    primary_axis, primary_target, secondary_axis, secondary_target
+):
+    """Compute a rotation matrix R: R x primary_axis = primary_target and
     R x secondary_axis places the secondary_axis in the plane perpendicular
     to the primary_target, as close as possible to the secondary_target.
     Require: primary_target orthogonal to secondary_target, primary axis
-    not colinear with secondary axis.'''
+    not colinear with secondary axis."""
 
     if type(primary_axis) == type(()) or type(primary_axis) == type([]):
         primary_axis = matrix.col(primary_axis).normalize()
@@ -156,8 +180,7 @@ def align_reference_frame(primary_axis, primary_target,
     else:
         secondary_axis = secondary_axis.normalize()
 
-    if type(secondary_target) == type(()) or \
-           type(secondary_target) == type([]):
+    if type(secondary_target) == type(()) or type(secondary_target) == type([]):
         secondary_target = matrix.col(secondary_target).normalize()
     else:
         secondary_target = secondary_target.normalize()
@@ -169,66 +192,75 @@ def align_reference_frame(primary_axis, primary_target,
     assert p_dot_s < 0.001, p_dot_s
 
     if primary_target.angle(primary_axis) % math.pi:
-      axis_p = primary_target.cross(primary_axis)
-      angle_p = - primary_target.angle(primary_axis)
-      Rprimary = axis_p.axis_and_angle_as_r3_rotation_matrix(angle_p)
+        axis_p = primary_target.cross(primary_axis)
+        angle_p = -primary_target.angle(primary_axis)
+        Rprimary = axis_p.axis_and_angle_as_r3_rotation_matrix(angle_p)
     elif primary_target.dot(primary_axis) < 0:
-      axis_p = primary_axis.ortho().normalize()
-      angle_p = math.pi
-      Rprimary = axis_p.axis_and_angle_as_r3_rotation_matrix(angle_p)
+        axis_p = primary_axis.ortho().normalize()
+        angle_p = math.pi
+        Rprimary = axis_p.axis_and_angle_as_r3_rotation_matrix(angle_p)
     else:
-      Rprimary = matrix.identity(3)
+        Rprimary = matrix.identity(3)
 
     if math.fabs(secondary_target.angle(Rprimary * secondary_axis)) < 1.0e-6:
-      Rsecondary = matrix.identity(3)
+        Rsecondary = matrix.identity(3)
     else:
-      axis_r = secondary_target.cross(Rprimary * secondary_axis)
-      axis_s = primary_target
+        axis_r = secondary_target.cross(Rprimary * secondary_axis)
+        axis_s = primary_target
 
-      if (axis_r.angle(primary_target, value_if_undefined=0) > 0.5 * math.pi):
-        angle_s = orthogonal_component(axis_s, secondary_target).angle(
-          orthogonal_component(axis_s, Rprimary * secondary_axis))
-      else:
-        angle_s = - orthogonal_component(axis_s, secondary_target).angle(
-          orthogonal_component(axis_s, Rprimary * secondary_axis))
+        if axis_r.angle(primary_target, value_if_undefined=0) > 0.5 * math.pi:
+            angle_s = orthogonal_component(axis_s, secondary_target).angle(
+                orthogonal_component(axis_s, Rprimary * secondary_axis)
+            )
+        else:
+            angle_s = -orthogonal_component(axis_s, secondary_target).angle(
+                orthogonal_component(axis_s, Rprimary * secondary_axis)
+            )
 
-      Rsecondary = axis_s.axis_and_angle_as_r3_rotation_matrix(angle_s)
+        Rsecondary = axis_s.axis_and_angle_as_r3_rotation_matrix(angle_s)
 
     return Rsecondary * Rprimary
 
+
 def is_xds_inp(putative_xds_inp_file):
-    '''See if this file looks like an XDS.INP file.'''
+    """See if this file looks like an XDS.INP file."""
     from iotbx.xds import xds_inp
+
     return xds_inp.reader.is_xds_inp_file(putative_xds_inp_file)
 
+
 def is_xds_xparm(putative_xds_xparm_file):
-    '''See if this file looks like an XDS XPARM file i.e. it consists of 42
-    floating point values and nothing else.'''
+    """See if this file looks like an XDS XPARM file i.e. it consists of 42
+    floating point values and nothing else."""
     from iotbx.xds import xparm
+
     return xparm.reader.is_xparm_file(putative_xds_xparm_file)
 
+
 def is_xds_integrate_hkl(putative_integrate_hkl_file):
-    '''See if this looks like an XDS INTEGRATE.HKL file.'''
+    """See if this looks like an XDS INTEGRATE.HKL file."""
 
     with io.open(putative_integrate_hkl_file, encoding="ascii") as fh:
-      try:
-        first_record = fh.readline()
-        return '!OUTPUT_FILE=INTEGRATE.HKL' in first_record
-      except UnicodeDecodeError:
-        return False
+        try:
+            first_record = fh.readline()
+            return "!OUTPUT_FILE=INTEGRATE.HKL" in first_record
+        except UnicodeDecodeError:
+            return False
+
 
 def is_xds_ascii_hkl(putative_xds_ascii_hkl_file):
-    '''See if this looks like an XDS INTEGRATE.HKL file.'''
+    """See if this looks like an XDS INTEGRATE.HKL file."""
 
     with io.open(putative_xds_ascii_hkl_file, encoding="ascii") as f:
-      try:
-        f.readline()
-        return "!OUTPUT_FILE=XDS_ASCII.HKL" in f.readline()
-      except UnicodeDecodeError:
-        return False
+        try:
+            f.readline()
+            return "!OUTPUT_FILE=XDS_ASCII.HKL" in f.readline()
+        except UnicodeDecodeError:
+            return False
+
 
 def is_recognized_file(filename):
-    ''' Check if the file is recognized.'''
+    """Check if the file is recognized."""
     if is_xds_xparm(filename):
         return True
     elif is_xds_integrate_hkl(filename):
@@ -241,17 +273,18 @@ def is_recognized_file(filename):
     # Not recognized
     return False
 
-def import_xds_integrate_hkl(integrate_hkl_file):
-    '''Read an XDS INTEGRATE.HKL file, transform the parameters contained
-    therein into the standard coordinate frame, record this as a dictionary.'''
 
-    assert(is_xds_integrate_hkl(integrate_hkl_file))
+def import_xds_integrate_hkl(integrate_hkl_file):
+    """Read an XDS INTEGRATE.HKL file, transform the parameters contained
+    therein into the standard coordinate frame, record this as a dictionary."""
+
+    assert is_xds_integrate_hkl(integrate_hkl_file)
 
     header = []
 
     with open(integrate_hkl_file) as fh:
         for record in fh:
-            if not record.startswith('!'):
+            if not record.startswith("!"):
                 break
 
             header.append(record)
@@ -261,59 +294,59 @@ def import_xds_integrate_hkl(integrate_hkl_file):
     distance = None
 
     for record in header:
-        if record.startswith('!ROTATION_AXIS='):
+        if record.startswith("!ROTATION_AXIS="):
             axis = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!INCIDENT_BEAM_DIRECTION='):
+        if record.startswith("!INCIDENT_BEAM_DIRECTION="):
             beam = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!DIRECTION_OF_DETECTOR_X-AXIS='):
+        if record.startswith("!DIRECTION_OF_DETECTOR_X-AXIS="):
             x = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!DIRECTION_OF_DETECTOR_Y-AXIS='):
+        if record.startswith("!DIRECTION_OF_DETECTOR_Y-AXIS="):
             y = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!UNIT_CELL_A-AXIS='):
+        if record.startswith("!UNIT_CELL_A-AXIS="):
             a = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!UNIT_CELL_B-AXIS='):
+        if record.startswith("!UNIT_CELL_B-AXIS="):
             b = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!UNIT_CELL_C-AXIS='):
-            c = [float(r) for r in  record.split()[-3:]]
+        if record.startswith("!UNIT_CELL_C-AXIS="):
+            c = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!X-RAY_WAVELENGTH='):
+        if record.startswith("!X-RAY_WAVELENGTH="):
             wavelength = float(record.split()[-1])
             continue
-        if record.startswith('!DETECTOR_DISTANCE='):
+        if record.startswith("!DETECTOR_DISTANCE="):
             distance = float(record.split()[-1])
             continue
-        if record.startswith('!SPACE_GROUP_NUMBER='):
+        if record.startswith("!SPACE_GROUP_NUMBER="):
             space_group_number = int(record.split()[-1])
             continue
-        if record.startswith('!BEAM_DIVERGENCE_E.S.D.'):
+        if record.startswith("!BEAM_DIVERGENCE_E.S.D."):
             sigma_divergence = float(record.split()[-1])
             continue
-        if record.startswith('!REFLECTING_RANGE_E.S.D.'):
+        if record.startswith("!REFLECTING_RANGE_E.S.D."):
             mosaicity = float(record.split()[-1])
             continue
-        if record.startswith('!NX='):
+        if record.startswith("!NX="):
             nx = int(record.split()[1])
             ny = int(record.split()[3])
             px = float(record.split()[5])
             py = float(record.split()[7])
             continue
-        if record.startswith('!ORGX='):
+        if record.startswith("!ORGX="):
             ox = float(record.split()[1])
             oy = float(record.split()[3])
             continue
-        if record.startswith('!STARTING_FRAME'):
+        if record.startswith("!STARTING_FRAME"):
             starting_frame = int(record.split()[-1])
             continue
-        if record.startswith('!STARTING_ANGLE'):
+        if record.startswith("!STARTING_ANGLE"):
             starting_angle = float(record.split()[-1])
             continue
-        if record.startswith('!OSCILLATION_RANGE'):
+        if record.startswith("!OSCILLATION_RANGE"):
             oscillation_range = float(record.split()[-1])
             continue
 
@@ -324,7 +357,7 @@ def import_xds_integrate_hkl(integrate_hkl_file):
     # Keep in mind that any inversion of a vector needs to be made with great
     # care!
 
-    B = - matrix.col(beam).normalize()
+    B = -matrix.col(beam).normalize()
     A = matrix.col(axis).normalize()
 
     X = matrix.col(x).normalize()
@@ -351,22 +384,37 @@ def import_xds_integrate_hkl(integrate_hkl_file):
     real_space_c = R * matrix.col(c)
 
     return coordinate_frame_information(
-        detector_origin, detector_fast, detector_slow, (nx, ny), (px, py),
-        rotation_axis, sample_to_source, wavelength,
-        real_space_a, real_space_b, real_space_c, space_group_number,
-        sigma_divergence, mosaicity,
-        starting_angle, oscillation_range, starting_frame, original_rotation = R)
+        detector_origin,
+        detector_fast,
+        detector_slow,
+        (nx, ny),
+        (px, py),
+        rotation_axis,
+        sample_to_source,
+        wavelength,
+        real_space_a,
+        real_space_b,
+        real_space_c,
+        space_group_number,
+        sigma_divergence,
+        mosaicity,
+        starting_angle,
+        oscillation_range,
+        starting_frame,
+        original_rotation=R,
+    )
+
 
 def import_xds_ascii_hkl(xds_ascii_hkl_file):
-    '''Read an XDS INTEGRATE.HKL file, transform the parameters contained therein
-    into the standard coordinate frame, record this as a dictionary.'''
+    """Read an XDS INTEGRATE.HKL file, transform the parameters contained therein
+    into the standard coordinate frame, record this as a dictionary."""
 
-    assert(is_xds_ascii_hkl(xds_ascii_hkl_file))
+    assert is_xds_ascii_hkl(xds_ascii_hkl_file)
 
     header = []
 
     for record in open(xds_ascii_hkl_file):
-        if not record.startswith('!'):
+        if not record.startswith("!"):
             break
 
         header.append(record)
@@ -374,59 +422,59 @@ def import_xds_ascii_hkl(xds_ascii_hkl_file):
     # now need to dig out the values I want, convert and return
 
     for record in header:
-        if record.startswith('!ROTATION_AXIS='):
+        if record.startswith("!ROTATION_AXIS="):
             axis = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!INCIDENT_BEAM_DIRECTION='):
+        if record.startswith("!INCIDENT_BEAM_DIRECTION="):
             beam = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!DIRECTION_OF_DETECTOR_X-AXIS='):
+        if record.startswith("!DIRECTION_OF_DETECTOR_X-AXIS="):
             x = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!DIRECTION_OF_DETECTOR_Y-AXIS='):
+        if record.startswith("!DIRECTION_OF_DETECTOR_Y-AXIS="):
             y = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!UNIT_CELL_A-AXIS='):
+        if record.startswith("!UNIT_CELL_A-AXIS="):
             a = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!UNIT_CELL_B-AXIS='):
+        if record.startswith("!UNIT_CELL_B-AXIS="):
             b = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!UNIT_CELL_C-AXIS='):
+        if record.startswith("!UNIT_CELL_C-AXIS="):
             c = [float(r) for r in record.split()[-3:]]
             continue
-        if record.startswith('!X-RAY_WAVELENGTH='):
+        if record.startswith("!X-RAY_WAVELENGTH="):
             wavelength = float(record.split()[-1])
             continue
-        if record.startswith('!DETECTOR_DISTANCE='):
+        if record.startswith("!DETECTOR_DISTANCE="):
             distance = float(record.split()[-1])
             continue
-        if record.startswith('!SPACE_GROUP_NUMBER='):
+        if record.startswith("!SPACE_GROUP_NUMBER="):
             space_group_number = int(record.split()[-1])
             continue
-        if record.startswith('!BEAM_DIVERGENCE_E.S.D.'):
+        if record.startswith("!BEAM_DIVERGENCE_E.S.D."):
             sigma_divergence = float(record.split()[-1])
             continue
-        if record.startswith('!REFLECTING_RANGE_E.S.D.'):
+        if record.startswith("!REFLECTING_RANGE_E.S.D."):
             mosaicity = float(record.split()[-1])
             continue
-        if record.startswith('!NX='):
+        if record.startswith("!NX="):
             nx = int(record.split()[1])
             ny = int(record.split()[3])
             px = float(record.split()[5])
             py = float(record.split()[7])
             continue
-        if record.startswith('!ORGX='):
+        if record.startswith("!ORGX="):
             ox = float(record.split()[1])
             oy = float(record.split()[3])
             continue
-        if record.startswith('!STARTING_FRAME'):
+        if record.startswith("!STARTING_FRAME"):
             starting_frame = int(record.split()[-1])
             continue
-        if record.startswith('!STARTING_ANGLE'):
+        if record.startswith("!STARTING_ANGLE"):
             starting_angle = float(record.split()[-1])
             continue
-        if record.startswith('!OSCILLATION_RANGE'):
+        if record.startswith("!OSCILLATION_RANGE"):
             oscillation_range = float(record.split()[-1])
             continue
 
@@ -434,7 +482,7 @@ def import_xds_ascii_hkl(xds_ascii_hkl_file):
     # Keep in mind that any inversion of a vector needs to be made with great
     # care!
 
-    B = - matrix.col(beam).normalize()
+    B = -matrix.col(beam).normalize()
     A = matrix.col(axis).normalize()
 
     X = matrix.col(x).normalize()
@@ -451,7 +499,6 @@ def import_xds_ascii_hkl(xds_ascii_hkl_file):
     ox = ox - 0.5
     oy = oy - 0.5
 
-
     detector_origin = R * (distance * N - ox * px * X - oy * py * Y)
     detector_fast = R * X
     detector_slow = R * Y
@@ -462,15 +509,30 @@ def import_xds_ascii_hkl(xds_ascii_hkl_file):
     real_space_c = R * matrix.col(c)
 
     return coordinate_frame_information(
-        detector_origin, detector_fast, detector_slow, (nx, ny), (px, py),
-        rotation_axis, sample_to_source, wavelength,
-        real_space_a, real_space_b, real_space_c, space_group_number,
-        sigma_divergence, mosaicity,
-        starting_angle, oscillation_range, starting_frame, original_rotation = R)
+        detector_origin,
+        detector_fast,
+        detector_slow,
+        (nx, ny),
+        (px, py),
+        rotation_axis,
+        sample_to_source,
+        wavelength,
+        real_space_a,
+        real_space_b,
+        real_space_c,
+        space_group_number,
+        sigma_divergence,
+        mosaicity,
+        starting_angle,
+        oscillation_range,
+        starting_frame,
+        original_rotation=R,
+    )
+
 
 def import_xds_inp(xds_inp_file):
-    '''Read an XDS XPARM file, transform the parameters contained therein
-    into the standard coordinate frame, record this as a dictionary.'''
+    """Read an XDS XPARM file, transform the parameters contained therein
+    into the standard coordinate frame, record this as a dictionary."""
     from iotbx.xds import xds_inp
 
     handle = xds_inp.reader()
@@ -487,7 +549,7 @@ def import_xds_inp(xds_inp_file):
 
     # XDS defines the beam vector as s0 rather than from sample -> source.
 
-    B = - matrix.col(beam).normalize()
+    B = -matrix.col(beam).normalize()
     A = matrix.col(axis).normalize()
 
     X = matrix.col(x).normalize()
@@ -550,8 +612,8 @@ def import_xds_inp(xds_inp_file):
         for i in range(handle.num_segments):
             x1, x2, y1, y2 = handle.segment[i]
             # XDS panel limits inclusive range
-            panel_offset.append((x1-1, y1-1))
-            panel_size.append((x2-x1+1, y2-y1+1))
+            panel_offset.append((x1 - 1, y1 - 1))
+            panel_size.append((x2 - x1 + 1, y2 - y1 + 1))
             panel_fast = matrix.col(handle.direction_of_segment_x_axis[i])
             panel_slow = matrix.col(handle.direction_of_segment_y_axis[i])
             # local basis vectors
@@ -562,10 +624,10 @@ def import_xds_inp(xds_inp_file):
             orgxs = handle.segment_orgx[i]
             orgys = handle.segment_orgy[i]
             fs = handle.segment_distance[i]
-            panel_origin = R * (- (orgxs - x1 + 1) * px * fl \
-                                - (orgys - y1 + 1) * py * sl \
-                                + fs * nl ) \
+            panel_origin = (
+                R * (-(orgxs - x1 + 1) * px * fl - (orgys - y1 + 1) * py * sl + fs * nl)
                 + detector_origin
+            )
 
             # detector to laboratory transformation
             ED = matrix.sqr(list(X) + list(Y) + list(N))
@@ -576,22 +638,36 @@ def import_xds_inp(xds_inp_file):
             panel_slow_axes.append(R * ED * panel_slow)
 
     return coordinate_frame_information(
-        detector_origin, detector_fast, detector_slow, (nx, ny), (px, py),
-        rotation_axis, sample_to_source, wavelength,
-        real_space_a, real_space_b, real_space_c, space_group_number,
-        None, None, starting_angle, oscillation_range, starting_frame,
+        detector_origin,
+        detector_fast,
+        detector_slow,
+        (nx, ny),
+        (px, py),
+        rotation_axis,
+        sample_to_source,
+        wavelength,
+        real_space_a,
+        real_space_b,
+        real_space_c,
+        space_group_number,
+        None,
+        None,
+        starting_angle,
+        oscillation_range,
+        starting_frame,
         original_rotation=R,
         data_range=data_range,
         panel_offset=panel_offset,
         panel_size=panel_size,
         panel_origin=panel_origins,
         panel_fast=panel_fast_axes,
-        panel_slow=panel_slow_axes)
+        panel_slow=panel_slow_axes,
+    )
 
 
 def import_xds_xparm(xparm_file):
-    '''Read an XDS XPARM file, transform the parameters contained therein
-    into the standard coordinate frame, record this as a dictionary.'''
+    """Read an XDS XPARM file, transform the parameters contained therein
+    into the standard coordinate frame, record this as a dictionary."""
     from iotbx.xds import xparm
 
     handle = xparm.reader()
@@ -608,7 +684,7 @@ def import_xds_xparm(xparm_file):
 
     # XDS defines the beam vector as s0 rather than from sample -> source.
 
-    B = - matrix.col(beam).normalize()
+    B = -matrix.col(beam).normalize()
     A = matrix.col(axis).normalize()
 
     X = matrix.col(x).normalize()
@@ -673,11 +749,14 @@ def import_xds_xparm(xparm_file):
         panel_origins = []
         panel_fast_axes = []
         panel_slow_axes = []
-        for segment, orientation,  in zip(handle.segments, handle.orientation):
+        for (
+            segment,
+            orientation,
+        ) in zip(handle.segments, handle.orientation):
             iseg, x1, x2, y1, y2 = segment
             # XDS panel limits inclusive range
-            panel_offset.append((x1-1, y1-1))
-            panel_size.append((x2-x1+1, y2-y1+1))
+            panel_offset.append((x1 - 1, y1 - 1))
+            panel_size.append((x2 - x1 + 1, y2 - y1 + 1))
             panel_fast = matrix.col(orientation[3:6])
             panel_slow = matrix.col(orientation[6:9])
             # local basis vectors
@@ -686,10 +765,10 @@ def import_xds_xparm(xparm_file):
             nl = fl.cross(sl)
 
             orgxs, orgys, fs = orientation[:3]
-            panel_origin = R * (- (orgxs - x1 + 1) * px * fl \
-                                - (orgys - y1 + 1) * py * sl \
-                                + fs * nl ) \
+            panel_origin = (
+                R * (-(orgxs - x1 + 1) * px * fl - (orgys - y1 + 1) * py * sl + fs * nl)
                 + detector_origin
+            )
 
             # detector to laboratory transformation
             ED = matrix.sqr(list(X) + list(Y) + list(N))
@@ -700,16 +779,31 @@ def import_xds_xparm(xparm_file):
             panel_slow_axes.append(R * ED * panel_slow)
 
     return coordinate_frame_information(
-        detector_origin, detector_fast, detector_slow, (nx, ny), (px, py),
-        rotation_axis, sample_to_source, wavelength,
-        real_space_a, real_space_b, real_space_c, space_group_number,
-        None, None, starting_angle, oscillation_range, starting_frame,
+        detector_origin,
+        detector_fast,
+        detector_slow,
+        (nx, ny),
+        (px, py),
+        rotation_axis,
+        sample_to_source,
+        wavelength,
+        real_space_a,
+        real_space_b,
+        real_space_c,
+        space_group_number,
+        None,
+        None,
+        starting_angle,
+        oscillation_range,
+        starting_frame,
         original_rotation=R,
         panel_offset=panel_offset,
         panel_size=panel_size,
         panel_origin=panel_origins,
         panel_fast=panel_fast_axes,
-        panel_slow=panel_slow_axes)
+        panel_slow=panel_slow_axes,
+    )
+
 
 def test_align_reference_frame():
 
@@ -722,25 +816,30 @@ def test_align_reference_frame():
     secondary_axis = _k
     secondary_target = _k
 
-    m = align_reference_frame(primary_axis, primary_target,
-                              secondary_axis, secondary_target)
+    m = align_reference_frame(
+        primary_axis, primary_target, secondary_axis, secondary_target
+    )
 
     i = matrix.identity(3)
 
     for j in range(9):
-        assert(math.fabs(m.elems[j] - i.elems[j]) < 0.001)
+        assert math.fabs(m.elems[j] - i.elems[j]) < 0.001
 
     primary_axis = _j
     primary_target = _i
     secondary_axis = _k
     secondary_target = _k
 
-    m = align_reference_frame(primary_axis, primary_target,
-                              secondary_axis, secondary_target)
+    m = align_reference_frame(
+        primary_axis, primary_target, secondary_axis, secondary_target
+    )
 
     for j in range(3):
-        assert(math.fabs((m * primary_axis).elems[j] -
-                         matrix.col(primary_target).elems[j]) < 0.001)
+        assert (
+            math.fabs((m * primary_axis).elems[j] - matrix.col(primary_target).elems[j])
+            < 0.001
+        )
+
 
 def test_align_reference_frame_dw():
 
@@ -748,22 +847,23 @@ def test_align_reference_frame_dw():
 
     pa = [s, s, 0]
     pt = [1, 0, 0]
-    sa = [- s, s, 0]
+    sa = [-s, s, 0]
     st = [0, 1, 0]
 
-    R = align_reference_frame(pa,pt,sa,st)
+    R = align_reference_frame(pa, pt, sa, st)
 
     print(R * pa)
     print(pt)
     print(R * sa)
     print(st)
 
+
 def random_orthogonal_vectors():
-    v1 = matrix.col((random.random(), random.random(),
-                     random.random())).normalize()
+    v1 = matrix.col((random.random(), random.random(), random.random())).normalize()
     v2 = v1.ortho().normalize()
 
     return v1, v2
+
 
 def test_align_reference_frame_brute():
 
@@ -771,27 +871,27 @@ def test_align_reference_frame_brute():
         m = random_orthogonal_vectors()
         t = random_orthogonal_vectors()
 
-        assert(math.fabs(m[0].dot(m[1])) < 0.001)
-        assert(math.fabs(t[0].dot(t[1])) < 0.001)
+        assert math.fabs(m[0].dot(m[1])) < 0.001
+        assert math.fabs(t[0].dot(t[1])) < 0.001
 
-        R = align_reference_frame(m[0], t[0],
-                                  m[1], t[1])
+        R = align_reference_frame(m[0], t[0], m[1], t[1])
 
         r = (R * m[0], R * m[1])
 
-        assert(math.fabs(r[0].dot(t[0])) > 0.999)
-        assert(math.fabs(r[1].dot(t[1])) > 0.999)
+        assert math.fabs(r[0].dot(t[0])) > 0.999
+        assert math.fabs(r[1].dot(t[1])) > 0.999
 
     return
 
+
 def find_closest_matrix(moving, target):
-    '''Work through lattice permutations to try to align moving with target,
-    with the metric of trace(inverse(moving) * target).'''
+    """Work through lattice permutations to try to align moving with target,
+    with the metric of trace(inverse(moving) * target)."""
 
     trace = 0.0
     reindex = matrix.identity(3)
 
-    for op in sgtbx.space_group_info('P422').type().group().all_ops():
+    for op in sgtbx.space_group_info("P422").type().group().all_ops():
         moved = matrix.sqr(op.r().as_double()) * moving
         if (moved.inverse() * target).trace() > trace:
             trace = (moved.inverse() * target).trace()
@@ -799,10 +899,13 @@ def find_closest_matrix(moving, target):
 
     return reindex
 
+
 def work():
     import sys
-    import_xds_integrate_hkl(sys.argv[1])
-    print('OK')
 
-if __name__ == '__main__':
+    import_xds_integrate_hkl(sys.argv[1])
+    print("OK")
+
+
+if __name__ == "__main__":
     work()

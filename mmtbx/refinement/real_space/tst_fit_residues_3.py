@@ -97,47 +97,48 @@ TER
 """
 
 
-def exercise(i_pdb, pdb_for_map, d_min = 1.5, resolution_factor = 0.1):
-  """
-  Best fitting residue is a rotamer outlier (PHE 407), two scenarious:
-    - outlier fits density perfectly
-    - outlier fits not so good.
-  No better options to fit other than keep the outlier unchanged.
-  """
-  t = mmtbx.refinement.real_space.setup_test(
-    pdb_answer        = pdb_answer,
-    pdb_poor          = pdb_poor,
-    i_pdb             = i_pdb,
-    d_min             = d_min,
-    residues          = ["PHE","THR","ALA"],
-    resolution_factor = resolution_factor,
-    pdb_for_map       = pdb_for_map)
-  #
-  ph = t.ph_poor
-  for i in [1,2,3]:
-    result = mmtbx.refinement.real_space.fit_residues.run(
-      pdb_hierarchy     = ph,
-      vdw_radii         = t.vdw,
-      crystal_symmetry  = t.crystal_symmetry,
-      map_data          = t.target_map,
-      backbone_sample   = False,
-      rotatable_hd      = t.rotatable_hd,
-      rotamer_manager   = t.rotamer_manager,
-      sin_cos_table     = t.sin_cos_table,
-      mon_lib_srv       = t.mon_lib_srv)
-    ph = result.pdb_hierarchy
-  result.pdb_hierarchy.write_pdb_file(file_name = "refined_%s.pdb"%str(i_pdb),
-    crystal_symmetry = t.crystal_symmetry)
-  #
-  mmtbx.refinement.real_space.check_sites_match(
-    ph_answer  = t.ph_answer,
-    ph_refined = result.pdb_hierarchy,
-    tol        = 0.16)
+def exercise(i_pdb, pdb_for_map, d_min=1.5, resolution_factor=0.1):
+    """
+    Best fitting residue is a rotamer outlier (PHE 407), two scenarious:
+      - outlier fits density perfectly
+      - outlier fits not so good.
+    No better options to fit other than keep the outlier unchanged.
+    """
+    t = mmtbx.refinement.real_space.setup_test(
+        pdb_answer=pdb_answer,
+        pdb_poor=pdb_poor,
+        i_pdb=i_pdb,
+        d_min=d_min,
+        residues=["PHE", "THR", "ALA"],
+        resolution_factor=resolution_factor,
+        pdb_for_map=pdb_for_map,
+    )
+    #
+    ph = t.ph_poor
+    for i in [1, 2, 3]:
+        result = mmtbx.refinement.real_space.fit_residues.run(
+            pdb_hierarchy=ph,
+            vdw_radii=t.vdw,
+            crystal_symmetry=t.crystal_symmetry,
+            map_data=t.target_map,
+            backbone_sample=False,
+            rotatable_hd=t.rotatable_hd,
+            rotamer_manager=t.rotamer_manager,
+            sin_cos_table=t.sin_cos_table,
+            mon_lib_srv=t.mon_lib_srv,
+        )
+        ph = result.pdb_hierarchy
+    result.pdb_hierarchy.write_pdb_file(
+        file_name="refined_%s.pdb" % str(i_pdb), crystal_symmetry=t.crystal_symmetry
+    )
+    #
+    mmtbx.refinement.real_space.check_sites_match(
+        ph_answer=t.ph_answer, ph_refined=result.pdb_hierarchy, tol=0.16
+    )
 
-if(__name__ == "__main__"):
-  t0 = time.time()
-  for i_pdb, pdb_for_map in enumerate([pdb_for_map_1, pdb_for_map_2]):
-    exercise(
-      i_pdb       = i_pdb,
-      pdb_for_map = pdb_for_map)
-  print("Time: %6.4f"%(time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    for i_pdb, pdb_for_map in enumerate([pdb_for_map_1, pdb_for_map_2]):
+        exercise(i_pdb=i_pdb, pdb_for_map=pdb_for_map)
+    print("Time: %6.4f" % (time.time() - t0))

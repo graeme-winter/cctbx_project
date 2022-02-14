@@ -2,7 +2,9 @@ from __future__ import absolute_import, division, print_function
 from six.moves import cStringIO as StringIO
 from libtbx import easy_run
 from six.moves import range
-pdbs = ["""
+
+pdbs = [
+    """
 ATOM   3239  N   ASN A 411       8.430  37.928 107.306  1.00 14.13           N
 ATOM   3240  CA  ASN A 411       9.390  38.201 106.233  1.00 15.21           C
 ATOM   3241  C   ASN A 411      10.787  38.396 106.824  1.00 16.78           C
@@ -23,7 +25,7 @@ ATOM   3255  C   ALA A 413      15.125  32.912 106.082  1.00 20.71           C
 ATOM   3256  O   ALA A 413      14.595  32.411 105.098  1.00 20.46           O
 ATOM   3257  CB  ALA A 413      13.795  32.257 108.046  1.00 19.57           C
 """,
-  """
+    """
 ATOM     71  N   SER A 411      39.662  65.271  37.503  1.00 61.40           N
 ATOM     72  CA  SER A 411      38.219  65.068  37.450  1.00 59.89           C
 ATOM     73  C   SER A 411      37.919  63.580  37.301  1.00 57.15           C
@@ -46,89 +48,105 @@ ATOM     89  CG2 THR A 413      34.574  63.397  34.618  1.00 68.25           C
 """,
 ]
 
-params = {"" : [-180],
-          """
+params = {
+    "": [-180],
+    """
 pdb_interpretation {
  apply_cis_trans_specification {
    cis_trans_mod = cis
    residue_selection = chain a and resseq 412
   }
 }
-""" : [0],
-          """
+""": [
+        0
+    ],
+    """
 pdb_interpretation {
  apply_cis_trans_specification {
    cis_trans_mod = cis
    residue_selection = chain a and resseq 412 and name CA
   }
 }
-""" : [0],
-  }
+""": [
+        0
+    ],
+}
 
 cmd_args = {
-  "" : [0],
-  "peptide_link.apply_all_trans=False" : [0],
-  "peptide_link.apply_all_trans=True" : [-180],
-  }
+    "": [0],
+    "peptide_link.apply_all_trans=False": [0],
+    "peptide_link.apply_all_trans=True": [-180],
+}
 
-geo_specs = ["""dihedral pdb=" CA  ASN A 411 "
+geo_specs = [
+    """dihedral pdb=" CA  ASN A 411 "
          pdb=" C   ASN A 411 "
          pdb=" N   SER A 412 "
          pdb=" CA  SER A 412 "
     ideal   model   delta  harmonic     sigma   weight residual
   %4s.00""",
-  """dihedral pdb=" CA  SER A 411 "
+    """dihedral pdb=" CA  SER A 411 "
          pdb=" C   SER A 411 "
          pdb=" N   PRO A 412 "
          pdb=" CA  PRO A 412 "
     ideal   model   delta  harmonic     sigma   weight residual
-  %4s.00"""
-  ]
+  %4s.00""",
+]
+
 
 def cis_trans_specification():
-  for i, pdb in enumerate(pdbs):
-    preamble = "bad_cis_peptide_%02d" % i
-    f=open("%s.pdb" % preamble, "w")
-    f.write(pdb)
-    f.close()
-    for param, results in params.items():
-      f=open("%s.params" % preamble, "w")
-      f.write(param)
-      f.close()
-      cmd = "phenix.geometry_minimization %(preamble)s.pdb %(preamble)s.params" % locals()
-      print(cmd)
-      ero = easy_run.fully_buffered(command=cmd)
-      out = StringIO()
-      ero.show_stdout(out=out)
+    for i, pdb in enumerate(pdbs):
+        preamble = "bad_cis_peptide_%02d" % i
+        f = open("%s.pdb" % preamble, "w")
+        f.write(pdb)
+        f.close()
+        for param, results in params.items():
+            f = open("%s.params" % preamble, "w")
+            f.write(param)
+            f.close()
+            cmd = (
+                "phenix.geometry_minimization %(preamble)s.pdb %(preamble)s.params"
+                % locals()
+            )
+            print(cmd)
+            ero = easy_run.fully_buffered(command=cmd)
+            out = StringIO()
+            ero.show_stdout(out=out)
 
-      lines = open("%(preamble)s_minimized.geo" % locals(), "r").read()
-      geo_spec=geo_specs[i]
-      print(geo_spec % results[0])
-      if lines.find(geo_spec % results[0])==1:
-        if lines.find(geo_spec % abs(results[0]))==1:
-          assert 0, ".geo specification not found"
+            lines = open("%(preamble)s_minimized.geo" % locals(), "r").read()
+            geo_spec = geo_specs[i]
+            print(geo_spec % results[0])
+            if lines.find(geo_spec % results[0]) == 1:
+                if lines.find(geo_spec % abs(results[0])) == 1:
+                    assert 0, ".geo specification not found"
+
 
 def trans_only_specification():
-  # must be run after cis_trans_specification
-  for i in range(len(pdbs)):
-    preamble = "bad_cis_peptide_%02d" % i
-    for arg, results in cmd_args.items():
-      cmd = "phenix.geometry_minimization %(preamble)s_minimized.pdb %(arg)s" % locals()
-      print(cmd)
-      ero = easy_run.fully_buffered(command=cmd)
-      out = StringIO()
-      ero.show_stdout(out=out)
+    # must be run after cis_trans_specification
+    for i in range(len(pdbs)):
+        preamble = "bad_cis_peptide_%02d" % i
+        for arg, results in cmd_args.items():
+            cmd = (
+                "phenix.geometry_minimization %(preamble)s_minimized.pdb %(arg)s"
+                % locals()
+            )
+            print(cmd)
+            ero = easy_run.fully_buffered(command=cmd)
+            out = StringIO()
+            ero.show_stdout(out=out)
 
-      lines = open("%(preamble)s_minimized_minimized.geo" % locals(), "r").read()
-      geo_spec=geo_specs[i]
-      print(geo_spec % results[0])
-      if lines.find(geo_spec % results[0])==1:
-        if lines.find(geo_spec % abs(results[0]))==1:
-          assert 0, ".geo specification not found"
+            lines = open("%(preamble)s_minimized_minimized.geo" % locals(), "r").read()
+            geo_spec = geo_specs[i]
+            print(geo_spec % results[0])
+            if lines.find(geo_spec % results[0]) == 1:
+                if lines.find(geo_spec % abs(results[0])) == 1:
+                    assert 0, ".geo specification not found"
+
 
 def run():
-  cis_trans_specification()
-  trans_only_specification()
+    cis_trans_specification()
+    trans_only_specification()
 
-if __name__=="__main__":
-  run()#sys.argv[1])
+
+if __name__ == "__main__":
+    run()  # sys.argv[1])

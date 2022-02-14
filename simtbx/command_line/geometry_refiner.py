@@ -3,14 +3,19 @@ from __future__ import print_function, division
 # LIBTBX_SET_DISPATCHER_NAME diffBragg.geometry_refiner
 
 import numpy as np
+
 try:
     import lmfit
 except ImportError:
-    raise ImportError("Install lmfit 'libtbx.python -m pip install lmfit' before using geometry_refiner.py!")
-from libtbx.mpi4py import  MPI
+    raise ImportError(
+        "Install lmfit 'libtbx.python -m pip install lmfit' before using geometry_refiner.py!"
+    )
+from libtbx.mpi4py import MPI
+
 COMM = MPI.COMM_WORLD
 
 import logging
+
 MAIN_LOGGER = logging.getLogger("diffBragg.main")
 
 from dxtbx.model import Experiment, ExperimentList
@@ -27,7 +32,7 @@ PAN_Z_ID = 10
 PAN_OFS_IDS = PAN_O_ID, PAN_F_ID, PAN_S_ID
 PAN_XYZ_IDS = PAN_X_ID, PAN_Y_ID, PAN_Z_ID
 
-DEG_TO_PI = np.pi/180.
+DEG_TO_PI = np.pi / 180.0
 
 
 def rest_targ(p):
@@ -37,13 +42,12 @@ def rest_targ(p):
     """
     center, beta = p.user_data
     dist = center - p.value
-    return .5*dist**2/beta
-    #return .5*(np.log(2*np.pi*beta) + dist**2/beta)
+    return 0.5 * dist ** 2 / beta
+    # return .5*(np.log(2*np.pi*beta) + dist**2/beta)
 
 
 class DetectorParameters:
-
-    def __init__(self, phil_params, panel_groups_refined, num_panel_groups ):
+    def __init__(self, phil_params, panel_groups_refined, num_panel_groups):
 
         self.parameters = []
         GEO = phil_params.geometry
@@ -51,35 +55,70 @@ class DetectorParameters:
             group_has_data = i_group in panel_groups_refined
             if not group_has_data:
                 continue
-            vary_rots = [not fixed_flag and group_has_data for fixed_flag in GEO.fix.panel_rotations]
-            vary_rots = [True]*3
-            o = lmfit.Parameter(name="group%d_RotOrth" % i_group, value=0, #GEO.init.panel_rotations[2],
-                                min=GEO.min.panel_rotations[0]*DEG_TO_PI, max=GEO.max.panel_rotations[0]*DEG_TO_PI,
-                                vary=vary_rots[0], user_data=[0, GEO.betas.panel_rot[0]])
-            f = lmfit.Parameter(name="group%d_RotFast" % i_group, value=0, #GEO.init.panel_rotations[0],
-                                min=GEO.min.panel_rotations[1]*DEG_TO_PI, max=GEO.max.panel_rotations[1]*DEG_TO_PI,
-                                vary=vary_rots[1], user_data=[0, GEO.betas.panel_rot[1]])
-            s = lmfit.Parameter(name="group%d_RotSlow" % i_group, value=0, #GEO.init.panel_rotations[1],
-                                min=GEO.min.panel_rotations[2]*DEG_TO_PI, max=GEO.max.panel_rotations[2]*DEG_TO_PI,
-                                vary=vary_rots[2], user_data=[0, GEO.betas.panel_rot[2]])
+            vary_rots = [
+                not fixed_flag and group_has_data
+                for fixed_flag in GEO.fix.panel_rotations
+            ]
+            vary_rots = [True] * 3
+            o = lmfit.Parameter(
+                name="group%d_RotOrth" % i_group,
+                value=0,  # GEO.init.panel_rotations[2],
+                min=GEO.min.panel_rotations[0] * DEG_TO_PI,
+                max=GEO.max.panel_rotations[0] * DEG_TO_PI,
+                vary=vary_rots[0],
+                user_data=[0, GEO.betas.panel_rot[0]],
+            )
+            f = lmfit.Parameter(
+                name="group%d_RotFast" % i_group,
+                value=0,  # GEO.init.panel_rotations[0],
+                min=GEO.min.panel_rotations[1] * DEG_TO_PI,
+                max=GEO.max.panel_rotations[1] * DEG_TO_PI,
+                vary=vary_rots[1],
+                user_data=[0, GEO.betas.panel_rot[1]],
+            )
+            s = lmfit.Parameter(
+                name="group%d_RotSlow" % i_group,
+                value=0,  # GEO.init.panel_rotations[1],
+                min=GEO.min.panel_rotations[2] * DEG_TO_PI,
+                max=GEO.max.panel_rotations[2] * DEG_TO_PI,
+                vary=vary_rots[2],
+                user_data=[0, GEO.betas.panel_rot[2]],
+            )
 
-            vary_shifts = [not fixed_flag and group_has_data for fixed_flag in GEO.fix.panel_translations]
-            vary_shifts = [True]*3
-            x = lmfit.Parameter(name="group%d_ShiftX" % i_group, value=0, #GEO.init.panel_translations[0],
-                                min=GEO.min.panel_translations[0]*1e-3, max=GEO.max.panel_translations[0]*1e-3,
-                                vary=vary_shifts[0], user_data=[0, GEO.betas.panel_xyz[0]])
-            y = lmfit.Parameter(name="group%d_ShiftY" % i_group, value=0, #GEO.init.panel_translations[1],
-                                min=GEO.min.panel_translations[1]*1e-3, max=GEO.max.panel_translations[1]*1e-3,
-                                vary=vary_shifts[1], user_data=[0, GEO.betas.panel_xyz[1]])
-            z = lmfit.Parameter(name="group%d_ShiftZ" % i_group, value=0, #GEO.init.panel_translations[2],
-                                min=GEO.min.panel_translations[2]*1e-3, max=GEO.max.panel_translations[2]*1e-3,
-                                vary=vary_shifts[2], user_data=[0, GEO.betas.panel_xyz[2]])
+            vary_shifts = [
+                not fixed_flag and group_has_data
+                for fixed_flag in GEO.fix.panel_translations
+            ]
+            vary_shifts = [True] * 3
+            x = lmfit.Parameter(
+                name="group%d_ShiftX" % i_group,
+                value=0,  # GEO.init.panel_translations[0],
+                min=GEO.min.panel_translations[0] * 1e-3,
+                max=GEO.max.panel_translations[0] * 1e-3,
+                vary=vary_shifts[0],
+                user_data=[0, GEO.betas.panel_xyz[0]],
+            )
+            y = lmfit.Parameter(
+                name="group%d_ShiftY" % i_group,
+                value=0,  # GEO.init.panel_translations[1],
+                min=GEO.min.panel_translations[1] * 1e-3,
+                max=GEO.max.panel_translations[1] * 1e-3,
+                vary=vary_shifts[1],
+                user_data=[0, GEO.betas.panel_xyz[1]],
+            )
+            z = lmfit.Parameter(
+                name="group%d_ShiftZ" % i_group,
+                value=0,  # GEO.init.panel_translations[2],
+                min=GEO.min.panel_translations[2] * 1e-3,
+                max=GEO.max.panel_translations[2] * 1e-3,
+                vary=vary_shifts[2],
+                user_data=[0, GEO.betas.panel_xyz[2]],
+            )
 
             self.parameters += [o, f, s, x, y, z]
 
 
 class CrystalParameters:
-
     def __init__(self, data_modelers):
 
         self.parameters = []
@@ -88,29 +127,49 @@ class CrystalParameters:
 
             for i_N in range(3):
                 p = Mod.PAR.Nabc[i_N]
-                lmfit_p = lmfit.Parameter("rank%d_shot%d_Nabc%d" % (COMM.rank, i_shot, i_N),
-                                          min=p.minval, max=p.maxval, vary=True, value=p.init,
-                                          user_data=[p.center, p.beta])
+                lmfit_p = lmfit.Parameter(
+                    "rank%d_shot%d_Nabc%d" % (COMM.rank, i_shot, i_N),
+                    min=p.minval,
+                    max=p.maxval,
+                    vary=True,
+                    value=p.init,
+                    user_data=[p.center, p.beta],
+                )
                 self.parameters.append(lmfit_p)
 
             for i_rot in range(3):
                 p = Mod.PAR.RotXYZ_params[i_rot]
-                lmfit_p = lmfit.Parameter("rank%d_shot%d_RotXYZ%d" % (COMM.rank, i_shot, i_rot),
-                                          min=p.minval, max=p.maxval, vary=True, value=p.init,
-                                          user_data=[p.center, p.beta])
+                lmfit_p = lmfit.Parameter(
+                    "rank%d_shot%d_RotXYZ%d" % (COMM.rank, i_shot, i_rot),
+                    min=p.minval,
+                    max=p.maxval,
+                    vary=True,
+                    value=p.init,
+                    user_data=[p.center, p.beta],
+                )
                 self.parameters.append(lmfit_p)
 
             p = Mod.PAR.Scale
-            lmfit_p = lmfit.Parameter("rank%d_shot%d_Scale" % (COMM.rank, i_shot),
-                                      min=p.minval, max=p.maxval, vary=True, value=p.init,
-                                      user_data=[p.center, p.beta])
+            lmfit_p = lmfit.Parameter(
+                "rank%d_shot%d_Scale" % (COMM.rank, i_shot),
+                min=p.minval,
+                max=p.maxval,
+                vary=True,
+                value=p.init,
+                user_data=[p.center, p.beta],
+            )
             self.parameters.append(lmfit_p)
 
             for i_uc in range(len(Mod.PAR.ucell)):
                 p = Mod.PAR.ucell[i_uc]
-                lmfit_p = lmfit.Parameter("rank%d_shot%d_Ucell%d" % (COMM.rank, i_shot, i_uc),
-                                          min=p.minval, max=p.maxval, vary=True, value=p.init,
-                                          user_data=[p.center, p.beta])
+                lmfit_p = lmfit.Parameter(
+                    "rank%d_shot%d_Ucell%d" % (COMM.rank, i_shot, i_uc),
+                    min=p.minval,
+                    max=p.maxval,
+                    vary=True,
+                    value=p.init,
+                    user_data=[p.center, p.beta],
+                )
                 self.parameters.append(lmfit_p)
 
 
@@ -119,9 +178,9 @@ class Target:
         pass
 
     def callbk(self, lmfit_params, iter, resid, *fcn_args, **fcn_kws):
-        if COMM.rank==0:
+        if COMM.rank == 0:
             print("Iteration %d:\n\tResid=%f, sigmaZ %f" % (iter, resid, self.sigmaZ))
-            if iter % 50==0:
+            if iter % 50 == 0:
                 SIM, params = fcn_args[2:4]
                 save_opt_det(params, lmfit_params, SIM)
 
@@ -143,7 +202,10 @@ def model(x, i_shot, Modeler, SIM, compute_grad=True):
     Nc = x["rank%d_shot%d_Nabc%d" % (COMM.rank, i_shot, 2)]
     G = x["rank%d_shot%d_Scale" % (COMM.rank, i_shot)]
     num_uc_p = len(Modeler.ucell_man.variables)
-    ucell_pars = [x["rank%d_shot%d_Ucell%d" % (COMM.rank, i_shot, i_uc)] for i_uc in range(num_uc_p)]
+    ucell_pars = [
+        x["rank%d_shot%d_Ucell%d" % (COMM.rank, i_shot, i_uc)]
+        for i_uc in range(num_uc_p)
+    ]
 
     # update the photon energy spectrum for this shot
     SIM.beam.spectrum = Modeler.spectra
@@ -157,7 +219,8 @@ def model(x, i_shot, Modeler, SIM, compute_grad=True):
         for i_ucell in range(len(ucell_pars)):
             SIM.D.set_ucell_derivative_matrix(
                 i_ucell + hopper_utils.UCELL_ID_OFFSET,
-                Modeler.ucell_man.derivative_matrices[i_ucell])
+                Modeler.ucell_man.derivative_matrices[i_ucell],
+            )
 
     # update the Umat rotation matrix and the RotXYZ perturbation
     SIM.D.Umatrix = Modeler.PAR.Umatrix
@@ -168,7 +231,7 @@ def model(x, i_shot, Modeler, SIM, compute_grad=True):
     # update the mosaic block size
     SIM.D.set_ncells_values((Na.value, Nb.value, Nc.value))
 
-    npix = int(len(Modeler.pan_fast_slow)/3.)
+    npix = int(len(Modeler.pan_fast_slow) / 3.0)
 
     # get the forward Bragg scatterint
     SIM.D.add_diffBragg_spots(Modeler.pan_fast_slow)
@@ -176,15 +239,17 @@ def model(x, i_shot, Modeler, SIM, compute_grad=True):
 
     # apply the per-shot scale factor
     scale = G.value
-    bragg = scale*bragg_no_scale
+    bragg = scale * bragg_no_scale
 
     model_pix = bragg + Modeler.all_background
 
     # compute the negative log Likelihood
-    resid = (Modeler.all_data - model_pix)
+    resid = Modeler.all_data - model_pix
     resid_square = resid ** 2
     V = model_pix + Modeler.sigma_rdout ** 2
-    neg_LL = (.5*(np.log(2*np.pi*V) + resid_square / V))[Modeler.all_trusted].sum()
+    neg_LL = (0.5 * (np.log(2 * np.pi * V) + resid_square / V))[
+        Modeler.all_trusted
+    ].sum()
 
     # compute the z-score sigma as a diagnostic
     zscore_sigma = np.std((resid / np.sqrt(V))[Modeler.all_trusted])
@@ -193,37 +258,55 @@ def model(x, i_shot, Modeler, SIM, compute_grad=True):
     J = {}
     if compute_grad:
         # this term is a common factor in all of the gradients
-        common_grad_term = (0.5 / V * (1 - 2 * resid - resid_square / V))
+        common_grad_term = 0.5 / V * (1 - 2 * resid - resid_square / V)
 
         # scale factor gradients
         if G.vary:
             scale_grad = bragg_no_scale
-            J[G.name] = (common_grad_term*scale_grad)[Modeler.all_trusted].sum()
+            J[G.name] = (common_grad_term * scale_grad)[Modeler.all_trusted].sum()
 
         # Umat gradients
         for i_rot, rot in enumerate([rotX, rotY, rotZ]):
             if rot.vary:
                 rot_db_id = ROTXYZ_ID[i_rot]
-                rot_grad = scale*SIM.D.get_derivative_pixels(rot_db_id).as_numpy_array()[:npix]
-                J[rot.name] = (common_grad_term*rot_grad)[Modeler.all_trusted].sum()
+                rot_grad = (
+                    scale
+                    * SIM.D.get_derivative_pixels(rot_db_id).as_numpy_array()[:npix]
+                )
+                J[rot.name] = (common_grad_term * rot_grad)[Modeler.all_trusted].sum()
 
         # mosaic block size gradients
         if Na.vary:
             Nabc_grad = SIM.D.get_ncells_derivative_pixels()
             for i_N, N in enumerate([Na, Nb, Nc]):
-                N_grad = scale*(Nabc_grad[i_N][:npix].as_numpy_array())
-                J[N.name] = (common_grad_term*N_grad)[Modeler.all_trusted].sum()
+                N_grad = scale * (Nabc_grad[i_N][:npix].as_numpy_array())
+                J[N.name] = (common_grad_term * N_grad)[Modeler.all_trusted].sum()
 
         # unit cell gradients
         if ucell_pars[0].vary:
             for i_ucell in range(len(ucell_pars)):
-                d = scale*SIM.D.get_derivative_pixels(hopper_utils.UCELL_ID_OFFSET+i_ucell).as_numpy_array()[:npix]
-                J[ucell_pars[i_ucell].name] = (common_grad_term*d)[Modeler.all_trusted].sum()
+                d = (
+                    scale
+                    * SIM.D.get_derivative_pixels(
+                        hopper_utils.UCELL_ID_OFFSET + i_ucell
+                    ).as_numpy_array()[:npix]
+                )
+                J[ucell_pars[i_ucell].name] = (common_grad_term * d)[
+                    Modeler.all_trusted
+                ].sum()
 
         # detector model gradients
         detector_derivs = []
-        for diffbragg_parameter_id in PAN_OFS_IDS+PAN_XYZ_IDS:
-            d = common_grad_term*scale*(SIM.D.get_derivative_pixels(diffbragg_parameter_id).as_numpy_array()[:npix])
+        for diffbragg_parameter_id in PAN_OFS_IDS + PAN_XYZ_IDS:
+            d = (
+                common_grad_term
+                * scale
+                * (
+                    SIM.D.get_derivative_pixels(
+                        diffbragg_parameter_id
+                    ).as_numpy_array()[:npix]
+                )
+            )
             detector_derivs.append(d)
         names = "RotOrth", "RotFast", "RotSlow", "ShiftX", "ShiftY", "ShiftZ"
         for group_id in Modeler.unique_panel_group_ids:
@@ -231,10 +314,10 @@ def model(x, i_shot, Modeler, SIM, compute_grad=True):
                 J["group%d_%s" % (group_id, name)] = 0
             for pixel_rng in Modeler.group_id_slices[group_id]:
                 trusted_pixels = Modeler.all_trusted[pixel_rng]
-                #grad_component = common_grad_term[pixel_rng]
+                # grad_component = common_grad_term[pixel_rng]
                 for i_name, name in enumerate(names):
                     d = detector_derivs[i_name][pixel_rng]
-                    #J["group%d_%s" % (group_id, name)] += (grad_component*d)[trusted_pixels].sum()
+                    # J["group%d_%s" % (group_id, name)] += (grad_component*d)[trusted_pixels].sum()
                     J["group%d_%s" % (group_id, name)] += d[trusted_pixels].sum()
 
     return neg_LL, J, model_pix, zscore_sigma
@@ -246,9 +329,9 @@ def set_group_id_slices(Modeler, group_id_from_panel_id):
     group_id_from_panel_id : dict where key is panel id and value is group id
     """
     Modeler.all_group_id = [group_id_from_panel_id[pid] for pid in Modeler.all_pid]
-    splitter = np.where(np.diff(Modeler.all_group_id) != 0)[0]+1
+    splitter = np.where(np.diff(Modeler.all_group_id) != 0)[0] + 1
     npix = len(Modeler.all_data)
-    slices = [slice(V[0], V[-1]+1, 1) for V in np.split(np.arange(npix), splitter)]
+    slices = [slice(V[0], V[-1] + 1, 1) for V in np.split(np.arange(npix), splitter)]
     group_ids = [V[0] for V in np.split(np.array(Modeler.all_group_id), splitter)]
     group_id_slices = {}
     for i_group, slc in zip(group_ids, slices):
@@ -257,7 +340,10 @@ def set_group_id_slices(Modeler, group_id_from_panel_id):
         else:
             group_id_slices[i_group].append(slc)
     Modeler.unique_panel_group_ids = set(Modeler.all_group_id)
-    logging.debug("Modeler has data on %d unique panel groups" % (len(Modeler.unique_panel_group_ids)))
+    logging.debug(
+        "Modeler has data on %d unique panel groups"
+        % (len(Modeler.unique_panel_group_ids))
+    )
     Modeler.group_id_slices = group_id_slices
 
 
@@ -276,9 +362,18 @@ def update_detector(x, SIM):
 
         origin_of_rotation = SIM.panel_reference_from_id[pid]
         SIM.D.reference_origin = origin_of_rotation
-        SIM.D.update_dxtbx_geoms(det, SIM.beam.nanoBragg_constructor_beam, pid,
-                                  Oang, Fang, Sang, Xdist, Ydist, Zdist,
-                                  force=False)
+        SIM.D.update_dxtbx_geoms(
+            det,
+            SIM.beam.nanoBragg_constructor_beam,
+            pid,
+            Oang,
+            Fang,
+            Sang,
+            Xdist,
+            Ydist,
+            Zdist,
+            force=False,
+        )
 
 
 def target_and_grad(x, x_mapping, data_modelers, SIM, params, compute_grad=True):
@@ -291,7 +386,9 @@ def target_and_grad(x, x_mapping, data_modelers, SIM, params, compute_grad=True)
     for i_shot in data_modelers:
         Modeler = data_modelers[i_shot]
 
-        neg_LL, neg_LL_grad, model_pix, per_shot_sigZ = model(x, i_shot, Modeler, SIM, compute_grad)
+        neg_LL, neg_LL_grad, model_pix, per_shot_sigZ = model(
+            x, i_shot, Modeler, SIM, compute_grad
+        )
         all_shot_sigZ.append(per_shot_sigZ)
 
         # accumulate the target functional for this rank/shot
@@ -315,7 +412,9 @@ def target_and_grad(x, x_mapping, data_modelers, SIM, params, compute_grad=True)
         grad = COMM.bcast(COMM.reduce(grad))
 
     if params.use_restraints and params.geometry.betas.close_distances is not None:
-        target_functional += np.std(SIM.D.close_distances) / params.geometry.betas.close_distances
+        target_functional += (
+            np.std(SIM.D.close_distances) / params.geometry.betas.close_distances
+        )
 
     # add in the detector parameter restraints
     if params.use_restraints:
@@ -326,7 +425,7 @@ def target_and_grad(x, x_mapping, data_modelers, SIM, params, compute_grad=True)
                 target_functional += rest_targ(p)
 
     all_shot_sigZ = COMM.reduce(all_shot_sigZ)
-    if COMM.rank==0:
+    if COMM.rank == 0:
         all_shot_sigZ = np.median(all_shot_sigZ)
 
     return target_functional, grad, all_shot_sigZ
@@ -334,16 +433,19 @@ def target_and_grad(x, x_mapping, data_modelers, SIM, params, compute_grad=True)
 
 def geom_min(params):
     import pandas
+
     launcher = ensemble_refine_launcher.RefineLauncher(params)
     df = pandas.read_pickle(params.geometry.input_pkl)
     if params.geometry.first_n is not None:
-        df = df.iloc[:params.geometry.first_n]
-    if COMM.rank==0:
-        print("Will optimize using %d experiments" %len(df))
+        df = df.iloc[: params.geometry.first_n]
+    if COMM.rank == 0:
+        print("Will optimize using %d experiments" % len(df))
     launcher.load_inputs(df, refls_key=params.geometry.refls_key)
 
     # same on every rank:
-    det_params = DetectorParameters(params, launcher.panel_groups_refined, launcher.n_panel_groups)
+    det_params = DetectorParameters(
+        params, launcher.panel_groups_refined, launcher.n_panel_groups
+    )
 
     # different on each rank
     crystal_params = CrystalParameters(launcher.Modelers)
@@ -369,33 +471,37 @@ def geom_min(params):
 
     # set the GPU device
     launcher.SIM.D.device_Id = COMM.rank % params.refiner.num_devices
-    if COMM.rank==0:
+    if COMM.rank == 0:
         print("Allocating %d pixels on rank %d")
-    npx_str = "(rnk%d, dev%d): %d pix" %(COMM.rank, launcher.SIM.D.device_Id, launcher.NPIX_TO_ALLOC)
+    npx_str = "(rnk%d, dev%d): %d pix" % (
+        COMM.rank,
+        launcher.SIM.D.device_Id,
+        launcher.NPIX_TO_ALLOC,
+    )
     npx_str = COMM.gather(npx_str)
-    if COMM.rank==0:
+    if COMM.rank == 0:
         print("How many pixels each rank will allocate for on its device:")
         print("; ".join(npx_str))
-    launcher.SIM.D.Npix_to_allocate =  launcher.NPIX_TO_ALLOC
+    launcher.SIM.D.Npix_to_allocate = launcher.NPIX_TO_ALLOC
 
     # configure diffBragg instance for gradient computation
     # TODO: fix flags currently unsupported in lmfit with gradients? One can always "fix" a parameter by
     #       setting the range in DetectorParameters/CrystalParameters to be infinitesimal, e.g. +-1e-10
     if do_grads:
-        #if not params.fix.RotXYZ:
+        # if not params.fix.RotXYZ:
         for i_rot in range(3):
             launcher.SIM.D.refine(ROTXYZ_ID[i_rot])
-        #if not params.fix.Nabc:
+        # if not params.fix.Nabc:
         launcher.SIM.D.refine(hopper_utils.NCELLS_ID)
-        #if not params.fix.ucell:
+        # if not params.fix.ucell:
         for i_ucell in range(launcher.SIM.num_ucell_param):
             launcher.SIM.D.refine(hopper_utils.UCELL_ID_OFFSET + i_ucell)
         for i, diffbragg_id in enumerate(PAN_OFS_IDS):
-            #if not params.geometry.fix.panel_rotations[i]:
+            # if not params.geometry.fix.panel_rotations[i]:
             launcher.SIM.D.refine(diffbragg_id)
 
         for i, diffbragg_id in enumerate(PAN_XYZ_IDS):
-            #if not params.geometry.fix.panel_translations[i]:
+            # if not params.geometry.fix.panel_translations[i]:
             launcher.SIM.D.refine(diffbragg_id)
 
     # do a barrel roll!
@@ -404,15 +510,32 @@ def geom_min(params):
     fcn_kws = {}
     lbfgs_kws = {}
     if do_grads:
-        lbfgs_kws = {"jac": target.jac,
-                    "options":  {"ftol": params.ftol, "gtol": 1e-10, "maxfun":1e5, "maxiter":params.lbfgs_maxiter}}
+        lbfgs_kws = {
+            "jac": target.jac,
+            "options": {
+                "ftol": params.ftol,
+                "gtol": 1e-10,
+                "maxfun": 1e5,
+                "maxiter": params.lbfgs_maxiter,
+            },
+        }
 
-    minzer = lmfit.Minimizer(userfcn=target, params=LMP, fcn_args=fcn_args, fcn_kws=fcn_kws, iter_cb=target.callbk,
-                             scale_covar=False, calc_covar=False)
-    result = minzer.minimize(method=params.geometry.optimize_method, params=LMP, **lbfgs_kws)
+    minzer = lmfit.Minimizer(
+        userfcn=target,
+        params=LMP,
+        fcn_args=fcn_args,
+        fcn_kws=fcn_kws,
+        iter_cb=target.callbk,
+        scale_covar=False,
+        calc_covar=False,
+    )
+    result = minzer.minimize(
+        method=params.geometry.optimize_method, params=LMP, **lbfgs_kws
+    )
 
     if COMM.rank == 0:
         save_opt_det(params, result.params, launcher.SIM)
+
 
 def save_opt_det(phil_params, lmfit_params, SIM):
     opt_det = get_optimized_detector(lmfit_params, SIM)
@@ -422,11 +545,12 @@ def save_opt_det(phil_params, lmfit_params, SIM):
     El.append(E)
     El.as_file(phil_params.geometry.optimized_detector_name)
     print_parmams(lmfit_params)
-    print("Saved detector model to %s" % phil_params.geometry.optimized_detector_name )
+    print("Saved detector model to %s" % phil_params.geometry.optimized_detector_name)
 
 
 def get_optimized_detector(x, SIM):
     from dxtbx.model import Detector, Panel
+
     new_det = Detector()
     for pid in range(len(SIM.detector)):
         panel = SIM.detector[pid]
@@ -442,9 +566,18 @@ def get_optimized_detector(x, SIM):
 
             origin_of_rotation = SIM.panel_reference_from_id[pid]
             SIM.D.reference_origin = origin_of_rotation
-            SIM.D.update_dxtbx_geoms(SIM.detector, SIM.beam.nanoBragg_constructor_beam, pid,
-                                     Oang, Fang, Sang, Xdist, Ydist, Zdist,
-                                     force=False)
+            SIM.D.update_dxtbx_geoms(
+                SIM.detector,
+                SIM.beam.nanoBragg_constructor_beam,
+                pid,
+                Oang,
+                Fang,
+                Sang,
+                Xdist,
+                Ydist,
+                Zdist,
+                force=False,
+            )
             fdet = SIM.D.fdet_vector
             sdet = SIM.D.sdet_vector
             origin = SIM.D.get_origin()
@@ -468,15 +601,22 @@ def print_parmams(params):
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+
     parser = ArgumentParser()
     parser.add_argument("--phil", type=str, required=True, help="path to a phil string")
-    parser.add_argument("--cmdlinePhil", nargs="+", default=None, type=str, help="command line phil params")
+    parser.add_argument(
+        "--cmdlinePhil",
+        nargs="+",
+        default=None,
+        type=str,
+        help="command line phil params",
+    )
     progargs = parser.parse_args()
 
     from libtbx.phil import parse
     from simtbx.diffBragg.phil import philz, hopper_phil
 
-    phil_scope = parse(philz+hopper_phil)
+    phil_scope = parse(philz + hopper_phil)
     arg_interp = phil_scope.command_line_argument_interpreter(home_scope="")
 
     phil_file = open(progargs.phil, "r").read()
@@ -487,7 +627,9 @@ if __name__ == "__main__":
         command_line_phils = [arg_interp.process(phil) for phil in progargs.cmdlinePhil]
         phil_sources += command_line_phils
 
-    working_phil, unused = phil_scope.fetch(sources=phil_sources, track_unused_definitions=True)
+    working_phil, unused = phil_scope.fetch(
+        sources=phil_sources, track_unused_definitions=True
+    )
     for loc in unused:
         print("WARNING: unused phil:", loc)
 

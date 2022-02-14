@@ -14,6 +14,7 @@ from __future__ import division
 from chimerax.core.tools import ToolInstance
 import math
 
+
 class HKLviewerTool(ToolInstance):
 
     # Inheriting from ToolInstance makes us known to the ChimeraX tool mangager,
@@ -22,11 +23,10 @@ class HKLviewerTool(ToolInstance):
     #
     # If cleaning up is needed on finish, override the 'delete' method
     # but be sure to call 'delete' from the superclass at the end.
-    SESSION_ENDURING = False    # Does this instance persist when session closes
-    SESSION_SAVE = True         # We do save/restore in sessions
+    SESSION_ENDURING = False  # Does this instance persist when session closes
+    SESSION_SAVE = True  # We do save/restore in sessions
     help = "help:user/tools/tutorial.html"
-                                # Let ChimeraX know about our help page
-
+    # Let ChimeraX know about our help page
 
     def __init__(self, session, tool_name):
         # 'session'   - chimerax.core.session.Session instance
@@ -47,6 +47,7 @@ class HKLviewerTool(ToolInstance):
         # this behavior, specify 'close_destroys=True' in the MainToolWindow
         # constructor.
         from chimerax.ui import MainToolWindow
+
         self.tool_window = MainToolWindow(self)
 
         # We will be adding an item to the tool's context menu, so override
@@ -76,29 +77,46 @@ class HKLviewerTool(ToolInstance):
         self.tool_window.ui_area.setLayout(hbox)
         # Show the window on the user-preferred side of the ChimeraX
         # main window
-        self.tool_window.manage('side')
+        self.tool_window.manage("side")
 
     def isolde_clipper_data_to_dict(self):
         try:
             sh = self.session.isolde.selected_model.parent
             xmapset = sh.map_mgr.xmapsets[0]
-            clipperlabel= list(xmapset.experimental_data.items())[0][0]
+            clipperlabel = list(xmapset.experimental_data.items())[0][0]
             labels = [lbl.strip() for lbl in clipperlabel.split(",")]
             self.clipper_crystdict = {}
             self.clipper_crystdict["spg_number"] = xmapset.spacegroup.spacegroup_number
-            self.clipper_crystdict["unit_cell"] =  (xmapset.unit_cell.cell.a, xmapset.unit_cell.cell.b, xmapset.unit_cell.cell.c,
-               xmapset.unit_cell.cell.alpha*180/math.pi, xmapset.unit_cell.cell.beta*180/math.pi, xmapset.unit_cell.cell.gamma*180/math.pi)
-            self.clipper_crystdict["HKL"] = xmapset.experimental_data[clipperlabel].data.data[0].tolist()
-            self.clipper_crystdict[clipperlabel] = xmapset.experimental_data[clipperlabel].data.data[1].transpose().tolist()
-            self.clipper_crystdict["FCALC,PHFCALC"] = xmapset.live_xmap_mgr.f_calc.data[1].transpose().tolist()
-            self.clipper_crystdict["2FOFC,PH2FOFC"] = xmapset.live_xmap_mgr.base_2fofc.data[1].transpose().tolist()
+            self.clipper_crystdict["unit_cell"] = (
+                xmapset.unit_cell.cell.a,
+                xmapset.unit_cell.cell.b,
+                xmapset.unit_cell.cell.c,
+                xmapset.unit_cell.cell.alpha * 180 / math.pi,
+                xmapset.unit_cell.cell.beta * 180 / math.pi,
+                xmapset.unit_cell.cell.gamma * 180 / math.pi,
+            )
+            self.clipper_crystdict["HKL"] = (
+                xmapset.experimental_data[clipperlabel].data.data[0].tolist()
+            )
+            self.clipper_crystdict[clipperlabel] = (
+                xmapset.experimental_data[clipperlabel]
+                .data.data[1]
+                .transpose()
+                .tolist()
+            )
+            self.clipper_crystdict["FCALC,PHFCALC"] = (
+                xmapset.live_xmap_mgr.f_calc.data[1].transpose().tolist()
+            )
+            self.clipper_crystdict["2FOFC,PH2FOFC"] = (
+                xmapset.live_xmap_mgr.base_2fofc.data[1].transpose().tolist()
+            )
         except Exception as e:
             pass
-
 
     def return_pressed(self):
         # The use has pressed the Return key; log the current text as HTML
         from chimerax.core.commands import run
+
         # ToolInstance has a 'session' attribute...
         run(self.session, "log html %s" % self.line_edit.text())
 
@@ -111,21 +129,20 @@ class HKLviewerTool(ToolInstance):
         # where the items put in the menu depends on where in the tool interface the menu
         # was raised.
         from PyQt5.QtWidgets import QAction
+
         settings_action = QAction("HKLviewer settings", menu)
-        settings_action.triggered.connect(lambda *args: self.Guiobj.SettingsDialog() )
+        settings_action.triggered.connect(lambda *args: self.Guiobj.SettingsDialog())
         menu.addAction(settings_action)
 
     def delete(self):
-      from Qt.QtCore import QEvent
-      self.session.triggers.remove_handler(self.Guiobj.chimeraxprocmsghandler)
-      self.Guiobj.closeEvent(QEvent.Close)
-      super(HKLviewerTool, self).delete()
+        from Qt.QtCore import QEvent
+
+        self.session.triggers.remove_handler(self.Guiobj.chimeraxprocmsghandler)
+        self.Guiobj.closeEvent(QEvent.Close)
+        super(HKLviewerTool, self).delete()
 
     def take_snapshot(self, session, flags):
-        return {
-            'version': 1,
-            'current text': self.line_edit.text()
-        }
+        return {"version": 1, "current text": self.line_edit.text()}
 
     @classmethod
     def restore_snapshot(class_obj, session, data):
@@ -134,5 +151,5 @@ class HKLviewerTool(ToolInstance):
         # from ToolInstance) and used that saved tool name.  There are pros and cons to
         # both approaches.
         inst = class_obj(session, "cctbx.HKLviewer")
-        inst.line_edit.setText(data['current text'])
+        inst.line_edit.setText(data["current text"])
         return inst

@@ -31,666 +31,633 @@ from libtbx.scheduling import result
 
 # Accounting
 class process_register(object):
-  """
-  A simple class that encapsulates job accounting
-  """
+    """
+    A simple class that encapsulates job accounting
+    """
 
-  def __init__(self):
+    def __init__(self):
 
-    self.running_on = {}
-    self.terminateds = deque()
-    self.requested_shutdowns = deque()
-    self.results = deque()
+        self.running_on = {}
+        self.terminateds = deque()
+        self.requested_shutdowns = deque()
+        self.results = deque()
 
+    def process_count(self):
 
-  def process_count(self):
+        return len(self.running_on)
 
-    return len( self.running_on )
+    def record_process_startup(self, pid):
 
+        if pid in self.running_on:
+            raise SchedulingError("Existing worker with identical processID")
 
-  def record_process_startup(self, pid):
+        self.running_on[pid] = None
 
-    if pid in self.running_on:
-      raise SchedulingError("Existing worker with identical processID")
+    def record_job_start(self, jobid, pid):
 
-    self.running_on[ pid ] = None
+        if pid not in self.running_on:
+            raise SchedulingError("Unknown processID")
 
+        if self.running_on[pid] is not None:
+            raise SchedulingError("Attempt to start process on busy worker")
 
-  def record_job_start(self, jobid, pid):
+        self.running_on[pid] = jobid
 
-    if pid not in self.running_on:
-      raise SchedulingError("Unknown processID")
+    def record_job_finish(self, jobid, pid, value):
 
-    if self.running_on[ pid ] is not None:
-      raise SchedulingError("Attempt to start process on busy worker")
+        if pid not in self.running_on:
+            raise SchedulingError("Unknown processID")
 
-    self.running_on[ pid ] = jobid
+        if self.running_on[pid] != jobid:
+            raise SchedulingError(
+                "Inconsistent register information: jobid/pid mismatch"
+            )
 
+        self.running_on[pid] = None
+        self.results.append((jobid, value))
 
-  def record_job_finish(self, jobid, pid, value):
+    def record_process_shutdown(self, pid):
 
-    if pid not in self.running_on:
-      raise SchedulingError("Unknown processID")
+        self.record_process_exit(pid=pid, container=self.requested_shutdowns)
 
-    if self.running_on[ pid ] != jobid:
-      raise SchedulingError("Inconsistent register information: jobid/pid mismatch")
+    def record_process_termination(self, pid):
 
-    self.running_on[ pid ] = None
-    self.results.append( ( jobid, value ) )
+        self.record_process_exit(pid=pid, container=self.terminateds)
 
+    def record_process_exit(self, pid, container):
 
-  def record_process_shutdown(self, pid):
+        if pid not in self.running_on:
+            raise SchedulingError("Unknown processID")
 
-    self.record_process_exit( pid = pid, container = self.requested_shutdowns )
+        if self.running_on[pid] is not None:
+            raise SchedulingError("Shutdown of busy worker")
 
+        container.append(pid)
+        del self.running_on[pid]
 
-  def record_process_termination(self, pid):
+    def record_process_crash(self, pid, exception, traceback):
 
-    self.record_process_exit( pid = pid, container = self.terminateds )
+        if pid not in self.running_on:
+            raise SchedulingError("Unknown processID")
 
+        jobid = self.running_on[pid]
 
-  def record_process_exit(self, pid, container):
+        if jobid is not None:
+            self.results.append(
+                (jobid, result.error(exception=exception, traceback=traceback))
+            )
 
-    if pid not in self.running_on:
-      raise SchedulingError("Unknown processID")
-
-    if self.running_on[ pid ] is not None:
-      raise SchedulingError("Shutdown of busy worker")
-
-    container.append( pid )
-    del self.running_on[ pid ]
-
-
-  def record_process_crash(self, pid, exception, traceback):
-
-    if pid not in self.running_on:
-      raise SchedulingError("Unknown processID")
-
-    jobid = self.running_on[ pid ]
-
-    if jobid is not None:
-      self.results.append(
-        ( jobid, result.error( exception = exception, traceback = traceback ) )
-        )
-
-    del self.running_on[ pid ]
-    self.terminateds.append( pid )
+        del self.running_on[pid]
+        self.terminateds.append(pid)
 
 
 # Stand-alone functions for pickling
 def job_started_event(register, data):
 
-  ( jobid, pid ) = data
-  register.record_job_start( jobid = jobid, pid = pid )
+    (jobid, pid) = data
+    register.record_job_start(jobid=jobid, pid=pid)
 
 
 def job_finished_event(register, data):
 
-  ( jobid, pid, value ) = data
-  register.record_job_finish( jobid = jobid, pid = pid, value = value )
+    (jobid, pid, value) = data
+    register.record_job_finish(jobid=jobid, pid=pid, value=value)
 
 
 def worker_startup_event(register, data):
 
-  register.record_process_startup( pid = data )
+    register.record_process_startup(pid=data)
 
 
 def worker_shutdown_event(register, data):
 
-  register.record_process_shutdown( pid = data )
+    register.record_process_shutdown(pid=data)
 
 
 def worker_termination_event(register, data):
 
-  register.record_process_termination( pid = data )
+    register.record_process_termination(pid=data)
 
 
 def worker_crash_event(register, data):
 
-  ( pid, exception, traceback ) = data
-  register.record_process_crash( pid = pid, exception = exception, traceback = traceback )
+    (pid, exception, traceback) = data
+    register.record_process_crash(pid=pid, exception=exception, traceback=traceback)
 
 
 # Lifecycle controllers
 class unlimited(object):
-  """
-  A worker that is not supposed to die
-  """
+    """
+    A worker that is not supposed to die
+    """
 
-  def active(self):
+    def active(self):
 
-    return True
+        return True
 
+    def record_job_start(self):
 
-  def record_job_start(self):
+        pass
 
-    pass
+    def record_job_end(self):
 
-
-  def record_job_end(self):
-
-    pass
+        pass
 
 
 class jobcount_limit(object):
-  """
-  A worker that completes N jobs, and then exits
-  """
+    """
+    A worker that completes N jobs, and then exits
+    """
 
-  def __init__(self, maxjobs):
+    def __init__(self, maxjobs):
 
-    self.jobs_to_go = maxjobs
+        self.jobs_to_go = maxjobs
 
+    def active(self):
 
-  def active(self):
+        return 0 < self.jobs_to_go
 
-    return 0 < self.jobs_to_go
+    def record_job_start(self):
 
+        pass
 
-  def record_job_start(self):
+    def record_job_end(self):
 
-    pass
-
-
-  def record_job_end(self):
-
-    self.jobs_to_go -= 1
+        self.jobs_to_go -= 1
 
 
 class runtime_limit(object):
-  """
-  A worker that exits when a time limit has been reached
-  """
+    """
+    A worker that exits when a time limit has been reached
+    """
 
-  def __init__(self, seconds):
+    def __init__(self, seconds):
 
-    self.endtime = time.time() + seconds
+        self.endtime = time.time() + seconds
 
+    def active(self):
 
-  def active(self):
+        return time.time() < self.endtime
 
-    return time.time() < self.endtime
+    def record_job_start(self):
 
+        pass
 
-  def record_job_start(self):
+    def record_job_done(self):
 
-    pass
-
-
-  def record_job_done(self):
-
-    pass
+        pass
 
 
 class wallclock_limit(object):
-  """
-  A worker that exits when a wall clock time limit has been reached
-  """
+    """
+    A worker that exits when a wall clock time limit has been reached
+    """
 
-  def __init__(self, seconds):
-    from libtbx.development.timers import work_clock
-    self.maxtime = work_clock() + seconds
+    def __init__(self, seconds):
+        from libtbx.development.timers import work_clock
 
+        self.maxtime = work_clock() + seconds
 
-  def active(self):
-    from libtbx.development.timers import work_clock
-    return work_clock() < self.maxtime
+    def active(self):
+        from libtbx.development.timers import work_clock
 
+        return work_clock() < self.maxtime
 
-  def record_job_start(self):
+    def record_job_start(self):
 
-    pass
+        pass
 
+    def record_job_done(self):
 
-  def record_job_done(self):
-
-    pass
+        pass
 
 
 def pool_process_cycle(
-  pid,
-  inqueue,
-  outqueue,
-  waittime,
-  lifecycle,
-  termination_signal,
-  idle_timeout,
-  ):
+    pid,
+    inqueue,
+    outqueue,
+    waittime,
+    lifecycle,
+    termination_signal,
+    idle_timeout,
+):
 
-  controller = lifecycle()
-  outqueue.put( ( worker_startup_event, pid ) )
-  last_activity = time.time()
-
-  while controller.active():
-    if last_activity + idle_timeout < time.time():
-      outqueue.put( ( worker_termination_event, pid ) )
-      break
-
-    try:
-      data = inqueue.get( timeout = waittime )
-
-    except Empty:
-      continue
-
-    if data == termination_signal:
-      outqueue.put( ( worker_shutdown_event, pid ) )
-      break
-
-    assert len( data ) == 4
-    ( jobid, target, args, kwargs ) = data
-    outqueue.put( ( job_started_event, ( jobid, pid ) ) )
-    controller.record_job_start()
-
-    try:
-      value = target( *args, **kwargs )
-
-    except Exception as e:
-      res = result.error( exception = e, traceback = result.get_traceback_info() )
-
-    else:
-      res = result.success( value = value )
-
-    outqueue.put( ( job_finished_event, ( jobid, pid, res ) ) )
-    controller.record_job_end()
+    controller = lifecycle()
+    outqueue.put((worker_startup_event, pid))
     last_activity = time.time()
 
-  else:
-    outqueue.put( ( worker_termination_event, pid ) )
+    while controller.active():
+        if last_activity + idle_timeout < time.time():
+            outqueue.put((worker_termination_event, pid))
+            break
+
+        try:
+            data = inqueue.get(timeout=waittime)
+
+        except Empty:
+            continue
+
+        if data == termination_signal:
+            outqueue.put((worker_shutdown_event, pid))
+            break
+
+        assert len(data) == 4
+        (jobid, target, args, kwargs) = data
+        outqueue.put((job_started_event, (jobid, pid)))
+        controller.record_job_start()
+
+        try:
+            value = target(*args, **kwargs)
+
+        except Exception as e:
+            res = result.error(exception=e, traceback=result.get_traceback_info())
+
+        else:
+            res = result.success(value=value)
+
+        outqueue.put((job_finished_event, (jobid, pid, res)))
+        controller.record_job_end()
+        last_activity = time.time()
+
+    else:
+        outqueue.put((worker_termination_event, pid))
 
 
 # Autoscaling
 class constant_capacity(object):
-  """
-  Keep pool size constant
-  """
+    """
+    Keep pool size constant
+    """
 
-  def __init__(self, capacity):
+    def __init__(self, capacity):
 
-    self.capacity = capacity
+        self.capacity = capacity
 
+    def __call__(self, manager):
 
-  def __call__(self, manager):
-
-    if manager.worker_count() != self.capacity:
-      manager.set_worker_count( target = self.capacity )
+        if manager.worker_count() != self.capacity:
+            manager.set_worker_count(target=self.capacity)
 
 
 class upscaling_capacity(object):
-  """
-  Increase pool size when needed, rely on timeout for downscaling
-  """
+    """
+    Increase pool size when needed, rely on timeout for downscaling
+    """
 
-  def __init__(self, minimum, maximum, buffering):
+    def __init__(self, minimum, maximum, buffering):
 
-    self.minimum = minimum
-    self.maximum = maximum
-    self.buffering = buffering
+        self.minimum = minimum
+        self.maximum = maximum
+        self.buffering = buffering
 
+    @property
+    def capacity(self):
 
-  @property
-  def capacity(self):
+        return self.maximum
 
-    return self.maximum
+    def __call__(self, manager):
 
+        ideal = max(
+            min(self.maximum, manager.job_count() + self.buffering),
+            self.minimum,
+        )
 
-  def __call__(self, manager):
+        worker_count = manager.worker_count()
 
-    ideal = max(
-      min( self.maximum, manager.job_count() + self.buffering ),
-      self.minimum,
-      )
-
-    worker_count = manager.worker_count()
-
-    if worker_count < ideal:
-      manager.set_worker_count( target = ideal )
+        if worker_count < ideal:
+            manager.set_worker_count(target=ideal)
 
 
 class breathing_capacity(object):
-  """
-  Varies pool size according to load
-  """
+    """
+    Varies pool size according to load
+    """
 
-  def __init__(self, minimum, maximum, buffering, downsize_step = 2, downsize_delay = 5):
+    def __init__(self, minimum, maximum, buffering, downsize_step=2, downsize_delay=5):
 
-    self.minimum = minimum
-    self.maximum = maximum
-    self.buffering = buffering
-    self.downsize_step = downsize_step
-    self.downsize_delay = downsize_delay
+        self.minimum = minimum
+        self.maximum = maximum
+        self.buffering = buffering
+        self.downsize_step = downsize_step
+        self.downsize_delay = downsize_delay
 
-    self.downsize_wait_start = None
+        self.downsize_wait_start = None
 
+    @property
+    def capacity(self):
 
-  @property
-  def capacity(self):
+        return self.maximum
 
-    return self.maximum
+    def __call__(self, manager):
 
+        ideal = max(
+            min(self.maximum, manager.job_count() + self.buffering),
+            self.minimum,
+        )
 
-  def __call__(self, manager):
+        worker_count = manager.worker_count()
 
-    ideal = max(
-      min( self.maximum, manager.job_count() + self.buffering ),
-      self.minimum,
-      )
+        if worker_count < ideal:
+            manager.set_worker_count(target=ideal)
+            self.downsize_wait_start = None
 
-    worker_count = manager.worker_count()
+        elif ideal < worker_count:
+            if self.downsize_wait_start is None:
+                self.downsize_wait_start = time.time()
 
-    if worker_count < ideal:
-      manager.set_worker_count( target = ideal )
-      self.downsize_wait_start = None
+            elif self.downsize_delay < time.time() - self.downsize_wait_start:
+                target = max(worker_count - self.downsize_step, ideal)
+                manager.set_worker_count(target=target)
+                self.downsize_wait_start = time.time()
 
-    elif ideal < worker_count:
-      if self.downsize_wait_start is None:
-        self.downsize_wait_start = time.time()
-
-      elif self.downsize_delay < time.time() - self.downsize_wait_start:
-        target = max( worker_count - self.downsize_step, ideal )
-        manager.set_worker_count( target = target )
-        self.downsize_wait_start = time.time()
-
-    else:
-      self.downsize_wait_start = None
+        else:
+            self.downsize_wait_start = None
 
 
 class manager(object):
-  """
-  Process pool
-  """
+    """
+    Process pool
+    """
 
-  TERMINATION_SIGNAL = None
+    TERMINATION_SIGNAL = None
 
-  def __init__(self,
-    inqueue,
-    outqueue,
-    job_factory,
-    autoscaling,
-    lifecycle,
-    waittime = 0.01,
-    stalltime = 2,
-    idle_timeout = 120,
+    def __init__(
+        self,
+        inqueue,
+        outqueue,
+        job_factory,
+        autoscaling,
+        lifecycle,
+        waittime=0.01,
+        stalltime=2,
+        idle_timeout=120,
     ):
 
-    self.job_factory = job_factory
-    self.autoscaling = autoscaling
-    self.lifecycle = lifecycle
+        self.job_factory = job_factory
+        self.autoscaling = autoscaling
+        self.lifecycle = lifecycle
 
-    self.inqueue = inqueue
-    self.outqueue = outqueue
+        self.inqueue = inqueue
+        self.outqueue = outqueue
 
-    self.waittime = waittime
-    self.stalltime = stalltime
-    self.idle_timeout = idle_timeout
+        self.waittime = waittime
+        self.stalltime = stalltime
+        self.idle_timeout = idle_timeout
 
-    self.register = process_register()
+        self.register = process_register()
 
-    from itertools import count
+        from itertools import count
 
-    self.pid_assigner = count()
-    self.process_numbered_as = {}
-    self.recycleds = deque()
-    self.terminatings = set()
-    self.unreporteds = deque()
-    self.outstanding_shutdown_requests = 0
+        self.pid_assigner = count()
+        self.process_numbered_as = {}
+        self.recycleds = deque()
+        self.terminatings = set()
+        self.unreporteds = deque()
+        self.outstanding_shutdown_requests = 0
 
-    self.running_jobs = set()
-    self.completed_results = deque()
+        self.running_jobs = set()
+        self.completed_results = deque()
 
-    self.manage()
-
-
-  def job_count(self):
-
-    return len( self.running_jobs )
-
-
-  def worker_count(self):
-
-    return max(
-      ( len( self.process_numbered_as ) + len( self.terminatings )
-        - self.outstanding_shutdown_requests ),
-      0,
-      )
-
-
-  def is_empty(self):
-
-    return not self.running_jobs and not self.completed_results
-
-
-  def is_full(self):
-
-    return self.autoscaling.capacity <= self.job_count()
-
-
-  def has_results(self):
-
-    return self.completed_results
-
-
-  def results(self):
-
-    while not self.is_empty():
-      while not self.has_results():
-        self.wait()
-        self.poll()
         self.manage()
 
-      yield self.completed_results.popleft()
+    def job_count(self):
 
+        return len(self.running_jobs)
 
-  def submit(self, target, args = (), kwargs = {}):
+    def worker_count(self):
 
-    jobid = identifier()
-    self.outqueue.put( ( jobid, target, args, kwargs ) )
-    self.running_jobs.add( jobid )
-    return jobid
+        return max(
+            (
+                len(self.process_numbered_as)
+                + len(self.terminatings)
+                - self.outstanding_shutdown_requests
+            ),
+            0,
+        )
 
+    def is_empty(self):
 
-  def shutdown(self):
+        return not self.running_jobs and not self.completed_results
 
-    self.set_worker_count( target = 0 )
+    def is_full(self):
 
+        return self.autoscaling.capacity <= self.job_count()
 
-  def resume(self):
+    def has_results(self):
 
-    self.manage()
+        return self.completed_results
 
+    def results(self):
 
-  def join(self):
+        while not self.is_empty():
+            while not self.has_results():
+                self.wait()
+                self.poll()
+                self.manage()
 
-    while self.running_jobs:
-      self.poll()
-      self.wait()
+            yield self.completed_results.popleft()
 
-    self.poll()
+    def submit(self, target, args=(), kwargs={}):
 
+        jobid = identifier()
+        self.outqueue.put((jobid, target, args, kwargs))
+        self.running_jobs.add(jobid)
+        return jobid
 
-  def terminate(self):
+    def shutdown(self):
 
-    self.shutdown()
-    self.wait()
-    self.poll()
+        self.set_worker_count(target=0)
 
-    for process in self.process_numbered_as.values():
-      if process.is_alive():
-        if hasattr( process, "terminate" ): # Thread has no terminate
-          try:
-            process.terminate()
+    def resume(self):
 
-          except Exception:
-            pass
+        self.manage()
 
-    while self.process_numbered_as:
-      self.poll()
-      self.wait()
+    def join(self):
 
+        while self.running_jobs:
+            self.poll()
+            self.wait()
 
-  # Internal methods
-  def start_process(self):
+        self.poll()
 
-    try:
-      pid = self.recycleds.popleft()
+    def terminate(self):
 
-    except IndexError:
-      pid = next(self.pid_assigner)
+        self.shutdown()
+        self.wait()
+        self.poll()
 
-    process = self.job_factory(
-      target = pool_process_cycle,
-      kwargs = {
-        "pid": pid,
-        "inqueue": self.outqueue,
-        "outqueue": self.inqueue,
-        "waittime": self.waittime,
-        "lifecycle": self.lifecycle,
-        "termination_signal": self.TERMINATION_SIGNAL,
-        "idle_timeout": self.idle_timeout,
-        },
-      )
+        for process in self.process_numbered_as.values():
+            if process.is_alive():
+                if hasattr(process, "terminate"):  # Thread has no terminate
+                    try:
+                        process.terminate()
 
-    process.start()
-    self.process_numbered_as[ pid ] = process
+                    except Exception:
+                        pass
 
+        while self.process_numbered_as:
+            self.poll()
+            self.wait()
 
-  def stop_process(self):
+    # Internal methods
+    def start_process(self):
 
-    self.outqueue.put( self.TERMINATION_SIGNAL )
-    self.outstanding_shutdown_requests += 1
+        try:
+            pid = self.recycleds.popleft()
 
+        except IndexError:
+            pid = next(self.pid_assigner)
 
-  def wait(self):
+        process = self.job_factory(
+            target=pool_process_cycle,
+            kwargs={
+                "pid": pid,
+                "inqueue": self.outqueue,
+                "outqueue": self.inqueue,
+                "waittime": self.waittime,
+                "lifecycle": self.lifecycle,
+                "termination_signal": self.TERMINATION_SIGNAL,
+                "idle_timeout": self.idle_timeout,
+            },
+        )
 
-    time.sleep( self.waittime )
+        process.start()
+        self.process_numbered_as[pid] = process
 
+    def stop_process(self):
 
-  def poll(self):
+        self.outqueue.put(self.TERMINATION_SIGNAL)
+        self.outstanding_shutdown_requests += 1
 
-    for (pid, process) in list(self.process_numbered_as.items()):
-      if not process.is_alive():
-        process.join()
+    def wait(self):
 
-        exit_code = getattr( process, "exitcode", 0 ) # Thread has no "exitcode" attribute
+        time.sleep(self.waittime)
 
-        if exit_code != 0:
-          data = (
-            pid,
-            result.get_exception( process = process, exit_code = exit_code ),
-            result.get_crash_info( process = process ),
-            )
-          self.unreporteds.append( ( worker_crash_event, data ) )
+    def poll(self):
 
-        self.terminatings.add( pid )
-        del self.process_numbered_as[ pid ]
+        for (pid, process) in list(self.process_numbered_as.items()):
+            if not process.is_alive():
+                process.join()
 
-    while self.unreporteds:
-      try:
-        self.inqueue.put( self.unreporteds[0], timeout = self.stalltime )
+                exit_code = getattr(
+                    process, "exitcode", 0
+                )  # Thread has no "exitcode" attribute
 
-      except Full:
-        break
+                if exit_code != 0:
+                    data = (
+                        pid,
+                        result.get_exception(process=process, exit_code=exit_code),
+                        result.get_crash_info(process=process),
+                    )
+                    self.unreporteds.append((worker_crash_event, data))
 
-      self.unreporteds.popleft()
+                self.terminatings.add(pid)
+                del self.process_numbered_as[pid]
 
-    while True:
-      try:
-        ( event, data ) = self.inqueue.get( timeout = self.waittime )
+        while self.unreporteds:
+            try:
+                self.inqueue.put(self.unreporteds[0], timeout=self.stalltime)
 
-      except Empty:
-        break
+            except Full:
+                break
 
-      event( register = self.register, data = data )
+            self.unreporteds.popleft()
 
-    while self.register.terminateds:
-      pid = self.register.terminateds[0]
+        while True:
+            try:
+                (event, data) = self.inqueue.get(timeout=self.waittime)
 
-      try:
-        self.terminatings.remove( pid )
+            except Empty:
+                break
 
-      except KeyError:
-        break
+            event(register=self.register, data=data)
 
-      self.register.terminateds.popleft()
-      self.recycleds.append( pid )
+        while self.register.terminateds:
+            pid = self.register.terminateds[0]
 
-    while self.register.requested_shutdowns:
-      pid = self.register.requested_shutdowns[0]
+            try:
+                self.terminatings.remove(pid)
 
-      try:
-        self.terminatings.remove( pid )
+            except KeyError:
+                break
 
-      except KeyError:
-        break
+            self.register.terminateds.popleft()
+            self.recycleds.append(pid)
 
-      self.register.requested_shutdowns.popleft()
-      self.recycleds.append( pid )
-      assert 0 < self.outstanding_shutdown_requests
-      self.outstanding_shutdown_requests -= 1
+        while self.register.requested_shutdowns:
+            pid = self.register.requested_shutdowns[0]
 
-    while self.register.results:
-      ( jobid, res ) = self.register.results.popleft()
-      self.completed_results.append( ( jobid, res ) )
-      self.running_jobs.remove( jobid )
+            try:
+                self.terminatings.remove(pid)
 
+            except KeyError:
+                break
 
-  def set_worker_count(self, target):
+            self.register.requested_shutdowns.popleft()
+            self.recycleds.append(pid)
+            assert 0 < self.outstanding_shutdown_requests
+            self.outstanding_shutdown_requests -= 1
 
-    while self.worker_count() < target:
-      self.start_process()
+        while self.register.results:
+            (jobid, res) = self.register.results.popleft()
+            self.completed_results.append((jobid, res))
+            self.running_jobs.remove(jobid)
 
-    while target < self.worker_count():
-      self.stop_process()
+    def set_worker_count(self, target):
 
+        while self.worker_count() < target:
+            self.start_process()
 
-  def manage(self):
+        while target < self.worker_count():
+            self.stop_process()
 
-    self.autoscaling( manager = self )
+    def manage(self):
+
+        self.autoscaling(manager=self)
 
 
 class creator(object):
-  """
-  Information to create and destroy a manager
-  """
+    """
+    Information to create and destroy a manager
+    """
 
-  def __init__(
-    self,
-    job_factory,
-    inq_factory,
-    outq_factory,
-    autoscaling,
-    lifecycle,
-    waittime = 0.01,
-    stalltime = 2,
-    idle_timeout = 120,
+    def __init__(
+        self,
+        job_factory,
+        inq_factory,
+        outq_factory,
+        autoscaling,
+        lifecycle,
+        waittime=0.01,
+        stalltime=2,
+        idle_timeout=120,
     ):
 
-    self.job_factory = job_factory
-    self.inq_factory = inq_factory
-    self.outq_factory = outq_factory
-    self.autoscaling = autoscaling
-    self.lifecycle = lifecycle
-    self.waittime = waittime
-    self.stalltime = stalltime
-    self.idle_timeout = idle_timeout
+        self.job_factory = job_factory
+        self.inq_factory = inq_factory
+        self.outq_factory = outq_factory
+        self.autoscaling = autoscaling
+        self.lifecycle = lifecycle
+        self.waittime = waittime
+        self.stalltime = stalltime
+        self.idle_timeout = idle_timeout
 
+    def create(self):
 
-  def create(self):
+        return manager(
+            inqueue=self.inq_factory.create(),
+            outqueue=self.outq_factory.create(),
+            job_factory=self.job_factory,
+            autoscaling=self.autoscaling,
+            lifecycle=self.lifecycle,
+            waittime=self.waittime,
+            stalltime=self.stalltime,
+            idle_timeout=self.idle_timeout,
+        )
 
-    return manager(
-      inqueue = self.inq_factory.create(),
-      outqueue = self.outq_factory.create(),
-      job_factory = self.job_factory,
-      autoscaling = self.autoscaling,
-      lifecycle = self.lifecycle,
-      waittime = self.waittime,
-      stalltime = self.stalltime,
-      idle_timeout = self.idle_timeout,
-      )
+    def destroy(self, manager):
 
-
-  def destroy(self, manager):
-
-    manager.terminate()
-    manager.join()
-    self.inq_factory.destroy( manager.inqueue )
-    self.outq_factory.destroy( manager.outqueue )
+        manager.terminate()
+        manager.join()
+        self.inq_factory.destroy(manager.inqueue)
+        self.outq_factory.destroy(manager.outqueue)

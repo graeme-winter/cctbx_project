@@ -5,7 +5,7 @@ import libtbx.load_env
 import os
 import sys
 
-what_is_this = '''
+what_is_this = """
 
 The command libtbx.git_avoid_merges identifies all module directories that are
 git repositories (ie. it checks all paths listed by libtbx.show_dist_paths),
@@ -30,51 +30,58 @@ Now there may be situations where you want to override this default policy.
 You can do that by specifying --no-rebase on the command line, eg.:
    git pull --no-rebase
 
-'''
+"""
+
 
 def find_all_git_modules():
-  for path in (abs(p) for p in libtbx.env.repository_paths):
-    for entry in os.listdir(path):
-      if not entry.startswith('.'):
-        modulepath = os.path.join(path, entry)
-        configfile = os.path.join(modulepath, '.git', 'config')
-        if os.path.exists(configfile):
-          yield (modulepath, configfile)
+    for path in (abs(p) for p in libtbx.env.repository_paths):
+        for entry in os.listdir(path):
+            if not entry.startswith("."):
+                modulepath = os.path.join(path, entry)
+                configfile = os.path.join(modulepath, ".git", "config")
+                if os.path.exists(configfile):
+                    yield (modulepath, configfile)
+
 
 def mangle_git_repository(module, config):
-  t = Toolbox()
-  print("Git repository found:", module)
-  t.set_git_repository_config_to_rebase(config)
+    t = Toolbox()
+    print("Git repository found:", module)
+    t.set_git_repository_config_to_rebase(config)
+
 
 def set_git_defaults_to_rebase():
-  result = libtbx.easy_run.fully_buffered("git config --global --list")
-  if result.return_code:
-    '''Could not run git executable. Bail out.'''
-    return
+    result = libtbx.easy_run.fully_buffered("git config --global --list")
+    if result.return_code:
+        """Could not run git executable. Bail out."""
+        return
 
-  expected = {
-    'branch.autosetuprebase': 'always',
-    'pull.rebase': 'true',
-  }
-  for line in result.stdout_lines:
-    if '=' in line:
-      name, value = line.split('=', 1)
-      if name in expected:
-        del(expected[name])
-  if expected:
-    print("Updating global git settings:")
-    for attribute, value in expected.items():
-      print("  %s = %s" % (attribute, value))
-      libtbx.easy_run.fully_buffered("git config --global \"%s\" \"%s\"" % (attribute, value))
+    expected = {
+        "branch.autosetuprebase": "always",
+        "pull.rebase": "true",
+    }
+    for line in result.stdout_lines:
+        if "=" in line:
+            name, value = line.split("=", 1)
+            if name in expected:
+                del expected[name]
+    if expected:
+        print("Updating global git settings:")
+        for attribute, value in expected.items():
+            print("  %s = %s" % (attribute, value))
+            libtbx.easy_run.fully_buffered(
+                'git config --global "%s" "%s"' % (attribute, value)
+            )
+
 
 def run():
-  for module, config in find_all_git_modules():
-    mangle_git_repository(module, config)
-  set_git_defaults_to_rebase()
-  print("\nAll done.")
+    for module, config in find_all_git_modules():
+        mangle_git_repository(module, config)
+    set_git_defaults_to_rebase()
+    print("\nAll done.")
+
 
 if __name__ == "__main__":
-  if len(sys.argv) != 1:
-    print(what_is_this)
-  else:
-    run()
+    if len(sys.argv) != 1:
+        print(what_is_this)
+    else:
+        run()

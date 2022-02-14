@@ -1,9 +1,9 @@
-'''
+"""
 Author      : Lyubimov, A.Y.
 Created     : 10/10/2014
 Last Changed: 11/03/2017
 Description : SIMTBX (nanoBragg) I/O module. Reads PHIL input.
-'''
+"""
 from __future__ import absolute_import, division, print_function
 
 import iotbx.phil as ip
@@ -11,25 +11,28 @@ import inspect
 
 from simtbx.nanoBragg import nanoBragg
 
+
 def isprop(v):
-  ''' Test if attribute is a property '''
-  return isinstance(v, property)
+    """Test if attribute is a property"""
+    return isinstance(v, property)
+
 
 def flatten(L):
-  for item in L:
-    try:
-      for i in flatten(item):
-        yield i
-    except TypeError:
-      yield item
+    for item in L:
+        try:
+            for i in flatten(item):
+                yield i
+        except TypeError:
+            yield item
+
 
 def generate_simtbx_phil():
-  ''' Generates a PHIL object from simTBX params
+    """Generates a PHIL object from simTBX params
 
-  @return: sim_phil: a PHIL object
-  '''
+    @return: sim_phil: a PHIL object
+    """
 
-  ui_phil_string = """
+    ui_phil_string = """
 description = None
   .type = str
   .help = Run description (optional).
@@ -71,51 +74,60 @@ dataset
 }
 """
 
-  sim = nanoBragg()
-  params = [name for (name, value) in inspect.getmembers(nanoBragg, isprop)]
+    sim = nanoBragg()
+    params = [name for (name, value) in inspect.getmembers(nanoBragg, isprop)]
 
-  param_lines = ['simtbx',
-                 '{']
-  for i in params:
-    # The below properties result in boost errors (Fbg_vs_stol), TypeError
-    # exceptions (xray_beams), or yield objects rather than values (the rest)
-    if i in ('Fbg_vs_stol', 'Fhkl_tuple', 'amplitudes', 'indices', 'raw_pixels',
-             'xray_source_XYZ', 'xray_source_intensity_fraction', 'xray_beams',
-             'xray_source_wavelengths_A', 'unit_cell_tuple', 'progress_pixel'):
-      continue
+    param_lines = ["simtbx", "{"]
+    for i in params:
+        # The below properties result in boost errors (Fbg_vs_stol), TypeError
+        # exceptions (xray_beams), or yield objects rather than values (the rest)
+        if i in (
+            "Fbg_vs_stol",
+            "Fhkl_tuple",
+            "amplitudes",
+            "indices",
+            "raw_pixels",
+            "xray_source_XYZ",
+            "xray_source_intensity_fraction",
+            "xray_beams",
+            "xray_source_wavelengths_A",
+            "unit_cell_tuple",
+            "progress_pixel",
+        ):
+            continue
 
-    try:
-      param_value = getattr(sim, i)
-      if type(param_value).__name__ == 'tuple':
-        element_type = type(list(flatten(param_value))[0]).__name__
-        param_type = "{}s".format(element_type)
-        param_value = ' '.join(str(i) for i in list(flatten(param_value)))
-        param_doc = getattr(nanoBragg, i).__doc__
-      else:
-        param_type = type(param_value).__name__
-        param_doc = getattr(nanoBragg, i).__doc__
-        if param_type == 'unit_cell':
-          param_value = ' '.join(str(i) for i in param_value.parameters())
+        try:
+            param_value = getattr(sim, i)
+            if type(param_value).__name__ == "tuple":
+                element_type = type(list(flatten(param_value))[0]).__name__
+                param_type = "{}s".format(element_type)
+                param_value = " ".join(str(i) for i in list(flatten(param_value)))
+                param_doc = getattr(nanoBragg, i).__doc__
+            else:
+                param_type = type(param_value).__name__
+                param_doc = getattr(nanoBragg, i).__doc__
+                if param_type == "unit_cell":
+                    param_value = " ".join(str(i) for i in param_value.parameters())
 
-      # Correct a number of weird vartypes
-      if param_type in ('convention', 'pivot', 'shapetype'):
-        param_type = 'str'
+            # Correct a number of weird vartypes
+            if param_type in ("convention", "pivot", "shapetype"):
+                param_type = "str"
 
+            # PHIL interprets ';' as a line break
+            param_doc = param_doc.replace(";", ".")
 
-      # PHIL interprets ';' as a line break
-      param_doc = param_doc.replace(';', '.')
+            param_line = "  {} = {} \n    .type = {}\n    .help = {}" "".format(
+                i, param_value, param_type, param_doc
+            )
+            param_lines.append(param_line)
 
-      param_line = '  {} = {} \n    .type = {}\n    .help = {}' \
-                   ''.format(i, param_value, param_type, param_doc)
-      param_lines.append(param_line)
+        except TypeError as e:
+            print(i, e)
+            pass
 
-    except TypeError as e:
-      print(i, e)
-      pass
+    param_lines.append("}")
+    sim_phil_string = "\n".join(param_lines)
+    combo_string = ui_phil_string + sim_phil_string
 
-  param_lines.append('}')
-  sim_phil_string = '\n'.join(param_lines)
-  combo_string = ui_phil_string + sim_phil_string
-
-  sim_phil = ip.parse(combo_string)
-  return sim_phil
+    sim_phil = ip.parse(combo_string)
+    return sim_phil

@@ -9,7 +9,7 @@ from libtbx import group_args
 import mmtbx.restraints
 import mmtbx.refinement.real_space
 
-pdb_str_answer="""\
+pdb_str_answer = """\
 CRYST1   16.960   19.455   19.841  90.00  90.00  90.00 P 1
 ATOM      1  N   ASP A  18      14.727  11.381  11.191  1.00 21.41           N
 ATOM      2  CA  ASP A  18      14.022  12.655  11.131  1.00 34.70           C
@@ -93,7 +93,7 @@ TER
 END
 """
 
-pdb_str_poor="""\n
+pdb_str_poor = """\n
 CRYST1   16.960   19.455   19.841  90.00  90.00  90.00 P 1
 ATOM      1  N   ASP A  18      14.727  11.381  11.191  1.00 21.41           N
 ATOM      2  CA  ASP A  18      14.022  12.655  11.131  1.00 34.70           C
@@ -177,49 +177,52 @@ TER
 END
 """
 
-def exercise(d_min=1.5, resolution_factor = 0.25):
-  # answer
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_answer)
-  pdb_inp.write_pdb_file(file_name = "answer.pdb")
-  xrs_answer = pdb_inp.xray_structure_simple()
-  f_calc = xrs_answer.structure_factors(d_min = d_min).f_calc()
-  fft_map = f_calc.fft_map(resolution_factor=resolution_factor)
-  fft_map.apply_sigma_scaling()
-  target_map = fft_map.real_map_unpadded()
-  mtz_dataset = f_calc.as_mtz_dataset(column_root_label = "FCmap")
-  mtz_object = mtz_dataset.mtz_object()
-  mtz_object.write(file_name = "answer.mtz")
-  # poor
-  mon_lib_srv = monomer_library.server.server()
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv              = mon_lib_srv,
-    ener_lib                 = monomer_library.server.ener_lib(),
-    raw_records              = flex.std_string(pdb_str_poor.splitlines()),
-    strict_conflict_handling = True,
-    force_symmetry           = True,
-    log                      = None)
-  pdb_hierarchy_poor = processed_pdb_file.all_chain_proxies.pdb_hierarchy
-  xrs_poor = processed_pdb_file.xray_structure()
-  sites_cart_poor = xrs_poor.sites_cart()
-  pdb_hierarchy_poor.write_pdb_file(file_name = "poor.pdb")
-  ####
-  target_map_object = group_args(
-    map_data         = target_map,
-    miller_array     = f_calc,
-    crystal_gridding = fft_map,
-    d_min            = d_min)
-  grm = mmtbx.restraints.manager(
-    geometry=processed_pdb_file.geometry_restraints_manager(show_energies=False),
-    normalization = True)
-  sm = mmtbx.refinement.real_space.structure_monitor(
-    pdb_hierarchy               = pdb_hierarchy_poor,
-    xray_structure              = xrs_poor,
-    target_map_object           = target_map_object,
-    geometry_restraints_manager = grm.geometry)
-  sm.show(prefix="start")
-  sm.show_residues(map_cc_all=2) # XXX assert printed output table:
 
-if(__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("Time: %6.4f"%(time.time()-t0))
+def exercise(d_min=1.5, resolution_factor=0.25):
+    # answer
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_answer)
+    pdb_inp.write_pdb_file(file_name="answer.pdb")
+    xrs_answer = pdb_inp.xray_structure_simple()
+    f_calc = xrs_answer.structure_factors(d_min=d_min).f_calc()
+    fft_map = f_calc.fft_map(resolution_factor=resolution_factor)
+    fft_map.apply_sigma_scaling()
+    target_map = fft_map.real_map_unpadded()
+    mtz_dataset = f_calc.as_mtz_dataset(column_root_label="FCmap")
+    mtz_object = mtz_dataset.mtz_object()
+    mtz_object.write(file_name="answer.mtz")
+    # poor
+    mon_lib_srv = monomer_library.server.server()
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=monomer_library.server.ener_lib(),
+        raw_records=flex.std_string(pdb_str_poor.splitlines()),
+        strict_conflict_handling=True,
+        force_symmetry=True,
+        log=None,
+    )
+    pdb_hierarchy_poor = processed_pdb_file.all_chain_proxies.pdb_hierarchy
+    xrs_poor = processed_pdb_file.xray_structure()
+    sites_cart_poor = xrs_poor.sites_cart()
+    pdb_hierarchy_poor.write_pdb_file(file_name="poor.pdb")
+    ####
+    target_map_object = group_args(
+        map_data=target_map, miller_array=f_calc, crystal_gridding=fft_map, d_min=d_min
+    )
+    grm = mmtbx.restraints.manager(
+        geometry=processed_pdb_file.geometry_restraints_manager(show_energies=False),
+        normalization=True,
+    )
+    sm = mmtbx.refinement.real_space.structure_monitor(
+        pdb_hierarchy=pdb_hierarchy_poor,
+        xray_structure=xrs_poor,
+        target_map_object=target_map_object,
+        geometry_restraints_manager=grm.geometry,
+    )
+    sm.show(prefix="start")
+    sm.show_residues(map_cc_all=2)  # XXX assert printed output table:
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Time: %6.4f" % (time.time() - t0))

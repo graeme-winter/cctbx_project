@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.validation.molprobity import mp_geo
 from iotbx import pdb
@@ -142,39 +141,42 @@ ATOM    672  C5    C B 118      24.316  86.326  84.289  1.00103.70           C
 ATOM    673  C6    C B 118      23.387  85.879  83.432  1.00104.01           C
 """
 
+
 def exercise_mp_geo():
-  open('mp_geo.pdb', 'w').write(pdb_str_1)
-  args = ['pdb=mp_geo.pdb',
-          'out_file=mp_geo.out',
-          'outliers_only=False',
-          'bonds_and_angles=True']
-  mp_geo.run(args)
-  f = open('mp_geo.out', 'r')
-  # Strip out newline and carriage return chars to
-  # prevent platform-specific errors.
-  lines = [i.rstrip('\n\r') for i in f.readlines()]
-  assert 'mp_geo.pdb: A:  10: :B:ASP:CG--OD1:1.839:31.054:PROTEIN' in lines
-  assert \
-    'mp_geo.pdb: A:  10: :B:ASP:OD1-CG-OD2:109.733:5.486:PROTEIN' in lines
-  f.close()
+    open("mp_geo.pdb", "w").write(pdb_str_1)
+    args = [
+        "pdb=mp_geo.pdb",
+        "out_file=mp_geo.out",
+        "outliers_only=False",
+        "bonds_and_angles=True",
+    ]
+    mp_geo.run(args)
+    f = open("mp_geo.out", "r")
+    # Strip out newline and carriage return chars to
+    # prevent platform-specific errors.
+    lines = [i.rstrip("\n\r") for i in f.readlines()]
+    assert "mp_geo.pdb: A:  10: :B:ASP:CG--OD1:1.839:31.054:PROTEIN" in lines
+    assert "mp_geo.pdb: A:  10: :B:ASP:OD1-CG-OD2:109.733:5.486:PROTEIN" in lines
+    f.close()
 
-  open('mp_geo.pdb', 'w').write(pdb_str_2)
-  args = ['pdb=mp_geo.pdb',
-          'out_file=mp_geo.out',
-          'rna_backbone=True']
-  mp_geo.run(args)
-  f = open('mp_geo.out', 'r')
-  lines = [i.rstrip('\n\r') for i in f.readlines()]
-  assert lines[0] == \
-    ' :1: B: 115: : :  C:__?__:178.072:55.525:76.414:-158.236:-67.172'
-  assert lines[1] == \
-    ' :1: B: 116: :A:  A:-80.906:172.347:71.412:81.732:-151.720:-70.053'
-  assert lines[2] == \
-    ' :1: B: 117: :A:  G:-80.508:177.077:61.989:80.676:-149.321:-69.591'
-  assert lines[3] == \
-    ' :1: B: 118: : :  C:-62.565:164.517:69.624:78.058:__?__:__?__'
+    open("mp_geo.pdb", "w").write(pdb_str_2)
+    args = ["pdb=mp_geo.pdb", "out_file=mp_geo.out", "rna_backbone=True"]
+    mp_geo.run(args)
+    f = open("mp_geo.out", "r")
+    lines = [i.rstrip("\n\r") for i in f.readlines()]
+    assert (
+        lines[0] == " :1: B: 115: : :  C:__?__:178.072:55.525:76.414:-158.236:-67.172"
+    )
+    assert (
+        lines[1] == " :1: B: 116: :A:  A:-80.906:172.347:71.412:81.732:-151.720:-70.053"
+    )
+    assert (
+        lines[2] == " :1: B: 117: :A:  G:-80.508:177.077:61.989:80.676:-149.321:-69.591"
+    )
+    assert lines[3] == " :1: B: 118: : :  C:-62.565:164.517:69.624:78.058:__?__:__?__"
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise_mp_geo()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise_mp_geo()
+    print("OK. Time: %8.3f" % (time.time() - t0))

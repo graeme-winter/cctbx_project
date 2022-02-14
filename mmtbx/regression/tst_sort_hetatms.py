@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.command_line import sort_hetatms
 from iotbx import file_reader
@@ -6,8 +5,9 @@ from six.moves import cStringIO as StringIO
 import os.path as op
 import os
 
+
 def exercise():
-  pdb_raw = """\
+    pdb_raw = """\
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      1  N   GLY A   1      -9.009   4.612   6.102  1.00 16.77           N
 ATOM      2  CA  GLY A   1      -9.052   4.207   4.651  1.00 16.57           C
@@ -79,31 +79,32 @@ HETATM   66  O   HOH A  13      -2.749   3.429  10.024  1.00 39.15           O
 HETATM   67  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 END
 """
-  pdb_file = "unsorted.pdb"
-  open(pdb_file, "w").write(pdb_raw)
-  if (op.exists("unsorted_sorted.pdb")):
-    os.remove("unsorted_sorted.pdb")
-  out = StringIO()
-  sort_hetatms.run(
-    args=[pdb_file, "--verbose"],
-    out=out)
-  assert ("""Residue group pdb=" O   HOH    10 " added to chain A (distance = 2.814, symop = -x-1,y-1/2,-z)""" in out.getvalue())
-  pdb_in = file_reader.any_file("unsorted_sorted.pdb")
-  hierarchy = pdb_in.file_object.hierarchy
-  chains = hierarchy.models()[0].chains()
-  assert (len(chains) == 4)
-  rgsA = chains[-2].residue_groups()
-  rgsB = chains[-1].residue_groups()
-  assert (len(rgsA) == 3) and (len(rgsB) == 4)
-  sort_hetatms.run(
-    args=[pdb_file, "preserve_chain_id=True", "renumber=False"],
-    out=StringIO())
-  pdb_in = file_reader.any_file("unsorted_sorted.pdb")
-  hierarchy = pdb_in.file_object.hierarchy
-  chains = hierarchy.models()[0].chains()
-  assert (len(chains) == 3)
-  assert (chains[-1].id == "A")
-  pdb_raw2 = """\
+    pdb_file = "unsorted.pdb"
+    open(pdb_file, "w").write(pdb_raw)
+    if op.exists("unsorted_sorted.pdb"):
+        os.remove("unsorted_sorted.pdb")
+    out = StringIO()
+    sort_hetatms.run(args=[pdb_file, "--verbose"], out=out)
+    assert (
+        """Residue group pdb=" O   HOH    10 " added to chain A (distance = 2.814, symop = -x-1,y-1/2,-z)"""
+        in out.getvalue()
+    )
+    pdb_in = file_reader.any_file("unsorted_sorted.pdb")
+    hierarchy = pdb_in.file_object.hierarchy
+    chains = hierarchy.models()[0].chains()
+    assert len(chains) == 4
+    rgsA = chains[-2].residue_groups()
+    rgsB = chains[-1].residue_groups()
+    assert (len(rgsA) == 3) and (len(rgsB) == 4)
+    sort_hetatms.run(
+        args=[pdb_file, "preserve_chain_id=True", "renumber=False"], out=StringIO()
+    )
+    pdb_in = file_reader.any_file("unsorted_sorted.pdb")
+    hierarchy = pdb_in.file_object.hierarchy
+    chains = hierarchy.models()[0].chains()
+    assert len(chains) == 3
+    assert chains[-1].id == "A"
+    pdb_raw2 = """\
 CRYST1   21.937   10.000   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      1  N   GLY A   1      -9.009   4.612   6.102  1.00 16.77           N
 ATOM      2  CA  GLY A   1      -9.052   4.207   4.651  1.00 16.57           C
@@ -135,23 +136,25 @@ HETATM   66  O   HOH A  13      -2.749   3.429  10.024  1.00 39.15           O
 HETATM   67  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 END
 """
-  pdb_file = "unsorted2.pdb"
-  open(pdb_file, "w").write(pdb_raw2)
-  if (op.exists("unsorted2_sorted.pdb")):
-    os.remove("unsorted2_sorted.pdb")
-  out = StringIO()
-  sort_hetatms.run(
-    args=[pdb_file, "--verbose", "--remove_waters_outside_radius"],
-    out=out)
-  assert ("Water     11  is not near any polymer chain, will delete" in
-          out.getvalue())
-  out = StringIO()
-  sort_hetatms.run(
-    args=[pdb_file, "--verbose",],
-    out=out)
-  assert ("Residue group A   11  is not near any macromolecule chain" in
-          out.getvalue())
-  pdb_raw = """\
+    pdb_file = "unsorted2.pdb"
+    open(pdb_file, "w").write(pdb_raw2)
+    if op.exists("unsorted2_sorted.pdb"):
+        os.remove("unsorted2_sorted.pdb")
+    out = StringIO()
+    sort_hetatms.run(
+        args=[pdb_file, "--verbose", "--remove_waters_outside_radius"], out=out
+    )
+    assert "Water     11  is not near any polymer chain, will delete" in out.getvalue()
+    out = StringIO()
+    sort_hetatms.run(
+        args=[
+            pdb_file,
+            "--verbose",
+        ],
+        out=out,
+    )
+    assert "Residue group A   11  is not near any macromolecule chain" in out.getvalue()
+    pdb_raw = """\
 HEADER    LIGASE                                  31-AUG-98   1BS2
 CRYST1  100.374  100.374  204.341  90.00  90.00  90.00 P 43 21 2     8
 ATOM   1094  N   LYS A 143      22.992  81.325 -18.373  1.00 63.31           N
@@ -259,37 +262,49 @@ HETATM 4963  O   HOH X 976      48.036  82.421 -33.012  1.00 30.31           O
 HETATM 4964  O   HOH X 977      44.190  81.253 -31.435  1.00 48.82           O
 HETATM 4965  O   HOH X 978      41.198  81.209 -30.407  1.00 48.77           O
 """
-  pdb_file = "unsorted3.pdb"
-  open(pdb_file, "w").write(pdb_raw)
-  if (op.exists("unsorted3_sorted.pdb")):
-    os.remove("unsorted3_sorted.pdb")
-  out = StringIO()
-  sort_hetatms.run(
-    args=[pdb_file, "--verbose",],
-    out=out)
-  assert op.isfile("unsorted3_sorted.pdb")
-  pdb_in = file_reader.any_file("unsorted3_sorted.pdb")
-  for atom in pdb_in.file_object.hierarchy.atoms():
-    assert atom.fetch_labels().chain_id == "A"
-  # now with ARG ligand minus waters, but still flagged as HETATM
-  pdb_in = file_reader.any_file("unsorted3.pdb")
-  sel_str = "not resname HOH"
-  sel_cache = pdb_in.file_object.hierarchy.atom_selection_cache()
-  sel = sel_cache.selection(sel_str)
-  hierarchy_new = pdb_in.file_object.hierarchy.select(sel)
-  open("unsorted4.pdb", "w").write(hierarchy_new.as_pdb_string(
-    crystal_symmetry=pdb_in.file_object.crystal_symmetry()))
-  if (op.exists("unsorted4_sorted.pdb")):
-    os.remove("unsorted4_sorted.pdb")
-  out = StringIO()
-  sort_hetatms.run(
-    args=["unsorted4.pdb", "--verbose",],
-    out=out)
-  assert op.isfile("unsorted4_sorted.pdb")
-  pdb_in = file_reader.any_file("unsorted4_sorted.pdb")
-  for atom in pdb_in.file_object.hierarchy.atoms():
-    assert atom.fetch_labels().chain_id == "A"
-  print("OK")
+    pdb_file = "unsorted3.pdb"
+    open(pdb_file, "w").write(pdb_raw)
+    if op.exists("unsorted3_sorted.pdb"):
+        os.remove("unsorted3_sorted.pdb")
+    out = StringIO()
+    sort_hetatms.run(
+        args=[
+            pdb_file,
+            "--verbose",
+        ],
+        out=out,
+    )
+    assert op.isfile("unsorted3_sorted.pdb")
+    pdb_in = file_reader.any_file("unsorted3_sorted.pdb")
+    for atom in pdb_in.file_object.hierarchy.atoms():
+        assert atom.fetch_labels().chain_id == "A"
+    # now with ARG ligand minus waters, but still flagged as HETATM
+    pdb_in = file_reader.any_file("unsorted3.pdb")
+    sel_str = "not resname HOH"
+    sel_cache = pdb_in.file_object.hierarchy.atom_selection_cache()
+    sel = sel_cache.selection(sel_str)
+    hierarchy_new = pdb_in.file_object.hierarchy.select(sel)
+    open("unsorted4.pdb", "w").write(
+        hierarchy_new.as_pdb_string(
+            crystal_symmetry=pdb_in.file_object.crystal_symmetry()
+        )
+    )
+    if op.exists("unsorted4_sorted.pdb"):
+        os.remove("unsorted4_sorted.pdb")
+    out = StringIO()
+    sort_hetatms.run(
+        args=[
+            "unsorted4.pdb",
+            "--verbose",
+        ],
+        out=out,
+    )
+    assert op.isfile("unsorted4_sorted.pdb")
+    pdb_in = file_reader.any_file("unsorted4_sorted.pdb")
+    for atom in pdb_in.file_object.hierarchy.atoms():
+        assert atom.fetch_labels().chain_id == "A"
+    print("OK")
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

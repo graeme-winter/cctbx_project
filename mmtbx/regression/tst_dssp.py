@@ -1,13 +1,13 @@
-
 from __future__ import absolute_import, division, print_function
 from libtbx.test_utils import show_diff
 from libtbx import easy_run
 import libtbx.load_env
 import os
 
+
 def exercise_basic():
-  # extracted from 1ywf
-  pdb_in = """\
+    # extracted from 1ywf
+    pdb_in = """\
 ATOM      1  N   ASP A 181      27.197  36.852   5.496  1.00 33.48           N
 ATOM      2  CA  ASP A 181      27.251  36.418   4.117  1.00 34.90           C
 ATOM      3  C   ASP A 181      26.472  37.390   3.236  1.00 34.37           C
@@ -159,24 +159,30 @@ ATOM    148  C   ARG A 210       6.081  73.522  -2.641  1.00 28.32           C
 ATOM    149  O   ARG A 210       7.167  74.068  -2.709  1.00 28.23           O
 ATOM    150  CB  ARG A 210       6.178  71.657  -4.275  1.00 27.92           C
 END"""
-  open("tst_dssp_1ywf_helix.pdb", "w").write(pdb_in)
-  result = easy_run.fully_buffered("mmtbx.dssp tst_dssp_1ywf_helix.pdb"
+    open("tst_dssp_1ywf_helix.pdb", "w").write(pdb_in)
+    result = easy_run.fully_buffered(
+        "mmtbx.dssp tst_dssp_1ywf_helix.pdb"
     ).raise_if_errors()
-  assert ("\n".join(result.stdout_lines) == """\
+    assert (
+        "\n".join(result.stdout_lines)
+        == """\
 HELIX    1   1 ASP A  181  ARG A  191  1                                  11
-HELIX    3   3 SER A  195  GLN A  209  1                                  15""")
+HELIX    3   3 SER A  195  GLN A  209  1                                  15"""
+    )
+
 
 # these exercised depend on files in other SVN trees
 def exercise_advanced():
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/1ywf.pdb",
-    test=os.path.isfile)
-  if (pdb_file is None):
-    print("phenix_regression not available, skipping test")
-    return
-  result = easy_run.fully_buffered("mmtbx.dssp \"%s\"" % pdb_file
-    ).raise_if_errors()
-  assert not show_diff("\n".join(result.stdout_lines), """\
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/1ywf.pdb", test=os.path.isfile
+    )
+    if pdb_file is None:
+        print("phenix_regression not available, skipping test")
+        return
+    result = easy_run.fully_buffered('mmtbx.dssp "%s"' % pdb_file).raise_if_errors()
+    assert not show_diff(
+        "\n".join(result.stdout_lines),
+        """\
 HELIX    2   2 ASP A   14  THR A   18  5                                   5
 HELIX    6   6 ASP A   37  GLY A   48  1                                  12
 HELIX    8   8 SER A   57  GLY A   65  1                                   9
@@ -194,21 +200,25 @@ SHEET    1   1 5 ARG A  13  ASP A  14  0
 SHEET    2   1 5 LEU A  27  SER A  30 -1  O  ARG A  29   N  ARG A  13
 SHEET    3   1 5 VAL A 156  HIS A 159  1  O  VAL A 156   N  PHE A  28
 SHEET    4   1 5 ASP A  51  ASP A  54  1  O  ASP A  51   N  LEU A 157
-SHEET    5   1 5 ASP A  74  LEU A  77  1  O  ASP A  74   N  VAL A  52""")
-  cctbx_p_dir = libtbx.env.find_in_repositories(
-    relative_path="cctbx_project",
-    test=os.path.isdir)
-  if (cctbx_p_dir is not None):
-    # mostly beta
-    pdb_file_1 = os.path.join(cctbx_p_dir, "mmtbx", "regression", "pdbs", "p9.pdb")
-    result = easy_run.fully_buffered("mmtbx.dssp \"%s\"" % pdb_file_1
-      ).raise_if_errors()
-    # XXX interestingly, this appears to be more accurate than the output of
-    # ksdssp, which finds an alpha helix from 111 to 116.  both the PDB and
-    # ksdssp have 131-137 as a continuous strand, but residue 135 actually
-    # breaks the hydrogen bonding pattern, and the hydrogen bonds cannot be
-    # accurately recovered from those annotations.
-    assert not show_diff("\n".join(result.stdout_lines), """\
+SHEET    5   1 5 ASP A  74  LEU A  77  1  O  ASP A  74   N  VAL A  52""",
+    )
+    cctbx_p_dir = libtbx.env.find_in_repositories(
+        relative_path="cctbx_project", test=os.path.isdir
+    )
+    if cctbx_p_dir is not None:
+        # mostly beta
+        pdb_file_1 = os.path.join(cctbx_p_dir, "mmtbx", "regression", "pdbs", "p9.pdb")
+        result = easy_run.fully_buffered(
+            'mmtbx.dssp "%s"' % pdb_file_1
+        ).raise_if_errors()
+        # XXX interestingly, this appears to be more accurate than the output of
+        # ksdssp, which finds an alpha helix from 111 to 116.  both the PDB and
+        # ksdssp have 131-137 as a continuous strand, but residue 135 actually
+        # breaks the hydrogen bonding pattern, and the hydrogen bonds cannot be
+        # accurately recovered from those annotations.
+        assert not show_diff(
+            "\n".join(result.stdout_lines),
+            """\
 HELIX   10  10 PRO    105  VAL    109  5                                   5
 HELIX   13  13 ALA    113  LEU    117  5                                   5
 SHEET    1   1 2 TYR    11  GLU    13  0
@@ -227,16 +237,20 @@ SHEET    5   4 5 ARG   131  ILE   134 -1  O  LYS   133   N  TRP   126
 SHEET    1   5 2 VAL    90  MET    94  0
 SHEET    2   5 2 THR   101  PRO   105 -1  O  VAL   104   N  ILE    91
 SHEET    1   6 2 VAL   123  GLU   124  0
-SHEET    2   6 2 ARG   136  VAL   137 -1  O  ARG   136   N  GLU   124""")
-    # beta barrel
-  examples_dir = libtbx.env.find_in_repositories(
-    relative_path="phenix_examples",
-    test=os.path.isdir)
-  if examples_dir is not None:
-    pdb_file_2 = os.path.join(examples_dir, "porin-twin", "porin.pdb")
-    result = easy_run.fully_buffered("mmtbx.dssp \"%s\"" % pdb_file_2
-      ).raise_if_errors()
-    assert not show_diff("\n".join(result.stdout_lines), """\
+SHEET    2   6 2 ARG   136  VAL   137 -1  O  ARG   136   N  GLU   124""",
+        )
+        # beta barrel
+    examples_dir = libtbx.env.find_in_repositories(
+        relative_path="phenix_examples", test=os.path.isdir
+    )
+    if examples_dir is not None:
+        pdb_file_2 = os.path.join(examples_dir, "porin-twin", "porin.pdb")
+        result = easy_run.fully_buffered(
+            'mmtbx.dssp "%s"' % pdb_file_2
+        ).raise_if_errors()
+        assert not show_diff(
+            "\n".join(result.stdout_lines),
+            """\
 HELIX    5   5 ASP     59  GLY     63  5                                   5
 HELIX    7   7 THR     87  VAL     92  1                                   6
 HELIX   18  18 ASP    156  VAL    160  5                                   5
@@ -257,12 +271,14 @@ SHEET   13   117 THR   235  ILE   244 -1  O  ASP   243   N  VAL   224
 SHEET   14   117 ALA   252  GLN   260 -1  O  ASP   258   N  THR   236
 SHEET   15   117 VAL   265  SER   273 -1  O  SER   273   N  TYR   253
 SHEET   16   117 THR   279  ASP   288 -1  O  ARG   286   N  LYS   266
-SHEET   17   117 TYR     7  VAL    15 -1  O  TYR    14   N  ALA   281""")
-  else :
-    print("WARNING: phenix_examples not available, some tests skipped")
-  # TODO add 1lfh test
-  print("OK")
+SHEET   17   117 TYR     7  VAL    15 -1  O  TYR    14   N  ALA   281""",
+        )
+    else:
+        print("WARNING: phenix_examples not available, some tests skipped")
+    # TODO add 1lfh test
+    print("OK")
 
-if (__name__ == "__main__"):
-  exercise_basic()
-  exercise_advanced()
+
+if __name__ == "__main__":
+    exercise_basic()
+    exercise_advanced()

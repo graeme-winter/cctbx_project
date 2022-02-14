@@ -76,43 +76,53 @@ HETATM   66  O   HOH A  13      -2.749   3.429  10.024  1.00 39.15           O
 HETATM   67  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 """
 
-def run(nonbonded_distance_cutoff=4.5, write_files=False):
-  """
-  Exercise supercell.
-  """
-  if (libtbx.env.find_in_repositories(relative_path="chem_data") is None):
-    print("Skipping exercise(): chem_data directory not available")
-    return
-  if(write_files):
-    with open("input.pdb","w") as fo:
-      fo.write(pdb_str)
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  m = mmtbx.model.manager(model_input = pdb_inp, log = null_out())
-  p = m.get_default_pdb_interpretation_params()
-  p.pdb_interpretation.nonbonded_distance_cutoff = nonbonded_distance_cutoff
-  m.process(make_restraints=True, pdb_interpretation_params=p)
-  # Figure symmetry interactions internally
-  sc1 = super_cell.run(
-    pdb_hierarchy        = m.get_hierarchy(),
-    crystal_symmetry     = m.crystal_symmetry(),
-    select_within_radius = nonbonded_distance_cutoff)
-  if(write_files):
-    sc1.hierarchy.write_pdb_file(file_name="sc1.pdb",
-      crystal_symmetry = sc1.crystal_symmetry)
-  # Take symmetry interactions from restraints
-  siiu = m.get_restraints_manager().geometry.pair_proxies().nonbonded_proxies.\
-     get_symmetry_interacting_indices_unique(
-       sites_cart = m.get_hierarchy().atoms().extract_xyz())
-  sc2 = super_cell.run(
-    pdb_hierarchy        = m.get_hierarchy(),
-    crystal_symmetry     = m.crystal_symmetry(),
-    select_within_radius = nonbonded_distance_cutoff,
-    siiu                 = siiu)
-  if(write_files):
-    sc2.hierarchy.write_pdb_file(file_name="sc2.pdb",
-      crystal_symmetry = sc2.crystal_symmetry)
-  # Check both ways produce the same models (chain/residue order can vary)
-  assert sc1.hierarchy.atoms().size()==sc2.hierarchy.atoms().size()
 
-if(__name__ == "__main__"):
-  run()
+def run(nonbonded_distance_cutoff=4.5, write_files=False):
+    """
+    Exercise supercell.
+    """
+    if libtbx.env.find_in_repositories(relative_path="chem_data") is None:
+        print("Skipping exercise(): chem_data directory not available")
+        return
+    if write_files:
+        with open("input.pdb", "w") as fo:
+            fo.write(pdb_str)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    m = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    p = m.get_default_pdb_interpretation_params()
+    p.pdb_interpretation.nonbonded_distance_cutoff = nonbonded_distance_cutoff
+    m.process(make_restraints=True, pdb_interpretation_params=p)
+    # Figure symmetry interactions internally
+    sc1 = super_cell.run(
+        pdb_hierarchy=m.get_hierarchy(),
+        crystal_symmetry=m.crystal_symmetry(),
+        select_within_radius=nonbonded_distance_cutoff,
+    )
+    if write_files:
+        sc1.hierarchy.write_pdb_file(
+            file_name="sc1.pdb", crystal_symmetry=sc1.crystal_symmetry
+        )
+    # Take symmetry interactions from restraints
+    siiu = (
+        m.get_restraints_manager()
+        .geometry.pair_proxies()
+        .nonbonded_proxies.get_symmetry_interacting_indices_unique(
+            sites_cart=m.get_hierarchy().atoms().extract_xyz()
+        )
+    )
+    sc2 = super_cell.run(
+        pdb_hierarchy=m.get_hierarchy(),
+        crystal_symmetry=m.crystal_symmetry(),
+        select_within_radius=nonbonded_distance_cutoff,
+        siiu=siiu,
+    )
+    if write_files:
+        sc2.hierarchy.write_pdb_file(
+            file_name="sc2.pdb", crystal_symmetry=sc2.crystal_symmetry
+        )
+    # Check both ways produce the same models (chain/residue order can vary)
+    assert sc1.hierarchy.atoms().size() == sc2.hierarchy.atoms().size()
+
+
+if __name__ == "__main__":
+    run()

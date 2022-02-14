@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 from six.moves import zip
 from six.moves import map
+
 #!/usr/bin/env cctbx.python
 #
 # Use case 1.2A - going back to the use case for predictions and making sure that
@@ -20,11 +21,13 @@ from six.moves import map
 # 1 read INTEGRATE.HKL - this frame, create map (x, y, phi) -> HKL. Can then use
 # ANN to 'find' a prediction and verify HKL later on.
 
+
 def import_xds_integrate_hkl(xds_integrate_hkl_file, phi_range):
     from rstbx.cftbx.coordinate_frame_converter import coordinate_frame_converter
+
     cfc = coordinate_frame_converter(xds_integrate_hkl_file)
 
-    px, py = cfc.get('detector_pixel_size_fast_slow')
+    px, py = cfc.get("detector_pixel_size_fast_slow")
 
     # read header, get out phi0, frame0, dphi, so can transform frame# to
     # phi value
@@ -34,26 +37,26 @@ def import_xds_integrate_hkl(xds_integrate_hkl_file, phi_range):
     frame0 = None
 
     for record in open(xds_integrate_hkl_file):
-        if not record.startswith('!'):
+        if not record.startswith("!"):
             break
-        if record.startswith('!STARTING_FRAME'):
+        if record.startswith("!STARTING_FRAME"):
             frame0 = int(record.split()[-1])
             continue
-        if record.startswith('!STARTING_ANGLE'):
+        if record.startswith("!STARTING_ANGLE"):
             phi0 = float(record.split()[-1])
             continue
-        if record.startswith('!OSCILLATION_RANGE'):
+        if record.startswith("!OSCILLATION_RANGE"):
             dphi = float(record.split()[-1])
             continue
 
-    assert(not dphi is None)
-    assert(not phi0 is None)
-    assert(not frame0 is None)
+    assert not dphi is None
+    assert not phi0 is None
+    assert not frame0 is None
 
-    xyz_to_hkl = { }
+    xyz_to_hkl = {}
 
     for record in open(xds_integrate_hkl_file):
-        if record.startswith('!'):
+        if record.startswith("!"):
             continue
 
         values = record.split()
@@ -61,8 +64,7 @@ def import_xds_integrate_hkl(xds_integrate_hkl_file, phi_range):
         hkl = list(map(int, values[:3]))
         xyz = list(map(float, values[5:8]))
 
-        xyz_mod = (xyz[0] * px, xyz[1] * py,
-                   (xyz[2] - frame0) * dphi + phi0)
+        xyz_mod = (xyz[0] * px, xyz[1] * py, (xyz[2] - frame0) * dphi + phi0)
 
         if xyz_mod[2] < phi_range[0]:
             continue
@@ -73,11 +75,13 @@ def import_xds_integrate_hkl(xds_integrate_hkl_file, phi_range):
 
     return xyz_to_hkl
 
+
 # 2 read coordinate frame from same INTEGRATE.HKL, provide number of frames as
 # input parameter, predict all reflections given camera position in same frame as
 # above, store in same structure. Verify that all reflections in INTEGRATE.HKL
 # appear in prediction list. N.B. lists not identical, as some reflections on dead
 # regions of camera. Compare HKL, (x, y, phi)
+
 
 def regenerate_predictions_brute(xds_integrate_hkl_file, phi_range):
     from rstbx.cftbx.coordinate_frame_converter import coordinate_frame_converter
@@ -93,53 +97,61 @@ def regenerate_predictions_brute(xds_integrate_hkl_file, phi_range):
 
     dmin = cfc.derive_detector_highest_resolution()
 
-    A = cfc.get_c('real_space_a')
-    B = cfc.get_c('real_space_b')
-    C = cfc.get_c('real_space_c')
+    A = cfc.get_c("real_space_a")
+    B = cfc.get_c("real_space_b")
+    C = cfc.get_c("real_space_c")
 
-    cell = (A.length(), B.length(), C.length(), B.angle(C, deg = True),
-            C.angle(A, deg = True), A.angle(B, deg = True))
+    cell = (
+        A.length(),
+        B.length(),
+        C.length(),
+        B.angle(C, deg=True),
+        C.angle(A, deg=True),
+        A.angle(B, deg=True),
+    )
 
     uc = unit_cell(cell)
-    sg = cfc.get('space_group_number')
+    sg = cfc.get("space_group_number")
 
     indices = full_sphere_indices(
-        unit_cell = uc,
-        resolution_limit = dmin,
-        space_group = space_group(space_group_symbols(sg).hall()))
+        unit_cell=uc,
+        resolution_limit=dmin,
+        space_group=space_group(space_group_symbols(sg).hall()),
+    )
 
-    u, b = cfc.get_u_b(convention = cfc.ROSSMANN)
-    axis = cfc.get('rotation_axis', convention = cfc.ROSSMANN)
+    u, b = cfc.get_u_b(convention=cfc.ROSSMANN)
+    axis = cfc.get("rotation_axis", convention=cfc.ROSSMANN)
     ub = u * b
 
-    wavelength = cfc.get('wavelength')
+    wavelength = cfc.get("wavelength")
 
     ra = rotation_angles(dmin, ub, wavelength, axis)
 
     obs_indices, obs_angles = ra.observed_indices_and_angles_from_angle_range(
-        phi_start_rad = phi_range[0] * d2r,
-        phi_end_rad = phi_range[1] * d2r,
-        indices = indices)
+        phi_start_rad=phi_range[0] * d2r,
+        phi_end_rad=phi_range[1] * d2r,
+        indices=indices,
+    )
 
     # in here work in internal (i.e. not Rossmann) coordinate frame
 
     u, b = cfc.get_u_b()
-    axis = cfc.get_c('rotation_axis')
-    sample_to_source_vec = cfc.get_c('sample_to_source').normalize()
-    s0 = (- 1.0 / wavelength) * sample_to_source_vec
+    axis = cfc.get_c("rotation_axis")
+    sample_to_source_vec = cfc.get_c("sample_to_source").normalize()
+    s0 = (-1.0 / wavelength) * sample_to_source_vec
     ub = u * b
 
-    detector_origin = cfc.get_c('detector_origin')
-    detector_fast = cfc.get_c('detector_fast')
-    detector_slow = cfc.get_c('detector_slow')
+    detector_origin = cfc.get_c("detector_origin")
+    detector_fast = cfc.get_c("detector_fast")
+    detector_slow = cfc.get_c("detector_slow")
     detector_normal = detector_fast.cross(detector_slow)
     distance = detector_origin.dot(detector_normal.normalize())
-    nx, ny = cfc.get('detector_size_fast_slow')
-    px, py = cfc.get('detector_pixel_size_fast_slow')
+    nx, ny = cfc.get("detector_size_fast_slow")
+    px, py = cfc.get("detector_pixel_size_fast_slow")
 
     limits = [0, nx * px, 0, ny * py]
 
-    xyz_to_hkl = { }
+    xyz_to_hkl = {}
 
     for hkl, angle in zip(obs_indices, obs_angles):
         s = (ub * hkl).rotate(axis, angle)
@@ -167,7 +179,9 @@ def regenerate_predictions_brute(xds_integrate_hkl_file, phi_range):
 
     return xyz_to_hkl
 
+
 # 3 same as #2 verify that the predictions are all correct.
+
 
 def regenerate_predictions_reeke(xds_integrate_hkl_file, phi_range):
     from rstbx.cftbx.coordinate_frame_converter import coordinate_frame_converter
@@ -184,50 +198,56 @@ def regenerate_predictions_reeke(xds_integrate_hkl_file, phi_range):
 
     dmin = cfc.derive_detector_highest_resolution()
 
-    A = cfc.get_c('real_space_a')
-    B = cfc.get_c('real_space_b')
-    C = cfc.get_c('real_space_c')
+    A = cfc.get_c("real_space_a")
+    B = cfc.get_c("real_space_b")
+    C = cfc.get_c("real_space_c")
 
-    cell = (A.length(), B.length(), C.length(), B.angle(C, deg = True),
-            C.angle(A, deg = True), A.angle(B, deg = True))
+    cell = (
+        A.length(),
+        B.length(),
+        C.length(),
+        B.angle(C, deg=True),
+        C.angle(A, deg=True),
+        A.angle(B, deg=True),
+    )
 
     uc = unit_cell(cell)
-    sg = cfc.get('space_group_number')
+    sg = cfc.get("space_group_number")
 
     u, b = cfc.get_u_b()
-    axis = cfc.get_c('rotation_axis')
-    sample_to_source_vec = cfc.get_c('sample_to_source').normalize()
-    wavelength = cfc.get('wavelength')
-    s0 = (- 1.0 / wavelength) * sample_to_source_vec
+    axis = cfc.get_c("rotation_axis")
+    sample_to_source_vec = cfc.get_c("sample_to_source").normalize()
+    wavelength = cfc.get("wavelength")
+    s0 = (-1.0 / wavelength) * sample_to_source_vec
     ub = u * b
     rm = reeke_model(ub, axis, s0, dmin, phi_range[0], phi_range[1], 3)
     reeke_indices = rm.generate_indices()
 
     # the following are in Rossmann coordinate frame to fit in with
     # Labelit code...
-    ur, br = cfc.get_u_b(convention = cfc.ROSSMANN)
-    axisr = cfc.get('rotation_axis', convention = cfc.ROSSMANN)
+    ur, br = cfc.get_u_b(convention=cfc.ROSSMANN)
+    axisr = cfc.get("rotation_axis", convention=cfc.ROSSMANN)
     ubr = ur * br
 
     ra = rotation_angles(dmin, ubr, wavelength, axisr)
 
     obs_indices, obs_angles = ra.observed_indices_and_angles_from_angle_range(
-            phi_start_rad = phi_range[0] * d2r,
-            phi_end_rad = phi_range[1] * d2r,
-            indices = reeke_indices)
+        phi_start_rad=phi_range[0] * d2r,
+        phi_end_rad=phi_range[1] * d2r,
+        indices=reeke_indices,
+    )
 
-
-    detector_origin = cfc.get_c('detector_origin')
-    detector_fast = cfc.get_c('detector_fast')
-    detector_slow = cfc.get_c('detector_slow')
+    detector_origin = cfc.get_c("detector_origin")
+    detector_fast = cfc.get_c("detector_fast")
+    detector_slow = cfc.get_c("detector_slow")
     detector_normal = detector_fast.cross(detector_slow)
     distance = detector_origin.dot(detector_normal.normalize())
-    nx, ny = cfc.get('detector_size_fast_slow')
-    px, py = cfc.get('detector_pixel_size_fast_slow')
+    nx, ny = cfc.get("detector_size_fast_slow")
+    px, py = cfc.get("detector_pixel_size_fast_slow")
 
     limits = [0, nx * px, 0, ny * py]
 
-    xyz_to_hkl = { }
+    xyz_to_hkl = {}
 
     for hkl, angle in zip(obs_indices, obs_angles):
         s = (ub * hkl).rotate(axis, angle)
@@ -255,6 +275,7 @@ def regenerate_predictions_reeke(xds_integrate_hkl_file, phi_range):
 
     return xyz_to_hkl
 
+
 def compare(xyz_to_hkl, xyz_to_hkl_ref):
     # construct ann to perform search...
 
@@ -270,7 +291,7 @@ def compare(xyz_to_hkl, xyz_to_hkl_ref):
         reference.append(xyz[1])
         reference.append(xyz[2])
 
-    ann = ann_adaptor(data = reference, dim = 3, k = 1)
+    ann = ann_adaptor(data=reference, dim=3, k=1)
 
     n_correct = 0
     n_wrong = 0
@@ -286,6 +307,7 @@ def compare(xyz_to_hkl, xyz_to_hkl_ref):
 
     return n_correct, n_wrong
 
+
 # 4 define 'matrix' and 'hkl' file formats - or follow d*TREK model:
 #
 # {
@@ -297,6 +319,7 @@ def compare(xyz_to_hkl, xyz_to_hkl_ref):
 # ...
 #
 # + read / write class.
+
 
 def ranges(xyz_to_hkl):
     xyzs = list(xyz_to_hkl)
@@ -321,38 +344,42 @@ def ranges(xyz_to_hkl):
 
     return hmin, hmax, kmin, kmax, lmin, lmax
 
+
 def work():
     import sys
+
     integrate_hkl = sys.argv[1]
 
     phi_range = (0.0, 1.0)
 
     xyz_to_hkl_xds = import_xds_integrate_hkl(integrate_hkl, phi_range)
 
-    print('XDS:', ranges(xyz_to_hkl_xds))
+    print("XDS:", ranges(xyz_to_hkl_xds))
 
     xyz_to_hkl = regenerate_predictions_brute(integrate_hkl, phi_range)
 
-    print('Brute:', ranges(xyz_to_hkl))
+    print("Brute:", ranges(xyz_to_hkl))
 
     n_correct, n_wrong = compare(xyz_to_hkl, xyz_to_hkl_xds)
     print(n_correct, n_wrong)
     # assert(float(n_correct) / float(n_correct + n_wrong) > 0.999)
-    print('OK')
+    print("OK")
 
     try:
         from dials.algorithms.refinement.prediction.reeke import reeke_model
+
         xyz_to_hkl = regenerate_predictions_reeke(integrate_hkl, phi_range)
 
-        print('Reeke:', ranges(xyz_to_hkl))
+        print("Reeke:", ranges(xyz_to_hkl))
 
         n_correct, n_wrong = compare(xyz_to_hkl, xyz_to_hkl_xds)
         print(n_correct, n_wrong)
         # assert(float(n_correct) / float(n_correct + n_wrong) > 0.999)
 
-        print('OK')
+        print("OK")
     except ImportError as e:
         print("Test of the Reeke algorithm requires DIALS.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     work()

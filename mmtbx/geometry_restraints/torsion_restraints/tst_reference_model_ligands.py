@@ -105,30 +105,36 @@ LIG Var_01         O04     C03     C02     C01          90.00  30.0 2
 LIG Var_02        H011     C01     C02     C03         -60.00  30.0 3
 """
 
+
 def tst_1(prefix="tst_ref_model_ligands_1"):
-  with open("%s.pdb" % prefix, 'w') as f:
-    f.write(pdb_str)
-  with open("%s.cif" % prefix, 'w') as f:
-    f.write(restr_string)
-  cmd = " ".join([
-      "phenix.geometry_minimization",
-      "%s.pdb" % prefix,
-      "%s.cif" % prefix,
-      "reference_model.enabled=True",
-      "reference_model.file=%s.pdb" % prefix,
-      ">%s.log" % prefix])
-  print(cmd)
-  assert not easy_run.call(cmd)
-  assert_lines_in_file(
-      file_name="%s.log" % prefix,
-      lines=
-          """Model:              Reference:
+    with open("%s.pdb" % prefix, "w") as f:
+        f.write(pdb_str)
+    with open("%s.cif" % prefix, "w") as f:
+        f.write(restr_string)
+    cmd = " ".join(
+        [
+            "phenix.geometry_minimization",
+            "%s.pdb" % prefix,
+            "%s.cif" % prefix,
+            "reference_model.enabled=True",
+            "reference_model.file=%s.pdb" % prefix,
+            ">%s.log" % prefix,
+        ]
+    )
+    print(cmd)
+    assert not easy_run.call(cmd)
+    assert_lines_in_file(
+        file_name="%s.log" % prefix,
+        lines="""Model:              Reference:
           LIG A   1  <=====>  LIG A   1
           Total # of matched residue pairs: 1
-          Total # of reference model restraints: 1""")
+          Total # of reference model restraints: 1""",
+    )
+
 
 def run():
-  tst_1()
+    tst_1()
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

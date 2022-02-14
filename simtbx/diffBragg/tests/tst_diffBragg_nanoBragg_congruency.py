@@ -4,10 +4,11 @@ from __future__ import division
 def main():
     from simtbx.nanoBragg.sim_data import SimData
     import sys
+
     if "--cuda" in sys.argv:
         import os
-        os.environ["DIFFBRAGG_USE_CUDA"]="1"
 
+        os.environ["DIFFBRAGG_USE_CUDA"] = "1"
 
     S = SimData(use_default_crystal=True)
     S.instantiate_diffBragg()
@@ -32,4 +33,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    print ("OK!")
+    print("OK!")

@@ -14,708 +14,715 @@ import itertools
 import glob
 from six.moves.queue import Empty as QueueEmptyException
 
+
 class InstantTimeout(object):
-  """
-  Timeout immediately
-  """
+    """
+    Timeout immediately
+    """
 
-  def delay(self, waittime):
+    def delay(self, waittime):
 
-    raise QueueEmptyException("No data found in queue")
+        raise QueueEmptyException("No data found in queue")
 
 
 class TimedTimeout(object):
-  """
-  Timeout after given time
-  """
+    """
+    Timeout after given time
+    """
 
-  def __init__(self, max_delay):
+    def __init__(self, max_delay):
 
-    self.max_delay = max_delay
+        self.max_delay = max_delay
 
+    def delay(self, waittime):
 
-  def delay(self, waittime):
+        if 0 < self.max_delay:
+            waittime = min(self.max_delay, waittime)
+            self.max_delay -= waittime
+            time.sleep(waittime)
 
-    if 0 < self.max_delay:
-      waittime = min( self.max_delay, waittime )
-      self.max_delay -= waittime
-      time.sleep( waittime )
-
-    else:
-      raise QueueEmptyException("No data found in queue within timeout")
+        else:
+            raise QueueEmptyException("No data found in queue within timeout")
 
 
 class NoTimeout(object):
-  """
-  No timeout
-  """
+    """
+    No timeout
+    """
 
-  def delay(self, waittime):
+    def delay(self, waittime):
 
-    time.sleep( waittime )
+        time.sleep(waittime)
 
 
 class Queue(object):
-  """
-  Queue object to receive data from jobs running on remote machines
+    """
+    Queue object to receive data from jobs running on remote machines
 
-  Data transfer is achieved via files. It is safe to use any number of
-  Queue objects in the same directory, even with a matching identifier
-  """
+    Data transfer is achieved via files. It is safe to use any number of
+    Queue objects in the same directory, even with a matching identifier
+    """
 
-  def __init__(self, identifier, waittime = 1):
+    def __init__(self, identifier, waittime=1):
 
-    self.waittime = waittime
-    self.root = "%s_%d_%d" % ( identifier, os.getpid(), id( self ) )
-    self.count = itertools.count()
+        self.waittime = waittime
+        self.root = "%s_%d_%d" % (identifier, os.getpid(), id(self))
+        self.count = itertools.count()
 
+    def put(self, obj):
 
-  def put(self, obj):
+        index = next(self.count)
+        # Writing a tempfile and renaming it may prevent reading incomplete files
+        tmp_name = "tmp_%s.%d" % (self.root, index)
+        assert not os.path.exists(tmp_name)
 
-    index = next(self.count)
-    # Writing a tempfile and renaming it may prevent reading incomplete files
-    tmp_name = "tmp_%s.%d" % ( self.root, index )
-    assert not os.path.exists( tmp_name )
+        with open(tmp_name, "wb") as ofile:
+            pickle.dump(obj, ofile)
 
-    with open( tmp_name, "wb" ) as ofile:
-      pickle.dump( obj, ofile )
+        target_name = "%s.%d" % (self.root, index)
+        assert not os.path.exists(target_name)
+        os.rename(tmp_name, target_name)
 
-    target_name = "%s.%d" % ( self.root, index )
-    assert not os.path.exists( target_name )
-    os.rename( tmp_name, target_name )
+    def get(self, block=True, timeout=None):
 
+        if not block:
+            predicate = InstantTimeout()
 
-  def get(self, block = True, timeout = None):
+        else:
+            if timeout is not None:
+                predicate = TimedTimeout(max_delay=timeout)
 
-    if not block:
-      predicate = InstantTimeout()
+            else:
+                predicate = NoTimeout()
 
-    else:
-      if timeout is not None:
-        predicate = TimedTimeout( max_delay = timeout )
+        while True:
+            try:
+                data = next(self)
 
-      else:
-        predicate = NoTimeout()
+            except StopIteration:
+                predicate.delay(waittime=self.waittime)
+                continue
 
-    while True:
-      try:
-        data = next(self)
+            break
 
-      except StopIteration:
-        predicate.delay( waittime = self.waittime )
-        continue
+        return data
 
-      break
+    def next(self):
 
-    return data
+        waiting = []
 
+        for fname in glob.glob("%s.*" % self.root):
+            (root, ext) = os.path.splitext(fname)
 
-  def next(self):
+            try:
+                number = int(ext[1:])
 
-    waiting = []
+            except ValueError:
+                continue
 
-    for fname in glob.glob( "%s.*" % self.root ):
-      ( root, ext ) = os.path.splitext( fname )
+            waiting.append((number, fname))
 
-      try:
-        number = int( ext[1:] )
+        if not waiting:
+            raise StopIteration
 
-      except ValueError:
-        continue
-
-      waiting.append( ( number, fname ) )
-
-    if not waiting:
-      raise StopIteration
-
-    selected = min( waiting, key = lambda p: p[0] )[1]
-    data = pickle.load( open( selected, "rb" ) )
-    os.remove( selected )
-    return data
+        selected = min(waiting, key=lambda p: p[0])[1]
+        data = pickle.load(open(selected, "rb"))
+        os.remove(selected)
+        return data
 
 
 class Job(object):
-  """
-  Job object to execute function calls on remote machines accessible via
-  queuing systems
+    """
+    Job object to execute function calls on remote machines accessible via
+    queuing systems
 
-  Restrictions: target, args and kwargs has to be pickleable
-  """
+    Restrictions: target, args and kwargs has to be pickleable
+    """
 
-  def __init__(self, qinterface, target, args = (), kwargs = {}):
+    def __init__(self, qinterface, target, args=(), kwargs={}):
 
-    self.qinterface = qinterface
+        self.qinterface = qinterface
 
-    self.target = target
-    self.args = args
-    self.kwargs = kwargs
+        self.target = target
+        self.args = args
+        self.kwargs = kwargs
 
-    from libtbx.queuing_system_utils.processing import status
-    self.status = status.NotSubmitted
+        from libtbx.queuing_system_utils.processing import status
 
+        self.status = status.NotSubmitted
 
-  @property
-  def name(self):
+    @property
+    def name(self):
 
-    return "%s_%d" % ( self.qinterface.root, id( self ) )
+        return "%s_%d" % (self.qinterface.root, id(self))
 
+    @property
+    def jobid(self):
 
-  @property
-  def jobid(self):
+        return getattr(self.status, "jobid", None)
 
-    return getattr( self.status, "jobid", None )
+    @property
+    def exitcode(self):
 
+        return self.status.exit_code()
 
-  @property
-  def exitcode(self):
+    def start(self):
 
-    return self.status.exit_code()
+        if self.status.is_submitted():
+            raise RuntimeError("start called second time")
 
+        data = self.qinterface.input(
+            name=self.name,
+            target=self.target,
+            args=self.args,
+            kwargs=self.kwargs,
+        )
 
-  def start(self):
+        self.status = self.qinterface.submitter(
+            name=self.name,
+            executable=self.qinterface.executable,
+            script=self.qinterface.script % data.script(),
+            include=self.qinterface.include,
+            cleanup=data.files(),
+        )
 
-    if self.status.is_submitted():
-      raise RuntimeError("start called second time")
+    def is_alive(self):
 
-    data = self.qinterface.input(
-      name = self.name,
-      target = self.target,
-      args = self.args,
-      kwargs = self.kwargs,
-      )
+        return not self.status.is_finished()
 
-    self.status = self.qinterface.submitter(
-      name = self.name,
-      executable = self.qinterface.executable,
-      script = self.qinterface.script % data.script(),
-      include = self.qinterface.include,
-      cleanup = data.files(),
-      )
+    def join(self):
 
+        while self.is_alive():
+            time.sleep(0.1)
 
-  def is_alive(self):
+        outcome = self.status.outcome(
+            timeout=self.qinterface.join_timeout,
+            polltime=self.qinterface.polltime,
+        )
+        self.status.cleanup()
+        self.status = outcome
 
-    return not self.status.is_finished()
+        if self.status.stdout:
+            print(self.status.stdout)
 
+        if self.status.stderr and self.qinterface.display_stderr:
+            import sys
 
-  def join(self):
+            sys.stderr.write(self.status.stderr)
+            sys.stderr.write("\n")
 
-    while self.is_alive():
-      time.sleep( 0.1 )
+        if self.qinterface.save_error and self.exitcode != 0:
+            self.stacktrace = self.status.stderr
 
-    outcome = self.status.outcome(
-      timeout = self.qinterface.join_timeout,
-      polltime = self.qinterface.polltime,
-      )
-    self.status.cleanup()
-    self.status = outcome
+        self.status.strip()
 
-    if self.status.stdout:
-      print(self.status.stdout)
+    def terminate(self):
 
-    if self.status.stderr and self.qinterface.display_stderr:
-      import sys
-      sys.stderr.write( self.status.stderr )
-      sys.stderr.write( "\n" )
+        self.status.terminate()
+        outcome = self.status.outcome(
+            timeout=self.qinterface.termination_timeout,
+            polltime=self.qinterface.polltime,
+        )
+        self.status.cleanup()
+        self.status = outcome
 
-    if self.qinterface.save_error and self.exitcode != 0:
-      self.stacktrace = self.status.stderr
+    def __str__(self):
 
-    self.status.strip()
-
-
-  def terminate(self):
-
-    self.status.terminate()
-    outcome = self.status.outcome(
-      timeout = self.qinterface.termination_timeout,
-      polltime = self.qinterface.polltime,
-      )
-    self.status.cleanup()
-    self.status = outcome
-
-
-  def __str__(self):
-
-    return "%s(name = '%s')" % ( self.__class__.__name__, self.name )
+        return "%s(name = '%s')" % (self.__class__.__name__, self.name)
 
 
 class QueueHandler(object):
-  """
-  Handles submission requests for common queuing systems
-  """
-  SCRIPT = \
-"""\
+    """
+    Handles submission requests for common queuing systems
+    """
+
+    SCRIPT = """\
 from six.moves import cPickle as pickle
 %s
 target( *args, **kwargs )
 """
 
-  def __init__(
-    self,
-    submitter,
-    input,
-    include,
-    root,
-    executable = "libtbx.python",
-    script = SCRIPT,
-    save_error = False,
-    display_stderr = True,
-    join_timeout = None,
-    termination_timeout = 5,
-    polltime = 1,
+    def __init__(
+        self,
+        submitter,
+        input,
+        include,
+        root,
+        executable="libtbx.python",
+        script=SCRIPT,
+        save_error=False,
+        display_stderr=True,
+        join_timeout=None,
+        termination_timeout=5,
+        polltime=1,
     ):
 
-    self.submitter = submitter
-    self.root = "%s%s" % ( root, os.getpid() )
-    self.input = input
-    self.include = include
+        self.submitter = submitter
+        self.root = "%s%s" % (root, os.getpid())
+        self.input = input
+        self.include = include
 
-    self.executable = executable
-    self.script = script
+        self.executable = executable
+        self.script = script
 
-    self.save_error = save_error
-    self.display_stderr = display_stderr
+        self.save_error = save_error
+        self.display_stderr = display_stderr
 
-    self.join_timeout = join_timeout
-    self.termination_timeout = termination_timeout
-    self.polltime = polltime
+        self.join_timeout = join_timeout
+        self.termination_timeout = termination_timeout
+        self.polltime = polltime
 
+    def Job(self, target, args=(), kwargs={}):
 
-  def Job(self, target, args = (), kwargs = {}):
-
-    return Job(
-      qinterface = self,
-      target = target,
-      args = args,
-      kwargs = kwargs,
-      )
+        return Job(
+            qinterface=self,
+            target=target,
+            args=args,
+            kwargs=kwargs,
+        )
 
 
 def get_libtbx_env_setpaths():
 
-  import libtbx.load_env
-  return libtbx.env.under_build( "setpaths.sh" )
+    import libtbx.load_env
+
+    return libtbx.env.under_build("setpaths.sh")
 
 
 def SGE(
-  name = "libtbx_python",
-  command = None,
-  asynchronous = True,
-  input = None,
-  include = None,
-  poller = None,
-  handler = None,
-  save_error = False,
-  display_stderr = True,
-  ):
+    name="libtbx_python",
+    command=None,
+    asynchronous=True,
+    input=None,
+    include=None,
+    poller=None,
+    handler=None,
+    save_error=False,
+    display_stderr=True,
+):
 
-  command = process_command_line( command = command, default = [ "qsub" ] )
+    command = process_command_line(command=command, default=["qsub"])
 
-  from libtbx.queuing_system_utils.processing import submission
+    from libtbx.queuing_system_utils.processing import submission
 
-  if asynchronous:
-    if handler is None:
-      from libtbx.queuing_system_utils.processing import status
-      handler = status.StdStreamStrategy
+    if asynchronous:
+        if handler is None:
+            from libtbx.queuing_system_utils.processing import status
 
-    if poller is None:
-      from libtbx.queuing_system_utils.processing import polling
-      poller = polling.CentralPoller.SGE()
+            handler = status.StdStreamStrategy
 
-    submitter = submission.AsynchronousCmdLine.SGE(
-      poller = poller,
-      handler = handler,
-      command = command,
-      )
+        if poller is None:
+            from libtbx.queuing_system_utils.processing import polling
 
-  else:
-    submitter = submission.Synchronous.SGE( command = command )
+            poller = polling.CentralPoller.SGE()
 
-  if input is None:
-    from libtbx.queuing_system_utils.processing import transfer
-    input = transfer.TemporaryFile
+        submitter = submission.AsynchronousCmdLine.SGE(
+            poller=poller,
+            handler=handler,
+            command=command,
+        )
 
-  if include is None:
-    include = get_libtbx_env_setpaths()
+    else:
+        submitter = submission.Synchronous.SGE(command=command)
 
-  return QueueHandler(
-    submitter = submitter,
-    input = input,
-    include = include,
-    root = name,
-    save_error = save_error,
-    display_stderr = display_stderr,
+    if input is None:
+        from libtbx.queuing_system_utils.processing import transfer
+
+        input = transfer.TemporaryFile
+
+    if include is None:
+        include = get_libtbx_env_setpaths()
+
+    return QueueHandler(
+        submitter=submitter,
+        input=input,
+        include=include,
+        root=name,
+        save_error=save_error,
+        display_stderr=display_stderr,
     )
 
 
 def LSF(
-  name = "libtbx_python",
-  command = None,
-  asynchronous = True,
-  input = None,
-  include = None,
-  poller = None,
-  handler = None,
-  save_error = False,
-  display_stderr = True,
-  ):
+    name="libtbx_python",
+    command=None,
+    asynchronous=True,
+    input=None,
+    include=None,
+    poller=None,
+    handler=None,
+    save_error=False,
+    display_stderr=True,
+):
 
-  command = process_command_line( command = command, default = [ "bsub" ] )
+    command = process_command_line(command=command, default=["bsub"])
 
-  from libtbx.queuing_system_utils.processing import submission
+    from libtbx.queuing_system_utils.processing import submission
 
-  if asynchronous:
-    if poller is None:
-      from libtbx.queuing_system_utils.processing import polling
-      poller = polling.CentralPoller.LSF()
+    if asynchronous:
+        if poller is None:
+            from libtbx.queuing_system_utils.processing import polling
 
-    submitter = submission.AsynchronousCmdLine.LSF(
-      poller = poller,
-      command = command,
-      )
+            poller = polling.CentralPoller.LSF()
 
-  else:
-    submitter = submission.Synchronous.LSF( command = command )
+        submitter = submission.AsynchronousCmdLine.LSF(
+            poller=poller,
+            command=command,
+        )
 
-  if input is None:
-    from libtbx.queuing_system_utils.processing import transfer
-    input = transfer.TemporaryFile
+    else:
+        submitter = submission.Synchronous.LSF(command=command)
 
-  if include is None:
-    include = get_libtbx_env_setpaths()
+    if input is None:
+        from libtbx.queuing_system_utils.processing import transfer
 
-  return QueueHandler(
-    submitter = submitter,
-    input = input,
-    include = include,
-    root = name,
-    save_error = save_error,
-    display_stderr = display_stderr,
+        input = transfer.TemporaryFile
+
+    if include is None:
+        include = get_libtbx_env_setpaths()
+
+    return QueueHandler(
+        submitter=submitter,
+        input=input,
+        include=include,
+        root=name,
+        save_error=save_error,
+        display_stderr=display_stderr,
     )
 
 
 def PBS(
-  name = "libtbx_python",
-  command = None,
-  asynchronous = True,
-  input = None,
-  include = None,
-  poller = None,
-  handler = None,
-  save_error = False,
-  display_stderr = True,
-  ):
+    name="libtbx_python",
+    command=None,
+    asynchronous=True,
+    input=None,
+    include=None,
+    poller=None,
+    handler=None,
+    save_error=False,
+    display_stderr=True,
+):
 
-  command = process_command_line( command = command, default = [ "qsub" ] )
+    command = process_command_line(command=command, default=["qsub"])
 
-  from libtbx.queuing_system_utils.processing import submission
+    from libtbx.queuing_system_utils.processing import submission
 
-  if asynchronous:
-    if poller is None:
-      from libtbx.queuing_system_utils.processing import polling
-      poller = polling.CentralPoller.PBS()
+    if asynchronous:
+        if poller is None:
+            from libtbx.queuing_system_utils.processing import polling
 
-    submitter = submission.AsynchronousCmdLine.PBS(
-      poller = poller,
-      command = command,
-      )
+            poller = polling.CentralPoller.PBS()
 
-  else:
-    raise RuntimeError("PBS does not support synchronous submission")
+        submitter = submission.AsynchronousCmdLine.PBS(
+            poller=poller,
+            command=command,
+        )
 
-  if input is None:
-    from libtbx.queuing_system_utils.processing import transfer
-    input = transfer.TemporaryFile
+    else:
+        raise RuntimeError("PBS does not support synchronous submission")
 
-  if include is None:
-    include = get_libtbx_env_setpaths()
+    if input is None:
+        from libtbx.queuing_system_utils.processing import transfer
 
-  return QueueHandler(
-    submitter = submitter,
-    input = input,
-    include = include,
-    root = name,
-    save_error = save_error,
-    display_stderr = display_stderr,
+        input = transfer.TemporaryFile
+
+    if include is None:
+        include = get_libtbx_env_setpaths()
+
+    return QueueHandler(
+        submitter=submitter,
+        input=input,
+        include=include,
+        root=name,
+        save_error=save_error,
+        display_stderr=display_stderr,
     )
 
 
 def PBSPro(
-  name = "libtbx_python",
-  command = None,
-  asynchronous = True,
-  input = None,
-  include = None,
-  poller = None,
-  handler = None,
-  save_error = False,
-  display_stderr = True,
-  ):
+    name="libtbx_python",
+    command=None,
+    asynchronous=True,
+    input=None,
+    include=None,
+    poller=None,
+    handler=None,
+    save_error=False,
+    display_stderr=True,
+):
 
-  command = process_command_line( command = command, default = [ "qsub" ] )
+    command = process_command_line(command=command, default=["qsub"])
 
-  from libtbx.queuing_system_utils.processing import submission
+    from libtbx.queuing_system_utils.processing import submission
 
-  if asynchronous:
-    if poller is None:
-      from libtbx.queuing_system_utils.processing import polling
-      poller = polling.CentralPoller.PBSPro()
+    if asynchronous:
+        if poller is None:
+            from libtbx.queuing_system_utils.processing import polling
 
-    submitter = submission.AsynchronousCmdLine.PBSPro(
-      poller = poller,
-      command = command,
-      )
+            poller = polling.CentralPoller.PBSPro()
 
-  else:
-    raise RuntimeError("Synchronous submission for PBSPro is not supported")
+        submitter = submission.AsynchronousCmdLine.PBSPro(
+            poller=poller,
+            command=command,
+        )
 
-  if input is None:
-    from libtbx.queuing_system_utils.processing import transfer
-    input = transfer.TemporaryFile
+    else:
+        raise RuntimeError("Synchronous submission for PBSPro is not supported")
 
-  if include is None:
-    include = get_libtbx_env_setpaths()
+    if input is None:
+        from libtbx.queuing_system_utils.processing import transfer
 
-  return QueueHandler(
-    submitter = submitter,
-    input = input,
-    include = include,
-    root = name,
-    save_error = save_error,
-    display_stderr = display_stderr,
+        input = transfer.TemporaryFile
+
+    if include is None:
+        include = get_libtbx_env_setpaths()
+
+    return QueueHandler(
+        submitter=submitter,
+        input=input,
+        include=include,
+        root=name,
+        save_error=save_error,
+        display_stderr=display_stderr,
     )
 
 
 def Condor(
-  name = "libtbx_python",
-  command = None,
-  asynchronous = True,
-  input = None,
-  include = None,
-  poller = None,
-  handler = None,
-  save_error = False,
-  display_stderr = True,
-  ):
+    name="libtbx_python",
+    command=None,
+    asynchronous=True,
+    input=None,
+    include=None,
+    poller=None,
+    handler=None,
+    save_error=False,
+    display_stderr=True,
+):
 
-  command = process_command_line( command = command, default = [ "condor_submit" ] )
+    command = process_command_line(command=command, default=["condor_submit"])
 
-  from libtbx.queuing_system_utils.processing import submission
+    from libtbx.queuing_system_utils.processing import submission
 
-  if asynchronous:
-    if poller is None:
-      from libtbx.queuing_system_utils.processing import polling
-      poller = polling.CentralPoller.Condor()
+    if asynchronous:
+        if poller is None:
+            from libtbx.queuing_system_utils.processing import polling
 
-    submitter = submission.AsynchronousScript.Condor(
-      poller = poller,
-      command = command,
-      )
+            poller = polling.CentralPoller.Condor()
 
-  else:
-    raise RuntimeError("Condor does not support synchronous submission")
+        submitter = submission.AsynchronousScript.Condor(
+            poller=poller,
+            command=command,
+        )
 
-  if input is None:
-    from libtbx.queuing_system_utils.processing import transfer
-    input = transfer.TemporaryFile
+    else:
+        raise RuntimeError("Condor does not support synchronous submission")
 
-  if include is None:
-    include = get_libtbx_env_setpaths()
+    if input is None:
+        from libtbx.queuing_system_utils.processing import transfer
 
-  return QueueHandler(
-    submitter = submitter,
-    input = input,
-    include = include,
-    root = name,
-    save_error = save_error,
-    display_stderr = display_stderr,
+        input = transfer.TemporaryFile
+
+    if include is None:
+        include = get_libtbx_env_setpaths()
+
+    return QueueHandler(
+        submitter=submitter,
+        input=input,
+        include=include,
+        root=name,
+        save_error=save_error,
+        display_stderr=display_stderr,
     )
 
 
 def Slurm(
-  name = "libtbx_python",
-  command = None,
-  asynchronous = True,
-  input = None,
-  include = None,
-  poller = None,
-  handler = None,
-  save_error = False,
-  display_stderr = True,
-  ):
+    name="libtbx_python",
+    command=None,
+    asynchronous=True,
+    input=None,
+    include=None,
+    poller=None,
+    handler=None,
+    save_error=False,
+    display_stderr=True,
+):
 
-  from libtbx.queuing_system_utils.processing import submission
+    from libtbx.queuing_system_utils.processing import submission
 
-  if asynchronous:
-    command = process_command_line( command = command, default = [ "sbatch" ] )
+    if asynchronous:
+        command = process_command_line(command=command, default=["sbatch"])
 
-    if poller is None:
-      from libtbx.queuing_system_utils.processing import polling
-      poller = polling.CentralPoller.Slurm()
+        if poller is None:
+            from libtbx.queuing_system_utils.processing import polling
 
-    submitter = submission.AsynchronousCmdLine.Slurm(
-      poller = poller,
-      command = command,
-      )
+            poller = polling.CentralPoller.Slurm()
 
-  else:
-    command = process_command_line( command = command, default = [ "srun" ] )
-    submitter = submission.SlurmStream( command = command )
+        submitter = submission.AsynchronousCmdLine.Slurm(
+            poller=poller,
+            command=command,
+        )
 
-  if input is None:
-    from libtbx.queuing_system_utils.processing import transfer
-    input = transfer.TemporaryFile
+    else:
+        command = process_command_line(command=command, default=["srun"])
+        submitter = submission.SlurmStream(command=command)
 
-  if include is None:
-    include = get_libtbx_env_setpaths()
+    if input is None:
+        from libtbx.queuing_system_utils.processing import transfer
 
-  return QueueHandler(
-    submitter = submitter,
-    input = input,
-    include = include,
-    root = name,
-    save_error = save_error,
-    display_stderr = display_stderr,
+        input = transfer.TemporaryFile
+
+    if include is None:
+        include = get_libtbx_env_setpaths()
+
+    return QueueHandler(
+        submitter=submitter,
+        input=input,
+        include=include,
+        root=name,
+        save_error=save_error,
+        display_stderr=display_stderr,
     )
 
 
 def process_command_line(command, default):
 
-  if command is None:
-    return default
+    if command is None:
+        return default
 
-  else:
-    import shlex
-    return shlex.split( command )
+    else:
+        import shlex
+
+        return shlex.split(command)
 
 
 def sge_evaluate(command):
 
-  from libtbx.queuing_system_utils.processing import polling
+    from libtbx.queuing_system_utils.processing import polling
 
-  return polling.SinglePoller(
-    command = process_command_line( command = command, default = [ "qstat", "-j" ] ),
-    evaluate = polling.sge_single_evaluate,
+    return polling.SinglePoller(
+        command=process_command_line(command=command, default=["qstat", "-j"]),
+        evaluate=polling.sge_single_evaluate,
     )
 
 
 def lsf_evaluate(command):
 
-  from libtbx.queuing_system_utils.processing import polling
+    from libtbx.queuing_system_utils.processing import polling
 
-  return polling.SinglePoller(
-    command = process_command_line( command = command, default = [ "bjobs" ] ),
-    evaluate = polling.lsf_single_evaluate,
+    return polling.SinglePoller(
+        command=process_command_line(command=command, default=["bjobs"]),
+        evaluate=polling.lsf_single_evaluate,
     )
 
 
 def pbs_evaluate(command):
 
-  from libtbx.queuing_system_utils.processing import polling
+    from libtbx.queuing_system_utils.processing import polling
 
-  return polling.SinglePoller(
-    command = process_command_line( command = command, default = [ "qstat", "-f" ] ),
-    evaluate = polling.pbs_single_evaluate,
+    return polling.SinglePoller(
+        command=process_command_line(command=command, default=["qstat", "-f"]),
+        evaluate=polling.pbs_single_evaluate,
     )
 
 
 def pbspro_evaluate(command):
 
-  from libtbx.queuing_system_utils.processing import polling
+    from libtbx.queuing_system_utils.processing import polling
 
-  return polling.CentralPoller(
-    command = process_command_line( command = command, default = [ "qstat" ] ),
-    evaluate = polling.pbspro_text_evaluate,
+    return polling.CentralPoller(
+        command=process_command_line(command=command, default=["qstat"]),
+        evaluate=polling.pbspro_text_evaluate,
     )
 
 
 def condor_evaluate(command):
 
-  from libtbx.queuing_system_utils.processing import polling
+    from libtbx.queuing_system_utils.processing import polling
 
-  return polling.CentralPoller(
-    command = process_command_line(
-      command = command,
-      default = [ "condor_q", "-xml" ],
-      ),
-    evaluate = polling.condor_xml_evaluate,
+    return polling.CentralPoller(
+        command=process_command_line(
+            command=command,
+            default=["condor_q", "-xml"],
+        ),
+        evaluate=polling.condor_xml_evaluate,
     )
 
 
 def slurm_evaluate(command):
 
-  from libtbx.queuing_system_utils.processing import polling
+    from libtbx.queuing_system_utils.processing import polling
 
-  return polling.SinglePoller(
-    command = process_command_line(
-      command = command,
-      default = [ "squeue", "-o", "%t", "-h", "-j" ],
-      ),
-    evaluate = polling.slurm_single_evaluate,
+    return polling.SinglePoller(
+        command=process_command_line(
+            command=command,
+            default=["squeue", "-o", "%t", "-h", "-j"],
+        ),
+        evaluate=polling.slurm_single_evaluate,
     )
 
 
 INTERFACE_FOR = {
-  "sge": ( SGE, sge_evaluate ),
-  "lsf": ( LSF, lsf_evaluate ),
-  "pbs": ( PBS, pbs_evaluate ),
-  "pbspro": (PBSPro, pbspro_evaluate ),
-  "condor": ( Condor, condor_evaluate ),
-  "slurm": ( Slurm, slurm_evaluate ),
-  }
+    "sge": (SGE, sge_evaluate),
+    "lsf": (LSF, lsf_evaluate),
+    "pbs": (PBS, pbs_evaluate),
+    "pbspro": (PBSPro, pbspro_evaluate),
+    "condor": (Condor, condor_evaluate),
+    "slurm": (Slurm, slurm_evaluate),
+}
+
 
 def qsub(
-  target,
-  name="libtbx_python",
-  platform="sge",
-  command=None,
-  polling_command=None,
-  ):
+    target,
+    name="libtbx_python",
+    platform="sge",
+    command=None,
+    polling_command=None,
+):
 
-  assert hasattr(target, "__call__")
+    assert hasattr(target, "__call__")
 
-  if platform not in INTERFACE_FOR:
-    raise RuntimeError("Unknown platform: %s" % platform)
+    if platform not in INTERFACE_FOR:
+        raise RuntimeError("Unknown platform: %s" % platform)
 
-  ( factory, poller_factory ) = INTERFACE_FOR[ platform ]
+    (factory, poller_factory) = INTERFACE_FOR[platform]
 
-  qinterface = factory(
-      name = name,
-      command = command,
-      poller = poller_factory( command = polling_command ),
-      asynchronous = True,
-      )
+    qinterface = factory(
+        name=name,
+        command=command,
+        poller=poller_factory(command=polling_command),
+        asynchronous=True,
+    )
 
-  return qinterface.Job( target = target )
+    return qinterface.Job(target=target)
 
 
 class JobFactory(object):
-  """
-  Creator for Queue.Job objects
-  """
+    """
+    Creator for Queue.Job objects
+    """
 
-  def __init__(self,
-    platform,
-    name = None,
-    command = None,
-    asynchronous = True,
-    use_target_file = True,
-    preserve_exception_message = True,
-    **kwargs
+    def __init__(
+        self,
+        platform,
+        name=None,
+        command=None,
+        asynchronous=True,
+        use_target_file=True,
+        preserve_exception_message=True,
+        **kwargs
     ):
 
-    from libtbx.queuing_system_utils.processing import transfer
-    self.qinterface = INTERFACE_FOR[ platform ][0](
-      name = "libtbx_python" if name is None else name,
-      command = command,
-      asynchronous = asynchronous,
-      input = transfer.TemporaryFile if use_target_file else transfer.Stdin,
-      save_error = preserve_exception_message,
-      display_stderr = False,
-      )
+        from libtbx.queuing_system_utils.processing import transfer
 
+        self.qinterface = INTERFACE_FOR[platform][0](
+            name="libtbx_python" if name is None else name,
+            command=command,
+            asynchronous=asynchronous,
+            input=transfer.TemporaryFile if use_target_file else transfer.Stdin,
+            save_error=preserve_exception_message,
+            display_stderr=False,
+        )
 
-  def __call__(self, target, args = (), kwargs = {}):
+    def __call__(self, target, args=(), kwargs={}):
 
-    return self.qinterface.Job( target = target, args = args, kwargs = kwargs)
+        return self.qinterface.Job(target=target, args=args, kwargs=kwargs)

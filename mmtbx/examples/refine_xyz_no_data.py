@@ -18,74 +18,81 @@ import scitbx.lbfgs
 from libtbx import adopt_init_args
 import math
 
-if (1): # fixed random seed
-  random.seed(1)
-  flex.set_random_seed(1)
+if 1:  # fixed random seed
+    random.seed(1)
+    flex.set_random_seed(1)
+
 
 class lbfgs(object):
+    def __init__(
+        self,
+        xray_structure,
+        geometry_restraints,
+        states,
+        max_iterations=100,
+        min_iterations=0,
+        verbose=0,
+        correct_special_position_tolerance=1.0,
+    ):
+        adopt_init_args(self, locals())
+        self.f = None
+        self.correct_special_position_tolerance = correct_special_position_tolerance
+        self.x = flex.double(self.xray_structure.n_parameters(), 0)
+        self._scatterers_start = self.xray_structure.scatterers()
+        lbfgs_termination_params = scitbx.lbfgs.termination_parameters(
+            max_iterations=max_iterations, min_iterations=min_iterations
+        )
+        self.minimizer = scitbx.lbfgs.run(
+            target_evaluator=self,
+            termination_params=lbfgs_termination_params,
+            exception_handling_params=scitbx.lbfgs.exception_handling_parameters(
+                ignore_line_search_failed_step_at_lower_bound=True
+            ),
+        )
+        self.apply_shifts()
+        del self._scatterers_start
+        self.compute_target(compute_gradients=False)
 
-  def __init__(self,
-               xray_structure,
-               geometry_restraints,
-               states,
-               max_iterations = 100,
-               min_iterations = 0,
-               verbose = 0,
-               correct_special_position_tolerance = 1.0):
-    adopt_init_args(self, locals())
-    self.f=None
-    self.correct_special_position_tolerance = correct_special_position_tolerance
-    self.x = flex.double(self.xray_structure.n_parameters(), 0)
-    self._scatterers_start = self.xray_structure.scatterers()
-    lbfgs_termination_params=scitbx.lbfgs.termination_parameters(
-      max_iterations = max_iterations,
-      min_iterations = min_iterations)
-    self.minimizer = scitbx.lbfgs.run(
-      target_evaluator          = self,
-      termination_params        = lbfgs_termination_params,
-      exception_handling_params = scitbx.lbfgs.exception_handling_parameters(
-        ignore_line_search_failed_step_at_lower_bound = True))
-    self.apply_shifts()
-    del self._scatterers_start
-    self.compute_target(compute_gradients = False)
+    def apply_shifts(self):
+        apply_shifts_result = xray.ext.minimization_apply_shifts(
+            unit_cell=self.xray_structure.unit_cell(),
+            scatterers=self._scatterers_start,
+            shifts=self.x,
+        )
+        scatterers_shifted = apply_shifts_result.shifted_scatterers
+        site_symmetry_table = self.xray_structure.site_symmetry_table()
+        for i_seq in site_symmetry_table.special_position_indices():
+            scatterers_shifted[i_seq].site = crystal.correct_special_position(
+                crystal_symmetry=self.xray_structure,
+                special_op=site_symmetry_table.get(i_seq).special_op(),
+                site_frac=scatterers_shifted[i_seq].site,
+                site_label=scatterers_shifted[i_seq].label,
+                tolerance=self.correct_special_position_tolerance,
+            )
+        self.xray_structure.replace_scatterers(scatterers=scatterers_shifted)
+        self.states.add(sites_cart=self.xray_structure.sites_cart())
 
-  def apply_shifts(self):
-    apply_shifts_result = xray.ext.minimization_apply_shifts(
-      unit_cell      = self.xray_structure.unit_cell(),
-      scatterers     = self._scatterers_start,
-      shifts         = self.x)
-    scatterers_shifted = apply_shifts_result.shifted_scatterers
-    site_symmetry_table = self.xray_structure.site_symmetry_table()
-    for i_seq in site_symmetry_table.special_position_indices():
-      scatterers_shifted[i_seq].site = crystal.correct_special_position(
-        crystal_symmetry = self.xray_structure,
-        special_op       = site_symmetry_table.get(i_seq).special_op(),
-        site_frac        = scatterers_shifted[i_seq].site,
-        site_label       = scatterers_shifted[i_seq].label,
-        tolerance        = self.correct_special_position_tolerance)
-    self.xray_structure.replace_scatterers(scatterers = scatterers_shifted)
-    self.states.add(sites_cart = self.xray_structure.sites_cart())
+    def compute_target(self, compute_gradients):
+        target_and_grads = self.geometry_restraints.energies_sites(
+            sites_cart=self.xray_structure.sites_cart(), compute_gradients=True
+        )
+        self.f = target_and_grads.target
+        if compute_gradients:
+            self.g = target_and_grads.gradients.as_double()
 
-  def compute_target(self, compute_gradients):
-    target_and_grads = self.geometry_restraints.energies_sites(
-      sites_cart = self.xray_structure.sites_cart(),
-      compute_gradients = True)
-    self.f = target_and_grads.target
-    if(compute_gradients):
-      self.g = target_and_grads.gradients.as_double()
+    def callback_after_step(self, minimizer):
+        if self.verbose > 0:
+            print("refinement.minimization step: f,iter,nfun:", end=" ")
+            print(self.f, minimizer.iter(), minimizer.nfun())
 
-  def callback_after_step(self, minimizer):
-    if(self.verbose > 0):
-      print("refinement.minimization step: f,iter,nfun:", end=' ')
-      print(self.f,minimizer.iter(),minimizer.nfun())
+    def compute_functional_and_gradients(self):
+        self.apply_shifts()
+        self.compute_target(compute_gradients=True)
+        if self.verbose > 1:
+            print("xray.minimization line search: f,rms(g):", end=" ")
+            print(self.f, math.sqrt(flex.mean_sq(self.g)))
+        return self.f, self.g
 
-  def compute_functional_and_gradients(self):
-    self.apply_shifts()
-    self.compute_target(compute_gradients = True)
-    if(self.verbose > 1):
-      print("xray.minimization line search: f,rms(g):", end=' ')
-      print(self.f, math.sqrt(flex.mean_sq(self.g)))
-    return self.f, self.g
 
 pdb_str = """
 CRYST1   16.660   13.261   16.215  90.00  90.00  90.00 P 1
@@ -113,53 +120,60 @@ TER
 END
 """
 
-def run():
-  # Read and process PDB file
-  mon_lib_srv = monomer_library.server.server()
-  ener_lib = monomer_library.server.ener_lib()
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv    = mon_lib_srv,
-    ener_lib       = ener_lib,
-    file_name      = None,
-    raw_records    = pdb_str,
-    force_symmetry = True)
-  pdb_hierarchy = processed_pdb_file.all_chain_proxies.pdb_hierarchy
-  xray_structure = processed_pdb_file.xray_structure()
-  #
-  xrs_dc = xray_structure.deep_copy_scatterers()
-  pdb_hierarchy.write_pdb_file(
-    file_name        = "start.pdb",
-    crystal_symmetry = xray_structure.crystal_symmetry())
-  # Create grm
-  geometry_restraints = processed_pdb_file.geometry_restraints_manager(
-    show_energies = False)
-  states = mmtbx.utils.states(
-    xray_structure = xray_structure,
-    pdb_hierarchy  = pdb_hierarchy)
-  states.add(sites_cart = xray_structure.sites_cart())
-  # shake coordinates
-  xray_structure.shake_sites_in_place(rms_difference=5.0)
-  pdb_hierarchy.adopt_xray_structure(xray_structure)
-  pdb_hierarchy.write_pdb_file(
-    file_name        = "distorted.pdb",
-    crystal_symmetry = xray_structure.crystal_symmetry())
-  states.add(sites_cart = xray_structure.sites_cart())
-  #
-  xray_structure.scatterers().flags_set_grads(state=False)
-  xray_structure.scatterers().flags_set_grad_site(
-    iselection = xray_structure.all_selection().iselection())
-  minimized = lbfgs(
-    xray_structure      = xray_structure,
-    states              = states,
-    geometry_restraints = geometry_restraints,
-    verbose             = 0)
-  minimized.states.write(
-    file_name        = "minimized_all_states.pdb",
-    crystal_symmetry = xray_structure.crystal_symmetry())
-  pdb_hierarchy.adopt_xray_structure(minimized.xray_structure)
-  pdb_hierarchy.write_pdb_file(
-    file_name        = "minimized.pdb",
-    crystal_symmetry = xray_structure.crystal_symmetry())
 
-if (__name__ == "__main__"):
-  run()
+def run():
+    # Read and process PDB file
+    mon_lib_srv = monomer_library.server.server()
+    ener_lib = monomer_library.server.ener_lib()
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        file_name=None,
+        raw_records=pdb_str,
+        force_symmetry=True,
+    )
+    pdb_hierarchy = processed_pdb_file.all_chain_proxies.pdb_hierarchy
+    xray_structure = processed_pdb_file.xray_structure()
+    #
+    xrs_dc = xray_structure.deep_copy_scatterers()
+    pdb_hierarchy.write_pdb_file(
+        file_name="start.pdb", crystal_symmetry=xray_structure.crystal_symmetry()
+    )
+    # Create grm
+    geometry_restraints = processed_pdb_file.geometry_restraints_manager(
+        show_energies=False
+    )
+    states = mmtbx.utils.states(
+        xray_structure=xray_structure, pdb_hierarchy=pdb_hierarchy
+    )
+    states.add(sites_cart=xray_structure.sites_cart())
+    # shake coordinates
+    xray_structure.shake_sites_in_place(rms_difference=5.0)
+    pdb_hierarchy.adopt_xray_structure(xray_structure)
+    pdb_hierarchy.write_pdb_file(
+        file_name="distorted.pdb", crystal_symmetry=xray_structure.crystal_symmetry()
+    )
+    states.add(sites_cart=xray_structure.sites_cart())
+    #
+    xray_structure.scatterers().flags_set_grads(state=False)
+    xray_structure.scatterers().flags_set_grad_site(
+        iselection=xray_structure.all_selection().iselection()
+    )
+    minimized = lbfgs(
+        xray_structure=xray_structure,
+        states=states,
+        geometry_restraints=geometry_restraints,
+        verbose=0,
+    )
+    minimized.states.write(
+        file_name="minimized_all_states.pdb",
+        crystal_symmetry=xray_structure.crystal_symmetry(),
+    )
+    pdb_hierarchy.adopt_xray_structure(minimized.xray_structure)
+    pdb_hierarchy.write_pdb_file(
+        file_name="minimized.pdb", crystal_symmetry=xray_structure.crystal_symmetry()
+    )
+
+
+if __name__ == "__main__":
+    run()

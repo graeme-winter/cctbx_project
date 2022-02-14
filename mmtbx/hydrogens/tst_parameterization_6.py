@@ -5,51 +5,53 @@ import iotbx.pdb
 from libtbx.utils import null_out
 from six.moves import zip
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # This test checks the parameterization of H/D atoms in models containing
 # both H and D atoms
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def exercise(pdb_str):
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.use_neutron_distances = True
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.use_neutron_distances = True
 
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=True)
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
 
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  atoms = pdb_hierarchy.atoms()
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    atoms = pdb_hierarchy.atoms()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  h_parameterization = riding_h_manager.h_parameterization
+    h_parameterization = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart         = sites_cart,
-    threshold          = 0.05)
-  h_distances        = diagnostics.h_distances
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
+    h_distances = diagnostics.h_distances
 
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_parameterization) - h_parameterization.count(None)
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_parameterization) - h_parameterization.count(None)
 
-  if (pdb_str != pdb_str_02):
-    assert (number_h_para == number_h), 'Not all H atoms are parameterized'
+    if pdb_str != pdb_str_02:
+        assert number_h_para == number_h, "Not all H atoms are parameterized"
 
-# For each H atom, check if distance between computed H and that in input model is
-# not too large
-  for ih in h_distances:
-    labels = atoms[ih].fetch_labels()
-    assert (h_distances[ih] < 0.1), \
-      'distance too large: %s  atom: %s (%s) residue: %s ' \
-      % (h_parameterization[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
+    # For each H atom, check if distance between computed H and that in input model is
+    # not too large
+    for ih in h_distances:
+        labels = atoms[ih].fetch_labels()
+        assert (
+            h_distances[ih] < 0.1
+        ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+            h_parameterization[ih].htype,
+            atoms[ih].name,
+            ih,
+            labels.resseq.strip(),
+        )
 
-  #for type1, type2 in zip(type_list, type_list_known):
-  #  assert (type1 == type2)
+    # for type1, type2 in zip(type_list, type_list_known):
+    #  assert (type1 == type2)
 
 
 pdb_str_00 = """\
@@ -167,9 +169,9 @@ ATOM    550  C  CGLU A  31       7.488  40.540   5.574  0.71 20.61           C
 
 pdb_list = [pdb_str_00, pdb_str_01, pdb_str_02]
 
-pdb_list_name = ['pdb_str_00', 'pdb_str_01', 'pdb_str_02']
+pdb_list_name = ["pdb_str_00", "pdb_str_01", "pdb_str_02"]
 
-#type_list_known = ['2tetra', '2tetra', 'alg1b', '3neigbs', '3neigbs',
+# type_list_known = ['2tetra', '2tetra', 'alg1b', '3neigbs', '3neigbs',
 #  '3neigbs', 'alg1b', '2tetra', '2tetra', '2tetra', '2tetra', 'alg1b',
 #  '3neigbs', '2tetra', '2tetra', '3neigbs', '2tetra', '2tetra',
 #  'flat_2neigbs', 'alg1b', '3neigbs', '2tetra', '2tetra', 'alg1b',
@@ -178,12 +180,13 @@ pdb_list_name = ['pdb_str_00', 'pdb_str_01', 'pdb_str_02']
 #  'prop', 'prop', 'prop', 'prop', 'prop', '3neigbs', '2tetra', '2tetra',
 #  'alg1b', '2tetra', '2tetra', 'alg1b', 'flat_2neigbs']
 
+
 def run():
-  for pdb_str, str_name in zip(pdb_list,pdb_list_name):
-    exercise(pdb_str=pdb_str)
+    for pdb_str, str_name in zip(pdb_list, pdb_list_name):
+        exercise(pdb_str=pdb_str)
 
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time: %8.3f" % (time.time() - t0))

@@ -8,64 +8,67 @@ from libtbx.test_utils import approx_equal
 from six.moves import zip
 from six.moves import range
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # This finite difference test checks transformation of riding H gradients
 # for nucleic acids
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def exercise(pdb_str, eps, idealize):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
 
-  model = mmtbx.model.manager(
-            model_input = pdb_inp,
-            log         = null_out())
-  model.process(make_restraints=True)
-  geometry_restraints = model.restraints_manager.geometry
-  xray_structure = model.get_xray_structure()
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    geometry_restraints = model.restraints_manager.geometry
+    xray_structure = model.get_xray_structure()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  riding_h_manager.idealize_riding_h_positions(xray_structure=xray_structure)
-  sites_cart = xray_structure.sites_cart()
+    riding_h_manager.idealize_riding_h_positions(xray_structure=xray_structure)
+    sites_cart = xray_structure.sites_cart()
 
-  g_analytical = geometry_restraints.energies_sites(
-    sites_cart = sites_cart, compute_gradients = True).gradients
-  hd_selection = xray_structure.hd_selection()
+    g_analytical = geometry_restraints.energies_sites(
+        sites_cart=sites_cart, compute_gradients=True
+    ).gradients
+    hd_selection = xray_structure.hd_selection()
 
-  g_analytical_reduced = riding_h_manager.gradients_reduced_cpp(
-    gradients    = g_analytical,
-    sites_cart   = sites_cart,
-    hd_selection = hd_selection)
-  #
-  ex = [eps,0,0]
-  ey = [0,eps,0]
-  ez = [0,0,eps]
-  g_fd = flex.vec3_double()
-  for i_site in range(sites_cart.size()):
-    g_fd_i = []
-    for e in [ex,ey,ez]:
-      ts = []
-      for sign in [-1,1]:
-        sites_cart_ = sites_cart.deep_copy()
-        xray_structure_ = xray_structure.deep_copy_scatterers()
-        sites_cart_[i_site] = [
-          sites_cart_[i_site][j]+e[j]*sign for j in range(3)]
-        xray_structure_.set_sites_cart(sites_cart_)
-        # after shift, recalculate H position
-        riding_h_manager.idealize_riding_h_positions(
-          xray_structure=xray_structure_)
-        sites_cart_ = xray_structure_.sites_cart()
-        ts.append(geometry_restraints.energies_sites(
-          sites_cart = sites_cart_,
-          compute_gradients = False).target)
-      g_fd_i.append((ts[1]-ts[0])/(2*eps))
-    g_fd.append(g_fd_i)
+    g_analytical_reduced = riding_h_manager.gradients_reduced_cpp(
+        gradients=g_analytical, sites_cart=sites_cart, hd_selection=hd_selection
+    )
+    #
+    ex = [eps, 0, 0]
+    ey = [0, eps, 0]
+    ez = [0, 0, eps]
+    g_fd = flex.vec3_double()
+    for i_site in range(sites_cart.size()):
+        g_fd_i = []
+        for e in [ex, ey, ez]:
+            ts = []
+            for sign in [-1, 1]:
+                sites_cart_ = sites_cart.deep_copy()
+                xray_structure_ = xray_structure.deep_copy_scatterers()
+                sites_cart_[i_site] = [
+                    sites_cart_[i_site][j] + e[j] * sign for j in range(3)
+                ]
+                xray_structure_.set_sites_cart(sites_cart_)
+                # after shift, recalculate H position
+                riding_h_manager.idealize_riding_h_positions(
+                    xray_structure=xray_structure_
+                )
+                sites_cart_ = xray_structure_.sites_cart()
+                ts.append(
+                    geometry_restraints.energies_sites(
+                        sites_cart=sites_cart_, compute_gradients=False
+                    ).target
+                )
+            g_fd_i.append((ts[1] - ts[0]) / (2 * eps))
+        g_fd.append(g_fd_i)
 
-  g_fd_reduced = g_fd.select(~hd_selection)
+    g_fd_reduced = g_fd.select(~hd_selection)
 
-  for g1, g2 in zip(g_analytical_reduced, g_fd_reduced):
-    assert approx_equal(g1,g2, 1.e-4)
+    for g1, g2 in zip(g_analytical_reduced, g_fd_reduced):
+        assert approx_equal(g1, g2, 1.0e-4)
 
 
 # DNA and RNA nucleic acids
@@ -336,11 +339,13 @@ TER
 END
 """
 
-def run():
-  for idealize in [True,False]:
-    exercise(pdb_str=pdb_str, eps=1.e-4, idealize=idealize)
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time:", round(time.time()-t0, 2), "seconds")
+def run():
+    for idealize in [True, False]:
+        exercise(pdb_str=pdb_str, eps=1.0e-4, idealize=idealize)
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time:", round(time.time() - t0, 2), "seconds")

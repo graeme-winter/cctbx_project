@@ -229,30 +229,35 @@ ATOM   2466  CG1 VAL A 336     173.083 107.857  61.137  1.00208.89           C
 ATOM   2467  CG2 VAL A 336     171.737 107.334  63.172  1.00161.96           C
 """
 
+
 def exercise_no_sidechains(prefix="tst_single_outliers_sur_no_sidechains"):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split('\n'), source_info=None)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  s = model.selection("name N or name CA or name C or name O")
-  model = model.select(s)
-  with open("%s_start.pdb" % prefix, 'w') as f:
-    f.write(model.model_as_pdb())
-  ci = cablam_idealization(model = model, params=master_phil.extract().cablam_idealization, log=sys.stdout)
-  with open("%s_end.pdb" % prefix, 'w') as f:
-    f.write(model.model_as_pdb())
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    s = model.selection("name N or name CA or name C or name O")
+    model = model.select(s)
+    with open("%s_start.pdb" % prefix, "w") as f:
+        f.write(model.model_as_pdb())
+    ci = cablam_idealization(
+        model=model, params=master_phil.extract().cablam_idealization, log=sys.stdout
+    )
+    with open("%s_end.pdb" % prefix, "w") as f:
+        f.write(model.model_as_pdb())
+
 
 def exercise_yes_sidechains(prefix="tst_single_outliers_sur_yes_sidechains"):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split('\n'), source_info=None)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  with open("%s_start.pdb" % prefix, 'w') as f:
-    f.write(model.model_as_pdb())
-  ci = cablam_idealization(model = model, params=master_phil.extract().cablam_idealization, log=sys.stdout)
-  pdb_txt = model.model_as_pdb()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    with open("%s_start.pdb" % prefix, "w") as f:
+        f.write(model.model_as_pdb())
+    ci = cablam_idealization(
+        model=model, params=master_phil.extract().cablam_idealization, log=sys.stdout
+    )
+    pdb_txt = model.model_as_pdb()
 
-if __name__ == '__main__':
-  if (not libtbx.env.has_module(name="probe")):
-    print("Skipping: probe not configured")
-  else:
-    exercise_no_sidechains()
-    exercise_yes_sidechains()
+
+if __name__ == "__main__":
+    if not libtbx.env.has_module(name="probe"):
+        print("Skipping: probe not configured")
+    else:
+        exercise_no_sidechains()
+        exercise_yes_sidechains()

@@ -138,57 +138,163 @@ HETATM 8102  O   HOH   502      50.327  -5.724 -17.983  1.00 53.54           O
 END
 """
 
+
 def exercise_atom_selections():
-  verbose = "--verbose" in sys.argv[1:]
-  log = None
-  if (verbose):
-    log = sys.stdout
-  open("tmp_selection.pdb", "w").write(test_pdb_file)
-  try:
-    mon_lib_srv = monomer_library.server.server()
-  except monomer_library.server.MonomerLibraryServerError:
-    print("Skipping exercise_atom_selections(): monomer library not available.")
-    return
-  ener_lib = monomer_library.server.ener_lib()
-  processed_pdb = monomer_library.pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    file_name="tmp_selection.pdb",
-    log=log)
-  isel = processed_pdb.all_chain_proxies.iselection
-  assert list(isel("peptide")) == list(range(52)) + list(range(114,122))
-  assert list(isel("rna")) == list(range(52,95))
-  assert list(isel("dna")) == list(range(95,114))
-  assert list(isel("nucleotide")) == list(range(52,114))
-  assert list(isel("water")) == [124,125]
-  assert list(isel("peptide backbone")) \
-      == list(isel("peptide and (name ca or name c or name o or name n)"))
-  assert list(isel("nucleotide backbone")) \
-      == [52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
-          72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,
-          95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105]
-  assert list(isel("backbone and (rna or dna)")) \
-      == list(isel("nucleotide backbone"))
-  assert list(isel("phosphate")) \
-      == [52, 53, 54, 55, 60, 72, 73, 74, 75, 80, 95, 96, 97, 98, 103]
-  assert list(isel("ribose")) \
-      == [56, 57, 58, 59, 61, 62, 63,
-          76, 77, 78, 79, 81, 82, 83,
-          99, 100, 101, 102, 104, 105]
-  assert list(isel("phosphate or ribose")) == list(isel("nuc backbone"))
-  assert list(isel("backbone resname glu")) \
-      == [6, 7, 8, 9, 43, 44, 45, 46]
-  assert list(isel("within(0.5, backbone resname glu)")) \
-      == [6, 7, 8, 9, 43, 44, 45, 46]
-  assert list(isel("within(1.5, backbone resname glu)")) \
-      == [2, 6, 7, 8, 9, 15, 39, 43, 44, 45, 46]
-  assert list(isel("within(2.5, backbone resname glu)")) \
-      == [1, 2, 3, 6, 7, 8, 9, 10, 15, 16, 38, 39, 40, 43, 44, 45, 46, 47]
-  assert list(isel("resname ser sidechain")) == [4, 5, 19, 20, 41, 42]
+    verbose = "--verbose" in sys.argv[1:]
+    log = None
+    if verbose:
+        log = sys.stdout
+    open("tmp_selection.pdb", "w").write(test_pdb_file)
+    try:
+        mon_lib_srv = monomer_library.server.server()
+    except monomer_library.server.MonomerLibraryServerError:
+        print("Skipping exercise_atom_selections(): monomer library not available.")
+        return
+    ener_lib = monomer_library.server.ener_lib()
+    processed_pdb = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        file_name="tmp_selection.pdb",
+        log=log,
+    )
+    isel = processed_pdb.all_chain_proxies.iselection
+    assert list(isel("peptide")) == list(range(52)) + list(range(114, 122))
+    assert list(isel("rna")) == list(range(52, 95))
+    assert list(isel("dna")) == list(range(95, 114))
+    assert list(isel("nucleotide")) == list(range(52, 114))
+    assert list(isel("water")) == [124, 125]
+    assert list(isel("peptide backbone")) == list(
+        isel("peptide and (name ca or name c or name o or name n)")
+    )
+    assert list(isel("nucleotide backbone")) == [
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+    ]
+    assert list(isel("backbone and (rna or dna)")) == list(isel("nucleotide backbone"))
+    assert list(isel("phosphate")) == [
+        52,
+        53,
+        54,
+        55,
+        60,
+        72,
+        73,
+        74,
+        75,
+        80,
+        95,
+        96,
+        97,
+        98,
+        103,
+    ]
+    assert list(isel("ribose")) == [
+        56,
+        57,
+        58,
+        59,
+        61,
+        62,
+        63,
+        76,
+        77,
+        78,
+        79,
+        81,
+        82,
+        83,
+        99,
+        100,
+        101,
+        102,
+        104,
+        105,
+    ]
+    assert list(isel("phosphate or ribose")) == list(isel("nuc backbone"))
+    assert list(isel("backbone resname glu")) == [6, 7, 8, 9, 43, 44, 45, 46]
+    assert list(isel("within(0.5, backbone resname glu)")) == [
+        6,
+        7,
+        8,
+        9,
+        43,
+        44,
+        45,
+        46,
+    ]
+    assert list(isel("within(1.5, backbone resname glu)")) == [
+        2,
+        6,
+        7,
+        8,
+        9,
+        15,
+        39,
+        43,
+        44,
+        45,
+        46,
+    ]
+    assert list(isel("within(2.5, backbone resname glu)")) == [
+        1,
+        2,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10,
+        15,
+        16,
+        38,
+        39,
+        40,
+        43,
+        44,
+        45,
+        46,
+        47,
+    ]
+    assert list(isel("resname ser sidechain")) == [4, 5, 19, 20, 41, 42]
+
 
 def exercise():
-  exercise_atom_selections()
-  print("OK")
+    exercise_atom_selections()
+    print("OK")
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

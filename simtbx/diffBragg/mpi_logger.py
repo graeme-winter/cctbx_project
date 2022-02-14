@@ -2,8 +2,10 @@ from __future__ import division, print_function
 import os
 import logging
 import socket
+
 HOST = socket.gethostname()
 from libtbx.mpi4py import MPI
+
 COMM = MPI.COMM_WORLD
 if not hasattr(COMM, "rank"):
     COMM.rank = 0
@@ -12,21 +14,30 @@ if not hasattr(COMM, "rank"):
 # gather all hostnames and create sub-communicators for all processes on a given host
 unique_hosts = COMM.gather(HOST)
 HOST_MAP = None
-if COMM.rank==0:
-    HOST_MAP = {HOST:i for i,HOST in enumerate(set(unique_hosts))}
+if COMM.rank == 0:
+    HOST_MAP = {HOST: i for i, HOST in enumerate(set(unique_hosts))}
 HOST_MAP = COMM.bcast(HOST_MAP)
 HOST_COMM = COMM.Split(color=HOST_MAP[HOST])
 
 
 LEVELS = {"low": logging.WARNING, "normal": logging.INFO, "high": logging.DEBUG}
-DETAILED_FORMAT = 'RANK%d:%s | ' % (COMM.rank, HOST) + '%(asctime)s | %(filename)s:%(funcName)s >>  %(message)s'
+DETAILED_FORMAT = (
+    "RANK%d:%s | " % (COMM.rank, HOST)
+    + "%(asctime)s | %(filename)s:%(funcName)s >>  %(message)s"
+)
 SIMPLE_FORMAT = "%(message)s"
 
 from simtbx.diffBragg import utils
 
 
-def _make_logger(loggername, filename=None, formatter=None, level=None, overwrite=False,
-                propagate=False):
+def _make_logger(
+    loggername,
+    filename=None,
+    formatter=None,
+    level=None,
+    overwrite=False,
+    propagate=False,
+):
     """
     :param loggername: name for logger used throughout application
     :param filename: if logging to a file, this should be set
@@ -61,17 +72,21 @@ def setup_logging_from_params(params):
             utils.safe_makedirs(params.outdir)
         COMM.barrier()
         main_level = LEVELS[params.logging.logfiles_level]
-        main_logger = _make_logger("diffBragg.main",
-                                  os.path.join(params.outdir, HOST+"-"+params.logging.logname),
-                                  level=main_level,
-                                  overwrite=params.logging.overwrite,
-                                  formatter=logging.Formatter(DETAILED_FORMAT))
+        main_logger = _make_logger(
+            "diffBragg.main",
+            os.path.join(params.outdir, HOST + "-" + params.logging.logname),
+            level=main_level,
+            overwrite=params.logging.overwrite,
+            formatter=logging.Formatter(DETAILED_FORMAT),
+        )
 
-        _make_logger("diffBragg.profile",
-                    os.path.join(params.outdir, HOST+"-"+params.profile_name),
-                    level=logging.INFO,
-                    overwrite=params.logging.overwrite,
-                    formatter=logging.Formatter(SIMPLE_FORMAT))
+        _make_logger(
+            "diffBragg.profile",
+            os.path.join(params.outdir, HOST + "-" + params.profile_name),
+            level=logging.INFO,
+            overwrite=params.logging.overwrite,
+            formatter=logging.Formatter(SIMPLE_FORMAT),
+        )
 
         # for convenience we add a console logger for rank0 so we can optionally see output
         # even when logging to files
@@ -86,8 +101,12 @@ def setup_logging_from_params(params):
             level = LEVELS[params.logging.rank0_level]
         else:
             level = LEVELS[params.logging.other_ranks_level]
-        _make_logger("diffBragg.main", level=level, formatter=logging.Formatter(SIMPLE_FORMAT))
-        _make_logger("diffBragg.profile", level=level, formatter=logging.Formatter(SIMPLE_FORMAT))
+        _make_logger(
+            "diffBragg.main", level=level, formatter=logging.Formatter(SIMPLE_FORMAT)
+        )
+        _make_logger(
+            "diffBragg.profile", level=level, formatter=logging.Formatter(SIMPLE_FORMAT)
+        )
 
 
 class MPIIOStream(object):
@@ -117,8 +136,9 @@ class MPIIOStream(object):
 class MPIFileHandler(logging.StreamHandler):
     # The class is from https://gist.github.com/sixy6e/ed35ea88ba0627e0f7dfdf115a3bf4d1
 
-    def __init__(self, filename,
-                 mode=MPI.MODE_WRONLY|MPI.MODE_CREATE, comm=MPI.COMM_WORLD):
+    def __init__(
+        self, filename, mode=MPI.MODE_WRONLY | MPI.MODE_CREATE, comm=MPI.COMM_WORLD
+    ):
         self.filename = filename
         self.mode = mode
         self.comm = comm
@@ -144,7 +164,7 @@ class MPIFileHandler(logging.StreamHandler):
         conjoined log message.
         """
         msg = self.format(record)
-        self.stream.write('{}{}'.format(msg, self.terminator))
+        self.stream.write("{}{}".format(msg, self.terminator))
         self.flush()
 
 
@@ -153,22 +173,24 @@ def main():
     A sample test run from https://gist.github.com/sixy6e/ed35ea88ba0627e0f7dfdf115a3bf4d1
     """
     comm = MPI.COMM_WORLD
-    logger = logging.getLogger("node[%i]"%comm.rank)
+    logger = logging.getLogger("node[%i]" % comm.rank)
     # logger = logging.getLogger("func-status") # another name example
 
     logger.setLevel(logging.DEBUG)
 
     mpi_handler = MPIFileHandler("test.log")
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     mpi_handler.setFormatter(formatter)
     logger.addHandler(mpi_handler)
 
     # sample log levels
-    logger.debug('debug message')
-    logger.info('info message')
-    logger.warning('warn message')
-    logger.error('error message')
-    logger.critical('critical message')
+    logger.debug("debug message")
+    logger.info("info message")
+    logger.warning("warn message")
+    logger.error("error message")
+    logger.critical("critical message")
 
 
 if __name__ == "__main__":

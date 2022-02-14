@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 # -*- Mode: Python; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 8 -*-
 #
 # LIBTBX_SET_DISPATCHER_NAME cxi.find_highres_shots
@@ -24,7 +25,7 @@ we find the 10 images whose strong reflections diffract to the highest resolutio
 command prints out a cctbx.image_viewer command you can directly run to see these images.
 """
 
-phil_str = '''
+phil_str = """
   data = None
     .type = str
     .multiple = True
@@ -44,123 +45,149 @@ phil_str = '''
   max_to_examine = None
     .type = int
     .help = Only examine this many images
-'''
+"""
 
 phil_scope = parse(phil_str)
 
+
 class Script(object):
-  """ Script to find good images """
-  def __init__(self):
-    """ Set up the option parser. Arguments come from the command line or a phil file """
-    self.usage = "%s data=path"%(libtbx.env.dispatcher_name)
-    self.parser = OptionParser(
-      usage = self.usage,
-      phil = phil_scope,
-      epilog = help_message)
+    """Script to find good images"""
 
-  def run(self):
-    """ Find the high res images """
+    def __init__(self):
+        """Set up the option parser. Arguments come from the command line or a phil file"""
+        self.usage = "%s data=path" % (libtbx.env.dispatcher_name)
+        self.parser = OptionParser(
+            usage=self.usage, phil=phil_scope, epilog=help_message
+        )
 
-    params, options = self.parser.parse_args(
-      show_diff_phil=True)
+    def run(self):
+        """Find the high res images"""
 
-    assert params.max_images is not None
-    assert params.min_IsigI is not None
+        params, options = self.parser.parse_args(show_diff_phil=True)
 
-    final_data = {}
-    worst_resolution = None
-    worst_image = None
-    n_tested = 0
+        assert params.max_images is not None
+        assert params.min_IsigI is not None
 
-    all_paths = []
-    for item in params.data:
-      all_paths.extend(glob.glob(item))
+        final_data = {}
+        worst_resolution = None
+        worst_image = None
+        n_tested = 0
 
-    # loop through the integration pickles
-    for path in all_paths:
-      for filename in os.listdir(path):
-        if not os.path.splitext(filename)[1] == ".pickle":
-          continue
+        all_paths = []
+        for item in params.data:
+            all_paths.extend(glob.glob(item))
 
-        filepath = os.path.join(path, filename)
-        try:
-          data = easy_pickle.load(filepath)
-        except Exception as e:
-          print("Couldn't read", filepath)
-          continue
+        # loop through the integration pickles
+        for path in all_paths:
+            for filename in os.listdir(path):
+                if not os.path.splitext(filename)[1] == ".pickle":
+                    continue
 
-        if not 'observations' in data:
-          print("Not an integration pickle", filepath)
-          continue
+                filepath = os.path.join(path, filename)
+                try:
+                    data = easy_pickle.load(filepath)
+                except Exception as e:
+                    print("Couldn't read", filepath)
+                    continue
 
-        n_tested += 1
+                if not "observations" in data:
+                    print("Not an integration pickle", filepath)
+                    continue
 
-        # Find the critical parameters for this image
-        obs = data['observations'][0]
-        uc = obs.unit_cell()
-        obs_strong = obs.select((obs.data()/obs.sigmas() >= params.min_IsigI))
-        strong_measurements = len(obs_strong.indices())
-        d = uc.d(obs_strong.indices())
-        resolution = flex.min(d)
+                n_tested += 1
 
-        if params.min_resolution is not None and resolution > min_resolution:
-          print("Rejecting", filepath, "because resolution", resolution, "is too low")
-          continue
+                # Find the critical parameters for this image
+                obs = data["observations"][0]
+                uc = obs.unit_cell()
+                obs_strong = obs.select((obs.data() / obs.sigmas() >= params.min_IsigI))
+                strong_measurements = len(obs_strong.indices())
+                d = uc.d(obs_strong.indices())
+                resolution = flex.min(d)
 
-        if params.min_good_reflections is not None and strong_measurements < params.min_good_reflections:
-          print("Rejecting", filepath, "because number of measurements where I/sigmaI >=", params.min_IsigI, strong_measurements, "is too low")
-          continue
+                if params.min_resolution is not None and resolution > min_resolution:
+                    print(
+                        "Rejecting",
+                        filepath,
+                        "because resolution",
+                        resolution,
+                        "is too low",
+                    )
+                    continue
 
-        # Save the image if it's good enough
-        if len(final_data) < params.max_images:
-          print("Accepting", filepath, "not yet reached maximum number good images")
-          final_data[filepath] = data, resolution
-          if worst_resolution is None or resolution > worst_resolution:
-            worst_resolution = resolution
-            worst_image = filepath
-        elif resolution < worst_resolution:
-          print("Accepting", filepath, "better than the worst image")
-          final_data.pop(worst_image)
-          final_data[filepath] = data, resolution
+                if (
+                    params.min_good_reflections is not None
+                    and strong_measurements < params.min_good_reflections
+                ):
+                    print(
+                        "Rejecting",
+                        filepath,
+                        "because number of measurements where I/sigmaI >=",
+                        params.min_IsigI,
+                        strong_measurements,
+                        "is too low",
+                    )
+                    continue
 
-          worst_resolution = 0
-          for key, entry in six.iteritems(final_data):
-            data, resolution = entry
-            if resolution > worst_resolution:
-              worst_resolution = resolution
-              worst_image = key
-        else:
-          print("Rejecting", filepath)
+                # Save the image if it's good enough
+                if len(final_data) < params.max_images:
+                    print(
+                        "Accepting",
+                        filepath,
+                        "not yet reached maximum number good images",
+                    )
+                    final_data[filepath] = data, resolution
+                    if worst_resolution is None or resolution > worst_resolution:
+                        worst_resolution = resolution
+                        worst_image = filepath
+                elif resolution < worst_resolution:
+                    print("Accepting", filepath, "better than the worst image")
+                    final_data.pop(worst_image)
+                    final_data[filepath] = data, resolution
 
-        if params.max_to_examine is not None and n_tested > params.max_to_examine: break
-      if params.max_to_examine is not None and n_tested > params.max_to_examine: break
+                    worst_resolution = 0
+                    for key, entry in six.iteritems(final_data):
+                        data, resolution = entry
+                        if resolution > worst_resolution:
+                            worst_resolution = resolution
+                            worst_image = key
+                else:
+                    print("Rejecting", filepath)
 
-    # Results
-    print("Final best images and resolutions:")
-    for key in final_data:
-      print(key, final_data[key][1])
+                if (
+                    params.max_to_examine is not None
+                    and n_tested > params.max_to_examine
+                ):
+                    break
+            if params.max_to_examine is not None and n_tested > params.max_to_examine:
+                break
 
-    # Show a viewing command
-    cmd = "cctbx.image_viewer "
+        # Results
+        print("Final best images and resolutions:")
+        for key in final_data:
+            print(key, final_data[key][1])
 
-    for key in final_data:
-      dirname = os.path.dirname(key).replace('integration', 'out')
-      basename = os.path.basename(key)
+        # Show a viewing command
+        cmd = "cctbx.image_viewer "
 
-      # tsl: time stamp long, tss: time stamp short
-      if basename.endswith("_00000.pickle"):
-        tsl = basename.lstrip('int-').split('_00000.pickle')[0]
-      elif basename.endswith(".pickle"):
-        tsl = os.path.splitext(basename.lstrip('int-'))[0]
+        for key in final_data:
+            dirname = os.path.dirname(key).replace("integration", "out")
+            basename = os.path.basename(key)
 
-      tss = ''.join([c for c in tsl if c in '1234567890'])
+            # tsl: time stamp long, tss: time stamp short
+            if basename.endswith("_00000.pickle"):
+                tsl = basename.lstrip("int-").split("_00000.pickle")[0]
+            elif basename.endswith(".pickle"):
+                tsl = os.path.splitext(basename.lstrip("int-"))[0]
 
-      cmd += (os.path.join(dirname, "idx-%s.pickle "%tss))
+            tss = "".join([c for c in tsl if c in "1234567890"])
 
-    print("Use this command to display these images:")
-    print(cmd.rstrip())
+            cmd += os.path.join(dirname, "idx-%s.pickle " % tss)
+
+        print("Use this command to display these images:")
+        print(cmd.rstrip())
+
 
 if __name__ == "__main__":
-  with show_mail_on_error():
-    script = Script()
-    script.run()
+    with show_mail_on_error():
+        script = Script()
+        script.run()

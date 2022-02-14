@@ -34,94 +34,105 @@ TER
 END
 """
 
+
 def write_ccp4_map(map_data, cs, file_name):
-  from iotbx import mrcfile
-  mrcfile.write_ccp4_map(
-    file_name=file_name,
-    unit_cell=cs.unit_cell(),
-    space_group=cs.space_group(),
-    map_data=map_data,
-    labels=flex.std_string([""]))
+    from iotbx import mrcfile
+
+    mrcfile.write_ccp4_map(
+        file_name=file_name,
+        unit_cell=cs.unit_cell(),
+        space_group=cs.space_group(),
+        map_data=map_data,
+        labels=flex.std_string([""]),
+    )
+
 
 def run(prefix="tst_map_model_cc"):
-  """
-  Make sure it works with map having origin != (0,0,0)
-  """
-  # original (zero-origin) map and model
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  pdb_inp.write_pdb_file(file_name="%s_%s"%(prefix,"orig.pdb"))
-  ph = pdb_inp.construct_hierarchy()
-  xrs = pdb_inp.xray_structure_simple()
-  fc = xrs.structure_factors(d_min=1.5).f_calc()
-  fft_map = fc.fft_map(resolution_factor = 0.25)
-  fft_map.apply_sigma_scaling()
-  map_data = fft_map.real_map_unpadded()
-  assert map_data.all() == (40, 45, 54)
-  assert map_data.origin() == (0, 0, 0)
-  assert map_data.focus() == (40, 45, 54)
-  write_ccp4_map(map_data=map_data, cs=xrs.crystal_symmetry(),
-    file_name="%s_%s"%(prefix,"orig.ccp4"))
-  # shift origin of the map
-  g = flex.grid((-20,-25,-27), (20,20,27))
-  map_data.reshape(g)
-  assert map_data.all() == (40, 45, 54)
-  assert map_data.origin() == (-20, -25, -27)
-  assert map_data.focus() == (20, 20, 27)
-  write_ccp4_map(map_data=map_data, cs=xrs.crystal_symmetry(),
-    file_name="%s_%s"%(prefix,"shifted.ccp4"))
-  # apply same shift to the model
-  a,b,c = xrs.crystal_symmetry().unit_cell().parameters()[:3]
-  N = map_data.all()
-  O=map_data.origin()
-  sites_cart = ph.atoms().extract_xyz()
-  sx,sy,sz = a/N[0]*O[0], b/N[1]*O[1], c/N[2]*O[2]
-  sites_cart_shifted = sites_cart+\
-    flex.vec3_double(sites_cart.size(), [sx,sy,sz])
-  ph.atoms().set_xyz(sites_cart_shifted)
-  ph.write_pdb_file(file_name="%s_%s"%(prefix,"shifted.pdb"))
-  # run phenix.real_space_refine
-  checked = 0
-  cmd = " ".join([
-    "phenix.map_model_cc",
-    "%s_shifted.pdb"%prefix,
-    "%s_shifted.ccp4"%prefix,
-    "resolution=1.5",
-    "> %s.zlog"%prefix
-  ])
-  print(cmd)
-  easy_run.call(cmd)
-  # check results
-  fo = open("%s.zlog"%prefix,"r")
-  for l in fo.readlines():
-    if(l.startswith("  CC_mask  :")):
-      cc = float(l.split()[2])
-      assert cc>0.98
-      checked+=1
-  fo.close()
-  assert checked==1
-  # Exercise corresponding library function
-  params = mmtbx.maps.map_model_cc.master_params().extract()
-  params.map_model_cc.resolution=1.5
-  task_obj = mmtbx.maps.map_model_cc.map_model_cc(
-    map_data         = map_data,
-    pdb_hierarchy    = ph,
-    crystal_symmetry = xrs.crystal_symmetry(),
-    params           = params.map_model_cc)
-  task_obj.validate()
-  task_obj.run()
-  result = task_obj.get_results()
-  assert result.cc_mask  >0.98
-  assert result.cc_peaks >0.98
-  assert result.cc_volume>0.98
-  assert result.cc_side_chain.cc>0.98
-  assert result.cc_main_chain.cc>0.98
-  easy_pickle.dump(
-    file_name = "map_model_cc_test.pkl",
-    obj       = result)
-  easy_pickle.load("map_model_cc_test.pkl")
+    """
+    Make sure it works with map having origin != (0,0,0)
+    """
+    # original (zero-origin) map and model
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    pdb_inp.write_pdb_file(file_name="%s_%s" % (prefix, "orig.pdb"))
+    ph = pdb_inp.construct_hierarchy()
+    xrs = pdb_inp.xray_structure_simple()
+    fc = xrs.structure_factors(d_min=1.5).f_calc()
+    fft_map = fc.fft_map(resolution_factor=0.25)
+    fft_map.apply_sigma_scaling()
+    map_data = fft_map.real_map_unpadded()
+    assert map_data.all() == (40, 45, 54)
+    assert map_data.origin() == (0, 0, 0)
+    assert map_data.focus() == (40, 45, 54)
+    write_ccp4_map(
+        map_data=map_data,
+        cs=xrs.crystal_symmetry(),
+        file_name="%s_%s" % (prefix, "orig.ccp4"),
+    )
+    # shift origin of the map
+    g = flex.grid((-20, -25, -27), (20, 20, 27))
+    map_data.reshape(g)
+    assert map_data.all() == (40, 45, 54)
+    assert map_data.origin() == (-20, -25, -27)
+    assert map_data.focus() == (20, 20, 27)
+    write_ccp4_map(
+        map_data=map_data,
+        cs=xrs.crystal_symmetry(),
+        file_name="%s_%s" % (prefix, "shifted.ccp4"),
+    )
+    # apply same shift to the model
+    a, b, c = xrs.crystal_symmetry().unit_cell().parameters()[:3]
+    N = map_data.all()
+    O = map_data.origin()
+    sites_cart = ph.atoms().extract_xyz()
+    sx, sy, sz = a / N[0] * O[0], b / N[1] * O[1], c / N[2] * O[2]
+    sites_cart_shifted = sites_cart + flex.vec3_double(sites_cart.size(), [sx, sy, sz])
+    ph.atoms().set_xyz(sites_cart_shifted)
+    ph.write_pdb_file(file_name="%s_%s" % (prefix, "shifted.pdb"))
+    # run phenix.real_space_refine
+    checked = 0
+    cmd = " ".join(
+        [
+            "phenix.map_model_cc",
+            "%s_shifted.pdb" % prefix,
+            "%s_shifted.ccp4" % prefix,
+            "resolution=1.5",
+            "> %s.zlog" % prefix,
+        ]
+    )
+    print(cmd)
+    easy_run.call(cmd)
+    # check results
+    fo = open("%s.zlog" % prefix, "r")
+    for l in fo.readlines():
+        if l.startswith("  CC_mask  :"):
+            cc = float(l.split()[2])
+            assert cc > 0.98
+            checked += 1
+    fo.close()
+    assert checked == 1
+    # Exercise corresponding library function
+    params = mmtbx.maps.map_model_cc.master_params().extract()
+    params.map_model_cc.resolution = 1.5
+    task_obj = mmtbx.maps.map_model_cc.map_model_cc(
+        map_data=map_data,
+        pdb_hierarchy=ph,
+        crystal_symmetry=xrs.crystal_symmetry(),
+        params=params.map_model_cc,
+    )
+    task_obj.validate()
+    task_obj.run()
+    result = task_obj.get_results()
+    assert result.cc_mask > 0.98
+    assert result.cc_peaks > 0.98
+    assert result.cc_volume > 0.98
+    assert result.cc_side_chain.cc > 0.98
+    assert result.cc_main_chain.cc > 0.98
+    easy_pickle.dump(file_name="map_model_cc_test.pkl", obj=result)
+    easy_pickle.load("map_model_cc_test.pkl")
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("Time: %6.3f"%(time.time()-t0))
-  print("OK")
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("Time: %6.3f" % (time.time() - t0))
+    print("OK")

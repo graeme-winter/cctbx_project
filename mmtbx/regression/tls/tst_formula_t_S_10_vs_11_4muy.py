@@ -9,7 +9,7 @@ import math
 from scitbx.array_family import flex
 from six.moves import range
 
-pdb_str= """
+pdb_str = """
 REMARK   3
 REMARK   3   TLS GROUP : 6
 REMARK   3    NUMBER OF COMPONENTS GROUP : 1
@@ -217,66 +217,74 @@ TER
 END
 """
 
-def exercise_00(pdb_str, formula):
-  """
-  TLS group 6 of 4muy.
-  """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  asc = pdb_hierarchy.atom_selection_cache()
-  cs = pdb_inp.crystal_symmetry_from_cryst1()
-  tls_extract = mmtbx.tls.tools.tls_from_pdb_inp(
-    remark_3_records = pdb_inp.extract_remark_iii_records(3),
-    pdb_hierarchy    = pdb_hierarchy)
-  #
-  deg_to_rad_scale = math.pi/180
-  tls_params_one_group = tls_extract.tls_params[0]
-  T = matrix.sym(sym_mat3=tls_params_one_group.t)
-  L = matrix.sym(sym_mat3=tls_params_one_group.l)
-  S = matrix.sqr(tls_params_one_group.s)
-  origin = tls_params_one_group.origin
-  tlso = tools.tlso(
-    t      = T.as_sym_mat3(),
-    l      = L.as_sym_mat3(),
-    s      = S,
-    origin = origin)
-  log = open("analysis.log","w")
-  r = analysis.run(T=T, L=L*(deg_to_rad_scale**2), S=S*deg_to_rad_scale,
-    log=log, find_t_S_using_formula=formula).self_check(show=False)
-  log.close()
-  #
-  rs = flex.double()
-  for trial in range(10):
-    o = tools.u_tls_vs_u_ens(pdb_str=pdb_str,
-      dx       = r.dx,
-      dy       = r.dy,
-      dz       = r.dz,
-      sx       = r.sx,
-      sy       = r.sy,
-      sz       = r.sz,
-      lx       = r.l_x,
-      ly       = r.l_y,
-      lz       = r.l_z,
-      tx       = r.tx,
-      ty       = r.ty,
-      tz       = r.tz,
-      vx       = r.v_x,
-      vy       = r.v_y,
-      vz       = r.v_z,
-      w_M_lx   = r.w_M_lx,
-      w_M_ly   = r.w_M_ly,
-      w_M_lz   = r.w_M_lz,
-      origin   = origin,
-      n_models = 10000,
-      assert_similarity=False)
-    rs.append(o.r)
-  return flex.mean(rs)
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  for formula in ["10","11"]:
-    print("formula:", formula)
-    r = exercise_00(pdb_str=pdb_str, formula=formula)
-    print("  ", r)
-    if(formula=="10"): assert r>0.55
-    if(formula=="11"): assert r<0.06
+def exercise_00(pdb_str, formula):
+    """
+    TLS group 6 of 4muy.
+    """
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    asc = pdb_hierarchy.atom_selection_cache()
+    cs = pdb_inp.crystal_symmetry_from_cryst1()
+    tls_extract = mmtbx.tls.tools.tls_from_pdb_inp(
+        remark_3_records=pdb_inp.extract_remark_iii_records(3),
+        pdb_hierarchy=pdb_hierarchy,
+    )
+    #
+    deg_to_rad_scale = math.pi / 180
+    tls_params_one_group = tls_extract.tls_params[0]
+    T = matrix.sym(sym_mat3=tls_params_one_group.t)
+    L = matrix.sym(sym_mat3=tls_params_one_group.l)
+    S = matrix.sqr(tls_params_one_group.s)
+    origin = tls_params_one_group.origin
+    tlso = tools.tlso(t=T.as_sym_mat3(), l=L.as_sym_mat3(), s=S, origin=origin)
+    log = open("analysis.log", "w")
+    r = analysis.run(
+        T=T,
+        L=L * (deg_to_rad_scale ** 2),
+        S=S * deg_to_rad_scale,
+        log=log,
+        find_t_S_using_formula=formula,
+    ).self_check(show=False)
+    log.close()
+    #
+    rs = flex.double()
+    for trial in range(10):
+        o = tools.u_tls_vs_u_ens(
+            pdb_str=pdb_str,
+            dx=r.dx,
+            dy=r.dy,
+            dz=r.dz,
+            sx=r.sx,
+            sy=r.sy,
+            sz=r.sz,
+            lx=r.l_x,
+            ly=r.l_y,
+            lz=r.l_z,
+            tx=r.tx,
+            ty=r.ty,
+            tz=r.tz,
+            vx=r.v_x,
+            vy=r.v_y,
+            vz=r.v_z,
+            w_M_lx=r.w_M_lx,
+            w_M_ly=r.w_M_ly,
+            w_M_lz=r.w_M_lz,
+            origin=origin,
+            n_models=10000,
+            assert_similarity=False,
+        )
+        rs.append(o.r)
+    return flex.mean(rs)
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    for formula in ["10", "11"]:
+        print("formula:", formula)
+        r = exercise_00(pdb_str=pdb_str, formula=formula)
+        print("  ", r)
+        if formula == "10":
+            assert r > 0.55
+        if formula == "11":
+            assert r < 0.06

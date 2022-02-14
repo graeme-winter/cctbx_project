@@ -21,42 +21,37 @@ import os
 from six.moves import zip
 from six.moves import range
 
+
 def exercise_basic():
-  t = ramachandran.load_tables()["ala"]
-  assert approx_equal(t.get_score(0.0,0.0), -26.16, eps=0.01)
-  assert approx_equal(t.get_score(-60,120), 10.41, eps=0.01)
-  assert approx_equal(t.get_score(90,90), -7.43, eps=0.01)
-  assert approx_equal(t.get_energy(0.0,0.0), 53.81, eps=0.01)
-  assert approx_equal(t.get_energy(-60,120), 17.24, eps=0.01)
-  e1 = t.get_energy(-85.0, 85.0)
-  e2 = t.get_energy(-85.000001, 85.000001)
-  assert approx_equal(e1, e2, eps=0.000001)
-  assert approx_equal(t.get_energy(-85.0, 86.0), 21.3345, eps=0.001)
-  assert approx_equal(t.get_energy(-86.0, 85.0), 21.389, eps=0.001)
-  ext = bp.import_ext("mmtbx_ramachandran_restraints_ext")
-  proxies = ext.shared_phi_psi_proxy()
-  proxies.append(
-    ext.phi_psi_proxy(
-      i_seqs=[0,1,2,3,4],
-      residue_type="general",
-      weight=1))
-  proxies.append(
-    ext.phi_psi_proxy(
-      i_seqs=[4,5,6,7,8],
-      residue_type="pre-proline",
-      weight=1))
-  proxies.append(
-    ext.phi_psi_proxy(
-      i_seqs=[8,9,10,11,12],
-      residue_type="general",
-      weight=1))
-  selected = proxies.proxy_select(n_seq=13,
-    iselection=flex.size_t(range(9)))
-  assert (selected.size() == 2)
-  assert list(selected[0].get_i_seqs()) == [0,1,2,3,4]
-  assert selected[0].residue_type == "general"
-  assert list(selected[1].get_i_seqs()) == [4,5,6,7,8]
-  assert selected[1].residue_type == "pre-proline"
+    t = ramachandran.load_tables()["ala"]
+    assert approx_equal(t.get_score(0.0, 0.0), -26.16, eps=0.01)
+    assert approx_equal(t.get_score(-60, 120), 10.41, eps=0.01)
+    assert approx_equal(t.get_score(90, 90), -7.43, eps=0.01)
+    assert approx_equal(t.get_energy(0.0, 0.0), 53.81, eps=0.01)
+    assert approx_equal(t.get_energy(-60, 120), 17.24, eps=0.01)
+    e1 = t.get_energy(-85.0, 85.0)
+    e2 = t.get_energy(-85.000001, 85.000001)
+    assert approx_equal(e1, e2, eps=0.000001)
+    assert approx_equal(t.get_energy(-85.0, 86.0), 21.3345, eps=0.001)
+    assert approx_equal(t.get_energy(-86.0, 85.0), 21.389, eps=0.001)
+    ext = bp.import_ext("mmtbx_ramachandran_restraints_ext")
+    proxies = ext.shared_phi_psi_proxy()
+    proxies.append(
+        ext.phi_psi_proxy(i_seqs=[0, 1, 2, 3, 4], residue_type="general", weight=1)
+    )
+    proxies.append(
+        ext.phi_psi_proxy(i_seqs=[4, 5, 6, 7, 8], residue_type="pre-proline", weight=1)
+    )
+    proxies.append(
+        ext.phi_psi_proxy(i_seqs=[8, 9, 10, 11, 12], residue_type="general", weight=1)
+    )
+    selected = proxies.proxy_select(n_seq=13, iselection=flex.size_t(range(9)))
+    assert selected.size() == 2
+    assert list(selected[0].get_i_seqs()) == [0, 1, 2, 3, 4]
+    assert selected[0].residue_type == "general"
+    assert list(selected[1].get_i_seqs()) == [4, 5, 6, 7, 8]
+    assert selected[1].residue_type == "pre-proline"
+
 
 pdb1 = """
 CRYST1   10.000   10.000   10.000  90.00  90.00  90.00 P 1           1
@@ -148,142 +143,145 @@ ATOM     61  CZ3 TRP A   4       0.960   7.272   2.810  1.00  0.00           C
 ATOM     62  CH2 TRP A   4       0.788   6.958   1.455  1.00  0.00           C
 END
 """
+
+
 def exercise_lbfgs_simple(mon_lib_srv, ener_lib, verbose=False):
-  # three peptides:
-  #  1 = poly-ALA, favored
-  #  2 = poly-ALA, outlier
-  #  3 = poly-TRP, outlier
-  #
-  # Note that the ramalyze score for the first actually gets slightly worse,
-  # but it's still good and we're starting from an excellent score anyway.
-  #
-  residuals = [0.00168766995882, 170.847971607, 161.521460906]
-  for i, peptide in enumerate([pdb1, pdb2, pdb3]):
-    pdb_in = iotbx.pdb.input(source_info="peptide",
-      lines=flex.split_lines(peptide))
-    log = StringIO()
-    pdb_hierarchy = pdb_in.construct_hierarchy()
-    atoms = pdb_hierarchy.atoms()
-    sites_cart_1 = atoms.extract_xyz().deep_copy()
-    gradients_fd = flex.vec3_double(sites_cart_1.size(), (0,0,0))
-    gradients_an = flex.vec3_double(sites_cart_1.size(), (0,0,0))
-    params = ramachandran.master_phil.fetch().extract().ramachandran_plot_restraints
-    params.favored="oldfield"
-    params.allowed="oldfield"
-    params.outlier="oldfield"
-    params.inject_emsley8k_into_oldfield_favored=False
-    rama_manager = ramachandran.ramachandran_manager(
-        pdb_hierarchy, params, log)
-    assert rama_manager.get_n_proxies() == 1, rama_manager.get_n_proxies()
-    residual_an = rama_manager.target_and_gradients(
-      unit_cell=None,
-      sites_cart=sites_cart_1,
-      gradient_array=gradients_an)
-    # print "comparing", residual_an
-    assert approx_equal(residual_an, residuals[i], eps=0.001)
-    # approx_equal(residual_an, residuals[i], eps=0.001)
-  if verbose :
-    print("")
-  for i, peptide in enumerate([pdb1, pdb2, pdb3]):
-    pdb_in = iotbx.pdb.input(source_info="peptide",
-      lines=flex.split_lines(peptide))
-    o = benchmark_structure(pdb_in, mon_lib_srv, ener_lib, verbose)
-    phi0, psi0 = o.r0.results[0].phi, o.r0.results[0].psi
-    phi1, psi1 = o.r1.results[0].phi, o.r1.results[0].psi
-    phi2, psi2 = o.r2.results[0].phi, o.r2.results[0].psi
-    r0 = o.r0.results[0].score
-    r1 = o.r1.results[0].score
-    r2 = o.r2.results[0].score
-    if verbose :
-      print("peptide %d" % (i+1))
-      print(" before: rmsd_bonds=%-6.4f rmsd_angles=%-6.3f" % (o.b0,o.a0))
-      print("         phi=%-6.1f psi=%-6.1f score=%-.2f" % (phi0, psi0, r0))
-      print(" simple: rmsd_bonds=%-6.4f rmsd_angles=%-6.3f" % (o.b1,o.a1))
-      print("         phi=%-6.1f psi=%-6.1f score=%-.2f" % (phi1, psi1, r1))
-      print(" + Rama: rmsd_bonds=%-6.4f rmsd_angles=%-6.3f" % (o.b2,o.a2))
-      print("         phi=%-6.1f psi=%-6.1f score=%-.2f" % (phi2, psi2, r2))
-      print("")
+    # three peptides:
+    #  1 = poly-ALA, favored
+    #  2 = poly-ALA, outlier
+    #  3 = poly-TRP, outlier
+    #
+    # Note that the ramalyze score for the first actually gets slightly worse,
+    # but it's still good and we're starting from an excellent score anyway.
+    #
+    residuals = [0.00168766995882, 170.847971607, 161.521460906]
+    for i, peptide in enumerate([pdb1, pdb2, pdb3]):
+        pdb_in = iotbx.pdb.input(source_info="peptide", lines=flex.split_lines(peptide))
+        log = StringIO()
+        pdb_hierarchy = pdb_in.construct_hierarchy()
+        atoms = pdb_hierarchy.atoms()
+        sites_cart_1 = atoms.extract_xyz().deep_copy()
+        gradients_fd = flex.vec3_double(sites_cart_1.size(), (0, 0, 0))
+        gradients_an = flex.vec3_double(sites_cart_1.size(), (0, 0, 0))
+        params = ramachandran.master_phil.fetch().extract().ramachandran_plot_restraints
+        params.favored = "oldfield"
+        params.allowed = "oldfield"
+        params.outlier = "oldfield"
+        params.inject_emsley8k_into_oldfield_favored = False
+        rama_manager = ramachandran.ramachandran_manager(pdb_hierarchy, params, log)
+        assert rama_manager.get_n_proxies() == 1, rama_manager.get_n_proxies()
+        residual_an = rama_manager.target_and_gradients(
+            unit_cell=None, sites_cart=sites_cart_1, gradient_array=gradients_an
+        )
+        # print "comparing", residual_an
+        assert approx_equal(residual_an, residuals[i], eps=0.001)
+        # approx_equal(residual_an, residuals[i], eps=0.001)
+    if verbose:
+        print("")
+    for i, peptide in enumerate([pdb1, pdb2, pdb3]):
+        pdb_in = iotbx.pdb.input(source_info="peptide", lines=flex.split_lines(peptide))
+        o = benchmark_structure(pdb_in, mon_lib_srv, ener_lib, verbose)
+        phi0, psi0 = o.r0.results[0].phi, o.r0.results[0].psi
+        phi1, psi1 = o.r1.results[0].phi, o.r1.results[0].psi
+        phi2, psi2 = o.r2.results[0].phi, o.r2.results[0].psi
+        r0 = o.r0.results[0].score
+        r1 = o.r1.results[0].score
+        r2 = o.r2.results[0].score
+        if verbose:
+            print("peptide %d" % (i + 1))
+            print(" before: rmsd_bonds=%-6.4f rmsd_angles=%-6.3f" % (o.b0, o.a0))
+            print("         phi=%-6.1f psi=%-6.1f score=%-.2f" % (phi0, psi0, r0))
+            print(" simple: rmsd_bonds=%-6.4f rmsd_angles=%-6.3f" % (o.b1, o.a1))
+            print("         phi=%-6.1f psi=%-6.1f score=%-.2f" % (phi1, psi1, r1))
+            print(" + Rama: rmsd_bonds=%-6.4f rmsd_angles=%-6.3f" % (o.b2, o.a2))
+            print("         phi=%-6.1f psi=%-6.1f score=%-.2f" % (phi2, psi2, r2))
+            print("")
+
 
 def exercise_lbfgs_big(verbose=False):
-  file_name = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/3mku.pdb",
-    test=os.path.isfile)
-  if (file_name is None):
-    print("Skipping big test.")
-    return
-  pdb_in = iotbx.pdb.input(source_info="peptide",
-    file_name=file_name)
-  o = benchmark_structure(pdb_in, verbose, 1.0)
-  if verbose :
-    show_results(o, "3mhk")
+    file_name = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/3mku.pdb", test=os.path.isfile
+    )
+    if file_name is None:
+        print("Skipping big test.")
+        return
+    pdb_in = iotbx.pdb.input(source_info="peptide", file_name=file_name)
+    o = benchmark_structure(pdb_in, verbose, 1.0)
+    if verbose:
+        show_results(o, "3mhk")
+
 
 def show_results(o, structure_name):
-  print(structure_name)
-  print(" before: bonds=%-6.4f angles=%-6.3f outliers=%.1f%% favored=%.1f%%"\
-    % (o.b0, o.a0, o.r0.percent_outliers, o.r0.percent_favored))
-  print(" simple: bonds=%-6.4f angles=%-6.3f outliers=%.1f%% favored=%.1f%%"\
-    % (o.b1, o.a1, o.r1.percent_outliers, o.r1.percent_favored))
-  print(" + Rama: bonds=%-6.4f angles=%-6.3f outliers=%.1f%% favored=%.1f%%"\
-    % (o.b2, o.a2, o.r2.percent_outliers, o.r2.percent_favored))
-  print("")
+    print(structure_name)
+    print(
+        " before: bonds=%-6.4f angles=%-6.3f outliers=%.1f%% favored=%.1f%%"
+        % (o.b0, o.a0, o.r0.percent_outliers, o.r0.percent_favored)
+    )
+    print(
+        " simple: bonds=%-6.4f angles=%-6.3f outliers=%.1f%% favored=%.1f%%"
+        % (o.b1, o.a1, o.r1.percent_outliers, o.r1.percent_favored)
+    )
+    print(
+        " + Rama: bonds=%-6.4f angles=%-6.3f outliers=%.1f%% favored=%.1f%%"
+        % (o.b2, o.a2, o.r2.percent_outliers, o.r2.percent_favored)
+    )
+    print("")
+
 
 def benchmark_structure(pdb_in, mon_lib_srv, ener_lib, verbose=False, w=1.0):
-  log = StringIO()
+    log = StringIO()
 
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.peptide_link.ramachandran_restraints = True
-  params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored=False
-  model = mmtbx.model.manager(
-      model_input=pdb_in,
-      log=null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  pdb_hierarchy = model.get_hierarchy()
-  r0 = ramalyze(pdb_hierarchy=pdb_hierarchy, outliers_only=False)
-  atoms = pdb_hierarchy.atoms()
-  sites_cart_1 = atoms.extract_xyz().deep_copy()
-  sites_cart_2 = sites_cart_1.deep_copy()
-  assert (grm is not None)
-  e = grm.energies_sites(sites_cart=sites_cart_1)
-  b0 = e.bond_deviations()[-1]
-  a0 = e.angle_deviations()[-1]
-  flags = cctbx.geometry_restraints.flags.flags(default=True)
-  lbfgs = geometry_minimization.lbfgs(
-    sites_cart=sites_cart_1,
-    correct_special_position_tolerance=1.0,
-    geometry_restraints_manager=grm,
-    geometry_restraints_flags=flags,
-    lbfgs_termination_params=scitbx.lbfgs.termination_parameters(
-        max_iterations=500))
-  a1 = lbfgs.rmsd_angles
-  b1 = lbfgs.rmsd_bonds
-  atoms.set_xyz(sites_cart_1)
-  r1 = ramalyze(pdb_hierarchy=pdb_hierarchy, outliers_only=False)
-  rama_params = ramachandran.master_phil.fetch().extract().ramachandran_plot_restraints
-  rama_manager = ramachandran.ramachandran_manager(
-      pdb_hierarchy, rama_params, log)
-  grm.set_ramachandran_restraints(rama_manager)
-  lbfgs = geometry_minimization.lbfgs(
-    sites_cart=sites_cart_2,
-    correct_special_position_tolerance=1.0,
-    geometry_restraints_manager=grm,
-    geometry_restraints_flags=flags,
-    lbfgs_termination_params=scitbx.lbfgs.termination_parameters(
-        max_iterations=500))
-  a2 = lbfgs.rmsd_angles
-  b2 = lbfgs.rmsd_bonds
-  atoms.set_xyz(sites_cart_2)
-  r2 = ramalyze(pdb_hierarchy=pdb_hierarchy, outliers_only=False)
-  return group_args(
-    a0=a0,
-    a1=a1,
-    a2=a2,
-    b0=b0,
-    b1=b1,
-    b2=b2,
-    r0=r0,
-    r1=r1,
-    r2=r2)
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.peptide_link.ramachandran_restraints = True
+    params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored = (
+        False
+    )
+    model = mmtbx.model.manager(model_input=pdb_in, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    pdb_hierarchy = model.get_hierarchy()
+    r0 = ramalyze(pdb_hierarchy=pdb_hierarchy, outliers_only=False)
+    atoms = pdb_hierarchy.atoms()
+    sites_cart_1 = atoms.extract_xyz().deep_copy()
+    sites_cart_2 = sites_cart_1.deep_copy()
+    assert grm is not None
+    e = grm.energies_sites(sites_cart=sites_cart_1)
+    b0 = e.bond_deviations()[-1]
+    a0 = e.angle_deviations()[-1]
+    flags = cctbx.geometry_restraints.flags.flags(default=True)
+    lbfgs = geometry_minimization.lbfgs(
+        sites_cart=sites_cart_1,
+        correct_special_position_tolerance=1.0,
+        geometry_restraints_manager=grm,
+        geometry_restraints_flags=flags,
+        lbfgs_termination_params=scitbx.lbfgs.termination_parameters(
+            max_iterations=500
+        ),
+    )
+    a1 = lbfgs.rmsd_angles
+    b1 = lbfgs.rmsd_bonds
+    atoms.set_xyz(sites_cart_1)
+    r1 = ramalyze(pdb_hierarchy=pdb_hierarchy, outliers_only=False)
+    rama_params = (
+        ramachandran.master_phil.fetch().extract().ramachandran_plot_restraints
+    )
+    rama_manager = ramachandran.ramachandran_manager(pdb_hierarchy, rama_params, log)
+    grm.set_ramachandran_restraints(rama_manager)
+    lbfgs = geometry_minimization.lbfgs(
+        sites_cart=sites_cart_2,
+        correct_special_position_tolerance=1.0,
+        geometry_restraints_manager=grm,
+        geometry_restraints_flags=flags,
+        lbfgs_termination_params=scitbx.lbfgs.termination_parameters(
+            max_iterations=500
+        ),
+    )
+    a2 = lbfgs.rmsd_angles
+    b2 = lbfgs.rmsd_bonds
+    atoms.set_xyz(sites_cart_2)
+    r2 = ramalyze(pdb_hierarchy=pdb_hierarchy, outliers_only=False)
+    return group_args(a0=a0, a1=a1, a2=a2, b0=b0, b1=b1, b2=b2, r0=r0, r1=r1, r2=r2)
+
 
 pdb_str = """\
 CRYST1   18.879   16.714   25.616  90.00  90.00  90.00 P 1
@@ -341,27 +339,30 @@ TER
 END
 """
 
+
 def exercise_geo_output(mon_lib_srv, ener_lib):
-  pdb_inp = iotbx.pdb.input(source_info="peptide",lines=flex.split_lines(pdb_str))
-  hierarchy = pdb_inp.construct_hierarchy()
-  atoms = hierarchy.atoms()
-  sites_cart = atoms.extract_xyz()
-  params = ramachandran.master_phil.fetch().extract()
-  params = params.ramachandran_plot_restraints
-  params.favored = 'emsley'
-  params.allowed = 'emsley'
-  params.outlier = 'emsley'
-  params.inject_emsley8k_into_oldfield_favored=False
-  rama_manager = ramachandran.ramachandran_manager(
-      hierarchy, params, StringIO())
-  out = StringIO()
-  rama_manager.show_sorted(
-      by_value="residual",
-      sites_cart=sites_cart,
-      site_labels=[a.id_str() for a in atoms],
-      f=out)
-  gv = out.getvalue()
-  assert not show_diff(gv, """\
+    pdb_inp = iotbx.pdb.input(source_info="peptide", lines=flex.split_lines(pdb_str))
+    hierarchy = pdb_inp.construct_hierarchy()
+    atoms = hierarchy.atoms()
+    sites_cart = atoms.extract_xyz()
+    params = ramachandran.master_phil.fetch().extract()
+    params = params.ramachandran_plot_restraints
+    params.favored = "emsley"
+    params.allowed = "emsley"
+    params.outlier = "emsley"
+    params.inject_emsley8k_into_oldfield_favored = False
+    rama_manager = ramachandran.ramachandran_manager(hierarchy, params, StringIO())
+    out = StringIO()
+    rama_manager.show_sorted(
+        by_value="residual",
+        sites_cart=sites_cart,
+        site_labels=[a.id_str() for a in atoms],
+        f=out,
+    )
+    gv = out.getvalue()
+    assert not show_diff(
+        gv,
+        """\
 Ramachandran plot restraints (Oldfield): 0
 Sorted by residual:
 
@@ -422,24 +423,27 @@ Sorted by residual:
 Ramachandran plot restraints (phi/psi/2): 0
 Sorted by residual:
 
-""")
+""",
+    )
 
-  params.favored = 'oldfield'
-  params.allowed = 'oldfield'
-  params.outlier = 'oldfield'
-  params.inject_emsley8k_into_oldfield_favored=False
-  rama_manager = ramachandran.ramachandran_manager(
-      hierarchy, params, StringIO())
-  out = StringIO()
-  rama_manager.show_sorted(
-      by_value="residual",
-      sites_cart=sites_cart,
-      site_labels=[a.id_str() for a in atoms],
-      f=out)
-  gv = out.getvalue()
-  #print(gv)
-  #STOP()
-  assert not show_diff(gv, """\
+    params.favored = "oldfield"
+    params.allowed = "oldfield"
+    params.outlier = "oldfield"
+    params.inject_emsley8k_into_oldfield_favored = False
+    rama_manager = ramachandran.ramachandran_manager(hierarchy, params, StringIO())
+    out = StringIO()
+    rama_manager.show_sorted(
+        by_value="residual",
+        sites_cart=sites_cart,
+        site_labels=[a.id_str() for a in atoms],
+        f=out,
+    )
+    gv = out.getvalue()
+    # print(gv)
+    # STOP()
+    assert not show_diff(
+        gv,
+        """\
 Ramachandran plot restraints (Oldfield): 8
 Sorted by residual:
 phi-psi angles formed by             residual
@@ -500,37 +504,42 @@ Sorted by residual:
 Ramachandran plot restraints (phi/psi/2): 0
 Sorted by residual:
 
-""")
+""",
+    )
+
 
 def exercise_manager_selection(mon_lib_srv, ener_lib):
-  pdb_inp = iotbx.pdb.input(source_info="peptide",lines=flex.split_lines(pdb_str))
-  hierarchy = pdb_inp.construct_hierarchy()
-  atoms = hierarchy.atoms()
-  sites_cart = atoms.extract_xyz()
-  params = ramachandran.master_phil.fetch().extract()
-  params = params.ramachandran_plot_restraints
-  params.favored = 'emsley'
-  params.allowed = 'emsley'
-  params.outlier = 'emsley'
-  params.inject_emsley8k_into_oldfield_favored=False
-  rama_manager = ramachandran.ramachandran_manager(
-      hierarchy, params, StringIO())
-  out = StringIO()
-  s_out = StringIO()
-  rama_manager.show_sorted(
-      by_value="residual",
-      sites_cart=sites_cart,
-      site_labels=[a.id_str() for a in atoms],
-      f=out)
-  selected_m = rama_manager.proxy_select(
-      n_seq=hierarchy.atoms_size(),
-      iselection=flex.size_t(range(40)))
-  selected_m.show_sorted(
-      by_value="residual",
-      sites_cart=sites_cart,
-      site_labels=[a.id_str() for a in atoms],
-      f=s_out)
-  assert not show_diff(s_out.getvalue(), """\
+    pdb_inp = iotbx.pdb.input(source_info="peptide", lines=flex.split_lines(pdb_str))
+    hierarchy = pdb_inp.construct_hierarchy()
+    atoms = hierarchy.atoms()
+    sites_cart = atoms.extract_xyz()
+    params = ramachandran.master_phil.fetch().extract()
+    params = params.ramachandran_plot_restraints
+    params.favored = "emsley"
+    params.allowed = "emsley"
+    params.outlier = "emsley"
+    params.inject_emsley8k_into_oldfield_favored = False
+    rama_manager = ramachandran.ramachandran_manager(hierarchy, params, StringIO())
+    out = StringIO()
+    s_out = StringIO()
+    rama_manager.show_sorted(
+        by_value="residual",
+        sites_cart=sites_cart,
+        site_labels=[a.id_str() for a in atoms],
+        f=out,
+    )
+    selected_m = rama_manager.proxy_select(
+        n_seq=hierarchy.atoms_size(), iselection=flex.size_t(range(40))
+    )
+    selected_m.show_sorted(
+        by_value="residual",
+        sites_cart=sites_cart,
+        site_labels=[a.id_str() for a in atoms],
+        f=s_out,
+    )
+    assert not show_diff(
+        s_out.getvalue(),
+        """\
 Ramachandran plot restraints (Oldfield): 0
 Sorted by residual:
 
@@ -579,194 +588,199 @@ Sorted by residual:
 Ramachandran plot restraints (phi/psi/2): 0
 Sorted by residual:
 
-""")
-
+""",
+    )
 
 
 def exercise_ramachandran_selections(mon_lib_srv, ener_lib):
-  # Just check overall rama proxies
-  file_name = libtbx.env.find_in_repositories(
-    # relative_path="phenix_regression/pdb/3mku.pdb",
-    relative_path="phenix_regression/pdb/fab_a_cut.pdb",
-    test=os.path.isfile)
-  if (file_name is None):
-    print("Skipping test.")
-    return
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.ramachandran_plot_restraints.enabled=True
-  params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored=False
-  pdb_inp = iotbx.pdb.input(file_name=file_name)
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  n = grm.ramachandran_manager.get_n_proxies()
-  assert n == 53, n
+    # Just check overall rama proxies
+    file_name = libtbx.env.find_in_repositories(
+        # relative_path="phenix_regression/pdb/3mku.pdb",
+        relative_path="phenix_regression/pdb/fab_a_cut.pdb",
+        test=os.path.isfile,
+    )
+    if file_name is None:
+        print("Skipping test.")
+        return
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.ramachandran_plot_restraints.enabled = True
+    params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored = (
+        False
+    )
+    pdb_inp = iotbx.pdb.input(file_name=file_name)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    n = grm.ramachandran_manager.get_n_proxies()
+    assert n == 53, n
 
-  # simple selection
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  params.pdb_interpretation.ramachandran_plot_restraints.enabled=True
-  params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored=False
-  params.pdb_interpretation.ramachandran_plot_restraints.selection = "chain A and resid 1:7"
-  model.process(make_restraints=True,
-    pdb_interpretation_params=params)
-  grm = model.get_restraints_manager().geometry
-  nprox = grm.ramachandran_manager.get_n_proxies()
-  assert nprox == 5, ""+\
-      "Want to get 5 rama proxies, got %d" % nprox
-  # 7 residues: there are insertion codes
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  params.pdb_interpretation.ramachandran_plot_restraints.enabled=True
-  params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored=False
-  params.pdb_interpretation.ramachandran_plot_restraints.selection ="chain A and resid 27:28"
-  model.process(make_restraints=True,
-    pdb_interpretation_params=params)
-  grm = model.get_restraints_manager().geometry
-  nprox = grm.ramachandran_manager.get_n_proxies()
-  assert nprox == 5, ""+\
-      "Want to get 5 rama proxies, got %d" % nprox
+    # simple selection
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    params.pdb_interpretation.ramachandran_plot_restraints.enabled = True
+    params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored = (
+        False
+    )
+    params.pdb_interpretation.ramachandran_plot_restraints.selection = (
+        "chain A and resid 1:7"
+    )
+    model.process(make_restraints=True, pdb_interpretation_params=params)
+    grm = model.get_restraints_manager().geometry
+    nprox = grm.ramachandran_manager.get_n_proxies()
+    assert nprox == 5, "" + "Want to get 5 rama proxies, got %d" % nprox
+    # 7 residues: there are insertion codes
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    params.pdb_interpretation.ramachandran_plot_restraints.enabled = True
+    params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored = (
+        False
+    )
+    params.pdb_interpretation.ramachandran_plot_restraints.selection = (
+        "chain A and resid 27:28"
+    )
+    model.process(make_restraints=True, pdb_interpretation_params=params)
+    grm = model.get_restraints_manager().geometry
+    nprox = grm.ramachandran_manager.get_n_proxies()
+    assert nprox == 5, "" + "Want to get 5 rama proxies, got %d" % nprox
+
 
 def exercise_allowed_outliers():
-  file_name = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/3ifk.pdb",
-    test=os.path.isfile)
-  if (file_name is None):
-    print("Skipping test.")
-    return
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.ramachandran_plot_restraints.enabled=True
-  params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored=False
-  pdb_inp = iotbx.pdb.input(file_name=file_name)
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  assert grm.ramachandran_manager.get_n_proxies() == 170, grm.ramachandran_manager.get_n_proxies()
-  full_proxies_iseqs = list(tuple(x.get_i_seqs()) for x in grm.ramachandran_manager._oldfield_proxies)
-  params.pdb_interpretation.ramachandran_plot_restraints.favored="oldfield"
-  params.pdb_interpretation.ramachandran_plot_restraints.allowed="oldfield"
-  params.pdb_interpretation.ramachandran_plot_restraints.outlier=None
+    file_name = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/3ifk.pdb", test=os.path.isfile
+    )
+    if file_name is None:
+        print("Skipping test.")
+        return
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.ramachandran_plot_restraints.enabled = True
+    params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored = (
+        False
+    )
+    pdb_inp = iotbx.pdb.input(file_name=file_name)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    assert (
+        grm.ramachandran_manager.get_n_proxies() == 170
+    ), grm.ramachandran_manager.get_n_proxies()
+    full_proxies_iseqs = list(
+        tuple(x.get_i_seqs()) for x in grm.ramachandran_manager._oldfield_proxies
+    )
+    params.pdb_interpretation.ramachandran_plot_restraints.favored = "oldfield"
+    params.pdb_interpretation.ramachandran_plot_restraints.allowed = "oldfield"
+    params.pdb_interpretation.ramachandran_plot_restraints.outlier = None
 
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  model.process(make_restraints=True,
-    pdb_interpretation_params=params)
-  grm = model.get_restraints_manager().geometry
-  nprox = grm.ramachandran_manager.get_n_proxies()
-  # print "without outliers", nprox
-  assert nprox == 167, nprox
-  no_out_proxies_iseqs = list(tuple(x.get_i_seqs()) for x in grm.ramachandran_manager._oldfield_proxies)
-  # assert nprox == 5, ""+\
-  #     "Want to get 5 rama proxies, got %d" % nprox
-  sdif_list = sorted(list(set(full_proxies_iseqs) - set(no_out_proxies_iseqs)))
-  outliers_txt_list = [
-      'pdb=" N   THR B   5 "',
-      'pdb=" N   GLU B   6 "',
-      'pdb=" N   SER B  81 "']
-  # print "outliers"
-  for a, answer in zip(sdif_list, outliers_txt_list):
-    # print model.get_hierarchy().atoms()[a[1]].id_str()
-    assert model.get_hierarchy().atoms()[a[1]].id_str() == answer
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True, pdb_interpretation_params=params)
+    grm = model.get_restraints_manager().geometry
+    nprox = grm.ramachandran_manager.get_n_proxies()
+    # print "without outliers", nprox
+    assert nprox == 167, nprox
+    no_out_proxies_iseqs = list(
+        tuple(x.get_i_seqs()) for x in grm.ramachandran_manager._oldfield_proxies
+    )
+    # assert nprox == 5, ""+\
+    #     "Want to get 5 rama proxies, got %d" % nprox
+    sdif_list = sorted(list(set(full_proxies_iseqs) - set(no_out_proxies_iseqs)))
+    outliers_txt_list = [
+        'pdb=" N   THR B   5 "',
+        'pdb=" N   GLU B   6 "',
+        'pdb=" N   SER B  81 "',
+    ]
+    # print "outliers"
+    for a, answer in zip(sdif_list, outliers_txt_list):
+        # print model.get_hierarchy().atoms()[a[1]].id_str()
+        assert model.get_hierarchy().atoms()[a[1]].id_str() == answer
 
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  params.pdb_interpretation.ramachandran_plot_restraints.favored="oldfield"
-  params.pdb_interpretation.ramachandran_plot_restraints.allowed=None
-  params.pdb_interpretation.ramachandran_plot_restraints.outlier="oldfield"
-  model.process(make_restraints=True,
-    pdb_interpretation_params=params)
-  grm = model.get_restraints_manager().geometry
-  nprox = grm.ramachandran_manager.get_n_proxies()
-  # print "without allowed", nprox
-  assert nprox == 167
-  no_all_proxies_iseqs = list(tuple(x.get_i_seqs()) for x in grm.ramachandran_manager._oldfield_proxies)
-  sdif_list = sorted(list(set(full_proxies_iseqs) - set(no_all_proxies_iseqs)))
-  allowed_txt_list = [
-      'pdb=" N   THR A   5 "',
-      'pdb=" N   LEU B   4 "',
-      'pdb=" N   SER B  38 "']
-  # print "allowed"
-  for a, answer in zip(sdif_list, allowed_txt_list):
-    # print model.get_hierarchy().atoms()[a[1]].id_str()
-    assert model.get_hierarchy().atoms()[a[1]].id_str() == answer
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    params.pdb_interpretation.ramachandran_plot_restraints.favored = "oldfield"
+    params.pdb_interpretation.ramachandran_plot_restraints.allowed = None
+    params.pdb_interpretation.ramachandran_plot_restraints.outlier = "oldfield"
+    model.process(make_restraints=True, pdb_interpretation_params=params)
+    grm = model.get_restraints_manager().geometry
+    nprox = grm.ramachandran_manager.get_n_proxies()
+    # print "without allowed", nprox
+    assert nprox == 167
+    no_all_proxies_iseqs = list(
+        tuple(x.get_i_seqs()) for x in grm.ramachandran_manager._oldfield_proxies
+    )
+    sdif_list = sorted(list(set(full_proxies_iseqs) - set(no_all_proxies_iseqs)))
+    allowed_txt_list = [
+        'pdb=" N   THR A   5 "',
+        'pdb=" N   LEU B   4 "',
+        'pdb=" N   SER B  38 "',
+    ]
+    # print "allowed"
+    for a, answer in zip(sdif_list, allowed_txt_list):
+        # print model.get_hierarchy().atoms()[a[1]].id_str()
+        assert model.get_hierarchy().atoms()[a[1]].id_str() == answer
 
-  params.pdb_interpretation.ramachandran_plot_restraints.favored="oldfield"
-  params.pdb_interpretation.ramachandran_plot_restraints.allowed=None
-  params.pdb_interpretation.ramachandran_plot_restraints.outlier=None
+    params.pdb_interpretation.ramachandran_plot_restraints.favored = "oldfield"
+    params.pdb_interpretation.ramachandran_plot_restraints.allowed = None
+    params.pdb_interpretation.ramachandran_plot_restraints.outlier = None
 
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  model.process(make_restraints=True,
-    pdb_interpretation_params=params)
-  grm = model.get_restraints_manager().geometry
-  nprox = grm.ramachandran_manager.get_n_proxies()
-  # print "without both", nprox
-  assert nprox == 164
-  no_both_proxies_iseqs = list(tuple(x.get_i_seqs()) for x in grm.ramachandran_manager._oldfield_proxies)
-  sdif_list = sorted(list(set(full_proxies_iseqs) - set(no_both_proxies_iseqs)))
-  both_txt_list = [
-      'pdb=" N   THR A   5 "',
-      'pdb=" N   LEU B   4 "',
-      'pdb=" N   THR B   5 "',
-      'pdb=" N   GLU B   6 "',
-      'pdb=" N   SER B  38 "',
-      'pdb=" N   SER B  81 "']
-  # print "both"
-  for a, answer in zip(sdif_list, both_txt_list):
-    # print model.get_hierarchy().atoms()[a[1]].id_str()
-    assert model.get_hierarchy().atoms()[a[1]].id_str() == answer
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True, pdb_interpretation_params=params)
+    grm = model.get_restraints_manager().geometry
+    nprox = grm.ramachandran_manager.get_n_proxies()
+    # print "without both", nprox
+    assert nprox == 164
+    no_both_proxies_iseqs = list(
+        tuple(x.get_i_seqs()) for x in grm.ramachandran_manager._oldfield_proxies
+    )
+    sdif_list = sorted(list(set(full_proxies_iseqs) - set(no_both_proxies_iseqs)))
+    both_txt_list = [
+        'pdb=" N   THR A   5 "',
+        'pdb=" N   LEU B   4 "',
+        'pdb=" N   THR B   5 "',
+        'pdb=" N   GLU B   6 "',
+        'pdb=" N   SER B  38 "',
+        'pdb=" N   SER B  81 "',
+    ]
+    # print "both"
+    for a, answer in zip(sdif_list, both_txt_list):
+        # print model.get_hierarchy().atoms()[a[1]].id_str()
+        assert model.get_hierarchy().atoms()[a[1]].id_str() == answer
+
 
 def exercise_allowed_outliers_emsley_filling():
-  file_name = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/3ifk.pdb",
-    test=os.path.isfile)
-  if (file_name is None):
-    print("Skipping test.")
-    return
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.ramachandran_plot_restraints.enabled=True
-  params.pdb_interpretation.ramachandran_plot_restraints.favored="oldfield"
-  params.pdb_interpretation.ramachandran_plot_restraints.allowed="emsley"
-  params.pdb_interpretation.ramachandran_plot_restraints.outlier=None
-  params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored=False
+    file_name = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/3ifk.pdb", test=os.path.isfile
+    )
+    if file_name is None:
+        print("Skipping test.")
+        return
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.ramachandran_plot_restraints.enabled = True
+    params.pdb_interpretation.ramachandran_plot_restraints.favored = "oldfield"
+    params.pdb_interpretation.ramachandran_plot_restraints.allowed = "emsley"
+    params.pdb_interpretation.ramachandran_plot_restraints.outlier = None
+    params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored = (
+        False
+    )
 
-  pdb_inp = iotbx.pdb.input(file_name=file_name)
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  assert grm.ramachandran_manager.get_n_proxies() == 167
-  assert grm.ramachandran_manager.get_n_oldfield_proxies() == 164
-  assert grm.ramachandran_manager.get_n_emsley_proxies() == 3
-  params.pdb_interpretation.ramachandran_plot_restraints.enabled=True
-  params.pdb_interpretation.ramachandran_plot_restraints.favored="oldfield"
-  params.pdb_interpretation.ramachandran_plot_restraints.allowed=None
-  params.pdb_interpretation.ramachandran_plot_restraints.outlier=None
+    pdb_inp = iotbx.pdb.input(file_name=file_name)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    assert grm.ramachandran_manager.get_n_proxies() == 167
+    assert grm.ramachandran_manager.get_n_oldfield_proxies() == 164
+    assert grm.ramachandran_manager.get_n_emsley_proxies() == 3
+    params.pdb_interpretation.ramachandran_plot_restraints.enabled = True
+    params.pdb_interpretation.ramachandran_plot_restraints.favored = "oldfield"
+    params.pdb_interpretation.ramachandran_plot_restraints.allowed = None
+    params.pdb_interpretation.ramachandran_plot_restraints.outlier = None
 
-  pdb_inp = iotbx.pdb.input(file_name=file_name)
-  model = mmtbx.model.manager(
-      model_input=pdb_inp,
-      log=null_out())
-  model.process(make_restraints=True,
-    pdb_interpretation_params=params)
-  grm = model.get_restraints_manager().geometry
-  nprox = grm.ramachandran_manager.get_n_proxies()
-  assert nprox == 164, nprox
-  assert grm.ramachandran_manager.get_n_oldfield_proxies() == 164
-  assert grm.ramachandran_manager.get_n_emsley_proxies() == 0
+    pdb_inp = iotbx.pdb.input(file_name=file_name)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True, pdb_interpretation_params=params)
+    grm = model.get_restraints_manager().geometry
+    nprox = grm.ramachandran_manager.get_n_proxies()
+    assert nprox == 164, nprox
+    assert grm.ramachandran_manager.get_n_oldfield_proxies() == 164
+    assert grm.ramachandran_manager.get_n_emsley_proxies() == 0
+
 
 def exercise_acs(mon_lib_srv, ener_lib):
-  ac_pdb1 = """\
+    ac_pdb1 = """\
 CRYST1   72.072   33.173   34.033  90.00  90.00  90.00 P 1
 SCALE1      0.013875  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.030145  0.000000        0.00000
@@ -794,7 +808,7 @@ ATOM    537  CB  GLU B   3       7.115  11.041  22.731  1.00 20.00           C
 ATOM    538  HA  GLU B   3       8.761  12.248  22.034  1.00 20.00           H
 ATOM    539  H  AGLU B   3       7.474  10.360  20.122  0.50 20.00           H
 ATOM    540  D  BGLU B   3       7.474  10.360  20.122  0.50 20.00           D """
-  ac_pdb2 = """\
+    ac_pdb2 = """\
 CRYST1   72.072   33.173   34.033  90.00  90.00  90.00 P 1
 SCALE1      0.013875  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.030145  0.000000        0.00000
@@ -822,7 +836,7 @@ ATOM    537  CB  GLU B   3       7.115  11.041  22.731  1.00 20.00           C
 ATOM    538  HA  GLU B   3       8.761  12.248  22.034  1.00 20.00           H
 ATOM    539  H  AGLU B   3       7.474  10.360  20.122  0.50 20.00           H
 ATOM    540  D  BGLU B   3       7.474  10.360  20.122  0.50 20.00           D """
-  no_ac_pdb = """\
+    no_ac_pdb = """\
 CRYST1   72.072   33.173   34.033  90.00  90.00  90.00 P 1
 SCALE1      0.013875  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.030145  0.000000        0.00000
@@ -843,52 +857,70 @@ ATOM    535  C   GLU B   3       9.344  10.190  21.979  1.00 20.00           C
 ATOM    536  O   GLU B   3      10.197  10.267  22.867  1.00 20.00           O
 ATOM    537  CB  GLU B   3       7.115  11.041  22.731  1.00 20.00           C
 """
-  for correct_nprox, pdb_str in [
-      (1, ac_pdb1),
-      (2, ac_pdb2),
-      (1, no_ac_pdb),
-      ]:
-    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-    #params.pdb_interpretation.peptide_link.ramachandran_restraints = True
+    for correct_nprox, pdb_str in [
+        (1, ac_pdb1),
+        (2, ac_pdb2),
+        (1, no_ac_pdb),
+    ]:
+        params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+        # params.pdb_interpretation.peptide_link.ramachandran_restraints = True
 
-    params.pdb_interpretation.ramachandran_plot_restraints.enabled = True
-    params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored=False
+        params.pdb_interpretation.ramachandran_plot_restraints.enabled = True
+        params.pdb_interpretation.ramachandran_plot_restraints.inject_emsley8k_into_oldfield_favored = (
+            False
+        )
 
-    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-    model = mmtbx.model.manager(
-        model_input=pdb_inp,
-        log=null_out())
-    model.process(pdb_interpretation_params=params, make_restraints=True)
-    grm = model.get_restraints_manager().geometry
-    nprox = grm.ramachandran_manager.get_n_proxies()
-    assert nprox == correct_nprox, ""+\
-        "Want to get %d rama proxies, got %d" % (correct_nprox, nprox)
+        pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+        model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+        model.process(pdb_interpretation_params=params, make_restraints=True)
+        grm = model.get_restraints_manager().geometry
+        nprox = grm.ramachandran_manager.get_n_proxies()
+        assert nprox == correct_nprox, "" + "Want to get %d rama proxies, got %d" % (
+            correct_nprox,
+            nprox,
+        )
 
-if __name__ == "__main__" :
-  import time
-  mon_lib_srv = server.server()
-  ener_lib = server.ener_lib()
-  t0 = time.time()
-  exercise_basic()
-  t1 = time.time()
-  exercise_lbfgs_simple(mon_lib_srv, ener_lib,
-      ("--verbose" in sys.argv) or ("-v" in sys.argv))
-  t2 = time.time()
-  if ("--full" in sys.argv):
-    exercise_lbfgs_big(mon_lib_srv, ener_lib,
-        ("--verbose" in sys.argv) or ("-v" in sys.argv))
-  t3 = time.time()
-  exercise_geo_output(mon_lib_srv, ener_lib)
-  exercise_manager_selection(mon_lib_srv, ener_lib)
-  t4 = time.time()
-  exercise_ramachandran_selections(mon_lib_srv, ener_lib)
-  t5 = time.time()
-  exercise_allowed_outliers()
-  t6 = time.time()
-  exercise_allowed_outliers_emsley_filling()
-  t7 = time.time()
-  exercise_acs(mon_lib_srv, ener_lib)
-  t8 = time.time()
-  print("Times: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f. Total: %.3f" % (
-      t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, t7-t6, t8-t7, t8-t0))
-  print("OK")
+
+if __name__ == "__main__":
+    import time
+
+    mon_lib_srv = server.server()
+    ener_lib = server.ener_lib()
+    t0 = time.time()
+    exercise_basic()
+    t1 = time.time()
+    exercise_lbfgs_simple(
+        mon_lib_srv, ener_lib, ("--verbose" in sys.argv) or ("-v" in sys.argv)
+    )
+    t2 = time.time()
+    if "--full" in sys.argv:
+        exercise_lbfgs_big(
+            mon_lib_srv, ener_lib, ("--verbose" in sys.argv) or ("-v" in sys.argv)
+        )
+    t3 = time.time()
+    exercise_geo_output(mon_lib_srv, ener_lib)
+    exercise_manager_selection(mon_lib_srv, ener_lib)
+    t4 = time.time()
+    exercise_ramachandran_selections(mon_lib_srv, ener_lib)
+    t5 = time.time()
+    exercise_allowed_outliers()
+    t6 = time.time()
+    exercise_allowed_outliers_emsley_filling()
+    t7 = time.time()
+    exercise_acs(mon_lib_srv, ener_lib)
+    t8 = time.time()
+    print(
+        "Times: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f. Total: %.3f"
+        % (
+            t1 - t0,
+            t2 - t1,
+            t3 - t2,
+            t4 - t3,
+            t5 - t4,
+            t6 - t5,
+            t7 - t6,
+            t8 - t7,
+            t8 - t0,
+        )
+    )
+    print("OK")

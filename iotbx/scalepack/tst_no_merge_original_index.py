@@ -1,15 +1,16 @@
-
 from __future__ import absolute_import, division, print_function
 from libtbx.test_utils import show_diff
 import warnings
 
+
 def exercise():
-  from iotbx.scalepack import no_merge_original_index
-  from cctbx import crystal
-  # input from xia2 with one slight modification to the (44,0,-25) observation,
-  # as pointless/aimless seem to have a slightly different convention for ASU
-  # mapping.  (Scalepack itself is even more deviant.)
-  sca_raw = """\
+    from iotbx.scalepack import no_merge_original_index
+    from cctbx import crystal
+
+    # input from xia2 with one slight modification to the (44,0,-25) observation,
+    # as pointless/aimless seem to have a slightly different convention for ASU
+    # mapping.  (Scalepack itself is even more deviant.)
+    sca_raw = """\
     2 P 1 21 1
   1  0  0  0  1  0  0  0  1
   0  0  0
@@ -41,33 +42,33 @@ def exercise():
   38   2 -58 -38   2  58   267 1 0  2    69.6    92.7
   38  -2 -58 -38   2  58   267 2 0  1  -153.1   132.2
 """
-  hkl_in = "tst_scalepack_unmerged_writer.sca"
-  hkl_out = "tst_scalepack_unmerged_writer_out.sca"
-  with open(hkl_in, "w") as f:
-    f.write(sca_raw)
-  reader = no_merge_original_index.reader(hkl_in)
-  symm = crystal.symmetry(
-    space_group_symbol="P21",
-    unit_cell=(80.882, 51.511, 141.371, 90., 106.588, 90.))
-  i_obs = reader.as_miller_array(
-    crystal_symmetry=symm,
-    merge_equivalents=False)
-  i_obs.export_as_scalepack_unmerged(
-    file_name=hkl_out,
-    batch_numbers=reader.batch_numbers,
-    spindle_flags=reader.spindle_flags)
-  with open(hkl_out) as f:
-    sca_recycled = f.read()
-  assert not show_diff(sca_recycled, sca_raw)
-  batches = reader.batch_as_miller_array(crystal_symmetry=symm)
-  assert batches.indices().all_eq(i_obs.indices())
-  assert (batches.data()[0] == 316)
-  mas = reader.as_miller_arrays()
-  assert len(mas) == 2
-  assert mas[0].info().labels == ["I(+)", "SIGI(+)", "I(-)", "SIGI(-)"]
-  assert mas[1].info().labels == ["BATCH"]
-  # space group symbol and symops conflict (Scalepack bug?)
-  sca_bad = """\
+    hkl_in = "tst_scalepack_unmerged_writer.sca"
+    hkl_out = "tst_scalepack_unmerged_writer_out.sca"
+    with open(hkl_in, "w") as f:
+        f.write(sca_raw)
+    reader = no_merge_original_index.reader(hkl_in)
+    symm = crystal.symmetry(
+        space_group_symbol="P21",
+        unit_cell=(80.882, 51.511, 141.371, 90.0, 106.588, 90.0),
+    )
+    i_obs = reader.as_miller_array(crystal_symmetry=symm, merge_equivalents=False)
+    i_obs.export_as_scalepack_unmerged(
+        file_name=hkl_out,
+        batch_numbers=reader.batch_numbers,
+        spindle_flags=reader.spindle_flags,
+    )
+    with open(hkl_out) as f:
+        sca_recycled = f.read()
+    assert not show_diff(sca_recycled, sca_raw)
+    batches = reader.batch_as_miller_array(crystal_symmetry=symm)
+    assert batches.indices().all_eq(i_obs.indices())
+    assert batches.data()[0] == 316
+    mas = reader.as_miller_arrays()
+    assert len(mas) == 2
+    assert mas[0].info().labels == ["I(+)", "SIGI(+)", "I(-)", "SIGI(-)"]
+    assert mas[1].info().labels == ["BATCH"]
+    # space group symbol and symops conflict (Scalepack bug?)
+    sca_bad = """\
    24 f4132
   1  0  0  0  1  0  0  0  1
   0  0  0
@@ -125,16 +126,17 @@ def exercise():
   -3  -1  -1   3   1   1   217 0 1  4   588.2    53.9
   -3  -1  -1   3   1   1   579 0 0  4   552.4    53.9
 """
-  hkl_in = "tst_scalepack_unmerged_writer2.sca"
-  hkl_out = "tst_scalepack_unmerged_writer2_out.sca"
-  with open(hkl_in, "w") as f:
-    f.write(sca_bad)
-  reader = no_merge_original_index.reader(hkl_in)
-  with warnings.catch_warnings(record=True) as w:
-    space_group_info = reader.space_group_info()
-    assert (len(w) == 1)
-    assert (str(space_group_info) == "F 41 3 2")
+    hkl_in = "tst_scalepack_unmerged_writer2.sca"
+    hkl_out = "tst_scalepack_unmerged_writer2_out.sca"
+    with open(hkl_in, "w") as f:
+        f.write(sca_bad)
+    reader = no_merge_original_index.reader(hkl_in)
+    with warnings.catch_warnings(record=True) as w:
+        space_group_info = reader.space_group_info()
+        assert len(w) == 1
+        assert str(space_group_info) == "F 41 3 2"
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

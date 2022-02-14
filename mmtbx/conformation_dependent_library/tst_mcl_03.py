@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from libtbx import easy_run
 
-pdb_string = '''
+pdb_string = """
 CRYST1  111.035  111.035  103.765  90.00  90.00  90.00 P 42 21 2
 SCALE1      0.009006  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.009006  0.000000        0.00000
@@ -138,18 +138,20 @@ HETATM  127 FE2  SF4 A 605       7.863  40.820  19.591  0.72 17.44          Fe
 HETATM  128 FE3  SF4 A 605       6.948  41.912  17.304  0.74 17.32          Fe
 HETATM  129 FE4  SF4 A 605       8.114  43.542  19.144  0.73 18.33          Fe
 END
-'''
+"""
+
 
 def main():
-  with open('tst_mcl_03.pdb', 'w') as f:
-    f.write(pdb_string)
-  cmd = 'phenix.pdb_interpretation tst_mcl_03.pdb write_geo=1'
-  print (cmd)
-  rc = easy_run.go(cmd)
-  assert os.path.exists('tst_mcl_03.pdb.geo')
-  return rc.return_code
+    with open("tst_mcl_03.pdb", "w") as f:
+        f.write(pdb_string)
+    cmd = "phenix.pdb_interpretation tst_mcl_03.pdb write_geo=1"
+    print(cmd)
+    rc = easy_run.go(cmd)
+    assert os.path.exists("tst_mcl_03.pdb.geo")
+    return rc.return_code
 
-if __name__ == '__main__':
-  rc = main()
-  assert not rc
-  print('OK')
+
+if __name__ == "__main__":
+    rc = main()
+    assert not rc
+    print("OK")

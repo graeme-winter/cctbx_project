@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 ## This file conatins some usefull transformations
 ## for the generation of specific random variables
 import random
@@ -19,13 +20,11 @@ from six.moves import range
 ## mu4 = 3 (2.99848)
 ## It behaves as expected.
 ## Similar results are obtained when changing mu and sigma.
-def normal_variate(mu=0.0,sigma=1.0,N=100):
-  "Normal variate via Box-Muller transform"
-  U1 = flex.random_double(size=N)
-  U2 = flex.random_double(size=N)
-  return flex.sqrt(-2.0*flex.log(U1))*flex.cos(2.0*math.pi*U2)*sigma+mu
-
-
+def normal_variate(mu=0.0, sigma=1.0, N=100):
+    "Normal variate via Box-Muller transform"
+    U1 = flex.random_double(size=N)
+    U2 = flex.random_double(size=N)
+    return flex.sqrt(-2.0 * flex.log(U1)) * flex.cos(2.0 * math.pi * U2) * sigma + mu
 
 
 ## This function generates approximately
@@ -40,14 +39,16 @@ def normal_variate(mu=0.0,sigma=1.0,N=100):
 ## mu2 = 1.5  ( 1.49899419)
 ## mu3 = 0    (-0.01446477)
 ## mu3 = 13.5 (13.29293869)
-def t_variate(a=1.0,mu=0.0,sigma=1.0,N=100):
-  "T-variate via Baley's one-liner"
-  U1 = flex.random_double(size=N)
-  U2 = flex.random_double(size=N)
-  return ( flex.sqrt(a*(flex.pow(U1,-2.0/a)-1.0))
-           *flex.cos(2.0*math.pi*U2)*sigma+mu )
-
-
+def t_variate(a=1.0, mu=0.0, sigma=1.0, N=100):
+    "T-variate via Baley's one-liner"
+    U1 = flex.random_double(size=N)
+    U2 = flex.random_double(size=N)
+    return (
+        flex.sqrt(a * (flex.pow(U1, -2.0 / a) - 1.0))
+        * flex.cos(2.0 * math.pi * U2)
+        * sigma
+        + mu
+    )
 
 
 ## This function generates approximately
@@ -59,41 +60,44 @@ def t_variate(a=1.0,mu=0.0,sigma=1.0,N=100):
 ## mu2 : 1      (0.99946)
 ## mu4 : 2      (1.99826)
 
+
 def wilson_amplitude_variate(N=100):
-  "Wilson amplitude variate; The Rayleigh distribution"
-  ## Get wilson variate via two gaussians with half a variance
-  A = normal_variate(mu=0,sigma=math.sqrt(0.5),N=N)
-  B = normal_variate(mu=0,sigma=math.sqrt(0.5),N=N)
-  return flex.sqrt(A*A+B*B)
+    "Wilson amplitude variate; The Rayleigh distribution"
+    ## Get wilson variate via two gaussians with half a variance
+    A = normal_variate(mu=0, sigma=math.sqrt(0.5), N=N)
+    B = normal_variate(mu=0, sigma=math.sqrt(0.5), N=N)
+    return flex.sqrt(A * A + B * B)
+
 
 # As before, this takes about 0.81 seconds for 1 million r.v.'s
 def wilson_intensity_variate(N=100):
-  "Wilson intensity variate; The exponetial distribution"
-  return flex.pow2(wilson_amplitude_variate(N=N))
+    "Wilson intensity variate; The exponetial distribution"
+    return flex.pow2(wilson_amplitude_variate(N=N))
+
 
 # This random variate is distributed as the (error free) |I+-I-|
 # normalised by 4*( (sum f") * (sum  f_nought) )^(1/2)
 def pseudo_normalized_abs_delta_i(N=100):
-  x = flex.random_double(size=N)
-  x = -0.5*flex.log( 1.0-x )
-  return(x)
-
+    x = flex.random_double(size=N)
+    x = -0.5 * flex.log(1.0 - x)
+    return x
 
 
 def poisson_variate(N=100, llambda=1):
-  import random
-  result = flex.int()
-  assert llambda >= 0
-  l = math.exp(-llambda)
-  for ii in range(N):
-    x = 0
-    p = 1.0
-    done =False
-    while not done:
-      x = x + 1
-      u = random.random()
-      p = p*u
-      if p <= l:
-        done = True
-    result.append( x-1 )
-  return result
+    import random
+
+    result = flex.int()
+    assert llambda >= 0
+    l = math.exp(-llambda)
+    for ii in range(N):
+        x = 0
+        p = 1.0
+        done = False
+        while not done:
+            x = x + 1
+            u = random.random()
+            p = p * u
+            if p <= l:
+                done = True
+        result.append(x - 1)
+    return result

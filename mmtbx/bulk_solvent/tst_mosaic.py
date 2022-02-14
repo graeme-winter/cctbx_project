@@ -3,6 +3,7 @@ import iotbx.pdb
 import time
 from scitbx.array_family import flex
 import boost_adaptbx.boost.python as bp
+
 asu_map_ext = bp.import_ext("cctbx_asymmetric_map_ext")
 from libtbx.test_utils import approx_equal
 from libtbx import group_args
@@ -1019,118 +1020,169 @@ TER
 END
 """
 
+
 def write_ccp4_map(cg, file_name, mc=None, map_data=None):
-  assert [mc, map_data].count(None)==1
-  if(map_data is None):
-    map_data = get_map(mc=mc, cg=cg)
-  from iotbx import mrcfile
-  mrcfile.write_ccp4_map(
-      file_name=file_name,
-      unit_cell=cg.unit_cell(),
-      space_group=cg.space_group(),
-      #gridding_first=(0,0,0),# This causes a bug (map gets shifted)
-      #gridding_last=n_real,  # This causes a bug (map gets shifted)
-      map_data=map_data,
-      labels=flex.std_string([""]))
+    assert [mc, map_data].count(None) == 1
+    if map_data is None:
+        map_data = get_map(mc=mc, cg=cg)
+    from iotbx import mrcfile
+
+    mrcfile.write_ccp4_map(
+        file_name=file_name,
+        unit_cell=cg.unit_cell(),
+        space_group=cg.space_group(),
+        # gridding_first=(0,0,0),# This causes a bug (map gets shifted)
+        # gridding_last=n_real,  # This causes a bug (map gets shifted)
+        map_data=map_data,
+        labels=flex.std_string([""]),
+    )
+
 
 def common_inputs(k_sols, for_test):
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  xrs = pdb_inp.xray_structure_simple()
-  sgt = xrs.space_group().type()
-  fc  = xrs.structure_factors(d_min=4).f_calc()
-  #
-  mm = mosaic.f_masks(
-    f_obs          = abs(fc),
-    #f_calc         = fc,
-    xray_structure = xrs,
-    step           = 0.5,
-    volume_cutoff  = 6)
-  # Make Fobs
-  f_bulk_data = flex.complex_double(fc.data().size())
-  for f_mask, k_sol in zip(mm.FV.keys(), k_sols):
-    f_bulk_data += f_mask.data() * k_sol
-  f_obs = fc.customized_copy(data = flex.abs(fc.data()+f_bulk_data))
-  i_obs = f_obs.customized_copy(data = f_obs.data()*f_obs.data())
-  return group_args(mm=mm, f_obs=f_obs, i_obs=i_obs, fc=fc)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    xrs = pdb_inp.xray_structure_simple()
+    sgt = xrs.space_group().type()
+    fc = xrs.structure_factors(d_min=4).f_calc()
+    #
+    mm = mosaic.f_masks(
+        f_obs=abs(fc),
+        # f_calc         = fc,
+        xray_structure=xrs,
+        step=0.5,
+        volume_cutoff=6,
+    )
+    # Make Fobs
+    f_bulk_data = flex.complex_double(fc.data().size())
+    for f_mask, k_sol in zip(mm.FV.keys(), k_sols):
+        f_bulk_data += f_mask.data() * k_sol
+    f_obs = fc.customized_copy(data=flex.abs(fc.data() + f_bulk_data))
+    i_obs = f_obs.customized_copy(data=f_obs.data() * f_obs.data())
+    return group_args(mm=mm, f_obs=f_obs, i_obs=i_obs, fc=fc)
+
 
 def run2():
-  def rfactor(x,y):
-    n = flex.sum(flex.abs(x-y))
-    d = flex.sum(flex.abs(x+y))
-    if(d!=0): return n/d
-    else:     return None
-  for it in range(1):
-    k_sols = flex.random_double(6)
-    answer = flex.double([1,])
-    answer.extend(k_sols)
-    inp = common_inputs(k_sols=k_sols, for_test=False)
-    x = flex.double([1,])
-    x.extend(flex.random_double(6))
-    result1 = mosaic.algorithm_2(
-      i_obs          = inp.i_obs,
-      F              = [inp.fc]+list(inp.mm.FV.keys()),
-      x              = x.deep_copy(),
-      use_curvatures = True)
-    result2 = mosaic.algorithm_2(
-      i_obs          = inp.i_obs,
-      F              = [inp.fc]+list(inp.mm.FV.keys()),
-      x              = x.deep_copy(),
-      use_curvatures = False)
-    print (rfactor(answer, result1), rfactor(answer, result2))
+    def rfactor(x, y):
+        n = flex.sum(flex.abs(x - y))
+        d = flex.sum(flex.abs(x + y))
+        if d != 0:
+            return n / d
+        else:
+            return None
+
+    for it in range(1):
+        k_sols = flex.random_double(6)
+        answer = flex.double(
+            [
+                1,
+            ]
+        )
+        answer.extend(k_sols)
+        inp = common_inputs(k_sols=k_sols, for_test=False)
+        x = flex.double(
+            [
+                1,
+            ]
+        )
+        x.extend(flex.random_double(6))
+        result1 = mosaic.algorithm_2(
+            i_obs=inp.i_obs,
+            F=[inp.fc] + list(inp.mm.FV.keys()),
+            x=x.deep_copy(),
+            use_curvatures=True,
+        )
+        result2 = mosaic.algorithm_2(
+            i_obs=inp.i_obs,
+            F=[inp.fc] + list(inp.mm.FV.keys()),
+            x=x.deep_copy(),
+            use_curvatures=False,
+        )
+        print(rfactor(answer, result1), rfactor(answer, result2))
+
 
 def run():
-  k_sols = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-  inp = common_inputs(k_sols=k_sols, for_test=True)
-  mm, f_obs, i_obs, fc = inp.mm, inp.f_obs, inp.i_obs, inp.fc
-  # Initial k_sols for finite differences test and minimization (algorithm_2)
-  x = flex.double([1,  .01,.01,.01, .01,.01,.01])
-  # Finite differences test
-  g_anal = mosaic.tg(i_obs = i_obs, F=[fc]+list(mm.FV.keys()), x=x, use_curvatures=False).gradients()
-  e=1.e-6
-  g_fd = flex.double()
-  for i in [0,1,2,3,4,5,6]:
-    x_ = x[:]
-    x_[i] = x_[i]+e
-    t1 = mosaic.tg(i_obs = i_obs, F=[fc]+list(mm.FV.keys()), x=x_, use_curvatures=False).target()
-    x_ = x[:]
-    x_[i] = x_[i]-e
-    t2 = mosaic.tg(i_obs = i_obs, F=[fc]+list(mm.FV.keys()), x=x_, use_curvatures=False).target()
-    g_fd.append( (t1-t2)/(2*e) )
-  assert flex.sum(flex.abs(g_anal-g_fd))*2/flex.sum(flex.abs(g_anal+g_fd))<1.e-9
-  #
-  for use_cpp in [True, False]:
-    r = mosaic.algorithm_4(
-      f_obs             = f_obs,
-      phase_source      = fc,
-      F                 = [fc]+list(inp.mm.FV.keys()),
-      auto_converge_eps = 1.e-9,
-      use_cpp           = use_cpp)
-    assert approx_equal(r, [1,]+k_sols)
-  #
-  r = mosaic.algorithm_3(
-    i_obs = i_obs,
-    fc = fc,
-    f_masks = list(mm.FV.keys())
+    k_sols = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    inp = common_inputs(k_sols=k_sols, for_test=True)
+    mm, f_obs, i_obs, fc = inp.mm, inp.f_obs, inp.i_obs, inp.fc
+    # Initial k_sols for finite differences test and minimization (algorithm_2)
+    x = flex.double([1, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])
+    # Finite differences test
+    g_anal = mosaic.tg(
+        i_obs=i_obs, F=[fc] + list(mm.FV.keys()), x=x, use_curvatures=False
+    ).gradients()
+    e = 1.0e-6
+    g_fd = flex.double()
+    for i in [0, 1, 2, 3, 4, 5, 6]:
+        x_ = x[:]
+        x_[i] = x_[i] + e
+        t1 = mosaic.tg(
+            i_obs=i_obs, F=[fc] + list(mm.FV.keys()), x=x_, use_curvatures=False
+        ).target()
+        x_ = x[:]
+        x_[i] = x_[i] - e
+        t2 = mosaic.tg(
+            i_obs=i_obs, F=[fc] + list(mm.FV.keys()), x=x_, use_curvatures=False
+        ).target()
+        g_fd.append((t1 - t2) / (2 * e))
+    assert (
+        flex.sum(flex.abs(g_anal - g_fd)) * 2 / flex.sum(flex.abs(g_anal + g_fd))
+        < 1.0e-9
     )
-  assert approx_equal(r, [1,]+k_sols)
-  #
-  r = mosaic.algorithm_2(
-    i_obs = i_obs,
-    F = [fc]+list(inp.mm.FV.keys()),
-    x = flex.double(x))
-  assert approx_equal(r, [1,]+k_sols)
-  #
-  r = mosaic.algorithm_2(
-    i_obs = i_obs,
-    F = [fc]+list(inp.mm.FV.keys()),
-    x = flex.double(x),
-    use_curvatures = False,
-    macro_cycles=100)
-  assert approx_equal(r, [1,]+k_sols, 1.e-3)
+    #
+    for use_cpp in [True, False]:
+        r = mosaic.algorithm_4(
+            f_obs=f_obs,
+            phase_source=fc,
+            F=[fc] + list(inp.mm.FV.keys()),
+            auto_converge_eps=1.0e-9,
+            use_cpp=use_cpp,
+        )
+        assert approx_equal(
+            r,
+            [
+                1,
+            ]
+            + k_sols,
+        )
+    #
+    r = mosaic.algorithm_3(i_obs=i_obs, fc=fc, f_masks=list(mm.FV.keys()))
+    assert approx_equal(
+        r,
+        [
+            1,
+        ]
+        + k_sols,
+    )
+    #
+    r = mosaic.algorithm_2(
+        i_obs=i_obs, F=[fc] + list(inp.mm.FV.keys()), x=flex.double(x)
+    )
+    assert approx_equal(
+        r,
+        [
+            1,
+        ]
+        + k_sols,
+    )
+    #
+    r = mosaic.algorithm_2(
+        i_obs=i_obs,
+        F=[fc] + list(inp.mm.FV.keys()),
+        x=flex.double(x),
+        use_curvatures=False,
+        macro_cycles=100,
+    )
+    assert approx_equal(
+        r,
+        [
+            1,
+        ]
+        + k_sols,
+        1.0e-3,
+    )
 
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print ("Total time: %-8.4f"%(time.time()-t0))
-  print ("OK")
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("Total time: %-8.4f" % (time.time() - t0))
+    print("OK")

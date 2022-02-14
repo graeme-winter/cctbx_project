@@ -7,10 +7,12 @@ import iotbx.pdb
 from iotbx.cli_parser import run_program
 from mmtbx.programs import pdb_as_cif
 
+
 def exercise_01():
-  if (os.path.isfile("tst_pdb_as_cif_1.cif")):
-    os.remove("tst_pdb_as_cif_1.cif")
-  open("tst_pdb_as_cif_1.pdb", "w").write("""\
+    if os.path.isfile("tst_pdb_as_cif_1.cif"):
+        os.remove("tst_pdb_as_cif_1.cif")
+    open("tst_pdb_as_cif_1.pdb", "w").write(
+        """\
 CRYST1   97.470  113.870  196.190  90.00  90.00  90.00 P 21 21 21   16
 SCALE1      0.010260  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.008782  0.000000        0.00000
@@ -31,15 +33,18 @@ ATOM     13  CB  LEU A  44      11.428  27.808  61.775  1.00182.68           C
 ATOM     14  CG  LEU A  44      11.367  28.820  62.893  1.00182.68           C
 ATOM     15  CD1 LEU A  44      10.820  28.175  64.124  1.00182.68           C
 ATOM     16  CD2 LEU A  44      12.755  29.420  63.073  1.00182.68           C
-""")
-  run_program(program_class=pdb_as_cif.Program,
-              args=["tst_pdb_as_cif_1.pdb"],
-              logger=null_out(),
-              )
-  assert os.path.isfile("tst_pdb_as_cif_1.cif")
-  cif_in = iotbx.pdb.input("tst_pdb_as_cif_1.cif")
-  hierarchy = cif_in.construct_hierarchy()
-  open("tst_pdb_as_cif_2.pdb", "w").write("""\
+"""
+    )
+    run_program(
+        program_class=pdb_as_cif.Program,
+        args=["tst_pdb_as_cif_1.pdb"],
+        logger=null_out(),
+    )
+    assert os.path.isfile("tst_pdb_as_cif_1.cif")
+    cif_in = iotbx.pdb.input("tst_pdb_as_cif_1.cif")
+    hierarchy = cif_in.construct_hierarchy()
+    open("tst_pdb_as_cif_2.pdb", "w").write(
+        """\
 CRYST1    1.000    1.000    1.000  90.00  90.00  90.00 P 1
 SCALE1      1.000000  0.000000  0.000000        0.00000
 SCALE2      0.000000  1.000000  0.000000        0.00000
@@ -53,62 +58,77 @@ ATOM      6 N    GLY     2      25.198  26.203  18.856  1.00  8.14
 ATOM      7 CA   GLY     2      25.677  25.977  17.535  1.00 10.65
 ATOM      8 C    GLY     2      26.113  24.580  17.267  1.00  9.83
 ATOM      9 O    GLY     2      26.154  23.705  18.108  1.00  9.22
-""")
-  out = StringIO()
-  try:
-    run_program(program_class=pdb_as_cif.Program,
-                args=["tst_pdb_as_cif_2.pdb"],
-                logger=out,
-                )
-  except Exception as e:
-    pass
-  if 0:
-    assert (out.getvalue() == """\
+"""
+    )
+    out = StringIO()
+    try:
+        run_program(
+            program_class=pdb_as_cif.Program,
+            args=["tst_pdb_as_cif_2.pdb"],
+            logger=out,
+        )
+    except Exception as e:
+        pass
+    if 0:
+        assert (
+            out.getvalue()
+            == """\
   Converting tst_pdb_as_cif_2.pdb to mmCIF format.
   Error converting tst_pdb_as_cif_2.pdb to mmCIF format:
     Missing element symbol for 7 atoms.
-  """)
-  assert not os.path.isfile("tst_pdb_as_cif_2.cif")
+  """
+        )
+    assert not os.path.isfile("tst_pdb_as_cif_2.cif")
+
 
 def exercise_02():
-  if (os.path.isfile("tst_pdb_as_cif_2.cif")):
-    os.remove("tst_pdb_as_cif_2.cif")
-  open("tst_pdb_as_cif_2.pdb", "w").write("""\
+    if os.path.isfile("tst_pdb_as_cif_2.cif"):
+        os.remove("tst_pdb_as_cif_2.cif")
+    open("tst_pdb_as_cif_2.pdb", "w").write(
+        """\
 CRYST1  209.050  447.220  608.960  90.00  90.00  90.00 P 21 21 21
 ATOM  99999  N3    U   367     -23.562  29.366 106.688  1.00135.52      A16S N
 ANISOU99999  N3    U   367    20423  14326  16741  -1922  -2828  -1650  A16S N
 ATOM  A0000  C4    U   367     -23.357  30.626 106.161  1.00133.22      A16S C
 ANISOUA0000  C4    U   367    20015  14160  16442  -1873  -2801  -1645  A16S C
-""")
-  run_program(program_class=pdb_as_cif.Program,
-              args=["tst_pdb_as_cif_2.pdb"],
-              logger=null_out(),
-              )
-  assert os.path.isfile("tst_pdb_as_cif_2.cif")
-  inp = open("tst_pdb_as_cif_2.cif", "r")
-  cntr = 0
-  for l in inp.readlines():
-    l = l.strip()
-    # These are for align_columns=True in iotbx.cif.write_whole_cif_file()
-    # if(l.startswith("ATOM   99999  N3  .  U  .  367  ?")): cntr+=1
-    # if(l.startswith("ATOM  100000  C4  .  U  .  367  ?")): cntr+=1
-    # if(l.startswith("99999  N3  .  U  .  367  ?")): cntr+=1
-    # if(l.startswith("100000  C4  .  U  .  367  ?")): cntr+=1
+"""
+    )
+    run_program(
+        program_class=pdb_as_cif.Program,
+        args=["tst_pdb_as_cif_2.pdb"],
+        logger=null_out(),
+    )
+    assert os.path.isfile("tst_pdb_as_cif_2.cif")
+    inp = open("tst_pdb_as_cif_2.cif", "r")
+    cntr = 0
+    for l in inp.readlines():
+        l = l.strip()
+        # These are for align_columns=True in iotbx.cif.write_whole_cif_file()
+        # if(l.startswith("ATOM   99999  N3  .  U  .  367  ?")): cntr+=1
+        # if(l.startswith("ATOM  100000  C4  .  U  .  367  ?")): cntr+=1
+        # if(l.startswith("99999  N3  .  U  .  367  ?")): cntr+=1
+        # if(l.startswith("100000  C4  .  U  .  367  ?")): cntr+=1
 
-    # These are for align_columns=False in iotbx.cif.write_whole_cif_file()
-    if(l.startswith("ATOM 1 N3 . U A16S 367 ? ")): cntr+=1
-    if(l.startswith("ATOM 2 C4 . U A16S 367 ?")): cntr+=1
-    if(l.startswith("1 N3 . U A16S 367 ? ")): cntr+=1
-    if(l.startswith("2 C4 . U A16S 367 ?")): cntr+=1
-  assert cntr == 4, cntr
+        # These are for align_columns=False in iotbx.cif.write_whole_cif_file()
+        if l.startswith("ATOM 1 N3 . U A16S 367 ? "):
+            cntr += 1
+        if l.startswith("ATOM 2 C4 . U A16S 367 ?"):
+            cntr += 1
+        if l.startswith("1 N3 . U A16S 367 ? "):
+            cntr += 1
+        if l.startswith("2 C4 . U A16S 367 ?"):
+            cntr += 1
+    assert cntr == 4, cntr
 
-if (__name__ == "__main__"):
-  import mmtbx.monomer_library.server
-  try:
-    mon_lib_srv = mmtbx.monomer_library.server.server()
-  except mmtbx.monomer_library.server.MonomerLibraryServerError:
-    print("Can not initialize monomer_library, skipping tst_pdb_as_cif.")
-  else:
-    exercise_01()
-    exercise_02()
-  print("OK")
+
+if __name__ == "__main__":
+    import mmtbx.monomer_library.server
+
+    try:
+        mon_lib_srv = mmtbx.monomer_library.server.server()
+    except mmtbx.monomer_library.server.MonomerLibraryServerError:
+        print("Can not initialize monomer_library, skipping tst_pdb_as_cif.")
+    else:
+        exercise_01()
+        exercise_02()
+    print("OK")

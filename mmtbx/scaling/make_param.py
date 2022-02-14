@@ -2,16 +2,17 @@ from __future__ import absolute_import, division, print_function
 import iotbx.phil
 import sys
 
+
 class phil_lego(object):
-  """
-This class facilitates the construction of phil parameter files
-for the FA estimation program FATSO.
-"""
-  def __init__(self):
+    """
+    This class facilitates the construction of phil parameter files
+    for the FA estimation program FATSO."""
 
-    self.default_expert_level_for_parameters_that_should_be_sensible_defaults='1'
+    def __init__(self):
 
-    self.scaling_input = """ scaling.input{
+        self.default_expert_level_for_parameters_that_should_be_sensible_defaults = "1"
+
+        self.scaling_input = """ scaling.input{
 __REPLACE__
 
 expert_level=0
@@ -19,7 +20,7 @@ expert_level=0
 .expert_level=__EXPERT_LEVEL__
 }
 """
-    self.basic_info = """basic{
+        self.basic_info = """basic{
   n_residues=None
   .type=float
   n_bases=None
@@ -28,7 +29,7 @@ expert_level=0
   .type=float
 }
 """
-    self.xray_data_basic="""xray_data{
+        self.xray_data_basic = """xray_data{
   unit_cell=None
   .type=unit_cell
 
@@ -39,21 +40,21 @@ expert_level=0
 }
 """
 
-    self.data_type="""__REPLACE__{
+        self.data_type = """__REPLACE__{
   file_name=None
   .type=path
   labels=None
   .type=strings
 }
 """
-    self.scaling_strategy="""scaling_strategy
+        self.scaling_strategy = """scaling_strategy
 .expert_level=__EXPERT_LEVEL__
 {
   __REPLACE__
 }
 """
 
-    self.pre_scaler_protocol="""pre_scaler_protocol
+        self.pre_scaler_protocol = """pre_scaler_protocol
 .expert_level=__EXPERT_LEVEL__
 {
 high_resolution=None
@@ -70,7 +71,7 @@ outlier_level_wilson=1e-6
 .type=float
 }"""
 
-    self.scale_protocol="""__REPLACE__
+        self.scale_protocol = """__REPLACE__
 .expert_level=__EXPERT_LEVEL__
 {
            target = ls loc *ls_and_loc None
@@ -118,7 +119,7 @@ outlier_level_wilson=1e-6
 
 }"""
 
-    self.fa_estimation="""fa_estimation
+        self.fa_estimation = """fa_estimation
 .expert_level=__EXPERT_LEVEL__
 {
    protocol = *algebraic cns combine_ano
@@ -128,8 +129,7 @@ outlier_level_wilson=1e-6
 }
 """
 
-
-    self.output="""output
+        self.output = """output
 {
      log = 'fatso.log'
      .type = path
@@ -141,7 +141,7 @@ outlier_level_wilson=1e-6
 }
 """
 
-    self.omit="""omit
+        self.omit = """omit
 .expert_level=__EXPERT_LEVEL__
 {
    perform_omit=False
@@ -157,9 +157,8 @@ outlier_level_wilson=1e-6
 }
 """
 
-
-  def add_wavelength_info(self):
-    tmp= """
+    def add_wavelength_info(self):
+        tmp = """
     use_anomalous=True
     .type=bool
     .expert_level=5
@@ -177,263 +176,233 @@ outlier_level_wilson=1e-6
     .expert_level=0
     }
     """
-    self.data_type =self.data_type.replace( '}', tmp)
+        self.data_type = self.data_type.replace("}", tmp)
 
+    def default_sad(self):
+        outer_level = self.scaling_input
+        outer_level = outer_level.replace(
+            "__EXPERT_LEVEL__",
+            self.default_expert_level_for_parameters_that_should_be_sensible_defaults,
+        )
 
-  def default_sad(self):
-    outer_level = self.scaling_input
-    outer_level = outer_level.replace( '__EXPERT_LEVEL__',
-      self.default_expert_level_for_parameters_that_should_be_sensible_defaults)
+        basic = self.basic_info
+        data = self.data_type.replace("__REPLACE__", "reference")
+        data = self.xray_data_basic.replace("__REPLACE__", data)
+        scaler = self.pre_scaler_protocol + self.scale_protocol.replace(
+            "__REPLACE__", "ano_protocol"
+        )
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
+        scaler = self.scaling_strategy.replace("__REPLACE__", scaler)
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
+        scaler = scaler.replace("ls loc *ls_and_loc None", "*loc None")
+        output = self.output
 
-    basic = self.basic_info
-    data = self.data_type.replace( '__REPLACE__',
-                                      'reference' )
-    data = self.xray_data_basic.replace('__REPLACE__',
-                                           data )
-    scaler = self.pre_scaler_protocol + \
-             self.scale_protocol.replace('__REPLACE__',
-                                         'ano_protocol' )
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
-    scaler = self.scaling_strategy.replace('__REPLACE__',
-                                           scaler )
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
-    scaler = scaler.replace( 'ls loc *ls_and_loc None',
-                              '*loc None' )
-    output = self.output
+        omit = self.omit
+        omit = omit.replace("__EXPERT_LEVEL__", "1")
 
-    omit = self.omit
-    omit = omit.replace('__EXPERT_LEVEL__',
-                        '1' )
+        result = outer_level.replace(
+            "__REPLACE__", basic + data + scaler + omit + output
+        )
+        return result
 
-    result = outer_level.replace('__REPLACE__',
-                                 basic+data+scaler+omit+output)
-    return result
+    def default_sir(self):
+        outer_level = self.scaling_input
+        outer_level = outer_level.replace(
+            "__EXPERT_LEVEL__",
+            self.default_expert_level_for_parameters_that_should_be_sensible_defaults,
+        )
 
-  def default_sir(self):
-    outer_level = self.scaling_input
-    outer_level = outer_level.replace( '__EXPERT_LEVEL__',
-      self.default_expert_level_for_parameters_that_should_be_sensible_defaults)
+        basic = self.basic_info
+        data = self.data_type.replace("__REPLACE__", "native") + self.data_type.replace(
+            "__REPLACE__", "derivative"
+        )
 
-    basic = self.basic_info
-    data = self.data_type.replace( '__REPLACE__',
-                                      'native' ) \
-                                      + \
-            self.data_type.replace( '__REPLACE__',
-                                      'derivative' )
+        data = self.xray_data_basic.replace("__REPLACE__", data)
 
+        scaler = self.scale_protocol.replace("__REPLACE__", "iso_protocol")
 
-    data = self.xray_data_basic.replace('__REPLACE__',
-                                           data )
+        scaler = self.pre_scaler_protocol + scaler
 
-    scaler = self.scale_protocol.replace('__REPLACE__','iso_protocol' )
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
+        scaler = self.scaling_strategy.replace("__REPLACE__", scaler)
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
+        output = self.output
 
-    scaler = self.pre_scaler_protocol + scaler
+        result = outer_level.replace("__REPLACE__", basic + data + scaler + output)
+        return result
 
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
-    scaler = self.scaling_strategy.replace('__REPLACE__',
-                                           scaler )
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
-    output = self.output
-
-    result = outer_level.replace('__REPLACE__',
-                                 basic+data+scaler+output)
-    return result
-
-  def default_rip(self):
-    tmp = self.default_sir()
-    tmp = tmp.replace( 'native', 'after_burn' )
-    tmp = tmp.replace( 'derivative', 'before_burn' )
-    tmp = tmp.replace( 'least_squares_options{',
-                       """nsr_bias=1.0
+    def default_rip(self):
+        tmp = self.default_sir()
+        tmp = tmp.replace("native", "after_burn")
+        tmp = tmp.replace("derivative", "before_burn")
+        tmp = tmp.replace(
+            "least_squares_options{",
+            """nsr_bias=1.0
 .type=float
 .expert_level=0
 
-least_squares_options{""")
-    return tmp
+least_squares_options{""",
+        )
+        return tmp
 
+    def default_siras(self):
+        outer_level = self.scaling_input
+        outer_level = outer_level.replace(
+            "__EXPERT_LEVEL__",
+            self.default_expert_level_for_parameters_that_should_be_sensible_defaults,
+        )
 
-  def default_siras(self):
-    outer_level = self.scaling_input
-    outer_level = outer_level.replace( '__EXPERT_LEVEL__',
-      self.default_expert_level_for_parameters_that_should_be_sensible_defaults)
+        basic = self.basic_info
+        data = self.data_type.replace("__REPLACE__", "native") + self.data_type.replace(
+            "__REPLACE__", "derivative"
+        )
 
-    basic = self.basic_info
-    data = self.data_type.replace( '__REPLACE__',
-                                      'native' ) \
-                                      + \
-            self.data_type.replace( '__REPLACE__',
-                                      'derivative' )
+        data = self.xray_data_basic.replace("__REPLACE__", data)
 
-    data = self.xray_data_basic.replace('__REPLACE__',
-                                           data )
+        scaler = self.scale_protocol.replace("__REPLACE__", "ano_protocol")
+        scaler = scaler.replace("ls loc *ls_and_loc None", "*loc None")
 
-    scaler = self.scale_protocol.replace('__REPLACE__',
-                                         'ano_protocol' )
-    scaler = scaler.replace('ls loc *ls_and_loc None',
-                            '*loc None' )
+        scaler = (
+            self.pre_scaler_protocol
+            + scaler
+            + self.scale_protocol.replace("__REPLACE__", "iso_protocol")
+        )
 
-    scaler = self.pre_scaler_protocol + scaler + \
-             self.scale_protocol.replace('__REPLACE__','iso_protocol' )
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
+        scaler = self.scaling_strategy.replace("__REPLACE__", scaler)
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
 
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
-    scaler = self.scaling_strategy.replace('__REPLACE__',
-                                           scaler )
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
+        fa = self.fa_estimation.replace("__EXPERT_LEVEL__", "10")
+        output = self.output
 
-    fa = self.fa_estimation.replace('__EXPERT_LEVEL__',
-                            '10' )
-    output = self.output
+        result = outer_level.replace("__REPLACE__", basic + data + scaler + fa + output)
+        return result
 
-    result = outer_level.replace('__REPLACE__',
-                                 basic+data+scaler+fa+output)
-    return result
+    def default_2wmad(self):
+        self.add_wavelength_info()
 
-  def default_2wmad(self):
-    self.add_wavelength_info()
+        outer_level = self.scaling_input
+        outer_level = outer_level.replace(
+            "__EXPERT_LEVEL__",
+            self.default_expert_level_for_parameters_that_should_be_sensible_defaults,
+        )
 
-    outer_level = self.scaling_input
-    outer_level = outer_level.replace( '__EXPERT_LEVEL__',
-      self.default_expert_level_for_parameters_that_should_be_sensible_defaults)
+        basic = self.basic_info
+        data = self.data_type.replace(
+            "__REPLACE__", "wavelength1"
+        ) + self.data_type.replace("__REPLACE__", "wavelength2")
 
-    basic = self.basic_info
-    data = self.data_type.replace( '__REPLACE__',
-                                      'wavelength1' ) \
-                                      + \
-            self.data_type.replace( '__REPLACE__',
-                                      'wavelength2' )
+        data = self.xray_data_basic.replace("__REPLACE__", data)
 
-    data = self.xray_data_basic.replace('__REPLACE__',
-                                           data )
+        scaler = self.scale_protocol.replace("__REPLACE__", "ano_protocol")
+        scaler = scaler.replace("ls loc *ls_and_loc None", "*loc None")
 
-    scaler = self.scale_protocol.replace('__REPLACE__',
-                                         'ano_protocol' )
-    scaler = scaler.replace('ls loc *ls_and_loc None',
-                            '*loc None' )
+        scaler = (
+            self.pre_scaler_protocol
+            + scaler
+            + self.scale_protocol.replace("__REPLACE__", "iso_protocol")
+        )
 
-    scaler = self.pre_scaler_protocol + scaler + \
-             self.scale_protocol.replace('__REPLACE__','iso_protocol' )
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
+        scaler = self.scaling_strategy.replace("__REPLACE__", scaler)
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
+        fa = self.fa_estimation.replace("__EXPERT_LEVEL__", "10")
+        output = self.output
 
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
-    scaler = self.scaling_strategy.replace('__REPLACE__',
-                                           scaler )
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
-    fa = self.fa_estimation.replace('__EXPERT_LEVEL__',
-                            '10' )
-    output = self.output
+        result = outer_level.replace("__REPLACE__", basic + data + scaler + fa + output)
+        return result
 
-    result = outer_level.replace('__REPLACE__',
-                                 basic+data+scaler+fa+output)
-    return result
+    def default_3wmad(self):
+        self.add_wavelength_info()
 
+        outer_level = self.scaling_input
+        outer_level = outer_level.replace(
+            "__EXPERT_LEVEL__",
+            self.default_expert_level_for_parameters_that_should_be_sensible_defaults,
+        )
 
-  def default_3wmad(self):
-    self.add_wavelength_info()
+        basic = self.basic_info
+        data = (
+            self.data_type.replace("__REPLACE__", "wavelength1")
+            + self.data_type.replace("__REPLACE__", "wavelength2")
+            + self.data_type.replace("__REPLACE__", "wavelength3")
+        )
 
-    outer_level = self.scaling_input
-    outer_level = outer_level.replace( '__EXPERT_LEVEL__',
-      self.default_expert_level_for_parameters_that_should_be_sensible_defaults)
+        data = self.xray_data_basic.replace("__REPLACE__", data)
 
-    basic = self.basic_info
-    data = self.data_type.replace( '__REPLACE__',
-                                      'wavelength1' ) \
-                                      + \
-            self.data_type.replace( '__REPLACE__',
-                                      'wavelength2' )    \
-                                      + \
-            self.data_type.replace( '__REPLACE__',
-                                      'wavelength3' )
+        scaler = self.scale_protocol.replace("__REPLACE__", "ano_protocol")
+        scaler = scaler.replace("ls loc *ls_and_loc None", "*loc None")
 
-    data = self.xray_data_basic.replace('__REPLACE__',
-                                           data )
+        scaler = (
+            self.pre_scaler_protocol
+            + scaler
+            + self.scale_protocol.replace("__REPLACE__", "iso_protocol")
+        )
 
-    scaler = self.scale_protocol.replace('__REPLACE__',
-                                         'ano_protocol' )
-    scaler = scaler.replace('ls loc *ls_and_loc None',
-                            '*loc None' )
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
 
-    scaler = self.pre_scaler_protocol + scaler + \
-             self.scale_protocol.replace('__REPLACE__','iso_protocol' )
+        scaler = self.scaling_strategy.replace("__REPLACE__", scaler)
+        scaler = scaler.replace("__EXPERT_LEVEL__", "1")
 
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
+        fa = self.fa_estimation.replace("__EXPERT_LEVEL__", "10")
+        output = self.output
 
-    scaler = self.scaling_strategy.replace('__REPLACE__',
-                                           scaler )
-    scaler = scaler.replace('__EXPERT_LEVEL__',
-                            '1' )
-
-    fa = self.fa_estimation.replace('__EXPERT_LEVEL__',
-                            '10' )
-    output = self.output
-
-    result = outer_level.replace('__REPLACE__',
-                                 basic+data+scaler+fa+output)
-    return result
-
+        result = outer_level.replace("__REPLACE__", basic + data + scaler + fa + output)
+        return result
 
 
 def run(args):
-  okai=True
-  if len(args)==0:
-    print("Example parameter files lego-ed together from several phil blocks")
-    print()
-    print("specifiy 'expert level' on command line via ")
-    print("    python make_param.py <expert_level>      ")
-    okai=False
+    okai = True
+    if len(args) == 0:
+        print("Example parameter files lego-ed together from several phil blocks")
+        print()
+        print("specifiy 'expert level' on command line via ")
+        print("    python make_param.py <expert_level>      ")
+        okai = False
 
-  if okai:
-    tester = phil_lego()
-    print(" ---------- SAD ----------")
-    master_params = iotbx.phil.parse( tester.default_sad() )
-    master_params.show(expert_level = int(args[0]) )
-    print(" ---------- SIR ----------")
-    del master_params
-    del tester
-    tester = phil_lego()
-    master_params = iotbx.phil.parse( tester.default_sir() )
-    master_params.show(expert_level=int(args[0]))
-    print(" ---------- SIRAS ----------")
-    del master_params
-    del tester
-    tester = phil_lego()
-    master_params = iotbx.phil.parse( tester.default_siras() )
-    master_params.show(expert_level=int(args[0]))
-    print(" ---------- 2WMAD ----------")
-    del master_params
-    del tester
-    tester = phil_lego()
-    master_params = iotbx.phil.parse( tester.default_2wmad() )
-    master_params.show(expert_level=int(args[0]))
-    print(" ---------- 3WMAD ----------")
-    del master_params
-    del tester
-    tester = phil_lego()
-    master_params = iotbx.phil.parse( tester.default_3wmad() )
-    master_params.show(expert_level=int(args[0]))
-    print(" ---------- 3WMAD ----------")
-    del master_params
-    del tester
-    tester = phil_lego()
-    master_params = iotbx.phil.parse( tester.default_3wmad() )
-    master_params.show(expert_level=int(args[0]))
+    if okai:
+        tester = phil_lego()
+        print(" ---------- SAD ----------")
+        master_params = iotbx.phil.parse(tester.default_sad())
+        master_params.show(expert_level=int(args[0]))
+        print(" ---------- SIR ----------")
+        del master_params
+        del tester
+        tester = phil_lego()
+        master_params = iotbx.phil.parse(tester.default_sir())
+        master_params.show(expert_level=int(args[0]))
+        print(" ---------- SIRAS ----------")
+        del master_params
+        del tester
+        tester = phil_lego()
+        master_params = iotbx.phil.parse(tester.default_siras())
+        master_params.show(expert_level=int(args[0]))
+        print(" ---------- 2WMAD ----------")
+        del master_params
+        del tester
+        tester = phil_lego()
+        master_params = iotbx.phil.parse(tester.default_2wmad())
+        master_params.show(expert_level=int(args[0]))
+        print(" ---------- 3WMAD ----------")
+        del master_params
+        del tester
+        tester = phil_lego()
+        master_params = iotbx.phil.parse(tester.default_3wmad())
+        master_params.show(expert_level=int(args[0]))
+        print(" ---------- 3WMAD ----------")
+        del master_params
+        del tester
+        tester = phil_lego()
+        master_params = iotbx.phil.parse(tester.default_3wmad())
+        master_params.show(expert_level=int(args[0]))
 
-    print(" ---------- RIP ----------")
-    del master_params
-    del tester
-    tester = phil_lego()
-    master_params = iotbx.phil.parse( tester.default_rip() )
-    master_params.show(expert_level=int(args[0]))
-
-
+        print(" ---------- RIP ----------")
+        del master_params
+        del tester
+        tester = phil_lego()
+        master_params = iotbx.phil.parse(tester.default_rip())
+        master_params.show(expert_level=int(args[0]))
 
 
-if (__name__ == "__main__"):
-  run(sys.argv[1:])
+if __name__ == "__main__":
+    run(sys.argv[1:])

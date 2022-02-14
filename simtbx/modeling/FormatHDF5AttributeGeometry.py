@@ -16,6 +16,7 @@ class FormatHDF5AttributeGeometry(FormatHDF5, FormatStill):
     Class for reading HDF5 files for arbitrary geometries
     focused on performance
     """
+
     @staticmethod
     def understand(image_file):
         try:
@@ -81,7 +82,9 @@ class FormatHDF5AttributeGeometry(FormatHDF5, FormatStill):
         if self.panels.dtype == np.float64:
             flex_data = [flex.double(p) for p in self._image_dset[index]]
         else:
-            flex_data = [flex.double(p.astype(np.float64)) for p in self._image_dset[index]]
+            flex_data = [
+                flex.double(p.astype(np.float64)) for p in self._image_dset[index]
+            ]
         return tuple(flex_data)
 
     def get_detectorbase(self, index=None):
@@ -94,7 +97,7 @@ class FormatHDF5AttributeGeometry(FormatHDF5, FormatStill):
         if self._has_spectra:
             w = self._weights[index]
             E = self._energies[index]
-            ave_E = (w*E).sum() / (w.sum())
+            ave_E = (w * E).sum() / (w.sum())
             wavelength = self._ENERGY_CONV / ave_E
             if self.HAS_SPECTRUM_BEAM:
                 self._w = w
@@ -114,7 +117,8 @@ class FormatHDF5AttributeGeometry(FormatHDF5, FormatStill):
         return beam
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     for arg in sys.argv[1:]:
         print(FormatHDF5AttributeGeometry.understand(arg))

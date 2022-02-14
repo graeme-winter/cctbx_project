@@ -93,37 +93,43 @@ REMARK   3   TOTAL NUMBER OF REFLECTIONS   (F>4SIG(F)) : 9454
 REMARK   3
 """
 
-def run():
-  result = extract_rfactors_resolutions_sigma.get_r_rfree_sigma(
-    remark_2_and_3_records = example_cns.splitlines(), file_name = None)
-  assert approx_equal(result.r_work      , 0.171)
-  assert approx_equal(result.r_free      , 0.221)
-  assert approx_equal(result.high        , 2.2  )
-  assert approx_equal(result.low         , 99.0 )
-  assert approx_equal(result.resolution  , 2.2  )
-  assert approx_equal(result.sigma       , 2.0  )
-  #
-  result = extract_rfactors_resolutions_sigma.get_r_rfree_sigma(
-    remark_2_and_3_records = example_refmac.splitlines(), file_name = None)
-  assert approx_equal(result.r_work      , 0.198 )
-  assert approx_equal(result.r_free      , 0.248 )
-  assert approx_equal(result.high        , 1.55  )
-  assert approx_equal(result.low         , 18.0  )
-  assert approx_equal(result.resolution  , 1.55  )
-  assert approx_equal(result.sigma       , 0.0   )
-  #
-  result = extract_rfactors_resolutions_sigma.get_r_rfree_sigma(
-    remark_2_and_3_records = example_shelx.splitlines(), file_name = None)
-  assert approx_equal(result.r_work      , 0.140 )
-  assert approx_equal(result.r_free      , 0.166 )
-  assert approx_equal(result.high        , 1.05  )
-  assert approx_equal(result.low         , 20.0  )
-  assert approx_equal(result.resolution  , 1.05  )
-  assert approx_equal(result.sigma       , 0.0   )
-  result = extract_rfactors_resolutions_sigma.extract(
-    file_lines=example_shelx.splitlines(), file_name=None)
-  assert approx_equal(result.r_work      , 0.140 )
 
-if (__name__ == "__main__"):
-  run()
-  print("OK")
+def run():
+    result = extract_rfactors_resolutions_sigma.get_r_rfree_sigma(
+        remark_2_and_3_records=example_cns.splitlines(), file_name=None
+    )
+    assert approx_equal(result.r_work, 0.171)
+    assert approx_equal(result.r_free, 0.221)
+    assert approx_equal(result.high, 2.2)
+    assert approx_equal(result.low, 99.0)
+    assert approx_equal(result.resolution, 2.2)
+    assert approx_equal(result.sigma, 2.0)
+    #
+    result = extract_rfactors_resolutions_sigma.get_r_rfree_sigma(
+        remark_2_and_3_records=example_refmac.splitlines(), file_name=None
+    )
+    assert approx_equal(result.r_work, 0.198)
+    assert approx_equal(result.r_free, 0.248)
+    assert approx_equal(result.high, 1.55)
+    assert approx_equal(result.low, 18.0)
+    assert approx_equal(result.resolution, 1.55)
+    assert approx_equal(result.sigma, 0.0)
+    #
+    result = extract_rfactors_resolutions_sigma.get_r_rfree_sigma(
+        remark_2_and_3_records=example_shelx.splitlines(), file_name=None
+    )
+    assert approx_equal(result.r_work, 0.140)
+    assert approx_equal(result.r_free, 0.166)
+    assert approx_equal(result.high, 1.05)
+    assert approx_equal(result.low, 20.0)
+    assert approx_equal(result.resolution, 1.05)
+    assert approx_equal(result.sigma, 0.0)
+    result = extract_rfactors_resolutions_sigma.extract(
+        file_lines=example_shelx.splitlines(), file_name=None
+    )
+    assert approx_equal(result.r_work, 0.140)
+
+
+if __name__ == "__main__":
+    run()
+    print("OK")

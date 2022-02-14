@@ -443,41 +443,42 @@ ATOM    539  H  AGLU B   3       7.474  10.360  20.122  0.50 20.00           H
 ATOM    540  D  BGLU B   3       7.474  10.360  20.122  0.50 20.00           D
 """
 
-def exercise_phi_psi_extraction():
-  for n_prox, raw_records in [
-      ([0, 0], rec_1_residue),
-      ([0, 0], rec_2_residues),
-      ([4, 2], rec_3_residues),
-      ([6, 4], rec_4_residues),
-      ([0, 0], rec_2_chains),
-      ([0, 0], rec_2_segids),
-      ([8, 4], rec_2_acs_edge),
-      ([8, 4], rec_2_acs_middle),
-      ([6, 4], rec_4_residues_isertions),
-      ([12, 10], pdb_1yjp),
-      ([8, 4], pdb_1yjp_minus_4),
-      ([4, 2], rec_3_res_ac_h),
-      ([8, 4], rec_2_acs_middle_one_atom_1),
-      ([8, 4], rec_2_acs_middle_one_atom_2),
-      ([8, 4], rec_2_acs_middle_one_atom_3),
-      ]:
-    tmp_hierarchy = iotbx.pdb.input(
-      source_info=None,
-      lines=flex.split_lines(raw_records)).construct_hierarchy()
-    for opp in range(2):
-      proxies = []
-      for three in generate_protein_threes(
-          hierarchy=tmp_hierarchy,
-          geometry=None):
-        ppp = three.get_dummy_dihedral_proxies(only_psi_phi_pairs=opp)
-        print(three,'ppp',len(ppp))
-        proxies.extend(ppp)
-      print(len(proxies), n_prox)
-      assert len(proxies) == n_prox[opp], \
-         "Expected %d, got %d" % (
-           n_prox[opp],
-           len(proxies),
-           )
 
-if (__name__ == "__main__"):
-  exercise_phi_psi_extraction()
+def exercise_phi_psi_extraction():
+    for n_prox, raw_records in [
+        ([0, 0], rec_1_residue),
+        ([0, 0], rec_2_residues),
+        ([4, 2], rec_3_residues),
+        ([6, 4], rec_4_residues),
+        ([0, 0], rec_2_chains),
+        ([0, 0], rec_2_segids),
+        ([8, 4], rec_2_acs_edge),
+        ([8, 4], rec_2_acs_middle),
+        ([6, 4], rec_4_residues_isertions),
+        ([12, 10], pdb_1yjp),
+        ([8, 4], pdb_1yjp_minus_4),
+        ([4, 2], rec_3_res_ac_h),
+        ([8, 4], rec_2_acs_middle_one_atom_1),
+        ([8, 4], rec_2_acs_middle_one_atom_2),
+        ([8, 4], rec_2_acs_middle_one_atom_3),
+    ]:
+        tmp_hierarchy = iotbx.pdb.input(
+            source_info=None, lines=flex.split_lines(raw_records)
+        ).construct_hierarchy()
+        for opp in range(2):
+            proxies = []
+            for three in generate_protein_threes(
+                hierarchy=tmp_hierarchy, geometry=None
+            ):
+                ppp = three.get_dummy_dihedral_proxies(only_psi_phi_pairs=opp)
+                print(three, "ppp", len(ppp))
+                proxies.extend(ppp)
+            print(len(proxies), n_prox)
+            assert len(proxies) == n_prox[opp], "Expected %d, got %d" % (
+                n_prox[opp],
+                len(proxies),
+            )
+
+
+if __name__ == "__main__":
+    exercise_phi_psi_extraction()

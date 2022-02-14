@@ -5,7 +5,7 @@ import iotbx.pdb
 import time
 from cctbx import maptbx
 
-pdb_str="""
+pdb_str = """
 CRYST1    8.228   11.366   10.991  90.00  90.00  90.00 P 1
 SCALE1      0.121536  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.087982  0.000000        0.00000
@@ -61,51 +61,53 @@ ATOM     47  O   HOH C   9       6.636   9.772   7.633  1.00  5.99           O
 TER
 """
 
+
 def percentile_cutoffs_inefficient(
-      map_data,
-      vol_cutoff_plus_percent,
-      vol_cutoff_minus_percent):
-  s = flex.sort_permutation(map_data.as_1d())
-  map_data_sorted = map_data.select(s)
-  i = map_data.size()-1-int(map_data.size()*(vol_cutoff_plus_percent/100.))
-  cutoffp = map_data_sorted[i]
-  j = int(map_data.size()*(vol_cutoff_minus_percent/100.))
-  cutoffm = map_data_sorted[j]
-  return cutoffp, cutoffm
+    map_data, vol_cutoff_plus_percent, vol_cutoff_minus_percent
+):
+    s = flex.sort_permutation(map_data.as_1d())
+    map_data_sorted = map_data.select(s)
+    i = map_data.size() - 1 - int(map_data.size() * (vol_cutoff_plus_percent / 100.0))
+    cutoffp = map_data_sorted[i]
+    j = int(map_data.size() * (vol_cutoff_minus_percent / 100.0))
+    cutoffm = map_data_sorted[j]
+    return cutoffp, cutoffm
+
 
 def exercise():
-  xrs = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
-  fc = xrs.structure_factors(d_min=1.5).f_calc()
-  fft_map = fc.fft_map(resolution_factor=0.1)
-  fft_map.apply_sigma_scaling()
-  map_data = fft_map.real_map_unpadded()
-  for vcp in [1,50,99]:
-    for vcm in [1,50,99]:
-      # Doing it old inefficient way
-      po, mo = percentile_cutoffs_inefficient(
-        map_data                 = map_data,
-        vol_cutoff_plus_percent  = vcp,
-        vol_cutoff_minus_percent = vcm)
-      # Doing it new memory efficient way
-      hist = maptbx.histogram(map_data, n_bins=min(10000, map_data.size()))
-      pn, mn = hist.get_percentile_cutoffs(
-        map                      = map_data,
-        vol_cutoff_plus_percent  = vcp,
-        vol_cutoff_minus_percent = vcm)
-      assert approx_equal(po,pn, 0.01)
-      assert approx_equal(mo,mn, 0.01)
-      rp = (map_data >= po).count(True)*100./map_data.size()
-      rm = (map_data <= mo).count(True)*100./map_data.size()
-      assert approx_equal(rp, vcp, 1.e-3)
-      assert approx_equal(rm, vcm, 1.e-3)
-      assert approx_equal(
-        rp,
-        (map_data >= pn).count(True)*100./map_data.size(), 0.1)
-      assert approx_equal(
-        rm,
-        (map_data <= mn).count(True)*100./map_data.size(), 0.1)
+    xrs = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
+    fc = xrs.structure_factors(d_min=1.5).f_calc()
+    fft_map = fc.fft_map(resolution_factor=0.1)
+    fft_map.apply_sigma_scaling()
+    map_data = fft_map.real_map_unpadded()
+    for vcp in [1, 50, 99]:
+        for vcm in [1, 50, 99]:
+            # Doing it old inefficient way
+            po, mo = percentile_cutoffs_inefficient(
+                map_data=map_data,
+                vol_cutoff_plus_percent=vcp,
+                vol_cutoff_minus_percent=vcm,
+            )
+            # Doing it new memory efficient way
+            hist = maptbx.histogram(map_data, n_bins=min(10000, map_data.size()))
+            pn, mn = hist.get_percentile_cutoffs(
+                map=map_data, vol_cutoff_plus_percent=vcp, vol_cutoff_minus_percent=vcm
+            )
+            assert approx_equal(po, pn, 0.01)
+            assert approx_equal(mo, mn, 0.01)
+            rp = (map_data >= po).count(True) * 100.0 / map_data.size()
+            rm = (map_data <= mo).count(True) * 100.0 / map_data.size()
+            assert approx_equal(rp, vcp, 1.0e-3)
+            assert approx_equal(rm, vcm, 1.0e-3)
+            assert approx_equal(
+                rp, (map_data >= pn).count(True) * 100.0 / map_data.size(), 0.1
+            )
+            assert approx_equal(
+                rm, (map_data <= mn).count(True) * 100.0 / map_data.size(), 0.1
+            )
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("Time: %6.4f" % (time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Time: %6.4f" % (time.time() - t0))

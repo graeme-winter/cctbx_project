@@ -159,30 +159,47 @@ TER
 END
 """
 
-def run(file_name = "tst_tls_as_xyz.pdb"):
-  of = open(file_name,"w")
-  print(pdb_str, file=of)
-  of.close()
-  uc = iotbx.pdb.input(file_name=file_name).crystal_symmetry().unit_cell()
-  #for n in range(10,100,10)+range(100,1000,100)+range(1000,10001,1000)+[15000,20000]:
-  for n in [1000,]:
-    easy_run.call("phenix.tls_as_xyz %s n_models=%s > tst_tls_as_xyz.log"%(
-      file_name,str(n)))
-    for i in [0,1]:
-      u1 = iotbx.pdb.input(file_name=
-        "tst_tls_as_xyz_u_from_ensemble_%s.pdb"%str(i)
-        ).xray_structure_simple().scatterers().extract_u_cart(uc)
-      u2 = iotbx.pdb.input(file_name=
-        "tst_tls_as_xyz_u_from_tls_%s.pdb"%str(i)
-        ).xray_structure_simple().scatterers().extract_u_cart(uc)
 
-    u1, u2 = u1.as_double(), u2.as_double()
-    cc = flex.linear_correlation(x=u1, y=u2).coefficient()
-    r = flex.sum(flex.abs(flex.abs(u1)-flex.abs(u2)))/\
-        flex.sum(flex.abs(flex.abs(u1)+flex.abs(u2)))*2
-    print("%5d %6.4f %6.4f"%(n, cc, r))
-  assert cc>0.99, cc
-  assert r<0.06, r
+def run(file_name="tst_tls_as_xyz.pdb"):
+    of = open(file_name, "w")
+    print(pdb_str, file=of)
+    of.close()
+    uc = iotbx.pdb.input(file_name=file_name).crystal_symmetry().unit_cell()
+    # for n in range(10,100,10)+range(100,1000,100)+range(1000,10001,1000)+[15000,20000]:
+    for n in [
+        1000,
+    ]:
+        easy_run.call(
+            "phenix.tls_as_xyz %s n_models=%s > tst_tls_as_xyz.log"
+            % (file_name, str(n))
+        )
+        for i in [0, 1]:
+            u1 = (
+                iotbx.pdb.input(
+                    file_name="tst_tls_as_xyz_u_from_ensemble_%s.pdb" % str(i)
+                )
+                .xray_structure_simple()
+                .scatterers()
+                .extract_u_cart(uc)
+            )
+            u2 = (
+                iotbx.pdb.input(file_name="tst_tls_as_xyz_u_from_tls_%s.pdb" % str(i))
+                .xray_structure_simple()
+                .scatterers()
+                .extract_u_cart(uc)
+            )
 
-if (__name__ == "__main__"):
-  run()
+        u1, u2 = u1.as_double(), u2.as_double()
+        cc = flex.linear_correlation(x=u1, y=u2).coefficient()
+        r = (
+            flex.sum(flex.abs(flex.abs(u1) - flex.abs(u2)))
+            / flex.sum(flex.abs(flex.abs(u1) + flex.abs(u2)))
+            * 2
+        )
+        print("%5d %6.4f %6.4f" % (n, cc, r))
+    assert cc > 0.99, cc
+    assert r < 0.06, r
+
+
+if __name__ == "__main__":
+    run()

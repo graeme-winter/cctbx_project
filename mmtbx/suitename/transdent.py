@@ -1,11 +1,12 @@
 from __future__ import nested_scopes, generators, division, absolute_import
-from __future__ import  with_statement, print_function
+from __future__ import with_statement, print_function
 import re, os, sys
 
-N = 2   # indentation standard
+N = 2  # indentation standard
 white = "([ \t]*)"
 simple = re.compile(".*(#|:)")
-stringy = re.compile("[^\"#:]*(\".*\"|'.*'|#|:[ \t]*(#.*)?$)")
+stringy = re.compile('[^"#:]*(".*"|\'.*\'|#|:[ \t]*(#.*)?$)')
+
 
 class Line(object):
     content = ""
@@ -49,41 +50,42 @@ def analyzeLine(raw):
 
 def main():
     file = sys.argv[1] + ".py"
-    #root, ext = os.path.splitext(file)
+    # root, ext = os.path.splitext(file)
     outFile = sys.argv[1] + ".ind.py"
     # file = "target.py"
     stream = open(file)
     lines = stream.readlines()
     oStream = open(outFile, "w")
-    #oStream = sys.stderr
+    # oStream = sys.stderr
 
     indents = []
     prevSpaces = 0
     level = 0
     newLevel = False
     freeze = False
-    count=-1
+    count = -1
     for rawLine in lines:
         count += 1
         content, spaces, indenting = analyzeLine(rawLine)
         if spaces == 0 and rawLine.startswith("def "):
-          # sanity reset: no matter what, restart at left margin
-          # when defining a top level function
-          level = 0; newLevel = False
+            # sanity reset: no matter what, restart at left margin
+            # when defining a top level function
+            level = 0
+            newLevel = False
         elif newLevel:
-          if spaces > prevSpaces:
-            # A true syntactic indent (else a stray colon, ignore)
-            level += 1
-            indents.append(prevSpaces)
-          newLevel = False
+            if spaces > prevSpaces:
+                # A true syntactic indent (else a stray colon, ignore)
+                level += 1
+                indents.append(prevSpaces)
+            newLevel = False
         elif spaces > prevSpaces:
-          # indent without : is a line-continuation or data-formatting situation
-          freeze = True
-          indents.append(prevSpaces)
+            # indent without : is a line-continuation or data-formatting situation
+            freeze = True
+            indents.append(prevSpaces)
         if content == "":  # blank lines influence nothing
-          print("", file=oStream)
-          continue
-#        if spaces < prevSpaces and level > 0:
+            print("", file=oStream)
+            continue
+        #        if spaces < prevSpaces and level > 0:
         if spaces < prevSpaces and spaces <= indents[-1]:
             oldSpaces = indents.pop()
             while spaces < oldSpaces:
@@ -92,12 +94,12 @@ def main():
             freeze = False
         prevSpaces = spaces
         if freeze:
-          print((level * N + (spaces-indents[-1])) * " " + content, file=oStream)
+            print((level * N + (spaces - indents[-1])) * " " + content, file=oStream)
         else:
-          print(level * N * " " + content, file=oStream)
+            print(level * N * " " + content, file=oStream)
         if indenting:
             newLevel = True
     oStream.close()
 
-main()
 
+main()

@@ -4,87 +4,94 @@ import mmtbx.model
 import iotbx.pdb
 from mmtbx.hydrogens import reduce_hydrogen
 from libtbx.utils import null_out
-#from libtbx.test_utils import approx_equal
+
+# from libtbx.test_utils import approx_equal
 
 # ------------------------------------------------------------------------------
+
 
 def run():
-  test_000(pdb_str = pdb_str_000)
-  test_001(pdb_str = pdb_str_001)
+    test_000(pdb_str=pdb_str_000)
+    test_001(pdb_str=pdb_str_001)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_000(pdb_str):
-  '''
+    """
     Make sure reduce does not crash for single_atom_residue models
-  '''
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  # initial model (has no H atoms)
-  model_initial = mmtbx.model.manager(model_input = pdb_inp, log = null_out())
-  number_h_expected = model_initial.get_hd_selection().count(True)
-  assert(number_h_expected == 0)
-  # place H atoms
-  reduce_add_h_obj = reduce_hydrogen.place_hydrogens(model = model_initial)
-  reduce_add_h_obj.run()
-  # We don't expect H atoms to be placed
-  # (not enough restraints for single atom residues)
-  model_h_added = reduce_add_h_obj.get_model()
-  number_h_placed = model_h_added.get_hd_selection().count(True)
-  assert(number_h_placed == 0)
+    """
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    # initial model (has no H atoms)
+    model_initial = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    number_h_expected = model_initial.get_hd_selection().count(True)
+    assert number_h_expected == 0
+    # place H atoms
+    reduce_add_h_obj = reduce_hydrogen.place_hydrogens(model=model_initial)
+    reduce_add_h_obj.run()
+    # We don't expect H atoms to be placed
+    # (not enough restraints for single atom residues)
+    model_h_added = reduce_add_h_obj.get_model()
+    number_h_placed = model_h_added.get_hd_selection().count(True)
+    assert number_h_placed == 0
+
 
 # ------------------------------------------------------------------------------
 
+
 def test_001(pdb_str):
-  '''
+    """
     Check keyword n_terminal_charge:
     NH3 on resseq 1, first residue in chain, or no NH3 at all
-  '''
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  # initial model
-  model_initial = mmtbx.model.manager(model_input = pdb_inp, log = null_out())
-  #
-  # place H atoms: NH3 at resseq 1 only
-  reduce_add_h_obj = reduce_hydrogen.place_hydrogens(model = model_initial)
-  reduce_add_h_obj.run()
-  model_h_added = reduce_add_h_obj.get_model()
-  #
-  hd_sel_h_added = model_h_added.get_hd_selection()
-  ph_h_added     = model_h_added.get_hierarchy()
-  h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
-  h_names_added = list(h_atoms_added.extract_name())
-  assert(h_names_added.count(' H1 ')==1)
-  assert(h_names_added.count(' H2 ')==1)
-  assert(h_names_added.count(' H3 ')==1)
-  #
-  # place H atoms: NH3 at first residue in chain
-  reduce_add_h_obj = reduce_hydrogen.place_hydrogens(
-    model = model_initial,
-    n_terminal_charge = 'first_in_chain')
-  reduce_add_h_obj.run()
-  model_h_added = reduce_add_h_obj.get_model()
-  #
-  hd_sel_h_added = model_h_added.get_hd_selection()
-  ph_h_added     = model_h_added.get_hierarchy()
-  h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
-  h_names_added = list(h_atoms_added.extract_name())
-  assert(h_names_added.count(' H1 ')==3)
-  assert(h_names_added.count(' H2 ')==3)
-  assert(h_names_added.count(' H3 ')==3)
-  #
-  # place H atoms: no NH3
-  reduce_add_h_obj = reduce_hydrogen.place_hydrogens(
-    model = model_initial,
-    n_terminal_charge = 'no_charge')
-  reduce_add_h_obj.run()
-  model_h_added = reduce_add_h_obj.get_model()
-  #
-  hd_sel_h_added = model_h_added.get_hd_selection()
-  ph_h_added     = model_h_added.get_hierarchy()
-  h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
-  h_names_added = list(h_atoms_added.extract_name())
-  assert(h_names_added.count(' H1 ')==0)
-  assert(h_names_added.count(' H2 ')==0)
-  assert(h_names_added.count(' H3 ')==0)
+    """
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    # initial model
+    model_initial = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    #
+    # place H atoms: NH3 at resseq 1 only
+    reduce_add_h_obj = reduce_hydrogen.place_hydrogens(model=model_initial)
+    reduce_add_h_obj.run()
+    model_h_added = reduce_add_h_obj.get_model()
+    #
+    hd_sel_h_added = model_h_added.get_hd_selection()
+    ph_h_added = model_h_added.get_hierarchy()
+    h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
+    h_names_added = list(h_atoms_added.extract_name())
+    assert h_names_added.count(" H1 ") == 1
+    assert h_names_added.count(" H2 ") == 1
+    assert h_names_added.count(" H3 ") == 1
+    #
+    # place H atoms: NH3 at first residue in chain
+    reduce_add_h_obj = reduce_hydrogen.place_hydrogens(
+        model=model_initial, n_terminal_charge="first_in_chain"
+    )
+    reduce_add_h_obj.run()
+    model_h_added = reduce_add_h_obj.get_model()
+    #
+    hd_sel_h_added = model_h_added.get_hd_selection()
+    ph_h_added = model_h_added.get_hierarchy()
+    h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
+    h_names_added = list(h_atoms_added.extract_name())
+    assert h_names_added.count(" H1 ") == 3
+    assert h_names_added.count(" H2 ") == 3
+    assert h_names_added.count(" H3 ") == 3
+    #
+    # place H atoms: no NH3
+    reduce_add_h_obj = reduce_hydrogen.place_hydrogens(
+        model=model_initial, n_terminal_charge="no_charge"
+    )
+    reduce_add_h_obj.run()
+    model_h_added = reduce_add_h_obj.get_model()
+    #
+    hd_sel_h_added = model_h_added.get_hd_selection()
+    ph_h_added = model_h_added.get_hierarchy()
+    h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
+    h_names_added = list(h_atoms_added.extract_name())
+    assert h_names_added.count(" H1 ") == 0
+    assert h_names_added.count(" H2 ") == 0
+    assert h_names_added.count(" H3 ") == 0
+
 
 # ------------------------------------------------------------------------------
 
@@ -177,7 +184,7 @@ END
 
 # ------------------------------------------------------------------------------
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time: %8.3f" % (time.time() - t0))

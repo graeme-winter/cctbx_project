@@ -27,9 +27,10 @@ ATOM    152  OH  BNZ     2      15.111  40.507  44.807  1.00 21.58           O
 END
 """.splitlines()
 
-pdb_records_tyr = [line
-  .replace(" GLY ", " TYR ")
-  .replace(" BNZ     2  ", " TYR     1 ") for line in pdb_records_gly_bnz]
+pdb_records_tyr = [
+    line.replace(" GLY ", " TYR ").replace(" BNZ     2  ", " TYR     1 ")
+    for line in pdb_records_gly_bnz
+]
 
 cif_string = """\
 #
@@ -612,218 +613,218 @@ _chem_link_plane.dist_esd
  gly_bnz_to_tyr  plan   1 CB    0.020
 """
 
-def exercise(args):
-  if ("--verbose" in args):
-    out = sys.stdout
-  else:
-    out = StringIO()
-  mon_lib_srv = monomer_library.server.server()
-  ener_lib = monomer_library.server.ener_lib()
-  open("tmp.cif", "w").write(cif_string)
-  mon_lib_srv.process_cif(file_name="tmp.cif")
-  mod_gly_plus_c_beta = mon_lib_srv.mod_mod_id_dict[
-    "gly_plus_c_beta"]
-  mod_bnz_to_tyr_sidechain = mon_lib_srv.mod_mod_id_dict[
-    "bnz_to_tyr_sidechain"]
-  #
-  pdb_inp = pdb.input(
-    source_info=None, lines=flex.std_string(pdb_records_gly_bnz))
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  residues = pdb_hierarchy.only_conformer().residues()
-  assert len(residues) == 2
-  monomer_definitions = []
-  for residue in residues:
-    md, ani = mon_lib_srv.get_comp_comp_id_and_atom_name_interpretation(
-      residue_name=residue.resname,
-      atom_names=residue.atoms().extract_name())
-    if (ani is not None):
-      assert residue.resname == "GLY"
-      assert ani.mon_lib_names() == ["N", "CA", "C", "O", None]
-    monomer_definitions.append(md)
-  gly_plus_c_beta = monomer_definitions[0].apply_mod(mod=mod_gly_plus_c_beta)
-  gly_plus_c_beta.show(f=out)
-  sidechain = monomer_definitions[1].apply_mod(mod=mod_bnz_to_tyr_sidechain)
-  sidechain.show(f=out)
-  #
-  tyr_definition = mon_lib_srv.get_comp_comp_id_direct("TYR")
-  tyr_atoms = []
-  for atom in tyr_definition.atom_list:
-    s = StringIO()
-    atom.show(f=s)
-    tyr_atoms.append(s.getvalue())
-  tyr_atoms.sort()
-  #
-  mod_atoms = []
-  for atom in gly_plus_c_beta.atom_list + sidechain.atom_list:
-    s = StringIO()
-    atom.show(f=s)
-    mod_atoms.append(s.getvalue())
-  mod_atoms.sort()
-  assert not show_diff("".join(mod_atoms), "".join(tyr_atoms))
-  #
-  tyr_bonds = []
-  for bond in tyr_definition.normalized_bond_list():
-    s = StringIO()
-    bond.show(f=s)
-    tyr_bonds.append(s.getvalue())
-  tyr_bonds.sort()
-  #
-  mod_bonds = []
-  for bond in   gly_plus_c_beta.normalized_bond_list() \
-              + sidechain.normalized_bond_list():
-    s = StringIO()
-    bond.show(f=s)
-    mod_bonds.append(s.getvalue())
-  mod_bonds.sort()
-  mod_bonds.insert(5, None)
-  mod_bonds += [None] * (len(tyr_bonds) - len(mod_bonds))
-  for i,t,m in zip(count(), tyr_bonds, mod_bonds):
-    print("bond index:", i, file=out)
-    if (m is None):
-      print(t, file=out)
-    else:
-      t = t.splitlines()
-      m = m.splitlines()
-      assert len(m) == len(t)
-      for ti,mi in zip(t, m):
-        print("%-39s %-39s" % (ti,mi), file=out)
-    print(file=out)
-  assert not show_diff("".join(mod_bonds[:5]), "".join(tyr_bonds[:5]))
-  assert not show_diff("".join(mod_bonds[6]), "".join(tyr_bonds[6]))
-  assert not show_diff("".join(mod_bonds[8:]), "".join(tyr_bonds[8:]))
-  #
-  tyr_angles = []
-  for angle in tyr_definition.normalized_angle_list():
-    s = StringIO()
-    angle.show(f=s)
-    tyr_angles.append(s.getvalue())
-  tyr_angles.sort()
-  #
-  mod_angles = []
-  for angle in  gly_plus_c_beta.normalized_angle_list() \
-              + sidechain.normalized_angle_list():
-    s = StringIO()
-    angle.show(f=s)
-    mod_angles.append(s.getvalue())
-  mod_angles.sort()
-  mod_angles.insert(4, None)
-  mod_angles.insert(10, None)
-  mod_angles.insert(11, None)
-  mod_angles.insert(24, None)
-  mod_angles.insert(25, None)
-  mod_angles += [None] * (len(tyr_angles) - len(mod_angles))
-  for i,t,m in zip(count(), tyr_angles, mod_angles):
-    print("angle index:", i, file=out)
-    if (m is None):
-      print(t, file=out)
-    else:
-      t = t.splitlines()
-      m = m.splitlines()
-      assert len(m) == len(t)
-      for ti,mi in zip(t, m):
-        print("%-39s %-39s" % (ti,mi), file=out)
-      print(file=out)
-  assert not show_diff("".join(mod_angles[:4]), "".join(tyr_angles[:4]))
-  assert not show_diff("".join(mod_angles[5:10]), "".join(tyr_angles[5:10]))
-  assert not show_diff("".join(mod_angles[12:24]), "".join(tyr_angles[12:24]))
-  assert not show_diff("".join(mod_angles[26:]), "".join(tyr_angles[26:]))
-  #
-  tyr_tors = []
-  for tor in tyr_definition.tor_list:
-    s = StringIO()
-    tor.show(f=s)
-    tyr_tors.append(s.getvalue())
-  tyr_tors.sort()
-  #
-  mod_tors = []
-  for tor in  gly_plus_c_beta.tor_list \
-              + sidechain.tor_list:
-    s = StringIO()
-    tor.show(f=s)
-    mod_tors.append(s.getvalue())
-  mod_tors.sort()
-  mod_tors.insert(0, None)
-  mod_tors.insert(5, None)
-  mod_tors.insert(6, None)
-  for i,t,m in zip(count(), tyr_tors, mod_tors):
-    print("tor index:", i, file=out)
-    if (m is None):
-      print(t, file=out)
-    else:
-      t = t.splitlines()
-      m = m.splitlines()
-      assert len(m) == len(t)
-      for ti,mi in zip(t, m):
-        print("%-39s %-39s" % (ti,mi), file=out)
-      print(file=out)
-  assert not show_diff("".join(mod_tors[1:5]), "".join(tyr_tors[1:5]))
-  assert not show_diff("".join(mod_tors[7]), "".join(tyr_tors[7]))
-  #
-  assert len(tyr_definition.chir_list) == 1
-  assert len(gly_plus_c_beta.chir_list) == 1
-  assert len(sidechain.chir_list) == 0
-  gly_plus_c_beta.chir_list[0].id = tyr_definition.chir_list[0].id
-  s = StringIO()
-  tyr_definition.chir_list[0].show(f=s)
-  tyr_chir = s.getvalue()
-  s = StringIO()
-  gly_plus_c_beta.chir_list[0].show(f=s)
-  mod_chir = s.getvalue()
-  assert not show_diff(mod_chir, tyr_chir)
-  #
-  tyr_plane_atoms = []
-  for plane_atom in tyr_definition.plane_atom_list:
-    s = StringIO()
-    plane_atom.show(f=s)
-    tyr_plane_atoms.append(s.getvalue())
-  tyr_plane_atoms.sort()
-  #
-  mod_plane_atoms = []
-  for plane_atom in  gly_plus_c_beta.plane_atom_list \
-                   + sidechain.plane_atom_list:
-    s = StringIO()
-    plane_atom.show(f=s)
-    mod_plane_atoms.append(s.getvalue())
-  mod_plane_atoms.sort()
-  mod_plane_atoms.insert(0, None)
-  mod_plane_atoms += [None] * (len(tyr_plane_atoms) - len(mod_plane_atoms))
-  for i,t,m in zip(count(), tyr_plane_atoms, mod_plane_atoms):
-    print("plane_atom index:", i, file=out)
-    if (m is None):
-      print(t, file=out)
-    else:
-      t = t.splitlines()
-      m = m.splitlines()
-      assert len(m) == len(t)
-      for ti,mi in zip(t, m):
-        print("%-39s %-39s" % (ti,mi), file=out)
-      print(file=out)
-  assert not show_diff(
-    "".join(mod_plane_atoms[1:]), "".join(tyr_plane_atoms[1:]))
-  #
-  processed_tyr = monomer_library.pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    params=None,
-    raw_records=pdb_records_tyr,
-    log=sys.stdout)
-  print()
-  processed_gly_bnz = monomer_library.pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    params=None,
-    raw_records=pdb_records_gly_bnz,
-    log=sys.stdout)
-  print()
-  print("geo_tyr")
-  geo_tyr = processed_tyr.geometry_restraints_manager()
-  print()
-  print("geo_gly_bnz")
-  geo_gly_bnz = processed_gly_bnz.geometry_restraints_manager()
-  print()
-  #
-  print("TODO: compare geometry restraints")
-  print("OK")
 
-if (__name__ == "__main__"):
-  exercise(sys.argv[1:])
+def exercise(args):
+    if "--verbose" in args:
+        out = sys.stdout
+    else:
+        out = StringIO()
+    mon_lib_srv = monomer_library.server.server()
+    ener_lib = monomer_library.server.ener_lib()
+    open("tmp.cif", "w").write(cif_string)
+    mon_lib_srv.process_cif(file_name="tmp.cif")
+    mod_gly_plus_c_beta = mon_lib_srv.mod_mod_id_dict["gly_plus_c_beta"]
+    mod_bnz_to_tyr_sidechain = mon_lib_srv.mod_mod_id_dict["bnz_to_tyr_sidechain"]
+    #
+    pdb_inp = pdb.input(source_info=None, lines=flex.std_string(pdb_records_gly_bnz))
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    residues = pdb_hierarchy.only_conformer().residues()
+    assert len(residues) == 2
+    monomer_definitions = []
+    for residue in residues:
+        md, ani = mon_lib_srv.get_comp_comp_id_and_atom_name_interpretation(
+            residue_name=residue.resname, atom_names=residue.atoms().extract_name()
+        )
+        if ani is not None:
+            assert residue.resname == "GLY"
+            assert ani.mon_lib_names() == ["N", "CA", "C", "O", None]
+        monomer_definitions.append(md)
+    gly_plus_c_beta = monomer_definitions[0].apply_mod(mod=mod_gly_plus_c_beta)
+    gly_plus_c_beta.show(f=out)
+    sidechain = monomer_definitions[1].apply_mod(mod=mod_bnz_to_tyr_sidechain)
+    sidechain.show(f=out)
+    #
+    tyr_definition = mon_lib_srv.get_comp_comp_id_direct("TYR")
+    tyr_atoms = []
+    for atom in tyr_definition.atom_list:
+        s = StringIO()
+        atom.show(f=s)
+        tyr_atoms.append(s.getvalue())
+    tyr_atoms.sort()
+    #
+    mod_atoms = []
+    for atom in gly_plus_c_beta.atom_list + sidechain.atom_list:
+        s = StringIO()
+        atom.show(f=s)
+        mod_atoms.append(s.getvalue())
+    mod_atoms.sort()
+    assert not show_diff("".join(mod_atoms), "".join(tyr_atoms))
+    #
+    tyr_bonds = []
+    for bond in tyr_definition.normalized_bond_list():
+        s = StringIO()
+        bond.show(f=s)
+        tyr_bonds.append(s.getvalue())
+    tyr_bonds.sort()
+    #
+    mod_bonds = []
+    for bond in (
+        gly_plus_c_beta.normalized_bond_list() + sidechain.normalized_bond_list()
+    ):
+        s = StringIO()
+        bond.show(f=s)
+        mod_bonds.append(s.getvalue())
+    mod_bonds.sort()
+    mod_bonds.insert(5, None)
+    mod_bonds += [None] * (len(tyr_bonds) - len(mod_bonds))
+    for i, t, m in zip(count(), tyr_bonds, mod_bonds):
+        print("bond index:", i, file=out)
+        if m is None:
+            print(t, file=out)
+        else:
+            t = t.splitlines()
+            m = m.splitlines()
+            assert len(m) == len(t)
+            for ti, mi in zip(t, m):
+                print("%-39s %-39s" % (ti, mi), file=out)
+        print(file=out)
+    assert not show_diff("".join(mod_bonds[:5]), "".join(tyr_bonds[:5]))
+    assert not show_diff("".join(mod_bonds[6]), "".join(tyr_bonds[6]))
+    assert not show_diff("".join(mod_bonds[8:]), "".join(tyr_bonds[8:]))
+    #
+    tyr_angles = []
+    for angle in tyr_definition.normalized_angle_list():
+        s = StringIO()
+        angle.show(f=s)
+        tyr_angles.append(s.getvalue())
+    tyr_angles.sort()
+    #
+    mod_angles = []
+    for angle in (
+        gly_plus_c_beta.normalized_angle_list() + sidechain.normalized_angle_list()
+    ):
+        s = StringIO()
+        angle.show(f=s)
+        mod_angles.append(s.getvalue())
+    mod_angles.sort()
+    mod_angles.insert(4, None)
+    mod_angles.insert(10, None)
+    mod_angles.insert(11, None)
+    mod_angles.insert(24, None)
+    mod_angles.insert(25, None)
+    mod_angles += [None] * (len(tyr_angles) - len(mod_angles))
+    for i, t, m in zip(count(), tyr_angles, mod_angles):
+        print("angle index:", i, file=out)
+        if m is None:
+            print(t, file=out)
+        else:
+            t = t.splitlines()
+            m = m.splitlines()
+            assert len(m) == len(t)
+            for ti, mi in zip(t, m):
+                print("%-39s %-39s" % (ti, mi), file=out)
+            print(file=out)
+    assert not show_diff("".join(mod_angles[:4]), "".join(tyr_angles[:4]))
+    assert not show_diff("".join(mod_angles[5:10]), "".join(tyr_angles[5:10]))
+    assert not show_diff("".join(mod_angles[12:24]), "".join(tyr_angles[12:24]))
+    assert not show_diff("".join(mod_angles[26:]), "".join(tyr_angles[26:]))
+    #
+    tyr_tors = []
+    for tor in tyr_definition.tor_list:
+        s = StringIO()
+        tor.show(f=s)
+        tyr_tors.append(s.getvalue())
+    tyr_tors.sort()
+    #
+    mod_tors = []
+    for tor in gly_plus_c_beta.tor_list + sidechain.tor_list:
+        s = StringIO()
+        tor.show(f=s)
+        mod_tors.append(s.getvalue())
+    mod_tors.sort()
+    mod_tors.insert(0, None)
+    mod_tors.insert(5, None)
+    mod_tors.insert(6, None)
+    for i, t, m in zip(count(), tyr_tors, mod_tors):
+        print("tor index:", i, file=out)
+        if m is None:
+            print(t, file=out)
+        else:
+            t = t.splitlines()
+            m = m.splitlines()
+            assert len(m) == len(t)
+            for ti, mi in zip(t, m):
+                print("%-39s %-39s" % (ti, mi), file=out)
+            print(file=out)
+    assert not show_diff("".join(mod_tors[1:5]), "".join(tyr_tors[1:5]))
+    assert not show_diff("".join(mod_tors[7]), "".join(tyr_tors[7]))
+    #
+    assert len(tyr_definition.chir_list) == 1
+    assert len(gly_plus_c_beta.chir_list) == 1
+    assert len(sidechain.chir_list) == 0
+    gly_plus_c_beta.chir_list[0].id = tyr_definition.chir_list[0].id
+    s = StringIO()
+    tyr_definition.chir_list[0].show(f=s)
+    tyr_chir = s.getvalue()
+    s = StringIO()
+    gly_plus_c_beta.chir_list[0].show(f=s)
+    mod_chir = s.getvalue()
+    assert not show_diff(mod_chir, tyr_chir)
+    #
+    tyr_plane_atoms = []
+    for plane_atom in tyr_definition.plane_atom_list:
+        s = StringIO()
+        plane_atom.show(f=s)
+        tyr_plane_atoms.append(s.getvalue())
+    tyr_plane_atoms.sort()
+    #
+    mod_plane_atoms = []
+    for plane_atom in gly_plus_c_beta.plane_atom_list + sidechain.plane_atom_list:
+        s = StringIO()
+        plane_atom.show(f=s)
+        mod_plane_atoms.append(s.getvalue())
+    mod_plane_atoms.sort()
+    mod_plane_atoms.insert(0, None)
+    mod_plane_atoms += [None] * (len(tyr_plane_atoms) - len(mod_plane_atoms))
+    for i, t, m in zip(count(), tyr_plane_atoms, mod_plane_atoms):
+        print("plane_atom index:", i, file=out)
+        if m is None:
+            print(t, file=out)
+        else:
+            t = t.splitlines()
+            m = m.splitlines()
+            assert len(m) == len(t)
+            for ti, mi in zip(t, m):
+                print("%-39s %-39s" % (ti, mi), file=out)
+            print(file=out)
+    assert not show_diff("".join(mod_plane_atoms[1:]), "".join(tyr_plane_atoms[1:]))
+    #
+    processed_tyr = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        params=None,
+        raw_records=pdb_records_tyr,
+        log=sys.stdout,
+    )
+    print()
+    processed_gly_bnz = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        params=None,
+        raw_records=pdb_records_gly_bnz,
+        log=sys.stdout,
+    )
+    print()
+    print("geo_tyr")
+    geo_tyr = processed_tyr.geometry_restraints_manager()
+    print()
+    print("geo_gly_bnz")
+    geo_gly_bnz = processed_gly_bnz.geometry_restraints_manager()
+    print()
+    #
+    print("TODO: compare geometry restraints")
+    print("OK")
+
+
+if __name__ == "__main__":
+    exercise(sys.argv[1:])

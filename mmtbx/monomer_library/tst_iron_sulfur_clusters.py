@@ -1,5 +1,8 @@
 from __future__ import division
-pdbs = {'FES' : ['''
+
+pdbs = {
+    "FES": [
+        """
 CRYST1   69.637   83.783  289.575  90.00  90.00  90.00 P 21 21 21
 SCALE1      0.014360  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.011936  0.000000        0.00000
@@ -19,16 +22,17 @@ HETATM   14  S2  FES B1001      24.426  14.718 106.631  1.00 50.67           S
 HETATM   15 FE1  FES B1001      26.274  13.994 105.655  1.00 45.74          Fe
 HETATM   16 FE2  FES B1001      25.714  14.660 108.456  1.00 54.80          Fe
 END
-''',
-'''Iron sulfur cluster coordination
+""",
+        """Iron sulfur cluster coordination
       pdb=" FES B1001 "
         pdb="FE1  FES B1001 " - pdb=" SG  CYS B  85 "
         pdb="FE1  FES B1001 " - pdb=" SG  CYS B  73 "
         pdb="FE2  FES B1001 " - pdb=" SG  CYS B  65 "
         pdb="FE2  FES B1001 " - pdb=" SG  CYS B  70 "
-      Number of angles added : 6'''
-],
-  'SF4' : ['''
+      Number of angles added : 6""",
+    ],
+    "SF4": [
+        """
 CRYST1   69.637   83.783  289.575  90.00  90.00  90.00 P 21 21 21
 SCALE1      0.014360  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.011936  0.000000        0.00000
@@ -50,16 +54,17 @@ HETATM   15 FE2  SF4 B1002      15.000  18.186 101.701  1.00 44.87          Fe
 HETATM   16 FE3  SF4 B1002      15.185  20.158 104.048  1.00 43.71          Fe
 HETATM   17 FE4  SF4 B1002      17.638  19.418 102.765  1.00 45.13          Fe
 END
-''',
-'''Iron sulfur cluster coordination
+""",
+        """Iron sulfur cluster coordination
       pdb=" SF4 B1002 "
         pdb="FE3  SF4 B1002 " - pdb=" SG  CYS B 158 "
         pdb="FE1  SF4 B1002 " - pdb=" SG  CYS B 164 "
         pdb="FE2  SF4 B1002 " - pdb=" SG  CYS B 225 "
         pdb="FE4  SF4 B1002 " - pdb=" SG  CYS B 161 "
-      Number of angles added : 12'''
-],
-  'F3S' : ['''
+      Number of angles added : 12""",
+    ],
+    "F3S": [
+        """
 CRYST1   69.637   83.783  289.575  90.00  90.00  90.00 P 21 21 21
 SCALE1      0.014360  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.011936  0.000000        0.00000
@@ -79,32 +84,34 @@ HETATM   16 FE1  F3S B1003      12.222  26.021  92.644  1.00 44.92          Fe
 HETATM   17 FE3  F3S B1003      10.970  23.908  93.675  1.00 48.58          Fe
 HETATM   18 FE4  F3S B1003       9.433  26.146  93.042  1.00 47.61          Fe
 END
-''',
-'''Iron sulfur cluster coordination
+""",
+        """Iron sulfur cluster coordination
       pdb=" F3S B1003 "
         pdb="FE4  F3S B1003 " - pdb=" SG  CYS B 215 "
         pdb="FE1  F3S B1003 " - pdb=" SG  CYS B 168 "
         pdb="FE3  F3S B1003 " - pdb=" SG  CYS B 221 "
-      Number of angles added : 9'''
-],
+      Number of angles added : 9""",
+    ],
 }
 
 from libtbx import easy_run
 from libtbx.test_utils import assert_lines_in_file
 
-def main():
-  for code, item in pdbs.items():
-    print(code)
-    pf = 'tst_fe_s_%s.pdb' % code
-    with open(pf, 'w') as f:
-      f.write(item[0])
-    cmd = 'phenix.pdb_interpretation %(pf)s > %(pf)s.log' % locals()
-    print(cmd)
-    easy_run.go(cmd)
-    print(item[1])
-    for line in item[1].split('\n'):
-      print(line)
-      assert_lines_in_file(file_name='%s.log' % pf, lines=line)
 
-if __name__ == '__main__':
-  main()
+def main():
+    for code, item in pdbs.items():
+        print(code)
+        pf = "tst_fe_s_%s.pdb" % code
+        with open(pf, "w") as f:
+            f.write(item[0])
+        cmd = "phenix.pdb_interpretation %(pf)s > %(pf)s.log" % locals()
+        print(cmd)
+        easy_run.go(cmd)
+        print(item[1])
+        for line in item[1].split("\n"):
+            print(line)
+            assert_lines_in_file(file_name="%s.log" % pf, lines=line)
+
+
+if __name__ == "__main__":
+    main()

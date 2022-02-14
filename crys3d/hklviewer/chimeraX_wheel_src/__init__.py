@@ -7,9 +7,9 @@ from chimerax.core.toolshed import BundleAPI
 # inheriting all other methods from the base class.
 class _MyAPI(BundleAPI):
 
-    api_version = 1     # start_tool called with BundleInfo and
-                        # ToolInfo instance (vs. BundleInfo and
-                        # tool name when api_version==0 [the default])
+    api_version = 1  # start_tool called with BundleInfo and
+    # ToolInfo instance (vs. BundleInfo and
+    # tool name when api_version==0 [the default])
 
     # Override method
     @staticmethod
@@ -26,6 +26,7 @@ class _MyAPI(BundleAPI):
         # appropriate class from the ``tool`` module.
         if ti.name == "cctbx.HKLviewer":
             from . import tool
+
             return tool.HKLviewerTool(session, ti.name)
         raise ValueError("trying to start unknown tool: %s" % ti.name)
 
@@ -34,8 +35,10 @@ class _MyAPI(BundleAPI):
         # class_name will be a string
         if class_name == "HKLviewerTool":
             from . import tool
+
             return tool.HKLviewerTool
         raise ValueError("Unknown class name '%s'" % class_name)
+
 
 # Create the ``bundle_api`` object that ChimeraX expects.
 bundle_api = _MyAPI()

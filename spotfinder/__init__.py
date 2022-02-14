@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 inner_phil_str = """\
   scanbox_windows = 101 51 51
     #.type = ints(size_min=1, size_max=3, value_min=10)
@@ -12,11 +13,14 @@ inner_phil_str = """\
     .help = "No spot detection inside margin; width in pixels."
 """
 
-phil_str = """\
+phil_str = (
+    """\
 spotfinder {
 %s
 }
-""" % inner_phil_str
+"""
+    % inner_phil_str
+)
 
 labelit_related_commands = """\
 

@@ -1,8 +1,8 @@
 from __future__ import absolute_import, division, print_function
 from iotbx.phil import parse
 
-#help_message = '''
-#diffBragg command line utility
+# help_message = '''
+# diffBragg command line utility
 #'''
 
 hopper_phil = """

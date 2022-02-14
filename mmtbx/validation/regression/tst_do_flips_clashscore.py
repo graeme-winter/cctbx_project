@@ -6,9 +6,9 @@ import unittest
 import os
 from six.moves import map
 
-__author__ = 'Youval'
+__author__ = "Youval"
 
-test_pdb_str = '''\
+test_pdb_str = """\
 CRYST1   77.977   77.977   66.800  90.00  90.00 120.00 P 31 2 1      6
 SCALE1      0.012824  0.007404  0.000000        0.00000
 SCALE2      0.000000  0.014808  0.000000        0.00000
@@ -58,65 +58,67 @@ ATOM    530  CG  GLN A 100      33.883 -25.509   7.218  1.00 16.43           C
 ATOM    531  CD  GLN A 100      32.648 -25.287   8.021  1.00 19.16           C
 ATOM    532  NE2 GLN A 100      31.646 -24.831   7.508  1.00 17.90           O
 ATOM    533  OE1 GLN A 100      32.675 -25.714   9.280  1.00 24.40           N
-'''
+"""
 
 
 class MyTestCase(unittest.TestCase):
+    def setUp(self):
+        self.file_to_delete = []
+        # import files used in tests
+        self.file_name = "test_do_flips_clashscore.pdb"
+        with open(self.file_name, "w") as f:
+            f.write(test_pdb_str)
+        self.file_to_delete.append(self.file_name)
 
-  def setUp(self):
-    self.file_to_delete = []
-    # import files used in tests
-    self.file_name = 'test_do_flips_clashscore.pdb'
-    with open(self.file_name,'w') as f:
-      f.write(test_pdb_str)
-    self.file_to_delete.append(self.file_name)
+    def test_identifying_and_addition_of_hydrogen(self):
+        """test identifying and addition of hydrogen"""
+        has_reduce = libtbx.env.has_module(name="reduce")
+        if has_reduce:
+            pdb_inp = iotbx.pdb.input(file_name=self.file_name)
+            pdb_hierarchy = pdb_inp.construct_hierarchy()
 
-  def test_identifying_and_addition_of_hydrogen(self):
-    """ test identifying and addition of hydrogen """
-    has_reduce = libtbx.env.has_module(name="reduce")
-    if has_reduce:
-      pdb_inp = iotbx.pdb.input(file_name=self.file_name)
-      pdb_hierarchy = pdb_inp.construct_hierarchy()
+            # don't do flip
+            result = clashscore(
+                pdb_hierarchy=pdb_hierarchy, keep_hydrogens=False
+            )  # verbose=True)
 
-      # don't do flip
-      result = clashscore(
-        pdb_hierarchy=pdb_hierarchy,
-        keep_hydrogens=False)#verbose=True)
+            self.assertAlmostEqual(result.clashscore, 22.9885057471, places=4)
 
-      self.assertAlmostEqual(result.clashscore,22.9885057471,places=4)
+            # do flip
+            result = clashscore(
+                pdb_hierarchy=pdb_hierarchy,
+                keep_hydrogens=False,  # verbose=True)
+                do_flips=True,
+            )
 
-      # do flip
-      result = clashscore(
-        pdb_hierarchy=pdb_hierarchy,
-        keep_hydrogens=False,#verbose=True)
-        do_flips=True)
+            self.assertEqual(result.clashscore, 0)
+        else:
+            # Skip test if reduce is not present
+            pass
 
-      self.assertEqual(result.clashscore,0)
-    else:
-      # Skip test if reduce is not present
-      pass
+    def tearDown(self):
+        """delete files created in during testing"""
+        if self.file_to_delete:
+            for fn in self.file_to_delete:
+                if os.path.isfile(fn):
+                    os.remove(fn)
 
-  def tearDown(self):
-    """ delete files created in during testing"""
-    if self.file_to_delete:
-      for fn in self.file_to_delete:
-        if os.path.isfile(fn): os.remove(fn)
 
 def run_selected_tests():
-  """  Run selected tests
+    """Run selected tests
 
-  1) List in "tests" the names of the particular test you want to run
-  2) Comment out unittest.main()
-  3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
-  """
-  tests = ['test_something']
-  suite = unittest.TestSuite(list(map(MyTestCase, tests)))
-  return suite
+    1) List in "tests" the names of the particular test you want to run
+    2) Comment out unittest.main()
+    3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
+    """
+    tests = ["test_something"]
+    suite = unittest.TestSuite(list(map(MyTestCase, tests)))
+    return suite
 
 
-if __name__ == '__main__':
-  # use for individual tests
-  # unittest.TextTestRunner().run(run_selected_tests())
+if __name__ == "__main__":
+    # use for individual tests
+    # unittest.TextTestRunner().run(run_selected_tests())
 
-  # Use to run all tests
-  unittest.main(verbosity=0)
+    # Use to run all tests
+    unittest.main(verbosity=0)

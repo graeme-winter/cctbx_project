@@ -1,16 +1,17 @@
-
 from __future__ import absolute_import, division, print_function
 import os
 from libtbx.utils import null_out
 from libtbx import group_args
 from six.moves import cStringIO as StringIO
 
+
 def exercise():
-  from mmtbx.regression import make_fake_anomalous_data
-  import mmtbx.command_line.water_screen
-  import mmtbx.ions.utils
-  from iotbx.file_reader import any_file
-  pdb_in = """\
+    from mmtbx.regression import make_fake_anomalous_data
+    import mmtbx.command_line.water_screen
+    import mmtbx.ions.utils
+    from iotbx.file_reader import any_file
+
+    pdb_in = """\
 CRYST1   51.491   51.491   35.389  90.00  90.00 120.00 P 31 2 1
 SCALE1      0.019421  0.011213  0.000000        0.00000
 SCALE2      0.000000  0.022425  0.000000        0.00000
@@ -107,41 +108,40 @@ HETATM  373  O   HOH A 128       5.298  21.833  43.473  1.00 41.96           O
 HETATM  377  O   HOH A 132      13.181  22.613  29.210  1.00 35.43           O
 TER
 """
-  file_base = "tst_symmetry_axis"
-  with open(file_base + ".pdb", "w") as f:
-    f.write(pdb_in)
-  f = any_file(file_base + ".pdb")
-  hierarchy = f.file_object.hierarchy
-  xrs = f.file_object.xray_structure_simple()
-  hierarchy, n = mmtbx.ions.utils.anonymize_ions(hierarchy, log=null_out())
-  assert (n == 3)
-  with open(file_base + "_in.pdb", "w") as f:
-    f.write(hierarchy.as_pdb_string(crystal_symmetry=xrs))
-  mtz_file = make_fake_anomalous_data.generate_mtz_file(
-    file_base=file_base,
-    d_min=1.5,
-    anomalous_scatterers=[group_args(
-      selection="element CA",
-      fp=0.0,
-      fdp=0.4)])
-  args = [
-    file_base + "_in.pdb",
-    file_base + ".mtz",
-    "wavelength=0.9792",
-    "use_phaser=False",
-    "nproc=1",
-    "skip_twin_test=True",
-    "elements=CA",
-  ]
-  out = StringIO()
-  mmtbx.command_line.water_screen.run(args=args, out=out)
-  assert "Valence sum:  1.916" in out.getvalue()
-  assert out.getvalue().count("Probable cation: CA+2") >= 1
-  os.remove(file_base + ".pdb")
-  os.remove(file_base + "_in.pdb")
-  os.remove(file_base + ".mtz")
-  os.remove(file_base + "_fmodel.eff")
+    file_base = "tst_symmetry_axis"
+    with open(file_base + ".pdb", "w") as f:
+        f.write(pdb_in)
+    f = any_file(file_base + ".pdb")
+    hierarchy = f.file_object.hierarchy
+    xrs = f.file_object.xray_structure_simple()
+    hierarchy, n = mmtbx.ions.utils.anonymize_ions(hierarchy, log=null_out())
+    assert n == 3
+    with open(file_base + "_in.pdb", "w") as f:
+        f.write(hierarchy.as_pdb_string(crystal_symmetry=xrs))
+    mtz_file = make_fake_anomalous_data.generate_mtz_file(
+        file_base=file_base,
+        d_min=1.5,
+        anomalous_scatterers=[group_args(selection="element CA", fp=0.0, fdp=0.4)],
+    )
+    args = [
+        file_base + "_in.pdb",
+        file_base + ".mtz",
+        "wavelength=0.9792",
+        "use_phaser=False",
+        "nproc=1",
+        "skip_twin_test=True",
+        "elements=CA",
+    ]
+    out = StringIO()
+    mmtbx.command_line.water_screen.run(args=args, out=out)
+    assert "Valence sum:  1.916" in out.getvalue()
+    assert out.getvalue().count("Probable cation: CA+2") >= 1
+    os.remove(file_base + ".pdb")
+    os.remove(file_base + "_in.pdb")
+    os.remove(file_base + ".mtz")
+    os.remove(file_base + "_fmodel.eff")
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

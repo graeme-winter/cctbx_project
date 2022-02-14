@@ -3,67 +3,74 @@ from __future__ import absolute_import, division, print_function
 import os
 import time
 
-import boost_adaptbx.boost.optional # import dependency
+import boost_adaptbx.boost.optional  # import dependency
 import boost_adaptbx.boost.python as bp
+
 bp.import_ext("scitbx_random_ext")
 import scitbx_random_ext
 
+
 def get_random_seed():
-  try:
-    result = (os.getpid() * (2**16)) \
-           + (time.time() * (2**8))
-  except KeyboardInterrupt: raise
-  except Exception:
-    result = time.time()
-  return int(result % (2**31-1))
+    try:
+        result = (os.getpid() * (2 ** 16)) + (time.time() * (2 ** 8))
+    except KeyboardInterrupt:
+        raise
+    except Exception:
+        result = time.time()
+    return int(result % (2 ** 31 - 1))
+
 
 def set_random_seed(value):
-  mt19937.seed(value)
+    mt19937.seed(value)
+
 
 from scitbx_random_ext import *
+
 mt19937 = mersenne_twister_19937(value=get_random_seed())
 
 
 class variate_factory(object):
-  """
-  The corner stone of this package.
+    """
+    The corner stone of this package.
 
-  Synopsis
+    Synopsis
 
-    g = scitbx.random.variate(scitbx.random.normal_distribution(mean, sigma))
+      g = scitbx.random.variate(scitbx.random.normal_distribution(mean, sigma))
 
-  How to use it from other modules?
+    How to use it from other modules?
 
-    scitbx.random.variate.register(xxxx_ext)
+      scitbx.random.variate.register(xxxx_ext)
 
-  where xxxx_ext is a Boost.Python module featuring overloaded 'variate'
-  functions, variate(engine, distribution), where engine is the like
-  of mt19937 and distribution is the like of scitbx.random.normal_distribution.
-  """
+    where xxxx_ext is a Boost.Python module featuring overloaded 'variate'
+    functions, variate(engine, distribution), where engine is the like
+    of mt19937 and distribution is the like of scitbx.random.normal_distribution.
+    """
 
-  def __init__(self):
-    self.modules = []
+    def __init__(self):
+        self.modules = []
 
-  def register_module(self, module):
-    self.modules.append(module)
+    def register_module(self, module):
+        self.modules.append(module)
 
-  def variate_functions(self):
-    yield scitbx_random_ext.variate
-    for module in self.modules: yield module.variate
+    def variate_functions(self):
+        yield scitbx_random_ext.variate
+        for module in self.modules:
+            yield module.variate
 
-  def __call__(self, distribution, engine=mt19937):
-    exceptions = []
-    for variate in self.variate_functions():
-      try:
-        return variate(engine, distribution)
-      except Exception as e:
-        if str(e.__class__).find('Boost.Python.ArgumentError') >= 0:
-          exceptions.append(e)
-          continue
+    def __call__(self, distribution, engine=mt19937):
+        exceptions = []
+        for variate in self.variate_functions():
+            try:
+                return variate(engine, distribution)
+            except Exception as e:
+                if str(e.__class__).find("Boost.Python.ArgumentError") >= 0:
+                    exceptions.append(e)
+                    continue
+                else:
+                    raise
         else:
-          raise
-    else:
-      raise RuntimeError('\n'.join(str(e) for e in exceptions))
+            raise RuntimeError("\n".join(str(e) for e in exceptions))
+
 
 # Instantiate the one single variate factory doing it all
 variate = variate_factory()

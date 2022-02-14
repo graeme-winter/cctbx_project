@@ -5,9 +5,11 @@ from mmtbx.validation.rotalyze import rotalyze
 from libtbx.program_template import ProgramTemplate
 from libtbx.utils import Sorry
 
+
 class Program(ProgramTemplate):
-  prog = os.getenv('LIBTBX_DISPATCHER_NAME')
-  description="""\
+    prog = os.getenv("LIBTBX_DISPATCHER_NAME")
+    description = (
+        """\
 %(prog)s file.pdb [params.eff] [options ...]
 
 Options:
@@ -19,9 +21,11 @@ Options:
 Example:
 
   %(prog)s model=1ubq.pdb outliers_only=True
-""" % locals()
+"""
+        % locals()
+    )
 
-  master_phil_str = """
+    master_phil_str = """
   include scope mmtbx.validation.molprobity_cmdline_phil_str
   data_version = 8000
     .type = str
@@ -35,32 +39,33 @@ Example:
   use_parent = False
     .type = bool
   """
-  datatypes = ['model','phil']
-  data_manager_options = ['model_skip_expand_with_mtrix']
-  known_article_ids = ['molprobity']
+    datatypes = ["model", "phil"]
+    data_manager_options = ["model_skip_expand_with_mtrix"]
+    known_article_ids = ["molprobity"]
 
-  def validate(self):
-    self.data_manager.has_models(raise_sorry=True)
+    def validate(self):
+        self.data_manager.has_models(raise_sorry=True)
 
-  def run(self):
-    hierarchy = self.data_manager.get_model().get_hierarchy()
+    def run(self):
+        hierarchy = self.data_manager.get_model().get_hierarchy()
 
-    result = rotalyze(
-      pdb_hierarchy=hierarchy,
-      data_version="8000",#was 'params.data_version', no options currently
-      show_errors=self.params.show_errors,
-      outliers_only=self.params.outliers_only,
-      use_parent=self.params.use_parent,
-      out=self.logger,
-      quiet=False)
-    if self.params.verbose:
-      result.show_old_output(out=self.logger, verbose=True)
-    if self.params.wxplot :
-      try :
-        import wxtbx.app
-      except ImportError as e :
-        raise Sorry("wxPython not available.")
-      else :
-        app = wxtbx.app.CCTBXApp(0)
-        result.display_wx_plots()
-        app.MainLoop()
+        result = rotalyze(
+            pdb_hierarchy=hierarchy,
+            data_version="8000",  # was 'params.data_version', no options currently
+            show_errors=self.params.show_errors,
+            outliers_only=self.params.outliers_only,
+            use_parent=self.params.use_parent,
+            out=self.logger,
+            quiet=False,
+        )
+        if self.params.verbose:
+            result.show_old_output(out=self.logger, verbose=True)
+        if self.params.wxplot:
+            try:
+                import wxtbx.app
+            except ImportError as e:
+                raise Sorry("wxPython not available.")
+            else:
+                app = wxtbx.app.CCTBXApp(0)
+                result.display_wx_plots()
+                app.MainLoop()

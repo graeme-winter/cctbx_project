@@ -31,241 +31,233 @@ from libtbx.scheduling import identifier
 
 # Capacity modes
 class limited(object):
-  """
-  Limited number of jobs
-  """
+    """
+    Limited number of jobs
+    """
 
-  def __init__(self, njobs):
+    def __init__(self, njobs):
 
-    self.njobs = njobs
+        self.njobs = njobs
 
+    def is_full(self, njobs):
 
-  def is_full(self, njobs):
-
-    return self.njobs <= njobs
+        return self.njobs <= njobs
 
 
 class unlimited(object):
-  """
-  Unlimited number of jobs (to be used with submission queue
+    """
+    Unlimited number of jobs (to be used with submission queue
 
-  Note: this is a singleton object
-  """
+    Note: this is a singleton object
+    """
 
-  @staticmethod
-  def is_full(njobs):
+    @staticmethod
+    def is_full(njobs):
 
-    return False
+        return False
 
 
 def job_cycle(outqueue, jobid, target, args, kwargs):
 
-  try:
-    value = target( *args, **kwargs )
+    try:
+        value = target(*args, **kwargs)
 
-  except Exception as e:
-    res = result.error( exception = e, traceback = result.get_traceback_info() )
+    except Exception as e:
+        res = result.error(exception=e, traceback=result.get_traceback_info())
 
-  else:
-    res = result.success( value = value )
+    else:
+        res = result.success(value=value)
 
-  outqueue.put( ( jobid, res ) )
+    outqueue.put((jobid, res))
 
 
 class manager(object):
-  """
-  Job scheduler
-  """
+    """
+    Job scheduler
+    """
 
-  def __init__(self, inqueue, job_factory, capacity, waittime = 0.01):
+    def __init__(self, inqueue, job_factory, capacity, waittime=0.01):
 
-    self.inqueue = inqueue
-    self.job_factory = job_factory
-    self.capacity = capacity
+        self.inqueue = inqueue
+        self.job_factory = job_factory
+        self.capacity = capacity
 
-    self.waittime = waittime
+        self.waittime = waittime
 
-    self.process_data_for = {}
-    self.waiting_results = set()
-    self.waiting_jobs = deque()
-    self.completed_results = deque()
+        self.process_data_for = {}
+        self.waiting_results = set()
+        self.waiting_jobs = deque()
+        self.completed_results = deque()
 
-    self.resume()
+        self.resume()
 
+    def job_count(self):
 
-  def job_count(self):
+        return len(self.process_data_for) + len(self.waiting_jobs)
 
-    return len( self.process_data_for ) + len( self.waiting_jobs )
+    def process_count(self):
 
+        return len(self.process_data_for)
 
-  def process_count(self):
+    def is_empty(self):
 
-    return len( self.process_data_for )
+        return not (
+            self.waiting_jobs
+            or self.process_data_for
+            or self.waiting_results
+            or self.completed_results
+        )
 
+    def is_full(self):
 
-  def is_empty(self):
+        return self.capacity.is_full(njobs=self.process_count())
 
-    return not (
-      self.waiting_jobs or self.process_data_for or self.waiting_results
-      or self.completed_results
-      )
+    def has_results(self):
 
+        return self.completed_results
 
-  def is_full(self):
+    def results(self):
 
-    return self.capacity.is_full( njobs = self.process_count() )
-
-
-  def has_results(self):
-
-    return self.completed_results
-
-
-  def results(self):
-
-    self.poll()
-
-    while (
-      self.process_data_for or self.waiting_results or self.completed_results
-      or ( self.waiting_jobs and self.active )
-      ):
-      while not self.has_results():
-        self.wait()
         self.poll()
 
-      yield self.completed_results.popleft()
+        while (
+            self.process_data_for
+            or self.waiting_results
+            or self.completed_results
+            or (self.waiting_jobs and self.active)
+        ):
+            while not self.has_results():
+                self.wait()
+                self.poll()
 
+            yield self.completed_results.popleft()
 
-  def submit(self, target, args = (), kwargs = {}):
+    def submit(self, target, args=(), kwargs={}):
 
-    jobid = identifier()
-    self.waiting_jobs.append( ( jobid, target, args, kwargs ) )
-    self.poll()
-    return jobid
+        jobid = identifier()
+        self.waiting_jobs.append((jobid, target, args, kwargs))
+        self.poll()
+        return jobid
 
+    def shutdown(self):
 
-  def shutdown(self):
+        self.active = False
 
-    self.active = False
+    def resume(self):
 
+        self.active = True
 
-  def resume(self):
+    def join(self):
 
-    self.active = True
+        while self.process_data_for:
+            self.poll()
+            self.wait()
 
+        self.poll()
 
-  def join(self):
+    def terminate(self):
 
-    while self.process_data_for:
-      self.poll()
-      self.wait()
+        self.shutdown()
 
-    self.poll()
+        for process in self.process_data_for.values():
+            if process.is_alive():
+                if hasattr(process, "terminate"):  # Thread has no terminate
+                    try:
+                        process.terminate()
 
+                    except Exception:
+                        pass
 
-  def terminate(self):
+        self.join()
 
-    self.shutdown()
+    # Internal methods
+    def wait(self):
 
-    for process in self.process_data_for.values():
-      if process.is_alive():
-        if hasattr( process, "terminate" ): # Thread has no terminate
-          try:
-            process.terminate()
+        time.sleep(self.waittime)
 
-          except Exception:
-            pass
+    def poll(self):
 
-    self.join()
+        # Check existing jobs
+        for jobid in list(self.process_data_for):
+            process = self.process_data_for[jobid]
 
+            if not process.is_alive():
+                self.finish_job(jobid=jobid)
 
-  # Internal methods
-  def wait(self):
+        # Collect results
+        while True:
+            try:
+                (jobid, res) = self.inqueue.get(timeout=self.waittime)
 
-    time.sleep( self.waittime )
+            except Empty:
+                break
 
+            if jobid in self.process_data_for:
+                self.finish_job(jobid=jobid)
 
-  def poll(self):
+            self.waiting_results.remove(jobid)
+            self.completed_results.append((jobid, res))
 
-    # Check existing jobs
-    for jobid in list(self.process_data_for):
-      process = self.process_data_for[ jobid ]
+        # Submit new jobs
+        while (
+            not self.capacity.is_full(njobs=self.process_count())
+            and self.waiting_jobs
+            and self.active
+        ):
+            (jobid, target, args, kwargs) = self.waiting_jobs.popleft()
 
-      if not process.is_alive():
-        self.finish_job( jobid = jobid )
+            process = self.job_factory(
+                target=job_cycle,
+                args=(self.inqueue, jobid, target, args, kwargs),
+            )
 
-    # Collect results
-    while True:
-      try:
-        ( jobid, res ) = self.inqueue.get( timeout = self.waittime )
+            process.start()
+            self.process_data_for[jobid] = process
 
-      except Empty:
-        break
+    def finish_job(self, jobid):
 
-      if jobid in self.process_data_for:
-        self.finish_job( jobid = jobid )
+        process = self.process_data_for[jobid]
+        process.join()
+        exit_code = getattr(
+            process, "exitcode", 0
+        )  # Thread has no "exitcode" attribute
 
-      self.waiting_results.remove( jobid )
-      self.completed_results.append( ( jobid, res ) )
+        if exit_code != 0:
+            res = result.error(
+                exception=result.get_exception(process=process, exit_code=exit_code),
+                traceback=result.get_crash_info(process=process),
+            )
+            self.completed_results.append((jobid, res))
 
-    # Submit new jobs
-    while ( not self.capacity.is_full( njobs = self.process_count() )
-      and self.waiting_jobs and self.active ):
-      ( jobid, target, args, kwargs ) = self.waiting_jobs.popleft()
+        else:
+            self.waiting_results.add(jobid)
 
-      process = self.job_factory(
-        target = job_cycle,
-        args = ( self.inqueue, jobid, target, args, kwargs ),
-        )
-
-      process.start()
-      self.process_data_for[ jobid ] = process
-
-
-  def finish_job(self, jobid):
-
-    process = self.process_data_for[ jobid ]
-    process.join()
-    exit_code = getattr( process, "exitcode", 0 ) # Thread has no "exitcode" attribute
-
-    if exit_code != 0:
-      res = result.error(
-        exception = result.get_exception( process = process, exit_code = exit_code ),
-        traceback = result.get_crash_info( process = process ),
-        )
-      self.completed_results.append( ( jobid, res ) )
-
-    else:
-      self.waiting_results.add( jobid )
-
-    del self.process_data_for[ jobid ]
+        del self.process_data_for[jobid]
 
 
 class creator(object):
-  """
-  Information to create and destroy manager
-  """
+    """
+    Information to create and destroy manager
+    """
 
-  def __init__(self, job_factory, queue_factory, capacity, waittime = 0.01):
+    def __init__(self, job_factory, queue_factory, capacity, waittime=0.01):
 
-    self.job_factory = job_factory
-    self.queue_factory = queue_factory
-    self.capacity = capacity
-    self.waittime = waittime
+        self.job_factory = job_factory
+        self.queue_factory = queue_factory
+        self.capacity = capacity
+        self.waittime = waittime
 
+    def create(self):
 
-  def create(self):
+        return manager(
+            inqueue=self.queue_factory.create(),
+            job_factory=self.job_factory,
+            capacity=self.capacity,
+            waittime=self.waittime,
+        )
 
-    return manager(
-      inqueue = self.queue_factory.create(),
-      job_factory = self.job_factory,
-      capacity = self.capacity,
-      waittime = self.waittime,
-      )
+    def destroy(self, manager):
 
-
-  def destroy(self, manager):
-
-    manager.terminate()
-    manager.join()
-    self.queue_factory.destroy( manager.inqueue )
+        manager.terminate()
+        manager.join()
+        self.queue_factory.destroy(manager.inqueue)

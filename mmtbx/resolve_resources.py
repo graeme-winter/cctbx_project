@@ -18,5 +18,6 @@ use_dm_map = False
   .type = bool
 """
 
+
 def get_phenix_masks_master_params():
-  return libtbx.phil.parse(phenix_masks_master_params, process_includes=False)
+    return libtbx.phil.parse(phenix_masks_master_params, process_includes=False)

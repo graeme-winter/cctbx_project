@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.disorder import analyze_model
 from mmtbx.validation import molprobity
@@ -8,19 +7,20 @@ import libtbx.load_env
 import mmtbx.model
 from six.moves import cStringIO as StringIO
 
+
 def analyze_fragment(pdb_str):
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_str)
-  model = mmtbx.model.manager(pdb_in.input)
-  validation = molprobity.molprobity(model, outliers_only=False)
-  result = analyze_model.process_pdb_hierarchy(
-    pdb_hierarchy=model.get_hierarchy(),
-    validation=validation,
-    log=null_out())
-  return result
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_str)
+    model = mmtbx.model.manager(pdb_in.input)
+    validation = molprobity.molprobity(model, outliers_only=False)
+    result = analyze_model.process_pdb_hierarchy(
+        pdb_hierarchy=model.get_hierarchy(), validation=validation, log=null_out()
+    )
+    return result
+
 
 def exercise():
-  # single alternate, split at C-alpha (from 1ytt)
-  pdb_str = """\
+    # single alternate, split at C-alpha (from 1ytt)
+    pdb_str = """\
 CRYST1   65.508   72.216   45.035  90.00  90.00  90.00 P 21 21 21    8
 ATOM    844  N   VAL A 216      11.617  50.561  30.170  1.00  5.99           N
 ATOM    845  CA  VAL A 216      12.023  51.936  29.899  1.00  6.80           C
@@ -49,15 +49,15 @@ ATOM    867  OE1 GLU A 218      13.918  55.750  22.262  1.00 17.06           O
 ATOM    868  OE2 GLU A 218      12.382  55.827  20.711  1.00 20.67           O
 END
 """
-  result = analyze_fragment(pdb_str)
-  out = StringIO()
-  result.show(out=out)
-  assert ("atom_group=B CYS  occ=0.45 phi=-111.6 psi=146.7  rot=t" in
-    out.getvalue())
+    result = analyze_fragment(pdb_str)
+    out = StringIO()
+    result.show(out=out)
+    assert "atom_group=B CYS  occ=0.45 phi=-111.6 psi=146.7  rot=t" in out.getvalue()
 
-if (__name__ == "__main__"):
-  if (not libtbx.env.has_module("probe")):
-    print("Probe not configured, skipping test")
-  else :
-    exercise()
-    print("OK")
+
+if __name__ == "__main__":
+    if not libtbx.env.has_module("probe"):
+        print("Probe not configured, skipping test")
+    else:
+        exercise()
+        print("OK")

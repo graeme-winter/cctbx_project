@@ -1,16 +1,18 @@
 from __future__ import division
 
-from abc import ABCMeta #, abstractproperty
+from abc import ABCMeta  # , abstractproperty
 import numpy as np
 from scitbx.matrix import sqr
 
 import abc
+
 try:
     ABC = abc.ABC
     abstractproperty = lambda f: property(abc.abstractmethod(f))
 except AttributeError:  # Python 2.7, abc exists, but not ABC
     ABC = abc.ABCMeta("ABC", (object,), {"__slots__": ()})
     from abc import abstractproperty
+
 
 class CrystalSystemManager(object):
 
@@ -24,8 +26,8 @@ class CrystalSystemManager(object):
     def derivative_matrices(self):
         pass
 
-    #@abstractproperty
-    #def second_derivative_matrices(self):
+    # @abstractproperty
+    # def second_derivative_matrices(self):
     #    pass
 
     @abstractproperty
@@ -96,7 +98,18 @@ class CrystalSystemManager(object):
     @property
     def V(self):
         """unit cell volume in cubic Angstrom"""
-        return self.a*self.b*self.c*np.sqrt(1-self.cal**2 - self.cbe**2-self.cga**2+2*self.cal*self.cbe*self.cga)
+        return (
+            self.a
+            * self.b
+            * self.c
+            * np.sqrt(
+                1
+                - self.cal ** 2
+                - self.cbe ** 2
+                - self.cga ** 2
+                + 2 * self.cal * self.cbe * self.cga
+            )
+        )
 
     @property
     def B_realspace(self):
@@ -106,9 +119,18 @@ class CrystalSystemManager(object):
         aligned according to the PDB convention
         """
         return sqr(
-            (self.a, self.b*self.cga, self.c*self.cbe,
-             0,      self.b*self.sga, self.c*(self.cal-self.cbe*self.cga)/self.sga,
-             0,      0,               self.V/(self.a*self.b*self.sga)))
+            (
+                self.a,
+                self.b * self.cga,
+                self.c * self.cbe,
+                0,
+                self.b * self.sga,
+                self.c * (self.cal - self.cbe * self.cga) / self.sga,
+                0,
+                0,
+                self.V / (self.a * self.b * self.sga),
+            )
+        )
 
     @property
     def B_recipspace(self):
@@ -139,4 +161,11 @@ class CrystalSystemManager(object):
         unit cell parameter 6-tuple in Angstrom/degrees format
         returns: a,b,c, alpha, beta, gamma
         """
-        return self.a, self.b, self.c, self.al*180./np.pi, self.be*180./np.pi, self.ga*180./np.pi
+        return (
+            self.a,
+            self.b,
+            self.c,
+            self.al * 180.0 / np.pi,
+            self.be * 180.0 / np.pi,
+            self.ga * 180.0 / np.pi,
+        )

@@ -38,26 +38,30 @@ HETATM   33  OXT ALA A   3      -0.293   1.123  -3.725  1.00 20.00      A    O-1
 from six.moves import cStringIO as StringIO
 from libtbx import easy_run
 
-def run():
-  f=open("tst_correct_hydrogens.pdb", "w")
-  f.write(pdb)
-  f.close()
-  cmd = "phenix.geometry_minimization tst_correct_hydrogens.pdb"
-  print(cmd)
-  ero = easy_run.fully_buffered(command=cmd)
-  cmd = "phenix.geometry_minimization tst_correct_hydrogens_minimized.pdb"
-  print(cmd)
-  ero = easy_run.fully_buffered(command=cmd)
-  std = StringIO()
-  ero.show_stdout(out=std)
-  chiral_energy = None
-  for line in std.getvalue().splitlines():
-    if line.find("chirality_residual_sum")>-1:
-      chiral_energy = line
-  chiral_energy = chiral_energy.split()[-1]
-  print('chiral energy',chiral_energy)
-  assert float(chiral_energy)<0.03, 'chiral energy %0.2f greater than 0.03' % float(chiral_energy)
-  print("OK")
 
-if __name__=="__main__":
-  run()
+def run():
+    f = open("tst_correct_hydrogens.pdb", "w")
+    f.write(pdb)
+    f.close()
+    cmd = "phenix.geometry_minimization tst_correct_hydrogens.pdb"
+    print(cmd)
+    ero = easy_run.fully_buffered(command=cmd)
+    cmd = "phenix.geometry_minimization tst_correct_hydrogens_minimized.pdb"
+    print(cmd)
+    ero = easy_run.fully_buffered(command=cmd)
+    std = StringIO()
+    ero.show_stdout(out=std)
+    chiral_energy = None
+    for line in std.getvalue().splitlines():
+        if line.find("chirality_residual_sum") > -1:
+            chiral_energy = line
+    chiral_energy = chiral_energy.split()[-1]
+    print("chiral energy", chiral_energy)
+    assert float(chiral_energy) < 0.03, "chiral energy %0.2f greater than 0.03" % float(
+        chiral_energy
+    )
+    print("OK")
+
+
+if __name__ == "__main__":
+    run()

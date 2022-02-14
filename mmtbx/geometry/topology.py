@@ -5,480 +5,468 @@ from boost_adaptbx import graph
 import math
 from six.moves import zip
 
+
 class Atom(object):
-  """
-  Match results by identity
-  """
+    """
+    Match results by identity
+    """
 
-  def __init__(self, **kwargs):
+    def __init__(self, **kwargs):
 
-    for ( name, value ) in kwargs.items():
-      setattr( self, name, value )
+        for (name, value) in kwargs.items():
+            setattr(self, name, value)
 
 
 class Molecule(object):
-  """
-  A graph-based 3D-description of a molecule
-  """
+    """
+    A graph-based 3D-description of a molecule
+    """
 
-  def __init__(self, vertex_type = "vector", edge_type = "set"):
+    def __init__(self, vertex_type="vector", edge_type="set"):
 
-    self.graph = graph.adjacency_list(
-      graph_type = "undirected",
-      vertex_type = vertex_type,
-      edge_type = edge_type,
-      )
-    self.atom_for = {}
-    self.xyz_for = {}
-
-
-  @property
-  def descriptor_for(self):
-    # TODO: six.moves.zip this file
-    return dict( zip( self.atom_for.values(), self.atom_for.keys() ))
-
-
-  @property
-  def atoms(self):
-
-    return list(self.atom_for.values())
-
-
-  def add(self, atom, xyz):
-
-    d2 = self.graph.add_vertex( label = atom )
-    ( x2, y2, z2 ) = xyz
-    assert d2 not in self.xyz_for
-
-    for ( d1, ( x1, y1, z1 ) ) in self.xyz_for.items():
-      self.graph.add_edge(
-        vertex1 = d1,
-        vertex2 = d2,
-        weight = math.sqrt(
-          ( x1 - x2 ) ** 2  + ( y1 - y2 ) ** 2 + ( z1 - z2 ) ** 2
-          ),
+        self.graph = graph.adjacency_list(
+            graph_type="undirected",
+            vertex_type=vertex_type,
+            edge_type=edge_type,
         )
+        self.atom_for = {}
+        self.xyz_for = {}
 
-    self.atom_for[ d2 ] = atom
-    self.xyz_for[ d2 ] = xyz
+    @property
+    def descriptor_for(self):
+        # TODO: six.moves.zip this file
+        return dict(zip(self.atom_for.values(), self.atom_for.keys()))
 
+    @property
+    def atoms(self):
 
-  def size(self):
+        return list(self.atom_for.values())
 
-    return len( self.atom_for )
+    def add(self, atom, xyz):
+
+        d2 = self.graph.add_vertex(label=atom)
+        (x2, y2, z2) = xyz
+        assert d2 not in self.xyz_for
+
+        for (d1, (x1, y1, z1)) in self.xyz_for.items():
+            self.graph.add_edge(
+                vertex1=d1,
+                vertex2=d2,
+                weight=math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2),
+            )
+
+        self.atom_for[d2] = atom
+        self.xyz_for[d2] = xyz
+
+    def size(self):
+
+        return len(self.atom_for)
 
 
 class Compound(object):
-  """
-  A graph-based 2D-representation of a compound
-  """
+    """
+    A graph-based 2D-representation of a compound
+    """
 
-  def __init__(self, graph):
+    def __init__(self, graph):
 
-    self.graph = graph
-    self.descriptor_for = dict(
-      ( self.graph.vertex_label( vertex = v ), v ) for v in self.graph.vertices()
-      )
-
-
-  @property
-  def atom_for(self):
-
-    return dict( zip( self.descriptor_for.values(), self.descriptor_for.keys() ))
-
-
-  @property
-  def atoms(self):
-
-    return list(self.descriptor_for.keys())
-
-
-  @property
-  def descriptors(self):
-
-    return list(self.descriptor_for.values())
-
-
-  @property
-  def bonds(self):
-
-    atom_for = self.atom_for
-
-    for edge in self.graph.edges():
-      yield (
-        atom_for[ self.graph.source( edge = edge) ],
-        atom_for[ self.graph.target( edge = edge) ],
+        self.graph = graph
+        self.descriptor_for = dict(
+            (self.graph.vertex_label(vertex=v), v) for v in self.graph.vertices()
         )
 
+    @property
+    def atom_for(self):
 
-  def add_atom(self, atom):
+        return dict(zip(self.descriptor_for.values(), self.descriptor_for.keys()))
 
-    self.descriptor_for[ atom ] = self.graph.add_vertex( label = atom )
+    @property
+    def atoms(self):
 
+        return list(self.descriptor_for.keys())
 
-  def add_bond(self, left, right, order = 1):
+    @property
+    def descriptors(self):
 
-    if left not in self.descriptor_for:
-      self.add_atom( atom = left )
+        return list(self.descriptor_for.values())
 
-    if right not in self.descriptor_for:
-      self.add_atom( atom = right )
+    @property
+    def bonds(self):
 
-    self.graph.add_edge(
-      vertex1 = self.descriptor_for[ left ],
-      vertex2 = self.descriptor_for[ right ],
-      weight = order,
-      )
+        atom_for = self.atom_for
 
+        for edge in self.graph.edges():
+            yield (
+                atom_for[self.graph.source(edge=edge)],
+                atom_for[self.graph.target(edge=edge)],
+            )
 
-  def distances_from(self, atom):
+    def add_atom(self, atom):
 
-    if atom not in self.descriptor_for:
-      raise ValueError("Unknown atom: %s" % atom)
+        self.descriptor_for[atom] = self.graph.add_vertex(label=atom)
 
-    from boost_adaptbx.graph import breadth_first_search as bfs
+    def add_bond(self, left, right, order=1):
 
-    vertex = self.descriptor_for[ atom ]
-    visitor = bfs.distance_recording_visitor( start_vertex = vertex )
-    bfs.breadth_first_search(
-      graph = self.graph,
-      vertex = vertex,
-      visitor = visitor,
-      )
+        if left not in self.descriptor_for:
+            self.add_atom(atom=left)
 
-    atom_for = self.atom_for
-    return dict(
-      ( atom_for[ v ], visitor.distance_for.get( v, None ) )
-      for v in self.descriptors
-      )
+        if right not in self.descriptor_for:
+            self.add_atom(atom=right)
 
+        self.graph.add_edge(
+            vertex1=self.descriptor_for[left],
+            vertex2=self.descriptor_for[right],
+            weight=order,
+        )
 
-  def subset(self, atoms):
+    def distances_from(self, atom):
 
-    if not all( a in self.descriptor_for for a in atoms ):
-      raise ValueError("Unknown atoms: %s" % atoms)
+        if atom not in self.descriptor_for:
+            raise ValueError("Unknown atom: %s" % atom)
 
-    from boost_adaptbx.graph import maximum_clique
-    subgraph = maximum_clique.selected_subgraph(
-      graph = self.graph,
-      vertices = ( self.descriptor_for[ a ] for a in atoms ),
-      )
+        from boost_adaptbx.graph import breadth_first_search as bfs
 
-    return self.__class__( graph = subgraph )
+        vertex = self.descriptor_for[atom]
+        visitor = bfs.distance_recording_visitor(start_vertex=vertex)
+        bfs.breadth_first_search(
+            graph=self.graph,
+            vertex=vertex,
+            visitor=visitor,
+        )
 
+        atom_for = self.atom_for
+        return dict(
+            (atom_for[v], visitor.distance_for.get(v, None)) for v in self.descriptors
+        )
 
-  def connected_segments(self):
+    def subset(self, atoms):
 
-    from boost_adaptbx.graph import connected_component_algorithm as cca
-    res = cca.connected_components( graph = self.graph )
-    atom_for = self.atom_for
+        if not all(a in self.descriptor_for for a in atoms):
+            raise ValueError("Unknown atoms: %s" % atoms)
 
-    return [ [ atom_for[ v ] for v in comp ] for comp in res ]
+        from boost_adaptbx.graph import maximum_clique
 
+        subgraph = maximum_clique.selected_subgraph(
+            graph=self.graph,
+            vertices=(self.descriptor_for[a] for a in atoms),
+        )
 
-  def connected_segment_from(self, atom):
+        return self.__class__(graph=subgraph)
 
-    if atom not in self.descriptor_for:
-      raise ValueError("Unknown atom: %s" % atom)
+    def connected_segments(self):
 
-    from boost_adaptbx.graph import breadth_first_search as bfs
+        from boost_adaptbx.graph import connected_component_algorithm as cca
 
-    vertex = self.descriptor_for[ atom ]
-    visitor = bfs.vertex_recording_visitor( start_vertex = vertex )
-    bfs.breadth_first_search(
-      graph = self.graph,
-      vertex = vertex,
-      visitor = visitor,
-      )
+        res = cca.connected_components(graph=self.graph)
+        atom_for = self.atom_for
 
-    atom_for = self.atom_for
+        return [[atom_for[v] for v in comp] for comp in res]
 
-    return [ atom_for[ v ] for v in visitor.visited_vertices ]
+    def connected_segment_from(self, atom):
 
+        if atom not in self.descriptor_for:
+            raise ValueError("Unknown atom: %s" % atom)
 
-  @classmethod
-  def create(cls, vertex_type = "vector", edge_type = "set"):
+        from boost_adaptbx.graph import breadth_first_search as bfs
 
-    return cls(
-      graph = graph.adjacency_list(
-        graph_type = "undirected",
-        vertex_type = vertex_type,
-        edge_type = edge_type,
-        ),
-      )
+        vertex = self.descriptor_for[atom]
+        visitor = bfs.vertex_recording_visitor(start_vertex=vertex)
+        bfs.breadth_first_search(
+            graph=self.graph,
+            vertex=vertex,
+            visitor=visitor,
+        )
 
+        atom_for = self.atom_for
 
-  @classmethod
-  def from_structure(cls, atoms, tolerance = 0.1, vertex_type = "vector", edge_type = "set"):
+        return [atom_for[v] for v in visitor.visited_vertices]
 
-    compound = cls.create( vertex_type = vertex_type, edge_type = edge_type )
+    @classmethod
+    def create(cls, vertex_type="vector", edge_type="set"):
 
-    for a in atoms:
-      compound.add_atom( atom = a )
+        return cls(
+            graph=graph.adjacency_list(
+                graph_type="undirected",
+                vertex_type=vertex_type,
+                edge_type=edge_type,
+            ),
+        )
 
-    import itertools
-    from mmtbx.monomer_library import bondlength_defaults
+    @classmethod
+    def from_structure(
+        cls, atoms, tolerance=0.1, vertex_type="vector", edge_type="set"
+    ):
 
-    for ( a1, a2 ) in itertools.combinations( atoms, 2 ):
-      ( x1, y1, z1 ) = a1.xyz
-      ( x2, y2, z2 ) = a2.xyz
+        compound = cls.create(vertex_type=vertex_type, edge_type=edge_type)
 
-      dist2 = ( ( x1 - x2 ) ** 2 + ( y1 - y2 ) ** 2 + ( z1 - z2 ) ** 2 )
-      expected = bondlength_defaults.get_default_bondlength( a1.element, a2.element )
+        for a in atoms:
+            compound.add_atom(atom=a)
 
-      if dist2 < ( expected + tolerance ) ** 2:
-        compound.add_bond( a1, a2 )
+        import itertools
+        from mmtbx.monomer_library import bondlength_defaults
 
-    return compound
+        for (a1, a2) in itertools.combinations(atoms, 2):
+            (x1, y1, z1) = a1.xyz
+            (x2, y2, z2) = a2.xyz
+
+            dist2 = (x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2
+            expected = bondlength_defaults.get_default_bondlength(
+                a1.element, a2.element
+            )
+
+            if dist2 < (expected + tolerance) ** 2:
+                compound.add_bond(a1, a2)
+
+        return compound
 
 
 class RascalMatch(object):
-  """
-  Geometry and label-based correspondence matching using the Rascal algorithm
-  """
+    """
+    Geometry and label-based correspondence matching using the Rascal algorithm
+    """
 
-  def __init__(
-    self,
-    molecule1,
-    molecule2,
-    prematched = [],
-    vertex_equality = None,
-    edge_equality = None,
+    def __init__(
+        self,
+        molecule1,
+        molecule2,
+        prematched=[],
+        vertex_equality=None,
+        edge_equality=None,
     ):
 
-    if vertex_equality is None:
-      import operator
-      vertex_equality = operator.eq
+        if vertex_equality is None:
+            import operator
 
-    if edge_equality is None:
-      import operator
-      edge_equality = operator.eq
+            vertex_equality = operator.eq
 
-    self.molecule1 = molecule1.atom_for
-    self.molecule2 = molecule2.atom_for
-    self.best = [ [] ]
-    self.largest = 0
+        if edge_equality is None:
+            import operator
 
-    from boost_adaptbx.graph import maximum_clique
+            edge_equality = operator.eq
 
-    self.compat_graph = maximum_clique.compatibility_graph(
-      first = molecule1.graph,
-      second = molecule2.graph,
-      vertex_equality = vertex_equality,
-      edge_equality = edge_equality
-      )
+        self.molecule1 = molecule1.atom_for
+        self.molecule2 = molecule2.atom_for
+        self.best = [[]]
+        self.largest = 0
 
-    self.prematched = prematched
+        from boost_adaptbx.graph import maximum_clique
 
-    if self.prematched:
-      desc_for_1 = molecule1.descriptor_for
-      desc_for_2 = molecule2.descriptor_for
-      pairs = set(
-        [ ( desc_for_1[ l ], desc_for_2[ r ] ) for ( l, r ) in self.prematched ]
-        )
-      vertices = [ v for v in self.compat_graph.vertices()
-        if self.compat_graph.vertex_label( vertex = v ) in pairs ]
-
-      assert len( vertices ) == len( self.prematched )
-      neighbours = set( self.compat_graph.adjacent_vertices( vertex = vertices[0] ) )
-
-      for v in vertices[1:]:
-        neighbours.intersection_update( self.compat_graph.adjacent_vertices( vertex = v ) )
-
-      self.compat_graph = maximum_clique.selected_subgraph(
-        graph = self.compat_graph,
-        vertices = neighbours,
+        self.compat_graph = maximum_clique.compatibility_graph(
+            first=molecule1.graph,
+            second=molecule2.graph,
+            vertex_equality=vertex_equality,
+            edge_equality=edge_equality,
         )
 
-    maximum_clique.rascal( graph = self.compat_graph, callable = self )
+        self.prematched = prematched
 
+        if self.prematched:
+            desc_for_1 = molecule1.descriptor_for
+            desc_for_2 = molecule2.descriptor_for
+            pairs = set([(desc_for_1[l], desc_for_2[r]) for (l, r) in self.prematched])
+            vertices = [
+                v
+                for v in self.compat_graph.vertices()
+                if self.compat_graph.vertex_label(vertex=v) in pairs
+            ]
 
-  def count(self):
+            assert len(vertices) == len(self.prematched)
+            neighbours = set(self.compat_graph.adjacent_vertices(vertex=vertices[0]))
 
-    return len( self.best )
+            for v in vertices[1:]:
+                neighbours.intersection_update(
+                    self.compat_graph.adjacent_vertices(vertex=v)
+                )
 
+            self.compat_graph = maximum_clique.selected_subgraph(
+                graph=self.compat_graph,
+                vertices=neighbours,
+            )
 
-  def length(self):
+        maximum_clique.rascal(graph=self.compat_graph, callable=self)
 
-    return len( self.prematched ) + self.largest
+    def count(self):
 
+        return len(self.best)
 
-  def remapped(self):
+    def length(self):
 
-    matches = [
-      [ self.compat_graph.vertex_label( vertex = v ) for v in match ]
-      for match in self.best
-      ]
-    return [
-      self.prematched + [
-        ( self.molecule1[ l ], self.molecule2[ r ] ) for ( l, r ) in pairs
+        return len(self.prematched) + self.largest
+
+    def remapped(self):
+
+        matches = [
+            [self.compat_graph.vertex_label(vertex=v) for v in match]
+            for match in self.best
         ]
-      for pairs in matches
-      ]
+        return [
+            self.prematched
+            + [(self.molecule1[l], self.molecule2[r]) for (l, r) in pairs]
+            for pairs in matches
+        ]
 
+    def __call__(self, result):
 
-  def __call__(self, result):
+        size = len(result)
 
-    size = len( result )
+        if self.largest < size:
+            self.largest = size
+            self.best = [result]
 
-    if self.largest < size:
-      self.largest = size
-      self.best = [ result ]
-
-    elif self.largest == size:
-      self.best.append( result )
+        elif self.largest == size:
+            self.best.append(result)
 
 
 class McGregorMatch(object):
-  """
-  Geometry and label-based correspondence matching using the McGregor algorithm
-  """
+    """
+    Geometry and label-based correspondence matching using the McGregor algorithm
+    """
 
-  def __init__(
-    self,
-    molecule1,
-    molecule2,
-    is_valid,
-    maxsteps = 500,
-    vertex_equality = None,
-    edge_equality = None,
+    def __init__(
+        self,
+        molecule1,
+        molecule2,
+        is_valid,
+        maxsteps=500,
+        vertex_equality=None,
+        edge_equality=None,
     ):
 
-    if vertex_equality is None:
-      import operator
-      vertex_equality = operator.eq
+        if vertex_equality is None:
+            import operator
 
-    if edge_equality is None:
-      import operator
-      edge_equality = operator.eq
+            vertex_equality = operator.eq
 
-    self.molecule1 = molecule1.atom_for
-    self.molecule2 = molecule2.atom_for
-    self.is_valid = is_valid
-    self.best = []
-    self.steps = 0
-    self.maxsteps = maxsteps
+        if edge_equality is None:
+            import operator
 
-    from boost_adaptbx.graph import graph_structure_comparison as gsc
-    gsc.mcgregor_common_subgraphs_unique(
-      graph1 = molecule1.graph,
-      graph2 = molecule2.graph,
-      vertex_equality = vertex_equality,
-      edge_equality = edge_equality,
-      callback = self,
-      )
+            edge_equality = operator.eq
 
+        self.molecule1 = molecule1.atom_for
+        self.molecule2 = molecule2.atom_for
+        self.is_valid = is_valid
+        self.best = []
+        self.steps = 0
+        self.maxsteps = maxsteps
 
-  def length(self):
+        from boost_adaptbx.graph import graph_structure_comparison as gsc
 
-    return len( self.best )
+        gsc.mcgregor_common_subgraphs_unique(
+            graph1=molecule1.graph,
+            graph2=molecule2.graph,
+            vertex_equality=vertex_equality,
+            edge_equality=edge_equality,
+            callback=self,
+        )
 
+    def length(self):
 
-  def remapped(self):
+        return len(self.best)
 
-    return [
-      ( self.molecule1[ l ], self.molecule2[ r ] ) for ( l, r ) in self.best
-      ]
+    def remapped(self):
 
+        return [(self.molecule1[l], self.molecule2[r]) for (l, r) in self.best]
 
-  def __call__(self, match):
+    def __call__(self, match):
 
-    if len( match ) <= len( self.best ):
-      self.steps += 1
+        if len(match) <= len(self.best):
+            self.steps += 1
 
-    elif ( self.is_valid( ( self.molecule1[ m[0] ] for m in match ) )
-      and self.is_valid( ( self.molecule2[ m[1] ] for m in match ) ) ):
-      self.best = match
-      self.steps = 0
+        elif self.is_valid((self.molecule1[m[0]] for m in match)) and self.is_valid(
+            (self.molecule2[m[1]] for m in match)
+        ):
+            self.best = match
+            self.steps = 0
 
-    else:
-      self.steps += 1
+        else:
+            self.steps += 1
 
-    return self.steps <= self.maxsteps
+        return self.steps <= self.maxsteps
 
 
 class GreedyMatch(object):
-  """
-  Geometry and label-based correspondence matching using the Greedy algorithm
-  """
+    """
+    Geometry and label-based correspondence matching using the Greedy algorithm
+    """
 
-  def __init__(
-    self,
-    molecule1,
-    molecule2,
-    prematched = [],
-    vertex_equality = None,
-    edge_equality = None,
-    maxsol = 0,
+    def __init__(
+        self,
+        molecule1,
+        molecule2,
+        prematched=[],
+        vertex_equality=None,
+        edge_equality=None,
+        maxsol=0,
     ):
 
-    if vertex_equality is None:
-      import operator
-      vertex_equality = operator.eq
+        if vertex_equality is None:
+            import operator
 
-    if edge_equality is None:
-      import operator
-      edge_equality = operator.eq
+            vertex_equality = operator.eq
 
-    self.molecule1 = molecule1.atom_for
-    self.molecule2 = molecule2.atom_for
-    self.best = [ [] ]
-    self.largest = 0
+        if edge_equality is None:
+            import operator
 
-    from boost_adaptbx.graph import maximum_clique
+            edge_equality = operator.eq
 
-    self.compat_graph = maximum_clique.compatibility_graph(
-      first = molecule1.graph,
-      second = molecule2.graph,
-      vertex_equality = vertex_equality,
-      edge_equality = edge_equality
-      )
+        self.molecule1 = molecule1.atom_for
+        self.molecule2 = molecule2.atom_for
+        self.best = [[]]
+        self.largest = 0
 
-    self.prematched = prematched
+        from boost_adaptbx.graph import maximum_clique
 
-    if self.prematched:
-      desc_for_1 = molecule1.descriptor_for
-      desc_for_2 = molecule2.descriptor_for
-      pairs = set(
-        [ ( desc_for_1[ l ], desc_for_2[ r ] ) for ( l, r ) in self.prematched ]
-        )
-      vertices = [ v for v in self.compat_graph.vertices()
-        if self.compat_graph.vertex_label( vertex = v ) in pairs ]
-
-      assert len( vertices ) == len( self.prematched )
-      neighbours = set( self.compat_graph.adjacent_vertices( vertex = vertices[0] ) )
-
-      for v in vertices[1:]:
-        neighbours.intersection_update( self.compat_graph.adjacent_vertices( vertex = v ) )
-
-      self.compat_graph = maximum_clique.selected_subgraph(
-        graph = self.compat_graph,
-        vertices = neighbours,
+        self.compat_graph = maximum_clique.compatibility_graph(
+            first=molecule1.graph,
+            second=molecule2.graph,
+            vertex_equality=vertex_equality,
+            edge_equality=edge_equality,
         )
 
-    self.result = maximum_clique.greedy( graph = self.compat_graph, maxsol = maxsol )
+        self.prematched = prematched
 
+        if self.prematched:
+            desc_for_1 = molecule1.descriptor_for
+            desc_for_2 = molecule2.descriptor_for
+            pairs = set([(desc_for_1[l], desc_for_2[r]) for (l, r) in self.prematched])
+            vertices = [
+                v
+                for v in self.compat_graph.vertices()
+                if self.compat_graph.vertex_label(vertex=v) in pairs
+            ]
 
-  def count(self):
+            assert len(vertices) == len(self.prematched)
+            neighbours = set(self.compat_graph.adjacent_vertices(vertex=vertices[0]))
 
-    return len( self.result )
+            for v in vertices[1:]:
+                neighbours.intersection_update(
+                    self.compat_graph.adjacent_vertices(vertex=v)
+                )
 
+            self.compat_graph = maximum_clique.selected_subgraph(
+                graph=self.compat_graph,
+                vertices=neighbours,
+            )
 
-  def length(self):
+        self.result = maximum_clique.greedy(graph=self.compat_graph, maxsol=maxsol)
 
-    assert self.result
-    return len( self.prematched ) + len( self.result[0] )
+    def count(self):
 
+        return len(self.result)
 
-  def remapped(self):
+    def length(self):
 
-    matches = [
-      [ self.compat_graph.vertex_label( vertex = v ) for v in match ]
-      for match in self.result
-      ]
-    return [
-      self.prematched + [
-        ( self.molecule1[ l ], self.molecule2[ r ] ) for ( l, r ) in pairs
+        assert self.result
+        return len(self.prematched) + len(self.result[0])
+
+    def remapped(self):
+
+        matches = [
+            [self.compat_graph.vertex_label(vertex=v) for v in match]
+            for match in self.result
         ]
-      for pairs in matches
-      ]
+        return [
+            self.prematched
+            + [(self.molecule1[l], self.molecule2[r]) for (l, r) in pairs]
+            for pairs in matches
+        ]

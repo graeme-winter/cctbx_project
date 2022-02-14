@@ -355,78 +355,83 @@ ATOM   2363  O   ALA A 342      14.703 -12.618 103.392  1.00 14.49           O
 ATOM   2364  CB  ALA A 342      11.782 -12.143 104.511  1.00 12.29           C
 """
 
+
 def exercise_single_mtrix():
-  inp = iotbx.pdb.input(lines=single_mtrix_txt+ss_txt+atoms_txt, source_info=None)
-  model = mmtbx.model.manager(
-    model_input = inp)
-  # print (model.model_as_pdb())
-  assert model.get_number_of_atoms() == 600, model.get_number_of_atoms()
-  assert model.get_hierarchy().atoms_size() == 600
-  assert model.get_xray_structure().scatterers().size() == 600
-  ss_ann = model.get_ss_annotation()
-  # print ss_ann.as_pdb_str()
-  assert ss_ann.get_n_helices() == 4
-  assert ss_ann.get_n_sheets() == 2
+    inp = iotbx.pdb.input(lines=single_mtrix_txt + ss_txt + atoms_txt, source_info=None)
+    model = mmtbx.model.manager(model_input=inp)
+    # print (model.model_as_pdb())
+    assert model.get_number_of_atoms() == 600, model.get_number_of_atoms()
+    assert model.get_hierarchy().atoms_size() == 600
+    assert model.get_xray_structure().scatterers().size() == 600
+    ss_ann = model.get_ss_annotation()
+    # print ss_ann.as_pdb_str()
+    assert ss_ann.get_n_helices() == 4
+    assert ss_ann.get_n_sheets() == 2
+
 
 def exercise_mtrix():
-  inp = iotbx.pdb.input(lines=mtrix_txt+ss_txt+atoms_txt, source_info=None)
-  model = mmtbx.model.manager(
-    model_input = inp)
-  assert model.get_number_of_atoms() == 900, model.get_number_of_atoms()
-  assert model.get_hierarchy().atoms_size() == 900
-  assert model.get_xray_structure().scatterers().size() == 900
-  ss_ann = model.get_ss_annotation()
-  # print ss_ann.as_pdb_str()
-  assert ss_ann.get_n_helices() == 6
-  assert ss_ann.get_n_sheets() == 3
+    inp = iotbx.pdb.input(lines=mtrix_txt + ss_txt + atoms_txt, source_info=None)
+    model = mmtbx.model.manager(model_input=inp)
+    assert model.get_number_of_atoms() == 900, model.get_number_of_atoms()
+    assert model.get_hierarchy().atoms_size() == 900
+    assert model.get_xray_structure().scatterers().size() == 900
+    ss_ann = model.get_ss_annotation()
+    # print ss_ann.as_pdb_str()
+    assert ss_ann.get_n_helices() == 6
+    assert ss_ann.get_n_sheets() == 3
 
 
 def exercise_biomt():
-  inp = iotbx.pdb.input(lines=biomt_txt+ss_txt+atoms_txt, source_info=None)
-  model = mmtbx.model.manager(
-    model_input = inp)
-  assert model.get_number_of_atoms() == 300, model.get_number_of_atoms()
-  assert model.get_hierarchy().atoms_size() == 300
-  assert model.get_xray_structure().scatterers().size() == 300
-  ss_ann = model.get_ss_annotation()
-  assert ss_ann.get_n_helices() == 2
-  assert ss_ann.get_n_sheets() == 1
-  model.expand_with_BIOMT_records()
-  assert model.get_number_of_atoms() == 900, model.get_number_of_atoms()
-  assert model.get_hierarchy().atoms_size() == 900
-  assert model.get_xray_structure().scatterers().size() == 900, model.get_xray_structure().scatterers().size()
-  ss_ann = model.get_ss_annotation()
-  assert ss_ann.get_n_helices() == 6
-  assert ss_ann.get_n_sheets() == 3
+    inp = iotbx.pdb.input(lines=biomt_txt + ss_txt + atoms_txt, source_info=None)
+    model = mmtbx.model.manager(model_input=inp)
+    assert model.get_number_of_atoms() == 300, model.get_number_of_atoms()
+    assert model.get_hierarchy().atoms_size() == 300
+    assert model.get_xray_structure().scatterers().size() == 300
+    ss_ann = model.get_ss_annotation()
+    assert ss_ann.get_n_helices() == 2
+    assert ss_ann.get_n_sheets() == 1
+    model.expand_with_BIOMT_records()
+    assert model.get_number_of_atoms() == 900, model.get_number_of_atoms()
+    assert model.get_hierarchy().atoms_size() == 900
+    assert model.get_xray_structure().scatterers().size() == 900, (
+        model.get_xray_structure().scatterers().size()
+    )
+    ss_ann = model.get_ss_annotation()
+    assert ss_ann.get_n_helices() == 6
+    assert ss_ann.get_n_sheets() == 3
+
 
 def exercise_both():
-  inp = iotbx.pdb.input(lines=mtrix_txt+biomt_txt+ss_txt+atoms_txt, source_info=None)
-  model = mmtbx.model.manager(
-    model_input = inp)
-  assert model.get_number_of_atoms() == 900, model.get_number_of_atoms()
-  assert model.get_hierarchy().atoms_size() == 900
-  assert model.get_xray_structure().scatterers().size() == 900
-  ss_ann = model.get_ss_annotation()
-  # print ss_ann.as_pdb_str()
-  # print "="*30
-  assert ss_ann.get_n_helices() == 6
-  assert ss_ann.get_n_sheets() == 3
-  model.expand_with_BIOMT_records()
-  assert model.get_number_of_atoms() == 2700, model.get_number_of_atoms()
-  assert model.get_hierarchy().atoms_size() == 2700
-  assert model.get_xray_structure().scatterers().size() == 2700, model.get_xray_structure().scatterers().size()
-  ss_ann = model.get_ss_annotation()
-  # print ss_ann.as_pdb_str()
-  assert ss_ann.get_n_helices() == 18
-  assert ss_ann.get_n_sheets() == 9
-  return
+    inp = iotbx.pdb.input(
+        lines=mtrix_txt + biomt_txt + ss_txt + atoms_txt, source_info=None
+    )
+    model = mmtbx.model.manager(model_input=inp)
+    assert model.get_number_of_atoms() == 900, model.get_number_of_atoms()
+    assert model.get_hierarchy().atoms_size() == 900
+    assert model.get_xray_structure().scatterers().size() == 900
+    ss_ann = model.get_ss_annotation()
+    # print ss_ann.as_pdb_str()
+    # print "="*30
+    assert ss_ann.get_n_helices() == 6
+    assert ss_ann.get_n_sheets() == 3
+    model.expand_with_BIOMT_records()
+    assert model.get_number_of_atoms() == 2700, model.get_number_of_atoms()
+    assert model.get_hierarchy().atoms_size() == 2700
+    assert model.get_xray_structure().scatterers().size() == 2700, (
+        model.get_xray_structure().scatterers().size()
+    )
+    ss_ann = model.get_ss_annotation()
+    # print ss_ann.as_pdb_str()
+    assert ss_ann.get_n_helices() == 18
+    assert ss_ann.get_n_sheets() == 9
+    return
 
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise_single_mtrix()
-  exercise_mtrix()
-  exercise_biomt()
-  exercise_both()
-  print("Total time: %8.3f"%(time.time() - t0))
-  print("OK.")
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise_single_mtrix()
+    exercise_mtrix()
+    exercise_biomt()
+    exercise_both()
+    print("Total time: %8.3f" % (time.time() - t0))
+    print("OK.")

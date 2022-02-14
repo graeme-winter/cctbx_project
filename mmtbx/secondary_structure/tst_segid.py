@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 import libtbx.load_env
 import sys
@@ -732,52 +731,60 @@ ATOM    364  C6   DC B  20      -3.917  -7.457   4.043  1.00  5.82           C
 TER
 END"""
 
+
 def get_grm(pdb_str, mon_lib_srv, ener_lib, log):
-  pdb_int_pars = pdb_interpretation.master_params.extract()
-  pdb_int_pars.secondary_structure.enabled=True
-  processed_pdb_file = pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    params=pdb_int_pars,
-    raw_records=pdb_str,
-    substitute_non_crystallographic_unit_cell_if_necessary=True,
-    log=log)
-  return processed_pdb_file.geometry_restraints_manager()
+    pdb_int_pars = pdb_interpretation.master_params.extract()
+    pdb_int_pars.secondary_structure.enabled = True
+    processed_pdb_file = pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        params=pdb_int_pars,
+        raw_records=pdb_str,
+        substitute_non_crystallographic_unit_cell_if_necessary=True,
+        log=log,
+    )
+    return processed_pdb_file.geometry_restraints_manager()
 
 
 def exercise_protein(mon_lib_srv, ener_lib, log):
-  grm = get_grm(protein_pdb_str.split('\n'), mon_lib_srv, ener_lib, log)
-  print(grm.get_n_hbond_proxies(), "want 30")  # 31 hbonds, with segids 30
-  print(grm.get_n_hangle_proxies(), "want 90")
-  assert grm.get_n_hbond_proxies() == 30  # 31 hbonds, with segids 30
-  assert grm.get_n_hangle_proxies() == 90
+    grm = get_grm(protein_pdb_str.split("\n"), mon_lib_srv, ener_lib, log)
+    print(grm.get_n_hbond_proxies(), "want 30")  # 31 hbonds, with segids 30
+    print(grm.get_n_hangle_proxies(), "want 90")
+    assert grm.get_n_hbond_proxies() == 30  # 31 hbonds, with segids 30
+    assert grm.get_n_hangle_proxies() == 90
+
 
 def exercise_rna(mon_lib_srv, ener_lib, log):
-  grm = get_grm(rna_pdb_str.split('\n'), mon_lib_srv, ener_lib, log)
-  print(grm.get_n_hbond_proxies(), "want 22")  # 22 hbonds, with segids
-  print(grm.get_n_hangle_proxies(), "want 44")
-  assert grm.get_n_hbond_proxies() == 22
-  assert grm.get_n_hangle_proxies() == 44
+    grm = get_grm(rna_pdb_str.split("\n"), mon_lib_srv, ener_lib, log)
+    print(grm.get_n_hbond_proxies(), "want 22")  # 22 hbonds, with segids
+    print(grm.get_n_hangle_proxies(), "want 44")
+    assert grm.get_n_hbond_proxies() == 22
+    assert grm.get_n_hangle_proxies() == 44
+
 
 def exercise_both(mon_lib_srv, ener_lib, log):
-  grm = get_grm(protein_pdb_str.split('\n') + rna_pdb_str.split('\n'),
-      mon_lib_srv, ener_lib, log)
-  print(grm.get_n_hbond_proxies(), "want 52")
-  print(grm.get_n_hangle_proxies(), "want 44+90=134") # 90 from protein
-  assert grm.get_n_hbond_proxies() == 52
-  assert grm.get_n_hangle_proxies() == 134
+    grm = get_grm(
+        protein_pdb_str.split("\n") + rna_pdb_str.split("\n"),
+        mon_lib_srv,
+        ener_lib,
+        log,
+    )
+    print(grm.get_n_hbond_proxies(), "want 52")
+    print(grm.get_n_hangle_proxies(), "want 44+90=134")  # 90 from protein
+    assert grm.get_n_hbond_proxies() == 52
+    assert grm.get_n_hangle_proxies() == 134
 
 
 if __name__ == "__main__":
-  if (not libtbx.env.has_module(name="ksdssp")):
-    print("Skipping KSDSSP tests: ksdssp module not available.")
-  else:
-    mon_lib_srv = server.server()
-    ener_lib = server.ener_lib()
-    # log = sys.stdout
-    log = StringIO()
-    exercise_protein(mon_lib_srv, ener_lib, log)
-    exercise_rna(mon_lib_srv, ener_lib, log)
-    exercise_both(mon_lib_srv, ener_lib, log)
-  print(format_cpu_times())
-  print("OK")
+    if not libtbx.env.has_module(name="ksdssp"):
+        print("Skipping KSDSSP tests: ksdssp module not available.")
+    else:
+        mon_lib_srv = server.server()
+        ener_lib = server.ener_lib()
+        # log = sys.stdout
+        log = StringIO()
+        exercise_protein(mon_lib_srv, ener_lib, log)
+        exercise_rna(mon_lib_srv, ener_lib, log)
+        exercise_both(mon_lib_srv, ener_lib, log)
+    print(format_cpu_times())
+    print("OK")

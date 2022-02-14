@@ -123,50 +123,60 @@ db {
 """
 master_phil_scope = parse(master_phil_str + db_phil_str, process_includes=True)
 
-settings_dir = os.path.join(os.path.expanduser('~'), '.cctbx.xfel')
-settings_file = os.path.join(settings_dir, 'settings.phil')
+settings_dir = os.path.join(os.path.expanduser("~"), ".cctbx.xfel")
+settings_file = os.path.join(settings_dir, "settings.phil")
 
 known_dials_dispatchers = {
-  'cctbx.xfel.xtc_process': 'xfel.command_line.xtc_process',
-  'cctbx.xfel.process': 'xfel.command_line.xfel_process',
-  'dials.stills_process': 'dials.command_line.stills_process',
-  'cctbx.xfel.small_cell_process': 'xfel.small_cell.command_line.xfel_small_cell_process',
-  'cctbx.xfel.stripe_experiment': 'xfel.command_line.striping',
-  'cctbx.xfel.merge': 'xfel.merging.application.phil.phil'
+    "cctbx.xfel.xtc_process": "xfel.command_line.xtc_process",
+    "cctbx.xfel.process": "xfel.command_line.xfel_process",
+    "dials.stills_process": "dials.command_line.stills_process",
+    "cctbx.xfel.small_cell_process": "xfel.small_cell.command_line.xfel_small_cell_process",
+    "cctbx.xfel.stripe_experiment": "xfel.command_line.striping",
+    "cctbx.xfel.merge": "xfel.merging.application.phil.phil",
 }
 
+
 def load_phil_scope_from_dispatcher(dispatcher):
-  import importlib
-  try:
-    phil_scope = importlib.import_module(known_dials_dispatchers[dispatcher]).phil_scope
-  except KeyError:
-    import imp
-    mod = imp.load_source('module', dispatcher)
-    phil_scope = mod.phil_scope
-  return phil_scope
+    import importlib
+
+    try:
+        phil_scope = importlib.import_module(
+            known_dials_dispatchers[dispatcher]
+        ).phil_scope
+    except KeyError:
+        import imp
+
+        mod = imp.load_source("module", dispatcher)
+        phil_scope = mod.phil_scope
+    return phil_scope
+
 
 def load_cached_settings():
-  if os.path.exists(settings_file):
-    user_phil = parse(file_name = settings_file)
-    params, unused = master_phil_scope.fetch(source = user_phil, track_unused_definitions=True)
-    params = params.extract()
-    if len(unused) > 0:
-      from .phil_patch import sync_phil
-      sync_phil(params, unused)
-    return params
-  else:
-    return master_phil_scope.extract()
+    if os.path.exists(settings_file):
+        user_phil = parse(file_name=settings_file)
+        params, unused = master_phil_scope.fetch(
+            source=user_phil, track_unused_definitions=True
+        )
+        params = params.extract()
+        if len(unused) > 0:
+            from .phil_patch import sync_phil
+
+            sync_phil(params, unused)
+        return params
+    else:
+        return master_phil_scope.extract()
+
 
 def save_cached_settings(params):
-  if not os.path.exists(settings_dir):
-    os.makedirs(settings_dir)
+    if not os.path.exists(settings_dir):
+        os.makedirs(settings_dir)
 
-  working_phil = master_phil_scope.format(python_object = params)
-  diff_phil = master_phil_scope.fetch_diff(source = working_phil)
+    working_phil = master_phil_scope.format(python_object=params)
+    diff_phil = master_phil_scope.fetch_diff(source=working_phil)
 
-  try:
-    f = open(settings_file.encode('utf8'), 'wb')
-    f.write(diff_phil.as_str().encode('utf8'))
-    f.close()
-  except IOError:
-    raise Sorry('Unable to write %s.' % settings_file)
+    try:
+        f = open(settings_file.encode("utf8"), "wb")
+        f.write(diff_phil.as_str().encode("utf8"))
+        f.close()
+    except IOError:
+        raise Sorry("Unable to write %s." % settings_file)

@@ -3,7 +3,7 @@ import iotbx.ncs
 import iotbx.ncs as ncs
 from iotbx import pdb
 
-pdb_str_1="""\
+pdb_str_1 = """\
 ATOM      1  N   GLU A   3     189.385 151.249 151.584  1.00100.71           N
 ATOM      2  CA  GLU A   3     190.604 152.017 151.807  1.00100.71           C
 ATOM      3  C   GLU A   3     191.582 151.843 150.650  1.00100.71           C
@@ -277,17 +277,19 @@ HETATM  258 MG    MG E 503     163.118 163.159 156.463  1.00 53.90          MG
 TER
 """
 
-def exercise_00():
-  """ Verify that strangely broken chain does not lead to crash """
-  pdb_inp = iotbx.pdb.input(lines=pdb_str_1,source_info=None)
-  hierarchy = pdb_inp.construct_hierarchy()
-  ncs_inp = iotbx.ncs.input(hierarchy = hierarchy)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  assert len(ncs_groups[0].copies) == 3, len(ncs_groups[0].copies)
-  assert ncs_groups[0].master_iselection.size() == 51 # all chain
-  assert ncs_groups[0].copies[0].iselection.size() == 51 # all chain
-  print("OK")
 
-if(__name__=='__main__'):
-  exercise_00()
+def exercise_00():
+    """Verify that strangely broken chain does not lead to crash"""
+    pdb_inp = iotbx.pdb.input(lines=pdb_str_1, source_info=None)
+    hierarchy = pdb_inp.construct_hierarchy()
+    ncs_inp = iotbx.ncs.input(hierarchy=hierarchy)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert len(ncs_groups[0].copies) == 3, len(ncs_groups[0].copies)
+    assert ncs_groups[0].master_iselection.size() == 51  # all chain
+    assert ncs_groups[0].copies[0].iselection.size() == 51  # all chain
+    print("OK")
+
+
+if __name__ == "__main__":
+    exercise_00()

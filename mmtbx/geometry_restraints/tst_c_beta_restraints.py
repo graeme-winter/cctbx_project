@@ -121,99 +121,93 @@ TER
 END
 """
 
-def exercise_1():
-  pdb_inp = iotbx.pdb.input(lines=flex.std_string(pdb_str_1.splitlines()), source_info=None)
-  model = mmtbx.model.manager(model_input = pdb_inp)
-  model.process(make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  # c-beta restraints are added by default!!!
-  assert len(grm.get_c_beta_torsion_proxies()) == 4
 
-  #test global selection and removing c-beta restraints
-  tst_boolsel = pdb_hierarchy.atom_selection_cache().selection("resname TYR")
-  tst_iselection = tst_boolsel.iselection()
-  #test global selection
-  grm2 = grm.select(iselection=tst_iselection)
-  assert len(grm2.get_c_beta_torsion_proxies()) == 2
-  grm2 = grm.select(selection=tst_boolsel)
-  assert len(grm2.get_c_beta_torsion_proxies()) == 2
-  #remove a selection
-  grm.remove_c_beta_torsion_restraints_in_place(selection=tst_iselection)
-  assert len(grm.get_c_beta_torsion_proxies()) == 2
-  #add a selection
-  grm.remove_c_beta_torsion_restraints_in_place()
-  assert len(grm.get_c_beta_torsion_proxies()) == 0
-  c_beta_torsion_proxies = c_beta.get_c_beta_torsion_proxies(
-      pdb_hierarchy,
-      selection=tst_iselection,
-      sigma=2.5)
-  assert len(c_beta_torsion_proxies) == 2
+def exercise_1():
+    pdb_inp = iotbx.pdb.input(
+        lines=flex.std_string(pdb_str_1.splitlines()), source_info=None
+    )
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    # c-beta restraints are added by default!!!
+    assert len(grm.get_c_beta_torsion_proxies()) == 4
+
+    # test global selection and removing c-beta restraints
+    tst_boolsel = pdb_hierarchy.atom_selection_cache().selection("resname TYR")
+    tst_iselection = tst_boolsel.iselection()
+    # test global selection
+    grm2 = grm.select(iselection=tst_iselection)
+    assert len(grm2.get_c_beta_torsion_proxies()) == 2
+    grm2 = grm.select(selection=tst_boolsel)
+    assert len(grm2.get_c_beta_torsion_proxies()) == 2
+    # remove a selection
+    grm.remove_c_beta_torsion_restraints_in_place(selection=tst_iselection)
+    assert len(grm.get_c_beta_torsion_proxies()) == 2
+    # add a selection
+    grm.remove_c_beta_torsion_restraints_in_place()
+    assert len(grm.get_c_beta_torsion_proxies()) == 0
+    c_beta_torsion_proxies = c_beta.get_c_beta_torsion_proxies(
+        pdb_hierarchy, selection=tst_iselection, sigma=2.5
+    )
+    assert len(c_beta_torsion_proxies) == 2
+
 
 def exercise_2():
-  """
-  Testing with ACs
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None,
-      lines=pdb_str_2).construct_hierarchy()
-  c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
-  assert len(c_beta_restrs) == 2
+    """
+    Testing with ACs
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_str_2).construct_hierarchy()
+    c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
+    assert len(c_beta_restrs) == 2
 
-  pdb_h = iotbx.pdb.input(
-      source_info=None,
-      lines=pdb_str_3).construct_hierarchy()
-  c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
-  assert len(c_beta_restrs) == 4
+    pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_str_3).construct_hierarchy()
+    c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
+    assert len(c_beta_restrs) == 4
 
-  pdb_h = iotbx.pdb.input(
-      source_info=None,
-      lines=pdb_str_4).construct_hierarchy()
-  c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
-  assert len(c_beta_restrs) == 2
+    pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_str_4).construct_hierarchy()
+    c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
+    assert len(c_beta_restrs) == 2
+
 
 def exercise_3():
-  """
-  Testing d-peptide
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None,
-      lines=pdb_str_5).construct_hierarchy()
-  c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
-  assert len(c_beta_restrs) == 0
-  assert len(c_beta_skip.get("d-peptide", []))==1
-  assert len(c_beta_skip.get("-ve", []))==0
+    """
+    Testing d-peptide
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_str_5).construct_hierarchy()
+    c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
+    assert len(c_beta_restrs) == 0
+    assert len(c_beta_skip.get("d-peptide", [])) == 1
+    assert len(c_beta_skip.get("-ve", [])) == 0
 
-  pdb_h = iotbx.pdb.input(
-      source_info=None,
-      lines=pdb_str_6).construct_hierarchy()
-  c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
-  assert len(c_beta_restrs) == 0
-  assert len(c_beta_skip.get("d-peptide", []))==0
-  assert len(c_beta_skip.get("-ve", []))==1
+    pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_str_6).construct_hierarchy()
+    c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
+    assert len(c_beta_restrs) == 0
+    assert len(c_beta_skip.get("d-peptide", [])) == 0
+    assert len(c_beta_skip.get("-ve", [])) == 1
+
 
 def exercise_4():
-  """
-  Testing UNK to be equivalent to ALA
-  """
-  pdb_h = iotbx.pdb.input(
-      source_info=None,
-      lines=pdb_str_7).construct_hierarchy()
-  c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
-  assert c_beta_restrs.size()==10
-  assert c_beta_skip == {}
-  #
-  pdb_h = iotbx.pdb.input(
-      source_info=None,
-      lines=pdb_str_7.replace("UNK","ALA")).construct_hierarchy()
-  c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
-  assert c_beta_restrs.size()==10
-  assert c_beta_skip == {}
+    """
+    Testing UNK to be equivalent to ALA
+    """
+    pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_str_7).construct_hierarchy()
+    c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
+    assert c_beta_restrs.size() == 10
+    assert c_beta_skip == {}
+    #
+    pdb_h = iotbx.pdb.input(
+        source_info=None, lines=pdb_str_7.replace("UNK", "ALA")
+    ).construct_hierarchy()
+    c_beta_restrs, c_beta_skip = c_beta.get_c_beta_torsion_proxies(pdb_h)
+    assert c_beta_restrs.size() == 10
+    assert c_beta_skip == {}
 
-if (__name__ == "__main__"):
-  exercise_1()
-  exercise_2()
-  exercise_3()
-  exercise_4()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_1()
+    exercise_2()
+    exercise_3()
+    exercise_4()
+    print("OK")

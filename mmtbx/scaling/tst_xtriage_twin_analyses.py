@@ -1,4 +1,3 @@
-
 # XXX This overlaps heavily with tst_scaling.py, which is much more
 # comprehensive.  Maybe remove this one?
 
@@ -11,10 +10,11 @@ from libtbx.utils import null_out
 from six.moves import cStringIO as StringIO
 import sys
 
+
 def exercise_twin_detection(verbose=False):
-  # simple model with translational pseudosymmetry
-  # XXX one big disadvantage: no centric reflections!
-  pdb_str = """\
+    # simple model with translational pseudosymmetry
+    # XXX one big disadvantage: no centric reflections!
+    pdb_str = """\
 CRYST1   12.000    8.000   12.000  90.02  89.96  90.05 P 1           1
 ATOM     39  N   ASN A   6       5.514   2.664   4.856  1.00 11.99           N
 ATOM     40  CA  ASN A   6       6.831   2.310   4.318  1.00 12.30           C
@@ -61,87 +61,107 @@ ATOM     20  OH  TYR B   7      -0.207   2.910  11.443  1.00 15.39           O
 ATOM     21  OXT TYR B   7       7.316   5.408   8.654  1.00 18.49           O
 END
 """
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_str)
-  xrs = pdb_in.input.xray_structure_simple()
-  fc = abs(xrs.structure_factors(d_min=2.5).f_calc())
-  fc = fc.set_observation_type_xray_amplitude()
-  sigf = flex.double(fc.size(), 0.1) + (fc.data() * 0.03)
-  fc = fc.customized_copy(sigmas=sigf)
-  # and now add twinning
-  fc_twin = fc.twin_data(twin_law='-l,-k,-h', alpha=0.4)
-  fc_twin.as_mtz_dataset(column_root_label="F").mtz_object().write(
-    "tmp_xtriage_twinned.mtz")
-  # twin_laws
-  laws = twin_analyses.twin_laws(miller_array=fc_twin)
-  assert (len(laws.operators) == 7)
-  delta_santoro = [ tl.delta_santoro for tl in laws.operators ]
-  assert approx_equal(delta_santoro,
-    [0.104655, 0.104655, 0.066599, 0.104655, 0.076113, 0.066599, 0.028542])
-  delta_le_page = [ tl.delta_le_page for tl in laws.operators ]
-  assert approx_equal(delta_le_page,
-    [0.053839, 0.053839, 0.053839, 0.064020, 0.044706, 0.049480, 0.021221])
-  delta_lebedev = [ tl.delta_lebedev for tl in laws.operators ]
-  assert approx_equal(delta_lebedev,
-    [0.000787, 0.000787, 0.000767, 0.000912, 0.000637, 0.000705, 0.000302])
-  # TNCS
-  tps = twin_analyses.detect_pseudo_translations(
-    miller_array=fc_twin, out=null_out())
-  assert ([tps.mod_h, tps.mod_k, tps.mod_l] == [3,2,3])
-  assert approx_equal(tps.high_peak, 47.152352)
-  assert approx_equal(tps.high_p_value, 0.000103)
-  # L test
-  fc_norm_acentric = twin_analyses.wilson_normalised_intensities(
-    miller_array=fc_twin, normalise=True, out=null_out()).acentric
-  ltest = twin_analyses.l_test(miller_array=fc_norm_acentric,
-    parity_h=3, parity_l=3)
-  assert approx_equal(ltest.mean_l, 0.498974)
-  assert approx_equal(ltest.mean_l2, 0.371674)
-  # we need to go through the wrapper class for a lot of these...
-  out = StringIO()
-  tw = twin_analyses.twin_analyses(miller_array=fc_twin, out=out)
-  tw2 = twin_analyses.twin_analyses(miller_array=fc_twin, out=out,
-    d_hkl_for_l_test=[3,2,3])
-  # Wilson moments
-  wm = tw.wilson_moments
-  assert ([wm.centric_i_ratio, wm.centric_f_ratio, wm.centric_e_sq_minus_one]
-          == [None, None, None])
-  assert approx_equal(wm.acentric_i_ratio, 2.878383)
-  assert approx_equal(wm.acentric_f_ratio, 0.717738)
-  assert approx_equal(wm.acentric_abs_e_sq_minus_one, 0.808899)
-  assert (not wm.centric_present)
-  # Overall analyses
-  out = StringIO()
-  tw.show(out=out)
-  assert ("significantly different than is expected" in out.getvalue())
-  summary = tw.twin_summary
-  assert approx_equal(summary.l_mean, 0.4989738)
-  assert approx_equal(summary.patterson_height, 47.152352)
-  for k, twin_r_factor in enumerate(summary.r_obs):
-    if (k == 6) : assert twin_r_factor < 0.11
-    else : assert twin_r_factor > 0.3
-  out2 = StringIO()
-  tw.l_test.show(out=out2)
-  assert ("""\
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_str)
+    xrs = pdb_in.input.xray_structure_simple()
+    fc = abs(xrs.structure_factors(d_min=2.5).f_calc())
+    fc = fc.set_observation_type_xray_amplitude()
+    sigf = flex.double(fc.size(), 0.1) + (fc.data() * 0.03)
+    fc = fc.customized_copy(sigmas=sigf)
+    # and now add twinning
+    fc_twin = fc.twin_data(twin_law="-l,-k,-h", alpha=0.4)
+    fc_twin.as_mtz_dataset(column_root_label="F").mtz_object().write(
+        "tmp_xtriage_twinned.mtz"
+    )
+    # twin_laws
+    laws = twin_analyses.twin_laws(miller_array=fc_twin)
+    assert len(laws.operators) == 7
+    delta_santoro = [tl.delta_santoro for tl in laws.operators]
+    assert approx_equal(
+        delta_santoro,
+        [0.104655, 0.104655, 0.066599, 0.104655, 0.076113, 0.066599, 0.028542],
+    )
+    delta_le_page = [tl.delta_le_page for tl in laws.operators]
+    assert approx_equal(
+        delta_le_page,
+        [0.053839, 0.053839, 0.053839, 0.064020, 0.044706, 0.049480, 0.021221],
+    )
+    delta_lebedev = [tl.delta_lebedev for tl in laws.operators]
+    assert approx_equal(
+        delta_lebedev,
+        [0.000787, 0.000787, 0.000767, 0.000912, 0.000637, 0.000705, 0.000302],
+    )
+    # TNCS
+    tps = twin_analyses.detect_pseudo_translations(miller_array=fc_twin, out=null_out())
+    assert [tps.mod_h, tps.mod_k, tps.mod_l] == [3, 2, 3]
+    assert approx_equal(tps.high_peak, 47.152352)
+    assert approx_equal(tps.high_p_value, 0.000103)
+    # L test
+    fc_norm_acentric = twin_analyses.wilson_normalised_intensities(
+        miller_array=fc_twin, normalise=True, out=null_out()
+    ).acentric
+    ltest = twin_analyses.l_test(miller_array=fc_norm_acentric, parity_h=3, parity_l=3)
+    assert approx_equal(ltest.mean_l, 0.498974)
+    assert approx_equal(ltest.mean_l2, 0.371674)
+    # we need to go through the wrapper class for a lot of these...
+    out = StringIO()
+    tw = twin_analyses.twin_analyses(miller_array=fc_twin, out=out)
+    tw2 = twin_analyses.twin_analyses(
+        miller_array=fc_twin, out=out, d_hkl_for_l_test=[3, 2, 3]
+    )
+    # Wilson moments
+    wm = tw.wilson_moments
+    assert [wm.centric_i_ratio, wm.centric_f_ratio, wm.centric_e_sq_minus_one] == [
+        None,
+        None,
+        None,
+    ]
+    assert approx_equal(wm.acentric_i_ratio, 2.878383)
+    assert approx_equal(wm.acentric_f_ratio, 0.717738)
+    assert approx_equal(wm.acentric_abs_e_sq_minus_one, 0.808899)
+    assert not wm.centric_present
+    # Overall analyses
+    out = StringIO()
+    tw.show(out=out)
+    assert "significantly different than is expected" in out.getvalue()
+    summary = tw.twin_summary
+    assert approx_equal(summary.l_mean, 0.4989738)
+    assert approx_equal(summary.patterson_height, 47.152352)
+    for k, twin_r_factor in enumerate(summary.r_obs):
+        if k == 6:
+            assert twin_r_factor < 0.11
+        else:
+            assert twin_r_factor > 0.3
+    out2 = StringIO()
+    tw.l_test.show(out=out2)
+    assert (
+        """\
   Mean |L|   :0.499  (untwinned: 0.500; perfect twin: 0.375)
   Mean  L^2  :0.372  (untwinned: 0.333; perfect twin: 0.200)
-""" in out2.getvalue()), out2.getvalue()
-  out3 = StringIO()
-  tw2.l_test.show(out=out3)
-  assert not show_diff(out2.getvalue(), out3.getvalue())
-  if (verbose):
-    print(out.getvalue())
-  # twin_results_interpretation object via cctbx.miller.array API extension
-  # XXX I get slightly different numbers here versus running through the
-  # twin_analyses call above - this seems to be caused by the resolution
-  # limits passed here.  Need to confirm these with PHZ.
-  result = fc_twin.analyze_intensity_statistics()
-  assert approx_equal(result.maha_l, 27.580674)
-  assert approx_equal(result.r_obs,
-    [0.514901, 0.514901, 0.397741, 0.580353, 0.579294, 0.420914, 0.114999])
-  assert approx_equal(result.h_alpha,
-    [0.019980, 0.019980, 0.211788, 0.073926, 0.079920, 0.150849, 0.389610])
-  assert result.has_twinning()
+"""
+        in out2.getvalue()
+    ), out2.getvalue()
+    out3 = StringIO()
+    tw2.l_test.show(out=out3)
+    assert not show_diff(out2.getvalue(), out3.getvalue())
+    if verbose:
+        print(out.getvalue())
+    # twin_results_interpretation object via cctbx.miller.array API extension
+    # XXX I get slightly different numbers here versus running through the
+    # twin_analyses call above - this seems to be caused by the resolution
+    # limits passed here.  Need to confirm these with PHZ.
+    result = fc_twin.analyze_intensity_statistics()
+    assert approx_equal(result.maha_l, 27.580674)
+    assert approx_equal(
+        result.r_obs,
+        [0.514901, 0.514901, 0.397741, 0.580353, 0.579294, 0.420914, 0.114999],
+    )
+    assert approx_equal(
+        result.h_alpha,
+        [0.019980, 0.019980, 0.211788, 0.073926, 0.079920, 0.150849, 0.389610],
+    )
+    assert result.has_twinning()
 
-if (__name__ == "__main__"):
-  exercise_twin_detection(verbose=("--verbose" in sys.argv))
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_twin_detection(verbose=("--verbose" in sys.argv))
+    print("OK")

@@ -8,70 +8,71 @@ from libtbx.test_utils import approx_equal
 from six.moves import zip
 from six.moves import range
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # This finite difference test checks transformation of riding H gradients
 # for all amino acids, one by one
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 def exercise(pdb_str, eps):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
 
-  model = mmtbx.model.manager(
-            model_input = pdb_inp,
-            log         = null_out())
-  model.process(make_restraints=True)
-  geometry_restraints = model.restraints_manager.geometry
-  xray_structure = model.get_xray_structure()
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    geometry_restraints = model.restraints_manager.geometry
+    xray_structure = model.get_xray_structure()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  riding_h_manager.idealize_riding_h_positions(xray_structure = xray_structure)
+    riding_h_manager.idealize_riding_h_positions(xray_structure=xray_structure)
 
-  sites_cart = xray_structure.sites_cart()
+    sites_cart = xray_structure.sites_cart()
 
-  g_analytical = geometry_restraints.energies_sites(
-    sites_cart = sites_cart,
-    compute_gradients = True).gradients
+    g_analytical = geometry_restraints.energies_sites(
+        sites_cart=sites_cart, compute_gradients=True
+    ).gradients
 
-  hd_selection = xray_structure.hd_selection()
-  g_analytical_reduced = riding_h_manager.gradients_reduced_cpp(
-    gradients    = g_analytical,
-    sites_cart   = sites_cart,
-    hd_selection = hd_selection)
+    hd_selection = xray_structure.hd_selection()
+    g_analytical_reduced = riding_h_manager.gradients_reduced_cpp(
+        gradients=g_analytical, sites_cart=sites_cart, hd_selection=hd_selection
+    )
 
-  #
-  ex = [eps,0,0]
-  ey = [0,eps,0]
-  ez = [0,0,eps]
-  g_fd = flex.vec3_double()
-  for i_site in range(sites_cart.size()):
-    g_fd_i = []
-    for e in [ex,ey,ez]:
-      ts = []
-      for sign in [-1,1]:
-        sites_cart_ = sites_cart.deep_copy()
-        xray_structure_ = xray_structure.deep_copy_scatterers()
-        sites_cart_[i_site] = [
-          sites_cart_[i_site][j]+e[j]*sign for j in range(3)]
-        xray_structure_.set_sites_cart(sites_cart_)
-        # after shift, recalculate H position
-        riding_h_manager.idealize_riding_h_positions(
-          xray_structure=xray_structure_)
-        sites_cart_ = xray_structure_.sites_cart()
-        ts.append(geometry_restraints.energies_sites(
-          sites_cart = sites_cart_,
-          compute_gradients = False).target)
-      g_fd_i.append((ts[1]-ts[0])/(2*eps))
-    g_fd.append(g_fd_i)
+    #
+    ex = [eps, 0, 0]
+    ey = [0, eps, 0]
+    ez = [0, 0, eps]
+    g_fd = flex.vec3_double()
+    for i_site in range(sites_cart.size()):
+        g_fd_i = []
+        for e in [ex, ey, ez]:
+            ts = []
+            for sign in [-1, 1]:
+                sites_cart_ = sites_cart.deep_copy()
+                xray_structure_ = xray_structure.deep_copy_scatterers()
+                sites_cart_[i_site] = [
+                    sites_cart_[i_site][j] + e[j] * sign for j in range(3)
+                ]
+                xray_structure_.set_sites_cart(sites_cart_)
+                # after shift, recalculate H position
+                riding_h_manager.idealize_riding_h_positions(
+                    xray_structure=xray_structure_
+                )
+                sites_cart_ = xray_structure_.sites_cart()
+                ts.append(
+                    geometry_restraints.energies_sites(
+                        sites_cart=sites_cart_, compute_gradients=False
+                    ).target
+                )
+            g_fd_i.append((ts[1] - ts[0]) / (2 * eps))
+        g_fd.append(g_fd_i)
 
-  g_fd_reduced = g_fd.select(~hd_selection)
+    g_fd_reduced = g_fd.select(~hd_selection)
 
-  for g1, g2 in zip(g_analytical_reduced, g_fd_reduced):
-    assert approx_equal(g1,g2, 1.e-4)
+    for g1, g2 in zip(g_analytical_reduced, g_fd_reduced):
+        assert approx_equal(g1, g2, 1.0e-4)
 
 
-#Alanine
+# Alanine
 pdb_str_01 = """
 CRYST1   11.863   12.347   12.550  90.00  90.00  90.00 P 1
 SCALE1      0.084296  0.000000  0.000000        0.00000
@@ -117,7 +118,7 @@ ATOM     21 HH12 ARG A  50       7.866   6.356   7.069  1.00 10.00           H
 ATOM     22 HH21 ARG A  50       6.604   4.626   5.005  1.00 10.00           H
 ATOM     23 HH22 ARG A  50       7.522   4.396   5.734  1.00 10.00           H
 """
-#Asparagine
+# Asparagine
 pdb_str_03 = """
 CRYST1   13.889   13.738   13.126  90.00  90.00  90.00 P 1
 SCALE1      0.071999  0.000000  0.000000        0.00000
@@ -527,27 +528,64 @@ ATOM     14 HG22 VAL B  78       7.542   7.634   5.823  1.00 10.00           H
 ATOM     15 HG23 VAL B  78       7.889   5.963   5.346  1.00 10.00           H
 """
 
-pdb_list = [pdb_str_01, pdb_str_02, pdb_str_03, pdb_str_04, pdb_str_05,
-  pdb_str_06, pdb_str_07, pdb_str_08, pdb_str_09, pdb_str_10, pdb_str_11,
-  pdb_str_12, pdb_str_13, pdb_str_14, pdb_str_15, pdb_str_16, pdb_str_17,
-  pdb_str_18, pdb_str_19, pdb_str_20]
+pdb_list = [
+    pdb_str_01,
+    pdb_str_02,
+    pdb_str_03,
+    pdb_str_04,
+    pdb_str_05,
+    pdb_str_06,
+    pdb_str_07,
+    pdb_str_08,
+    pdb_str_09,
+    pdb_str_10,
+    pdb_str_11,
+    pdb_str_12,
+    pdb_str_13,
+    pdb_str_14,
+    pdb_str_15,
+    pdb_str_16,
+    pdb_str_17,
+    pdb_str_18,
+    pdb_str_19,
+    pdb_str_20,
+]
 #
-pdb_list_name = ['pdb_str_01', 'pdb_str_02', 'pdb_str_03', 'pdb_str_04', 'pdb_str_05',
-  'pdb_str_06', 'pdb_str_07', 'pdb_str_08', 'pdb_str_09', 'pdb_str_10', 'pdb_str_11',
-  'pdb_str_12', 'pdb_str_13', 'pdb_str_14', 'pdb_str_15', 'pdb_str_16', 'pdb_str_17',
-  'pdb_str_18', 'pdb_str_19', 'pdb_str_20']
+pdb_list_name = [
+    "pdb_str_01",
+    "pdb_str_02",
+    "pdb_str_03",
+    "pdb_str_04",
+    "pdb_str_05",
+    "pdb_str_06",
+    "pdb_str_07",
+    "pdb_str_08",
+    "pdb_str_09",
+    "pdb_str_10",
+    "pdb_str_11",
+    "pdb_str_12",
+    "pdb_str_13",
+    "pdb_str_14",
+    "pdb_str_15",
+    "pdb_str_16",
+    "pdb_str_17",
+    "pdb_str_18",
+    "pdb_str_19",
+    "pdb_str_20",
+]
 
-#pdb_list = [pdb_str_02]
-#pdb_list_name = ['pdb_str_02']
+# pdb_list = [pdb_str_02]
+# pdb_list_name = ['pdb_str_02']
+
 
 def run():
-  #for use_ideal_bonds_angles in [True, False]:
-  for pdb_str, str_name in zip(pdb_list,pdb_list_name):
-      #print 'pdb_string:', str_name, 'idealize =', idealize
-    exercise(pdb_str=pdb_str, eps=1.e-4)
+    # for use_ideal_bonds_angles in [True, False]:
+    for pdb_str, str_name in zip(pdb_list, pdb_list_name):
+        # print 'pdb_string:', str_name, 'idealize =', idealize
+        exercise(pdb_str=pdb_str, eps=1.0e-4)
 
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time:", round(time.time()-t0, 2), "seconds")
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time:", round(time.time() - t0, 2), "seconds")

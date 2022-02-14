@@ -15,44 +15,50 @@ from prime.postrefine.mod_input import read_frame, read_pickles
 from six.moves import range
 from six.moves import zip
 
-def read_input(args):
-  data = []
-  data_sweep = ''
-  for i in range(len(args)):
-    pair=args[i].split('=')
-    if len(pair) == 2:
-      if pair[0]=='data':
-        data.append(pair[1])
-      elif pair[0]=='data_sweep':
-        data_sweep = pair[1]
-  if len(data) == 0:
-    print("Please input all parameters")
-    exit()
-  return data, data_sweep
 
-if (__name__ == "__main__"):
-  #Read input parameters and frames (pickle files)
-  data_fine, data_sweep = read_input(args = sys.argv[1:])
-  pixel_size_mm = 0.079346
-  #read all the pickle files from fine-slice data
-  frames_fine = read_pickles(data_fine)
-  #get a sample reflections
-  sample_no = 0
-  obs_fine_sample = None
-  for i in range(2000):
-    frame = frames_fine[i]
-    pickle_fine = read_frame(frame)
-    obs_fine = pickle_fine["observations"][0]
-    obs_fine = obs_fine.select(obs_fine.data() > 0)
-    if len(obs_fine.data())> 5:
-      print(frame)
-      for index, d, I, sigI in zip(obs_fine.indices(), obs_fine.d_spacings().data(),\
-                                   obs_fine.data(), obs_fine.sigmas()):
-        print(index, d, I, sigI)
-      obs_fine_sample = obs_fine.deep_copy()
-      #break
-    sample_no += 1
-  """
+def read_input(args):
+    data = []
+    data_sweep = ""
+    for i in range(len(args)):
+        pair = args[i].split("=")
+        if len(pair) == 2:
+            if pair[0] == "data":
+                data.append(pair[1])
+            elif pair[0] == "data_sweep":
+                data_sweep = pair[1]
+    if len(data) == 0:
+        print("Please input all parameters")
+        exit()
+    return data, data_sweep
+
+
+if __name__ == "__main__":
+    # Read input parameters and frames (pickle files)
+    data_fine, data_sweep = read_input(args=sys.argv[1:])
+    pixel_size_mm = 0.079346
+    # read all the pickle files from fine-slice data
+    frames_fine = read_pickles(data_fine)
+    # get a sample reflections
+    sample_no = 0
+    obs_fine_sample = None
+    for i in range(2000):
+        frame = frames_fine[i]
+        pickle_fine = read_frame(frame)
+        obs_fine = pickle_fine["observations"][0]
+        obs_fine = obs_fine.select(obs_fine.data() > 0)
+        if len(obs_fine.data()) > 5:
+            print(frame)
+            for index, d, I, sigI in zip(
+                obs_fine.indices(),
+                obs_fine.d_spacings().data(),
+                obs_fine.data(),
+                obs_fine.sigmas(),
+            ):
+                print(index, d, I, sigI)
+            obs_fine_sample = obs_fine.deep_copy()
+            # break
+        sample_no += 1
+    """
   #find matching indices in the next consecutive frames
   n_frames_sel = 10
   colors = np.random.rand(n_frames_sel)

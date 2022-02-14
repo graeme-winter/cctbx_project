@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 # LIBTBX_SET_DISPATCHER_NAME phenix.fmodel
 
 import sys, os
@@ -115,9 +116,11 @@ mask
 }
 """
 fmodel_from_xray_structure_params = iotbx.phil.parse(
-  fmodel_from_xray_structure_params_str, process_includes=True)
+    fmodel_from_xray_structure_params_str, process_includes=True
+)
 
-fmodel_from_xray_structure_master_params_str = """\
+fmodel_from_xray_structure_master_params_str = (
+    """\
 high_resolution = None
   .type = float
   .expert_level=1
@@ -237,226 +240,279 @@ anomalous_scatterers
       .short_caption = f''
   }
 }
-"""%fmodel_from_xray_structure_params_str
+"""
+    % fmodel_from_xray_structure_params_str
+)
 
 fmodel_from_xray_structure_master_params = iotbx.phil.parse(
-  fmodel_from_xray_structure_master_params_str, process_includes=True)
-master_phil = fmodel_from_xray_structure_master_params # XXX for phenix docs
+    fmodel_from_xray_structure_master_params_str, process_includes=True
+)
+master_phil = fmodel_from_xray_structure_master_params  # XXX for phenix docs
 
-def set_fp_fdp_for_anomalous_scatterers(pdb_hierarchy, xray_structure,
-  anomalous_scatterer_groups):
-  scatterers = xray_structure.scatterers()
-  for group in anomalous_scatterer_groups:
-    iselection = pdb_hierarchy.atom_selection_cache().selection(
-      string = group.selection).iselection()
-    if(iselection.size() == 0):
-      raise Sorry(
-        "Empty selection: selection string '%s' does not select any atom."%
-        group.selection)
-    for i_seq in iselection:
-      scatterers[i_seq].fp = group.f_prime
-      scatterers[i_seq].fdp = group.f_double_prime
 
-def run(args, log = sys.stdout):
-  print(legend, file=log)
-  # XXX: pre-processing for GUI; duplicates some of mmtbx.utils
-  sources = []
-  for arg in args :
-    if os.path.isfile(arg):
-      try :
-        file_phil = iotbx.phil.parse(file_name=arg)
-      except KeyboardInterrupt :
-        raise
-      except RuntimeError :
-        pass
-      else :
-        if len(file_phil.objects) != 0 :
-          sources.append(file_phil)
-  if len(sources) > 0 :
-    cmdline_phil = fmodel_from_xray_structure_master_params.fetch(
-      sources=sources)
-    params = cmdline_phil.extract()
-    if len(params.pdb_file) > 0 :
-      args.extend(params.pdb_file)
-    if params.reference_file is not None :
-      args.append(params.reference_file)
-  # end of preprocessing
-  processed_args = mmtbx.utils.process_command_line_args(args = args, log = log,
-    master_params = fmodel_from_xray_structure_master_params)
-  pdb_combined = iotbx.pdb.combine_unique_pdb_files(
-    file_names = processed_args.pdb_file_names)
-  pdb_combined.report_non_unique(out = log)
-  print("-"*79, file=log)
-  print("\nParameters to compute Fmodel::\n", file=log)
-  processed_args.params.show(out = log, prefix=" ")
-  params = processed_args.params.extract()
-  if(params.random_seed is not None):
-    random.seed(params.random_seed)
-    flex.set_random_seed(params.random_seed)
-  pdb_file_names = processed_args.pdb_file_names
-  if len(pdb_file_names) == 0 :
-    pdb_file_names = params.pdb_file # for GUI
-  pdb_combined = iotbx.pdb.combine_unique_pdb_files(file_names=pdb_file_names)
-  pdb_combined.report_non_unique(out = log)
-  if(len(pdb_combined.unique_file_names) == 0):
-    raise Sorry("Model file is not provided.")
-  print("-"*79, file=log)
-  print("\nInput model file(s):", " ".join(processed_args.pdb_file_names), file=log)
-  pdb_inp = iotbx.pdb.input(source_info = None,
-    lines = flex.std_string(pdb_combined.raw_records))
-  # select miller array to use as a set of miller indices for f_model
-  miller_array = None
-  if(len(processed_args.reflection_files) > 1):
-    raise Sorry("Multiple reflection files found at input.")
-  # FIXME this does not pick up the reference_file parameter!  in fact, it
-  # appears to be ignored completely when run on the command line.
-  if(len(processed_args.reflection_files) == 1):
-    print("-"*79, file=log)
-    print("Input reflection data:", \
-      " ".join(processed_args.reflection_file_names), file=log)
-    if([params.high_resolution, params.low_resolution].count(None) != 2):
-      raise Sorry("high_resolution and low_resolution must be undefined "+
-                  "if reflection data file is given.")
-    miller_arrays = processed_args.reflection_files[0].as_miller_arrays()
-    data_sizes = flex.int([ma.data().size() for ma in miller_arrays])
-    if(data_sizes.all_eq(data_sizes[0])): miller_array = miller_arrays[0]
-    else:
-      all_labels = []
-      for ma in miller_arrays:
-        if(params.data_column_label is not None and
-           ma.info().label_string() == params.data_column_label):
-          miller_array = ma
-          break
-        all_labels.append(",".join(ma.info().labels))
-    if(miller_array is None):
-      raise Sorry("Multiple data available in input reflection file:\n%s\n%s"%(
-        "\n".join(all_labels),"Please select one using 'data_column_label=' keyword."))
-    else:
-      miller_array.show_comprehensive_summary(f = log, prefix="  ")
-  if(miller_array is not None):
-    miller_array = miller_array.map_to_asu().customized_copy(
-      data = flex.double(miller_array.data().size(), 1))
-  #
-  cryst1 = pdb_inp.crystal_symmetry_from_cryst1()
-  if(cryst1 is None and miller_array is not None):
-    cryst1 = miller_array.crystal_symmetry()
-    if (cryst1 is not None) and (params.generate_fake_p1_symmetry):
-      raise Sorry("The input reference data already define crystal symmetry; "+
-        "you may not use this in combination with the option "+
-        "generate_fake_p1_symmetry=True.")
-  if (not params.generate_fake_p1_symmetry):
-    if(cryst1 is None):
-      raise Sorry(
-        "CRYST1 record in input PDB file is incomplete or missing.  "+
-        "If you want the program to generate P1 symmetry automatically, set "+
-        "generate_fake_p1_symmetry=True.")
-    else:
-      if([cryst1.unit_cell(), cryst1.space_group_info()].count(None) != 0):
-        raise Sorry(
-          "CRYST1 record in input PDB file is incomplete or missing. "+
-          "If you want the program to generate P1 symmetry automatically, "+
-          "set generate_fake_p1_symmetry=True.")
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  # need to preserve the order in the hierarchy in case we have to perform an
-  # atom selection later
-  xray_structure = pdb_hierarchy.extract_xray_structure(
-    crystal_symmetry = cryst1)
-  if (cryst1 is None):
-    cryst1 = xray_structure.crystal_symmetry()
-  if (miller_array is not None):
-    if (miller_array.crystal_symmetry() is None):
-      miller_array = miller_array.customized_copy(crystal_symmetry=cryst1)
-  xray_structure.show_summary(f = log, prefix="  ")
-  if(len(params.anomalous_scatterers.group) != 0):
-    pdb_atoms = pdb_hierarchy.atoms()
-    pdb_atoms.reset_i_seq()
-    set_fp_fdp_for_anomalous_scatterers(
-      pdb_hierarchy              = pdb_hierarchy,
-      xray_structure             = xray_structure,
-      anomalous_scatterer_groups = params.anomalous_scatterers.group)
-  elif (params.wavelength is not None):
-    if (params.scattering_table == "neutron"):
-      raise Sorry("Wavelength parameter not supported when the neutron "+
-        "scattering table is used.")
-    print("Setting inelastic form factors for wavelength = %g" % \
-      params.wavelength, file=log)
-    xray_structure.set_inelastic_form_factors(
-      photon=params.wavelength,
-      table="sasaki")
-  #
-  validate_params_command_line(params)
-  #
-  print("-"*79, file=log)
-  print("Computing model structure factors, Fmodel:", file=log)
-  if(params.output.format == "cns"): extension = ".hkl"
-  elif(params.output.format == "mtz"): extension = ".mtz"
-  ofn = params.output.file_name
-  if(ofn is None):
-    ofn = os.path.basename(processed_args.pdb_file_names[0])
-    if(len(processed_args.pdb_file_names)==1): ofn = ofn + extension
-    else: ofn = ofn + "_et_al" + extension
-  if([miller_array, params.high_resolution].count(None)==2):
-    raise Sorry("Input data file or high_resolution has to be provided.")
-  mmtbx.utils.fmodel_from_xray_structure(
-    xray_structure = xray_structure,
-    f_obs          = miller_array,
-    add_sigmas     = params.add_sigmas,
-    params         = params,
-    twin_law       = params.twin_law,
-    twin_fraction  = params.twin_fraction,
-    out            = log).write_to_file(file_name = ofn,
-      obs_type=params.output.obs_type)
-  print("Output file name:", ofn, file=log)
-  print("All done.", file=log)
-  print("-"*79, file=log)
-  return ofn
+def set_fp_fdp_for_anomalous_scatterers(
+    pdb_hierarchy, xray_structure, anomalous_scatterer_groups
+):
+    scatterers = xray_structure.scatterers()
+    for group in anomalous_scatterer_groups:
+        iselection = (
+            pdb_hierarchy.atom_selection_cache()
+            .selection(string=group.selection)
+            .iselection()
+        )
+        if iselection.size() == 0:
+            raise Sorry(
+                "Empty selection: selection string '%s' does not select any atom."
+                % group.selection
+            )
+        for i_seq in iselection:
+            scatterers[i_seq].fp = group.f_prime
+            scatterers[i_seq].fdp = group.f_double_prime
+
+
+def run(args, log=sys.stdout):
+    print(legend, file=log)
+    # XXX: pre-processing for GUI; duplicates some of mmtbx.utils
+    sources = []
+    for arg in args:
+        if os.path.isfile(arg):
+            try:
+                file_phil = iotbx.phil.parse(file_name=arg)
+            except KeyboardInterrupt:
+                raise
+            except RuntimeError:
+                pass
+            else:
+                if len(file_phil.objects) != 0:
+                    sources.append(file_phil)
+    if len(sources) > 0:
+        cmdline_phil = fmodel_from_xray_structure_master_params.fetch(sources=sources)
+        params = cmdline_phil.extract()
+        if len(params.pdb_file) > 0:
+            args.extend(params.pdb_file)
+        if params.reference_file is not None:
+            args.append(params.reference_file)
+    # end of preprocessing
+    processed_args = mmtbx.utils.process_command_line_args(
+        args=args, log=log, master_params=fmodel_from_xray_structure_master_params
+    )
+    pdb_combined = iotbx.pdb.combine_unique_pdb_files(
+        file_names=processed_args.pdb_file_names
+    )
+    pdb_combined.report_non_unique(out=log)
+    print("-" * 79, file=log)
+    print("\nParameters to compute Fmodel::\n", file=log)
+    processed_args.params.show(out=log, prefix=" ")
+    params = processed_args.params.extract()
+    if params.random_seed is not None:
+        random.seed(params.random_seed)
+        flex.set_random_seed(params.random_seed)
+    pdb_file_names = processed_args.pdb_file_names
+    if len(pdb_file_names) == 0:
+        pdb_file_names = params.pdb_file  # for GUI
+    pdb_combined = iotbx.pdb.combine_unique_pdb_files(file_names=pdb_file_names)
+    pdb_combined.report_non_unique(out=log)
+    if len(pdb_combined.unique_file_names) == 0:
+        raise Sorry("Model file is not provided.")
+    print("-" * 79, file=log)
+    print("\nInput model file(s):", " ".join(processed_args.pdb_file_names), file=log)
+    pdb_inp = iotbx.pdb.input(
+        source_info=None, lines=flex.std_string(pdb_combined.raw_records)
+    )
+    # select miller array to use as a set of miller indices for f_model
+    miller_array = None
+    if len(processed_args.reflection_files) > 1:
+        raise Sorry("Multiple reflection files found at input.")
+    # FIXME this does not pick up the reference_file parameter!  in fact, it
+    # appears to be ignored completely when run on the command line.
+    if len(processed_args.reflection_files) == 1:
+        print("-" * 79, file=log)
+        print(
+            "Input reflection data:",
+            " ".join(processed_args.reflection_file_names),
+            file=log,
+        )
+        if [params.high_resolution, params.low_resolution].count(None) != 2:
+            raise Sorry(
+                "high_resolution and low_resolution must be undefined "
+                + "if reflection data file is given."
+            )
+        miller_arrays = processed_args.reflection_files[0].as_miller_arrays()
+        data_sizes = flex.int([ma.data().size() for ma in miller_arrays])
+        if data_sizes.all_eq(data_sizes[0]):
+            miller_array = miller_arrays[0]
+        else:
+            all_labels = []
+            for ma in miller_arrays:
+                if (
+                    params.data_column_label is not None
+                    and ma.info().label_string() == params.data_column_label
+                ):
+                    miller_array = ma
+                    break
+                all_labels.append(",".join(ma.info().labels))
+        if miller_array is None:
+            raise Sorry(
+                "Multiple data available in input reflection file:\n%s\n%s"
+                % (
+                    "\n".join(all_labels),
+                    "Please select one using 'data_column_label=' keyword.",
+                )
+            )
+        else:
+            miller_array.show_comprehensive_summary(f=log, prefix="  ")
+    if miller_array is not None:
+        miller_array = miller_array.map_to_asu().customized_copy(
+            data=flex.double(miller_array.data().size(), 1)
+        )
+    #
+    cryst1 = pdb_inp.crystal_symmetry_from_cryst1()
+    if cryst1 is None and miller_array is not None:
+        cryst1 = miller_array.crystal_symmetry()
+        if (cryst1 is not None) and (params.generate_fake_p1_symmetry):
+            raise Sorry(
+                "The input reference data already define crystal symmetry; "
+                + "you may not use this in combination with the option "
+                + "generate_fake_p1_symmetry=True."
+            )
+    if not params.generate_fake_p1_symmetry:
+        if cryst1 is None:
+            raise Sorry(
+                "CRYST1 record in input PDB file is incomplete or missing.  "
+                + "If you want the program to generate P1 symmetry automatically, set "
+                + "generate_fake_p1_symmetry=True."
+            )
+        else:
+            if [cryst1.unit_cell(), cryst1.space_group_info()].count(None) != 0:
+                raise Sorry(
+                    "CRYST1 record in input PDB file is incomplete or missing. "
+                    + "If you want the program to generate P1 symmetry automatically, "
+                    + "set generate_fake_p1_symmetry=True."
+                )
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    # need to preserve the order in the hierarchy in case we have to perform an
+    # atom selection later
+    xray_structure = pdb_hierarchy.extract_xray_structure(crystal_symmetry=cryst1)
+    if cryst1 is None:
+        cryst1 = xray_structure.crystal_symmetry()
+    if miller_array is not None:
+        if miller_array.crystal_symmetry() is None:
+            miller_array = miller_array.customized_copy(crystal_symmetry=cryst1)
+    xray_structure.show_summary(f=log, prefix="  ")
+    if len(params.anomalous_scatterers.group) != 0:
+        pdb_atoms = pdb_hierarchy.atoms()
+        pdb_atoms.reset_i_seq()
+        set_fp_fdp_for_anomalous_scatterers(
+            pdb_hierarchy=pdb_hierarchy,
+            xray_structure=xray_structure,
+            anomalous_scatterer_groups=params.anomalous_scatterers.group,
+        )
+    elif params.wavelength is not None:
+        if params.scattering_table == "neutron":
+            raise Sorry(
+                "Wavelength parameter not supported when the neutron "
+                + "scattering table is used."
+            )
+        print(
+            "Setting inelastic form factors for wavelength = %g" % params.wavelength,
+            file=log,
+        )
+        xray_structure.set_inelastic_form_factors(
+            photon=params.wavelength, table="sasaki"
+        )
+    #
+    validate_params_command_line(params)
+    #
+    print("-" * 79, file=log)
+    print("Computing model structure factors, Fmodel:", file=log)
+    if params.output.format == "cns":
+        extension = ".hkl"
+    elif params.output.format == "mtz":
+        extension = ".mtz"
+    ofn = params.output.file_name
+    if ofn is None:
+        ofn = os.path.basename(processed_args.pdb_file_names[0])
+        if len(processed_args.pdb_file_names) == 1:
+            ofn = ofn + extension
+        else:
+            ofn = ofn + "_et_al" + extension
+    if [miller_array, params.high_resolution].count(None) == 2:
+        raise Sorry("Input data file or high_resolution has to be provided.")
+    mmtbx.utils.fmodel_from_xray_structure(
+        xray_structure=xray_structure,
+        f_obs=miller_array,
+        add_sigmas=params.add_sigmas,
+        params=params,
+        twin_law=params.twin_law,
+        twin_fraction=params.twin_fraction,
+        out=log,
+    ).write_to_file(file_name=ofn, obs_type=params.output.obs_type)
+    print("Output file name:", ofn, file=log)
+    print("All done.", file=log)
+    print("-" * 79, file=log)
+    return ofn
+
 
 class launcher(runtime_utils.target_with_save_result):
-  def run(self):
-    return run(args=list(self.args), log=sys.stdout)
+    def run(self):
+        return run(args=list(self.args), log=sys.stdout)
+
 
 def validate_params(params, callback=None):
-  if len(params.pdb_file) == 0 :
-    raise Sorry("You must provide at least one model file to use for "+
-      "F(model) calculations.")
-  if (params.high_resolution is None):
-    if (params.reference_file is None):
-      raise Sorry("Please specify a high-resolution cutoff.")
-  elif (params.reference_file is not None):
-    if (params.data_column_label is None):
-      raise Sorry("Please select a column label to use in the reference "+
-        "data file.")
-    elif ([params.high_resolution, params.low_resolution].count(None) != 2):
-      raise Sorry("High resolution and low resolution must be undefined "+
-                  "if reflection data file is given.")
-  if (params.output.file_name is None):
-    raise Sorry("Please specify an output file.")
-  validate_params_command_line(params)
+    if len(params.pdb_file) == 0:
+        raise Sorry(
+            "You must provide at least one model file to use for "
+            + "F(model) calculations."
+        )
+    if params.high_resolution is None:
+        if params.reference_file is None:
+            raise Sorry("Please specify a high-resolution cutoff.")
+    elif params.reference_file is not None:
+        if params.data_column_label is None:
+            raise Sorry(
+                "Please select a column label to use in the reference " + "data file."
+            )
+        elif [params.high_resolution, params.low_resolution].count(None) != 2:
+            raise Sorry(
+                "High resolution and low resolution must be undefined "
+                + "if reflection data file is given."
+            )
+    if params.output.file_name is None:
+        raise Sorry("Please specify an output file.")
+    validate_params_command_line(params)
+
 
 def validate_params_command_line(params):
-  if (params.output.type == "complex") and (params.add_sigmas):
-    raise Sorry("Sigma values only supported when the output type is 'real'.")
-  if (    params.low_resolution is not None
-      and params.high_resolution is not None):
-    if params.low_resolution < params.high_resolution :
-      raise Sorry("Low-resolution cutoff must be larger than the high-"+
-        "resolution cutoff.")
-  if (params.output.obs_type == "intensities"):
-    if (params.output.type == "complex"):
-      raise Sorry("Output type must be 'real' when intensities specified "+
-        "for obs_type.")
-    if (not params.output.label.upper().startswith("I")):
-      raise Sorry("Output label must start with 'I' (any case) when "+
-        "intensities specified for obs_type (was: %s)." % params.output.label)
-    if (params.output.format != "mtz"):
-      raise Sorry("Output format must be 'mtz' when intensities specified.")
-  return True
+    if (params.output.type == "complex") and (params.add_sigmas):
+        raise Sorry("Sigma values only supported when the output type is 'real'.")
+    if params.low_resolution is not None and params.high_resolution is not None:
+        if params.low_resolution < params.high_resolution:
+            raise Sorry(
+                "Low-resolution cutoff must be larger than the high-"
+                + "resolution cutoff."
+            )
+    if params.output.obs_type == "intensities":
+        if params.output.type == "complex":
+            raise Sorry(
+                "Output type must be 'real' when intensities specified "
+                + "for obs_type."
+            )
+        if not params.output.label.upper().startswith("I"):
+            raise Sorry(
+                "Output label must start with 'I' (any case) when "
+                + "intensities specified for obs_type (was: %s)." % params.output.label
+            )
+        if params.output.format != "mtz":
+            raise Sorry("Output format must be 'mtz' when intensities specified.")
+    return True
+
 
 def finish_job(result):
-  output_files = []
-  if (result is not None) and (os.path.isfile(result)):
-    output_files.append((os.path.abspath(result), "MTZ file"))
-  return (output_files, [])
+    output_files = []
+    if (result is not None) and (os.path.isfile(result)):
+        output_files.append((os.path.abspath(result), "MTZ file"))
+    return (output_files, [])
 
-if (__name__ == "__main__"):
-  run(args=sys.argv[1:])
+
+if __name__ == "__main__":
+    run(args=sys.argv[1:])

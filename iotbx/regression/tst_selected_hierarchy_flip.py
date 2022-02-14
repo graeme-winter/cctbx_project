@@ -28,12 +28,14 @@ TER
 END
 """
 
-def run():
-  ph = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
-  asc = ph.atom_selection_cache()
-  sel = asc.selection("name SG and (resseq 30 or resseq 115)")
-  h = ph.select(~sel)
-  h.flip_symmetric_amino_acids()
 
-if (__name__ == "__main__"):
-  run()
+def run():
+    ph = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
+    asc = ph.atom_selection_cache()
+    sel = asc.selection("name SG and (resseq 30 or resseq 115)")
+    h = ph.select(~sel)
+    h.flip_symmetric_amino_acids()
+
+
+if __name__ == "__main__":
+    run()

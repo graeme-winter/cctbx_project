@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 from libtbx.test_utils import contains_substring
 import os, subprocess
 
-os.environ['PYTHONIOENCODING'] = 'UTF-8'
+os.environ["PYTHONIOENCODING"] = "UTF-8"
 
 test1_cifstr = """
 data_r4jglsf
@@ -416,8 +416,11 @@ Starting job
 
 ===============================================================================
 Job complete
-""" %("\u00b0", "\u00b0", "\u00b0")
-
+""" % (
+    "\u00b0",
+    "\u00b0",
+    "\u00b0",
+)
 
 
 test2_cifstr = """
@@ -515,7 +518,7 @@ selected_info {
 wrap_labels = -20
 """
 
-expected2str ="""
+expected2str = """
 Starting job
 ===============================================================================
 9 Miller arrays in this dataset:
@@ -542,7 +545,6 @@ mytest,_refln.A_calc,_refln.B_calc
 ===============================================================================
 Job complete
 """
-
 
 
 testhklstr = """!FORMAT=XDS_ASCII    MERGE=FALSE    FRIEDEL'S_LAW=TRUE
@@ -723,28 +725,29 @@ Job complete
 
 
 def test_hklinfo_run(cifstr, filename, philstr, expectedstr):
-  with open(filename, "w") as fh:
-    fh.write(cifstr)
-  with open("philinput.txt", "w") as fh:
-    fh.write(philstr)
+    with open(filename, "w") as fh:
+        fh.write(cifstr)
+    with open("philinput.txt", "w") as fh:
+        fh.write(philstr)
 
-  obj = subprocess.Popen("cctbx.HKLinfo %s philinput.txt" %filename,
-                         shell=True,
-                         stdin = subprocess.PIPE,
-                         stdout = subprocess.PIPE,
-                         stderr = subprocess.STDOUT)
-  out,err = obj.communicate()
-  fullstdout = out.decode().replace("\r\n", "\n") # omit \r\n line endings on Windows
-  #import code, traceback; code.interact(local=locals(), banner="".join( traceback.format_stack(limit=10) ) )
-  assert (contains_substring( fullstdout, expectedstr ) )
+    obj = subprocess.Popen(
+        "cctbx.HKLinfo %s philinput.txt" % filename,
+        shell=True,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    out, err = obj.communicate()
+    fullstdout = out.decode().replace("\r\n", "\n")  # omit \r\n line endings on Windows
+    # import code, traceback; code.interact(local=locals(), banner="".join( traceback.format_stack(limit=10) ) )
+    assert contains_substring(fullstdout, expectedstr)
 
 
 # =============================================================================
-if (__name__ == '__main__'):
-  test_hklinfo_run(test1_cifstr, "test-sf.cif", phil1str, expected1str)
-  test_hklinfo_run(test2_cifstr, "test-sf.cif", phil2str, expected2str)
-  test_hklinfo_run(testhklstr, "test.hkl", phil3str, expected3str)
-  test_hklinfo_run(testscastr, "test.sca", phil4str, expected4str)
+if __name__ == "__main__":
+    test_hklinfo_run(test1_cifstr, "test-sf.cif", phil1str, expected1str)
+    test_hklinfo_run(test2_cifstr, "test-sf.cif", phil2str, expected2str)
+    test_hklinfo_run(testhklstr, "test.hkl", phil3str, expected3str)
+    test_hklinfo_run(testscastr, "test.sca", phil4str, expected4str)
 
-
-  print('OK')
+    print("OK")

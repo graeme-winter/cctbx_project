@@ -75,19 +75,42 @@ HETATM   65  O   HOH A  13      -1.500   0.682  10.967  1.00 43.49           O
 END
 """
 
-def run():
-  """
-  Exercise interaction graph construction.
-  """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  ph = pdb_inp.construct_hierarchy()
-  interaction_list = pair_interaction.run(ph)
-  interaction_list.sort()
-  expected_list = [(1, 2), (1, 3), (1, 8), (2, 3), (2, 8), (2, 10), (3, 4),
-                   (3, 5), (3, 13), (3, 14), (4, 5), (4, 6), (5, 6), (5, 7),
-                   (5, 13), (5, 14), (6, 7), (6, 9), (7, 9), (7, 11), (7, 12),
-                   (11, 12), (13, 14)]
-  assert interaction_list == expected_list
 
-if(__name__ == "__main__"):
-  run()
+def run():
+    """
+    Exercise interaction graph construction.
+    """
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph = pdb_inp.construct_hierarchy()
+    interaction_list = pair_interaction.run(ph)
+    interaction_list.sort()
+    expected_list = [
+        (1, 2),
+        (1, 3),
+        (1, 8),
+        (2, 3),
+        (2, 8),
+        (2, 10),
+        (3, 4),
+        (3, 5),
+        (3, 13),
+        (3, 14),
+        (4, 5),
+        (4, 6),
+        (5, 6),
+        (5, 7),
+        (5, 13),
+        (5, 14),
+        (6, 7),
+        (6, 9),
+        (7, 9),
+        (7, 11),
+        (7, 12),
+        (11, 12),
+        (13, 14),
+    ]
+    assert interaction_list == expected_list
+
+
+if __name__ == "__main__":
+    run()

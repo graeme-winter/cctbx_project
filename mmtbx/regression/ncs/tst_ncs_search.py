@@ -8,323 +8,636 @@ import unittest
 from iotbx.pdb.amino_acid_codes import three_letter_given_one_letter
 from six.moves import map
 
-__author__ = 'Youval'
+__author__ = "Youval"
+
 
 class TestSimpleAlignment(unittest.TestCase):
-  """ Test alignment of closely similar sequences  """
+    """Test alignment of closely similar sequences"""
 
-  def setUp(self):
-    a = "ssssAESSADKFKRQxxxHMDTEGPSKSSPTYCNQMMKRQGMTKGSCKPVNTFVHEPLEDVQ" \
-        "NGRNNCHKSSSTLRITDCRLKGSSKYPNCDYTTTDSQKHIIIACDGNPYVPVHFDASV"
-    b = "AESSADKFKRQHMDTEGPSKSSPTYCNQMMKRQGMTKGSCKPVNTFVHEPLEDVQ" \
-        "NGRNNCHKSSSTLRITDCRLKGSSKYPNCDYTTTDSQkhIIIACDGNPYVPVHFDASVtttt"
-    self.seq_a = [three_letter_given_one_letter.get(x, 'X') for x in a]
-    self.seq_b = [three_letter_given_one_letter.get(x, 'X') for x in b]
-    self.length_diff = len(b)/len(a)
-    # Gaps needed for the inserted, not aligned, letters
-    self.gaps_needed = 4 + 3 + 4
-    #
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-    self.ph = pdb_inp.construct_hierarchy()
-    cache = self.ph.atom_selection_cache()
-    self.chain_a = self.ph.models()[0].chains()[0]
-    self.chain_b = self.ph.models()[0].chains()[1]
-    self.hierarchy_a = self.ph.select(cache.selection('chain A'))
-    self.hierarchy_b = self.ph.select(cache.selection('chain B'))
-    self.p = ncs.input.get_default_params()
+    def setUp(self):
+        a = (
+            "ssssAESSADKFKRQxxxHMDTEGPSKSSPTYCNQMMKRQGMTKGSCKPVNTFVHEPLEDVQ"
+            "NGRNNCHKSSSTLRITDCRLKGSSKYPNCDYTTTDSQKHIIIACDGNPYVPVHFDASV"
+        )
+        b = (
+            "AESSADKFKRQHMDTEGPSKSSPTYCNQMMKRQGMTKGSCKPVNTFVHEPLEDVQ"
+            "NGRNNCHKSSSTLRITDCRLKGSSKYPNCDYTTTDSQkhIIIACDGNPYVPVHFDASVtttt"
+        )
+        self.seq_a = [three_letter_given_one_letter.get(x, "X") for x in a]
+        self.seq_b = [three_letter_given_one_letter.get(x, "X") for x in b]
+        self.length_diff = len(b) / len(a)
+        # Gaps needed for the inserted, not aligned, letters
+        self.gaps_needed = 4 + 3 + 4
+        #
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+        self.ph = pdb_inp.construct_hierarchy()
+        cache = self.ph.atom_selection_cache()
+        self.chain_a = self.ph.models()[0].chains()[0]
+        self.chain_b = self.ph.models()[0].chains()[1]
+        self.hierarchy_a = self.ph.select(cache.selection("chain A"))
+        self.hierarchy_b = self.ph.select(cache.selection("chain B"))
+        self.p = ncs.input.get_default_params()
 
-  def test_1(self):
-    # print sys._getframe().f_code.co_name
-    seq_aa = "AAKDVKFGVNVLADAVKVTVASKANDAAGDGTTTATVLAQAI"
-    seq_bb = "AAKDVKFGNDARVKMLRGVNVLADAVKVTVASTATVLAQAI"
-    seq_a = [three_letter_given_one_letter.get(x, 'X') for x in seq_aa]
-    seq_b = [three_letter_given_one_letter.get(x, 'X') for x in seq_bb]
-    # Test that aligned segments are at least min_contig_length long
-    sel_a, sel_b, similarity = mmtbx_res_alignment(
-      seq_a=seq_a, seq_b=seq_b,
-      min_percent =0.1)
-    self.assertEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-                16, 17, 18, 19, 20, 21, 33, 34, 35, 36, 37, 38, 39, 40, 41],
-                    list(sel_a))
-    self.assertEqual([0, 1, 2, 3, 4, 5, 6, 7, 18, 19, 20, 21, 22, 23, 24,
-            25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
-                    list(sel_b))
-    # Without length limitation
-    sel_a, sel_b,similarity = mmtbx_res_alignment(
-      seq_a=seq_a, seq_b=seq_b,
-      min_percent =0.8)
-    self.assertEqual([],list(sel_a))
-    self.assertEqual([],list(sel_b))
+    def test_1(self):
+        # print sys._getframe().f_code.co_name
+        seq_aa = "AAKDVKFGVNVLADAVKVTVASKANDAAGDGTTTATVLAQAI"
+        seq_bb = "AAKDVKFGNDARVKMLRGVNVLADAVKVTVASTATVLAQAI"
+        seq_a = [three_letter_given_one_letter.get(x, "X") for x in seq_aa]
+        seq_b = [three_letter_given_one_letter.get(x, "X") for x in seq_bb]
+        # Test that aligned segments are at least min_contig_length long
+        sel_a, sel_b, similarity = mmtbx_res_alignment(
+            seq_a=seq_a, seq_b=seq_b, min_percent=0.1
+        )
+        self.assertEqual(
+            [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+            ],
+            list(sel_a),
+        )
+        self.assertEqual(
+            [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+            ],
+            list(sel_b),
+        )
+        # Without length limitation
+        sel_a, sel_b, similarity = mmtbx_res_alignment(
+            seq_a=seq_a, seq_b=seq_b, min_percent=0.8
+        )
+        self.assertEqual([], list(sel_a))
+        self.assertEqual([], list(sel_b))
 
-  def test_2(self):
-    # print sys._getframe().f_code.co_name
-    seq_a = ["CB", "NB", "OB", "SB", "CB1", "NB1", "OB1", "SB1"]
-    seq_b = ["CB", "NB", "OB", "SB",        "NB1", "OB1", "SB1"]
-    sel_a, sel_b, similarity = mmtbx_res_alignment(
-      seq_a, seq_b, min_percent=0.6, atomnames=True)
-    expected_1 = [0,1,2,3,5,6,7]
-    expected_2 = [0,1,2,3,4,5,6]
-    # print "sela", list(sel_a)
-    self.assertEqual(similarity, 0.875)
-    self.assertEqual(expected_1,list(sel_a))
-    self.assertEqual(expected_2,list(sel_b))
+    def test_2(self):
+        # print sys._getframe().f_code.co_name
+        seq_a = ["CB", "NB", "OB", "SB", "CB1", "NB1", "OB1", "SB1"]
+        seq_b = ["CB", "NB", "OB", "SB", "NB1", "OB1", "SB1"]
+        sel_a, sel_b, similarity = mmtbx_res_alignment(
+            seq_a, seq_b, min_percent=0.6, atomnames=True
+        )
+        expected_1 = [0, 1, 2, 3, 5, 6, 7]
+        expected_2 = [0, 1, 2, 3, 4, 5, 6]
+        # print "sela", list(sel_a)
+        self.assertEqual(similarity, 0.875)
+        self.assertEqual(expected_1, list(sel_a))
+        self.assertEqual(expected_2, list(sel_b))
 
-  def test_3(self):
-    # print sys._getframe().f_code.co_name
-    sel_a, sel_b, similarity = mmtbx_res_alignment(
-      self.seq_a,self.seq_b,min_percent=0.95)
-    # difference is to large
-    expected_1 = []
-    expected_2 = []
-    self.assertEqual(expected_1,list(sel_a))
-    self.assertEqual(expected_2,list(sel_b))
+    def test_3(self):
+        # print sys._getframe().f_code.co_name
+        sel_a, sel_b, similarity = mmtbx_res_alignment(
+            self.seq_a, self.seq_b, min_percent=0.95
+        )
+        # difference is to large
+        expected_1 = []
+        expected_2 = []
+        self.assertEqual(expected_1, list(sel_a))
+        self.assertEqual(expected_2, list(sel_b))
 
-  def test_search_ncs_relations(self):
-    # print sys._getframe().f_code.co_name
-    asc = self.ph.atom_selection_cache()
-    no_water_h = self.ph.select(asc.selection("not water"))
-    match_dict = ncs_search.search_ncs_relations(
-      ph=no_water_h,
-      chain_similarity_threshold=0.7)
+    def test_search_ncs_relations(self):
+        # print sys._getframe().f_code.co_name
+        asc = self.ph.atom_selection_cache()
+        no_water_h = self.ph.select(asc.selection("not water"))
+        match_dict = ncs_search.search_ncs_relations(
+            ph=no_water_h, chain_similarity_threshold=0.7
+        )
 
-    # FIXME indexing keys breaks py2/3 compatibility, this could be broken if more than 1 key
-    chain_a_id, chain_b_id = list(match_dict.keys())[0]
-    sel_a,sel_b,r1,r2,_,_,_ = match_dict[chain_a_id, chain_b_id]
-    #
-    self.assertEqual(chain_a_id,'A')
-    self.assertEqual(chain_b_id,'B')
-    #
-    atoms_in_A = self.hierarchy_a.atoms_size()
-    atoms_in_B = self.hierarchy_b.atoms_size()
-    # atom count including  water
-    self.assertEqual(32,atoms_in_A)
-    self.assertEqual(44,atoms_in_B)
-    #
-    self.assertEqual(sel_a.size(),25)
-    self.assertEqual(sel_b.size(),25)
-    # atom count including  water
-    self.assertEqual(32,atoms_in_A)
-    self.assertEqual(44,atoms_in_B)
-    #
-    # number of waters is different as well
-    expected_sel_a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-                      16, 17, 21, 22, 23, 24, 25, 26, 27]
-    expected_sel_b = [28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
-                      42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52]
-    self.assertEqual(list(sel_a), expected_sel_a)
-    self.assertEqual(list(sel_b), expected_sel_b)
-    #
-    self.assertEqual(r1,[0, 1, 2, 3])
-    self.assertEqual(r2,[0, 1, 2, 3])
+        # FIXME indexing keys breaks py2/3 compatibility, this could be broken if more than 1 key
+        chain_a_id, chain_b_id = list(match_dict.keys())[0]
+        sel_a, sel_b, r1, r2, _, _, _ = match_dict[chain_a_id, chain_b_id]
+        #
+        self.assertEqual(chain_a_id, "A")
+        self.assertEqual(chain_b_id, "B")
+        #
+        atoms_in_A = self.hierarchy_a.atoms_size()
+        atoms_in_B = self.hierarchy_b.atoms_size()
+        # atom count including  water
+        self.assertEqual(32, atoms_in_A)
+        self.assertEqual(44, atoms_in_B)
+        #
+        self.assertEqual(sel_a.size(), 25)
+        self.assertEqual(sel_b.size(), 25)
+        # atom count including  water
+        self.assertEqual(32, atoms_in_A)
+        self.assertEqual(44, atoms_in_B)
+        #
+        # number of waters is different as well
+        expected_sel_a = [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+        ]
+        expected_sel_b = [
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+        ]
+        self.assertEqual(list(sel_a), expected_sel_a)
+        self.assertEqual(list(sel_b), expected_sel_b)
+        #
+        self.assertEqual(r1, [0, 1, 2, 3])
+        self.assertEqual(r2, [0, 1, 2, 3])
 
-  def test_get_chains_info(self):
-    # print sys._getframe().f_code.co_name
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_1)
-    ph = pdb_inp.construct_hierarchy()
-    # test without selection
-    chains_info1 = ncs_search.get_chains_info(ph)
-    self.assertEqual(sorted(chains_info1),['A', 'D', 'X'])
+    def test_get_chains_info(self):
+        # print sys._getframe().f_code.co_name
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_1)
+        ph = pdb_inp.construct_hierarchy()
+        # test without selection
+        chains_info1 = ncs_search.get_chains_info(ph)
+        self.assertEqual(sorted(chains_info1), ["A", "D", "X"])
 
-  def test_remove_far_atoms(self):
-    # print sys._getframe().f_code.co_name
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=AB112_116)
-    ph = pdb_inp.construct_hierarchy()
-    pdb_inp_b = iotbx.pdb.input(source_info=None, lines=B112_116_fitted)
-    ph_b = pdb_inp_b.construct_hierarchy()
-    info_ab =  ncs_search.get_chains_info(ph)
-    # matching residues
-    res_n_a = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-    res_n_b = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    list_a = [flex.size_t(x) for x in info_ab['A'].atom_selection]
-    list_b = [flex.size_t(x) for x in info_ab['B'].atom_selection]
-    xxx = [x for y in list_a for x in y]
-    xxx.sort()
-    sel_a = flex.size_t(xxx)
-    other_sites = ph.select(sel_a).atoms().extract_xyz()
-    ref_sites = ph_b.atoms().extract_xyz()
-    self.assertEqual(other_sites.size(),ref_sites.size())
-    self.assertEqual(other_sites.size(),56)
-    #
-    sel_a,sel_b,res_n_a,res_n_b,ref_sites,other_sites = \
-      ncs_search.remove_far_atoms(
-        list_a, list_b,
-        res_n_a,res_n_b,
-        ref_sites,other_sites,
-        residue_match_radius=4.0)
-    #
-    self.assertEqual([0, 1, 5, 7, 8],res_n_a)
-    self.assertEqual([1, 2, 6, 8, 9],res_n_b)
+    def test_remove_far_atoms(self):
+        # print sys._getframe().f_code.co_name
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=AB112_116)
+        ph = pdb_inp.construct_hierarchy()
+        pdb_inp_b = iotbx.pdb.input(source_info=None, lines=B112_116_fitted)
+        ph_b = pdb_inp_b.construct_hierarchy()
+        info_ab = ncs_search.get_chains_info(ph)
+        # matching residues
+        res_n_a = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        res_n_b = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        list_a = [flex.size_t(x) for x in info_ab["A"].atom_selection]
+        list_b = [flex.size_t(x) for x in info_ab["B"].atom_selection]
+        xxx = [x for y in list_a for x in y]
+        xxx.sort()
+        sel_a = flex.size_t(xxx)
+        other_sites = ph.select(sel_a).atoms().extract_xyz()
+        ref_sites = ph_b.atoms().extract_xyz()
+        self.assertEqual(other_sites.size(), ref_sites.size())
+        self.assertEqual(other_sites.size(), 56)
+        #
+        (
+            sel_a,
+            sel_b,
+            res_n_a,
+            res_n_b,
+            ref_sites,
+            other_sites,
+        ) = ncs_search.remove_far_atoms(
+            list_a,
+            list_b,
+            res_n_a,
+            res_n_b,
+            ref_sites,
+            other_sites,
+            residue_match_radius=4.0,
+        )
+        #
+        self.assertEqual([0, 1, 5, 7, 8], res_n_a)
+        self.assertEqual([1, 2, 6, 8, 9], res_n_b)
 
-  def test_update_atom_selections(self):
-    # print sys._getframe().f_code.co_name
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_3)
-    ph = pdb_inp.construct_hierarchy(sort_atoms=False)
-    chains_info = ncs_search.get_chains_info(ph)
-    match_dict = ncs_search.search_ncs_relations(
-        ph=ph,
-        chains_info=chains_info,
-        chain_similarity_threshold=0.10,
-        chain_max_rmsd=2.3)
-    nrgl = ncs_search.ncs_grouping_and_group_dict(match_dict, ph)
-    # print group_dict
-    nrgl.update_str_selections_if_needed(hierarchy=ph)
-    # nrgl._show()
-    strsels = nrgl.get_array_of_str_selections()
-    # print strsels
-    assert strsels == [[
-        "(chain 'A' and resid 2 through 216)",
-        "chain 'B'",
-        "chain 'C'",
-        "(chain 'D' and (resid 2 through 171 or resid 186 through 216))"]]
-    assert nrgl.get_n_groups() == 1
-    isels = nrgl[0].get_iselections_list()
-    isels_list = [list(a) for a in isels]
-    # print isels_list
-    assert isels_list == [
-        [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
-         27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
-         45, 46, 47, 48, 49, 50, 51],
-        [52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69,
-         70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
-         88, 89, 90, 91, 92, 93, 94],
-        [95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
-         110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123,
-         124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137],
+    def test_update_atom_selections(self):
+        # print sys._getframe().f_code.co_name
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_3)
+        ph = pdb_inp.construct_hierarchy(sort_atoms=False)
+        chains_info = ncs_search.get_chains_info(ph)
+        match_dict = ncs_search.search_ncs_relations(
+            ph=ph,
+            chains_info=chains_info,
+            chain_similarity_threshold=0.10,
+            chain_max_rmsd=2.3,
+        )
+        nrgl = ncs_search.ncs_grouping_and_group_dict(match_dict, ph)
+        # print group_dict
+        nrgl.update_str_selections_if_needed(hierarchy=ph)
+        # nrgl._show()
+        strsels = nrgl.get_array_of_str_selections()
+        # print strsels
+        assert strsels == [
+            [
+                "(chain 'A' and resid 2 through 216)",
+                "chain 'B'",
+                "chain 'C'",
+                "(chain 'D' and (resid 2 through 171 or resid 186 through 216))",
+            ]
+        ]
+        assert nrgl.get_n_groups() == 1
+        isels = nrgl[0].get_iselections_list()
+        isels_list = [list(a) for a in isels]
+        # print isels_list
+        assert isels_list == [
+            [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+            ],
+            [
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63,
+                64,
+                65,
+                66,
+                67,
+                68,
+                69,
+                70,
+                71,
+                72,
+                73,
+                74,
+                75,
+                76,
+                77,
+                78,
+                79,
+                80,
+                81,
+                82,
+                83,
+                84,
+                85,
+                86,
+                87,
+                88,
+                89,
+                90,
+                91,
+                92,
+                93,
+                94,
+            ],
+            [
+                95,
+                96,
+                97,
+                98,
+                99,
+                100,
+                101,
+                102,
+                103,
+                104,
+                105,
+                106,
+                107,
+                108,
+                109,
+                110,
+                111,
+                112,
+                113,
+                114,
+                115,
+                116,
+                117,
+                118,
+                119,
+                120,
+                121,
+                122,
+                123,
+                124,
+                125,
+                126,
+                127,
+                128,
+                129,
+                130,
+                131,
+                132,
+                133,
+                134,
+                135,
+                136,
+                137,
+            ],
+            [
+                138,
+                139,
+                140,
+                141,
+                142,
+                143,
+                144,
+                145,
+                146,
+                147,
+                148,
+                149,
+                150,
+                151,
+                152,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                165,
+                166,
+                167,
+                168,
+                169,
+                170,
+                171,
+                172,
+                173,
+                174,
+                175,
+                176,
+                177,
+                178,
+                179,
+                180,
+                181,
+                182,
+                183,
+                184,
+            ],
+        ]
 
-        [138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151,
-         152, 153, 154, 155, 156, 157, 158, 159, 160, 165, 166, 167, 168, 169,
-         170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184]]
+    def test_split_chain_with_altloc(self):
+        # print sys._getframe().f_code.co_name
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_4)
+        chains_info = ncs_search.get_chains_info(pdb_inp.construct_hierarchy())
+        ch_A = chains_info["A"]
+        self.assertEqual(len(ch_A.res_names), len(ch_A.no_altloc))
+        #
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_5)
+        chains_info = ncs_search.get_chains_info(pdb_inp.construct_hierarchy())
+        ch_A = chains_info["A"]
+        self.assertEqual(len(ch_A.res_names), len(ch_A.no_altloc))
 
-  def test_split_chain_with_altloc(self):
-    # print sys._getframe().f_code.co_name
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_4)
-    chains_info = ncs_search.get_chains_info(pdb_inp.construct_hierarchy())
-    ch_A = chains_info['A']
-    self.assertEqual(len(ch_A.res_names),len(ch_A.no_altloc))
-    #
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_5)
-    chains_info = ncs_search.get_chains_info(pdb_inp.construct_hierarchy())
-    ch_A = chains_info['A']
-    self.assertEqual(len(ch_A.res_names),len(ch_A.no_altloc))
+    def test_groups_with_chains_of_different_size(self):
+        # print sys._getframe().f_code.co_name
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_6)
+        ph = pdb_inp.construct_hierarchy()
+        nrgl = ncs_search.find_ncs_in_hierarchy(ph=ph)
+        nrgl.update_str_selections_if_needed(hierarchy=ph)
+        str_sels = nrgl.get_array_of_str_selections()
+        self.assertEqual(
+            str_sels,
+            [
+                [
+                    "(chain 'H' and (resid 5 through 6 or (resid 640 and (name C1 ))))",
+                    "chain 'J'",
+                    "(chain 'L' and (resid 5 through 6 or (resid 646 and (name C1 ))))",
+                ],
+                ["chain 'I'", "chain 'K'", "chain 'M'"],
+            ],
+        )
 
-  def test_groups_with_chains_of_different_size(self):
-    # print sys._getframe().f_code.co_name
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_6)
-    ph=pdb_inp.construct_hierarchy()
-    nrgl = ncs_search.find_ncs_in_hierarchy(ph=ph)
-    nrgl.update_str_selections_if_needed(hierarchy=ph)
-    str_sels = nrgl.get_array_of_str_selections()
-    self.assertEqual(str_sels,
-        [["(chain 'H' and (resid 5 through 6 or (resid 640 and (name C1 ))))",
-          "chain 'J'", "(chain 'L' and (resid 5 through 6 or (resid 646 and (name C1 ))))"],
-        ["chain 'I'", "chain 'K'", "chain 'M'"]])
+    def test_iselection_is_in_correct_order(self):
+        """Make sure can calling get_ncs_restraints_group_list does not raise
+        error when atom selection in NCS group are out of order"""
+        h = iotbx.pdb.input(source_info=None, lines=test_pdb_6).construct_hierarchy()
+        ncs_obj = ncs.input(hierarchy=h)
+        ncs_obj.get_ncs_restraints_group_list()
+        pass
 
+    def test_correct_transform_selection(self):
+        """
+        When [A,B] can be the master for [D,E], [F,G]
+        but the transform from B to G is the same as the inverse of A to D,
+        make sure the non-transform match is selected
+        """
+        # print sys._getframe().f_code.co_name
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_7)
+        ph = pdb_inp.construct_hierarchy()
+        chains_info = ncs_search.get_chains_info(ph)
+        match_dict = ncs_search.search_ncs_relations(
+            ph=ph, chains_info=chains_info, chain_similarity_threshold=0.10
+        )
+        nrgl = ncs_search.ncs_grouping_and_group_dict(match_dict, ph)
+        nrgl.update_str_selections_if_needed(hierarchy=ph)
+        str_sels = nrgl.get_array_of_str_selections()
+        self.assertEqual(
+            str_sels,
+            [
+                ["chain 'A'", "chain 'D'", "chain 'F'"],
+                ["chain 'B'", "chain 'E'", "chain 'G'"],
+            ],
+        )
+        # nrgl._show()
+        #
+        # self.assertEqual(group_dict.keys(),[('A',), ('B',)])
 
-  def test_iselection_is_in_correct_order(self):
-    """ Make sure can calling get_ncs_restraints_group_list does not raise
-    error when atom selection in NCS group are out of order"""
-    h = iotbx.pdb.input(source_info=None, lines=test_pdb_6).construct_hierarchy()
-    ncs_obj = ncs.input(hierarchy=h)
-    ncs_obj.get_ncs_restraints_group_list()
-    pass
+    def test_split_groups_to_spec(self):
+        # print sys._getframe().f_code.co_name
+        pdb_str = test_pdb_7 + test_pdb_7_addition
+        h = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
+        ncs_obj = ncs.input(hierarchy=h)
+        spec = ncs_obj.get_ncs_info_as_spec()
+        gr = spec.ncs_groups()
+        self.assertEqual(len(gr), 2)
+        self.assertEqual(gr[0].chain_residue_id()[0], ["A", "D", "F"])
+        self.assertEqual(gr[1].chain_residue_id()[0], ["B", "E", "G", "X"])
 
+    def test_processing_ncs_with_hierarchy_input(self):
+        pdb_inp = iotbx.pdb.input(lines=test_pdb_6, source_info=None)
+        ph = pdb_inp.construct_hierarchy()
+        ncs_obj = ncs.input(hierarchy=ph)
+        nrgl = ncs_obj.get_ncs_restraints_group_list()
+        self.assertEqual(nrgl.get_n_groups(), 2)
+        self.assertEqual(nrgl[0].get_number_of_copies(), 2)
+        self.assertEqual(nrgl[1].get_number_of_copies(), 2)
 
-  def test_correct_transform_selection(self):
-    """
-    When [A,B] can be the master for [D,E], [F,G]
-    but the transform from B to G is the same as the inverse of A to D,
-    make sure the non-transform match is selected
-    """
-    # print sys._getframe().f_code.co_name
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_7)
-    ph = pdb_inp.construct_hierarchy()
-    chains_info = ncs_search.get_chains_info(ph)
-    match_dict = ncs_search.search_ncs_relations(ph=ph,
-      chains_info=chains_info,chain_similarity_threshold=0.10)
-    nrgl = ncs_search.ncs_grouping_and_group_dict(match_dict, ph)
-    nrgl.update_str_selections_if_needed(hierarchy=ph)
-    str_sels = nrgl.get_array_of_str_selections()
-    self.assertEqual(str_sels,
-        [["chain 'A'", "chain 'D'", "chain 'F'"],
-        ["chain 'B'", "chain 'E'", "chain 'G'"]])
-    # nrgl._show()
-    #
-    # self.assertEqual(group_dict.keys(),[('A',), ('B',)])
+    def test_min_contig_length(self):
+        """Test correct handling of min_contig_length and min_percent
+        alignment with 0.73 idenitiy is really exist:
+        referenc      AAKDVKFG----------VNVLADAVKVTVASKANDAAGDGTTTATVLAQAI
+                      ||||||||          ||||||||||||||           |||||||||
+        query         AAKDVKFGNDARVKMLRGVNVLADAVKVTVAS-----------TATVLAQAI
+        """
+        h = iotbx.pdb.input(source_info=None, lines=test_pdb_8).construct_hierarchy()
+        self.p.ncs_search.chain_max_rmsd = 10
+        self.p.ncs_search.residue_match_radius = 1000
+        self.p.ncs_search.chain_similarity_threshold = 0.5
+        ncs_obj = ncs.input(hierarchy=h, params=self.p.ncs_search)
+        self.assertEqual(ncs_obj.number_of_ncs_groups, 1)
+        ncs_groups = ncs_obj.get_ncs_restraints_group_list()
+        assert len(ncs_groups) == 1
+        assert ncs_groups[0].master_iselection.size() == 31
+        assert ncs_groups[0].copies[0].iselection.size() == 31
 
-  def test_split_groups_to_spec(self):
-    # print sys._getframe().f_code.co_name
-    pdb_str = test_pdb_7 + test_pdb_7_addition
-    h = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
-    ncs_obj = ncs.input(hierarchy=h)
-    spec = ncs_obj.get_ncs_info_as_spec()
-    gr = spec.ncs_groups()
-    self.assertEqual(len(gr),2)
-    self.assertEqual(gr[0].chain_residue_id()[0],["A", "D", "F"])
-    self.assertEqual(gr[1].chain_residue_id()[0],["B", "E", "G", "X"])
+    def test_file_formats(self):
+        """Make sure .ncs file format is as needed"""
+        # fixme: finish test when we decide how to change .ncs files
+        # create a pdb string for the test and flip to atoms order
+        pdb_str = test_pdb_7 + test_pdb_7_addition
+        pdb_lines = pdb_str.splitlines()
+        pdb_lines[2:4] = [
+            "ATOM      3  O   ASP A   5      89.553 -29.857  72.225  1.00 77.56           O",
+            "ATOM      4  C   ASP A   5      90.136 -30.762  71.617  1.00 77.70           C",
+        ]
+        h = iotbx.pdb.input(
+            source_info=None, lines="\n".join(pdb_lines)
+        ).construct_hierarchy()
+        self.p.ncs_search.chain_max_rmsd = 10
+        self.p.ncs_search.chain_similarity_threshold = 0.20
+        ncs_obj = ncs.input(hierarchy=h, params=self.p.ncs_search)
+        # x = ncs_obj.get_ncs_info_as_spec(write=True,write_ncs_phil=True)
+        # x = ncs_obj.show(format='spec')
+        # check another pdb string
+        h = iotbx.pdb.input(source_info=None, lines=test_pdb_6).construct_hierarchy()
+        ncs_obj = ncs.input(hierarchy=h)
+        ncs_obj.get_ncs_restraints_group_list()
+        # x = ncs_obj.get_ncs_info_as_spec(write=True,write_ncs_phil=True)
 
-  def test_processing_ncs_with_hierarchy_input(self):
-    pdb_inp = iotbx.pdb.input(lines=test_pdb_6,source_info=None)
-    ph = pdb_inp.construct_hierarchy()
-    ncs_obj = ncs.input(hierarchy=ph)
-    nrgl = ncs_obj.get_ncs_restraints_group_list()
-    self.assertEqual(nrgl.get_n_groups(), 2)
-    self.assertEqual(nrgl[0].get_number_of_copies(), 2)
-    self.assertEqual(nrgl[1].get_number_of_copies(), 2)
-
-  def test_min_contig_length(self):
-    """ Test correct handling of min_contig_length and min_percent
-    alignment with 0.73 idenitiy is really exist:
-    referenc      AAKDVKFG----------VNVLADAVKVTVASKANDAAGDGTTTATVLAQAI
-                  ||||||||          ||||||||||||||           |||||||||
-    query         AAKDVKFGNDARVKMLRGVNVLADAVKVTVAS-----------TATVLAQAI
-    """
-    h = iotbx.pdb.input(source_info=None, lines=test_pdb_8).construct_hierarchy()
-    self.p.ncs_search.chain_max_rmsd=10
-    self.p.ncs_search.residue_match_radius=1000
-    self.p.ncs_search.chain_similarity_threshold=0.5
-    ncs_obj = ncs.input(
-        hierarchy=h,
-        params=self.p.ncs_search)
-    self.assertEqual(ncs_obj.number_of_ncs_groups,1)
-    ncs_groups = ncs_obj.get_ncs_restraints_group_list()
-    assert len(ncs_groups) == 1
-    assert ncs_groups[0].master_iselection.size() == 31
-    assert ncs_groups[0].copies[0].iselection.size() == 31
-
-  def test_file_formats(self):
-    """ Make sure .ncs file format is as needed """
-    # fixme: finish test when we decide how to change .ncs files
-    # create a pdb string for the test and flip to atoms order
-    pdb_str = test_pdb_7 + test_pdb_7_addition
-    pdb_lines = pdb_str.splitlines()
-    pdb_lines[2:4] = [
-      'ATOM      3  O   ASP A   5      89.553 -29.857  72.225  1.00 77.56           O',
-      'ATOM      4  C   ASP A   5      90.136 -30.762  71.617  1.00 77.70           C'
-    ]
-    h = iotbx.pdb.input(source_info=None, lines='\n'.join(pdb_lines)).construct_hierarchy()
-    self.p.ncs_search.chain_max_rmsd=10
-    self.p.ncs_search.chain_similarity_threshold=0.20
-    ncs_obj = ncs.input(
-        hierarchy=h,
-        params=self.p.ncs_search)
-    # x = ncs_obj.get_ncs_info_as_spec(write=True,write_ncs_phil=True)
-    # x = ncs_obj.show(format='spec')
-    # check another pdb string
-    h = iotbx.pdb.input(source_info=None, lines=test_pdb_6).construct_hierarchy()
-    ncs_obj = ncs.input(hierarchy=h)
-    ncs_obj.get_ncs_restraints_group_list()
-    # x = ncs_obj.get_ncs_info_as_spec(write=True,write_ncs_phil=True)
-
-  def test_overlapping_chains(self):
-    '''  Test processing of overlapping identical chains  '''
-    h = iotbx.pdb.input(source_info=None, lines=pdb_str10).construct_hierarchy()
-    ncs_inp = ncs.input(hierarchy=h)
-    nrgl = ncs_inp.get_ncs_restraints_group_list()
-    # nrgl._show()
-    self.assertEqual(nrgl[0].master_str_selection, "chain 'A '")
+    def test_overlapping_chains(self):
+        """Test processing of overlapping identical chains"""
+        h = iotbx.pdb.input(source_info=None, lines=pdb_str10).construct_hierarchy()
+        ncs_inp = ncs.input(hierarchy=h)
+        nrgl = ncs_inp.get_ncs_restraints_group_list()
+        # nrgl._show()
+        self.assertEqual(nrgl[0].master_str_selection, "chain 'A '")
 
 
-test_pdb_1 = '''\
+test_pdb_1 = """\
 CRYST1  577.812  448.715  468.790  90.00  90.00  90.00 P 1
 SCALE1      0.001731  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.002229  0.000000        0.00000
@@ -351,9 +664,9 @@ ATOM      5  CA  THR D   5       9.101   9.421   9.092  1.00 20.00           C
 ATOM      6  CA  THR D   6       9.001  10.343   8.000  1.00 20.00           C
 ATOM      7  CA  THR D   7       8.964   8.000   8.565  1.00 20.00           C
 END
-'''
+"""
 
-pdb_str = '''\
+pdb_str = """\
 CRYST1   37.760   43.710  107.440  90.00 108.54  90.00 P 1 21 1      4
 ATOM      1  N   GLY A   1      10.100  14.506  -6.813  1.00 11.02           N
 ATOM      2  CA  GLY A   1       9.618  15.911  -6.685  1.00  9.34           C
@@ -434,9 +747,9 @@ HETATM 3133  O   HOH B 308      31.840 -18.209  58.265  1.00 34.09           O
 HETATM 3134  O   HOH B 309      21.378  -6.597  55.543  1.00 21.44           O
 HETATM 3135  O   HOH B 310      39.908 -13.756  54.831  1.00 11.05           O
 END
-'''
+"""
 
-AB112_116 = '''\
+AB112_116 = """\
 CRYST1  435.970  183.000  225.390  90.00 108.99  90.00 C 1 2 1      48
 SCALE1      0.002294  0.000000  0.000789        0.00000
 SCALE2      0.000000  0.005464  0.000000        0.00000
@@ -563,9 +876,9 @@ ATOM   4353  CB  PRO B 120    -123.215 -10.576  -1.453  1.00187.63           C
 ATOM   4354  CG  PRO B 120    -123.225  -9.326  -0.639  1.00188.14           C
 ATOM   4355  CD  PRO B 120    -122.778  -9.727   0.750  1.00180.96           C
 END
-'''
+"""
 
-B112_116_fitted = '''\
+B112_116_fitted = """\
 CRYST1  435.970  183.000  225.390  90.00 108.99  90.00 C 1 2 1
 SCALE1      0.002294  0.000000  0.000789        0.00000
 SCALE2      0.000000  0.005464  0.000000        0.00000
@@ -627,9 +940,9 @@ ATOM   4353  CB  PRO B 120     -70.516 -62.323  46.745  1.00187.63           C
 ATOM   4354  CG  PRO B 120     -69.117 -62.161  47.239  1.00188.14           C
 ATOM   4355  CD  PRO B 120     -68.218 -62.486  46.066  1.00180.96           C
 END
-'''
+"""
 
-pdb_str_2 = '''\
+pdb_str_2 = """\
 CRYST1   53.930  108.200  147.160  90.00  90.00  90.00 P 21 21 21   16
 SCALE1      0.018543  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.009242  0.000000        0.00000
@@ -811,9 +1124,9 @@ ATOM   1861  CB  VAL B   7      -9.771  -7.633  -4.787  1.00 28.15           C
 ATOM   1862  CG1 VAL B   7      -8.322  -7.707  -5.258  1.00 28.49           C
 ATOM   1863  CG2 VAL B   7      -9.933  -8.301  -3.425  1.00 28.37           C
 END
-'''
+"""
 
-pdb_str_3 = '''\
+pdb_str_3 = """\
 CRYST1   53.930  108.200  147.160  90.00  90.00  90.00 P 21 21 21   16
 SCALE1      0.018543  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.009242  0.000000        0.00000
@@ -1007,9 +1320,9 @@ ATOM   6936  CD  GLU D 216     -10.288  24.920 -59.644  1.00 46.88           C
 ATOM   6937  OE1 GLU D 216      -9.676  25.012 -58.542  1.00 45.82           O
 ATOM   6938  OE2 GLU D 216     -10.525  25.929 -60.342  1.00 49.35           O
 END
-'''
+"""
 
-test_pdb_4 = '''\
+test_pdb_4 = """\
 CRYST1  129.340  136.710  168.120  90.00  90.00  90.00 I 2 2 2      32
 SCALE1      0.007732  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.007315  0.000000        0.00000
@@ -1039,9 +1352,9 @@ HETATM 8501 NA    NA A 265      38.174  35.784  51.193  1.00 18.09          NA
 HETATM 8502 NA    NA A 266      37.726  40.289  60.423  1.00 22.78          NA
 HETATM 8503 NA    NA A 267      13.212  41.425  36.424  1.00 30.14          NA
 HETATM 8504 CL    CL A 268      44.904  37.770  59.641  1.00 29.60          CL
-'''
+"""
 
-test_pdb_5 = '''\
+test_pdb_5 = """\
 CRYST1  129.340  136.710  168.120  90.00  90.00  90.00 I 2 2 2      32
 SCALE1      0.007732  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.007315  0.000000        0.00000
@@ -1071,9 +1384,9 @@ HETATM 8501 NA    NA A 265      38.174  35.784  51.193  1.00 18.09          NA
 HETATM 8502 NA    NA A 266      37.726  40.289  60.423  1.00 22.78          NA
 HETATM 8503 NA    NA A 267      13.212  41.425  36.424  1.00 30.14          NA
 HETATM 8504 CL    CL A 268      44.904  37.770  59.641  1.00 29.60          CL
-'''
+"""
 
-test_pdb_6 = '''\
+test_pdb_6 = """\
 CRYST1  203.106   83.279  178.234  90.00 106.67  90.00 C 1 2 1      12
 SCALE1      0.004924  0.000000  0.001474        0.00000
 SCALE2      0.000000  0.012008  0.000000        0.00000
@@ -1120,9 +1433,9 @@ HETATM11449  C1  NDG J 643      92.487   3.543  81.144  1.00 70.91           C
 HETATM11494  C1  NDG L 646      61.028 -14.273  81.262  1.00 69.80           C
 HETATM11495  C2  NDG L 646      61.028 -14.273  81.262  1.00 69.80           C
 END
-'''
+"""
 
-test_pdb_7 = '''\
+test_pdb_7 = """\
 ATOM      1  N   ASP A   5      91.286 -31.834  73.572  1.00 77.83           N
 ATOM      2  CA  ASP A   5      90.511 -32.072  72.317  1.00 78.04           C
 ATOM      3  C   ASP A   5      90.136 -30.762  71.617  1.00 77.70           C
@@ -1158,17 +1471,17 @@ ATOM  10119  N   GLY G 501      61.217 -13.228  81.321  1.00 69.80           N
 ATOM  10120  CA  GLY G 501      60.975 -12.176  80.288  1.00 70.31           C
 ATOM  10121  C   GLY G 501      61.953 -12.288  79.115  1.00 70.96           C
 ATOM  10122  O   GLY G 501      63.174 -12.323  79.302  1.00 70.38           O
-'''
+"""
 
-test_pdb_7_addition = '''\
+test_pdb_7_addition = """\
 TER
 ATOM  10119  N   GLY X 501     -44.932 -80.765  78.851  1.00 69.80           N
 ATOM  10120  CA  GLY X 501     -45.174 -79.714  77.818  1.00 70.31           C
 ATOM  10121  C   GLY X 501     -44.196 -79.826  76.644  1.00 70.96           C
 ATOM  10122  O   GLY X 501     -42.975 -79.861  76.832  1.00 70.38           O
-'''
+"""
 
-test_pdb_8 = '''\
+test_pdb_8 = """\
 CRYST1  115.986  115.986   44.151  90.00  90.00 120.00 P 6
 ATOM      2  CA  ALA A   1      64.128 -67.160 -16.901  1.00  2.19           C
 ATOM      7  CA  ALA A   2      63.524 -68.826 -13.574  1.00  2.00           C
@@ -1253,9 +1566,9 @@ ATOM   4544  CA  ALA B  38      54.531 -89.280 -13.126  1.00  2.34           C
 ATOM   4549  CA  GLN B  39      54.795 -87.269  -9.909  1.00  2.02           C
 ATOM   4558  CA  ALA B  40      53.272 -90.229  -8.089  1.00  2.64           C
 ATOM   4563  CA  ILE B  41      55.515 -92.921  -9.376  1.00  2.00           C
-'''
+"""
 
-test_pdb_9 = '''\
+test_pdb_9 = """\
 ATOM      1  CA  ASP A   1       0.000   0.000   0.000  1.00 78.04           C
 TER
 ATOM      1  CA  ASP B   1      10.000  10.000  10.000  1.00 78.04           C
@@ -1268,7 +1581,7 @@ ATOM      1  CA  ASP F   1      21.000  21.000  21.000  1.00 78.04           C
 TER
 ATOM      1  CA  ASP D   1       1.000   1.000   1.000  1.00 78.04           C
 TER
-'''
+"""
 
 pdb_str10 = """\n
 CRYST1   25.287   40.217   65.471  90.00  90.00  90.00 P 21 21 21
@@ -1345,19 +1658,20 @@ END
 
 
 def run_selected_tests():
-  """  Run selected tests
+    """Run selected tests
 
-  1) List in "tests" the names of the particular test you want to run
-  2) Comment out unittest.main()
-  3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
-  """
-  tests = ['test_correct_transform_selection']
-  suite = unittest.TestSuite(list(map(TestSimpleAlignment,tests)))
-  return suite
+    1) List in "tests" the names of the particular test you want to run
+    2) Comment out unittest.main()
+    3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
+    """
+    tests = ["test_correct_transform_selection"]
+    suite = unittest.TestSuite(list(map(TestSimpleAlignment, tests)))
+    return suite
 
-if __name__=='__main__':
-  # use for individual tests
-  # unittest.TextTestRunner().run(run_selected_tests())
 
-  # Use to run all tests
-  unittest.main(verbosity=0)
+if __name__ == "__main__":
+    # use for individual tests
+    # unittest.TextTestRunner().run(run_selected_tests())
+
+    # Use to run all tests
+    unittest.main(verbosity=0)

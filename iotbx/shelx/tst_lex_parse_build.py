@@ -14,478 +14,879 @@ from six.moves import cStringIO as StringIO
 from six.moves import range
 from six.moves import zip
 
+
 def exercise_lexing():
-  stream = shelx.command_stream(file=StringIO(ins_mundane_tiny))
-  i = iter(stream)
-  try:
-    cmd, line = next(i)
-    assert cmd == ('TITL', ('in Pbca',))
-    cmd, line =  next(i)
-    assert cmd == ('CELL', (0.71073, 7.35, 9.541, 12.842, 90, 90, 90))
-    cmd, line = next(i)
-    assert cmd == ('ZERR', (4, 0.002, 0.002, 0.003, 0, 0, 0))
-    cmd, line = next(i)
-    assert cmd == ('LATT', (1,))
-    cmd, line = next(i)
-    assert cmd == ('SYMM', ('0.5-X, -Y, 0.5+Z',))
-    cmd, line = next(i)
-    assert cmd == ('SYMM', ('-X, 0.5+Y, 0.5-Z',))
-    cmd, line = next(i)
-    assert cmd == ('SYMM', ('1/2+X, 0.5-Y, -Z',))
-    cmd, line =  next(i)
-    assert cmd == ('SFAC', ('C', 'H', 'O', 'N',))
-    cmd, line = next(i)
-    assert cmd == ('UNIT', (32, 40, 16, 8))
-    cmd, line = next(i)
-    assert cmd == ('TEMP', (-153,))
-    cmd, line = next(i)
-    assert cmd == ('L.S.', (4,))
-    cmd, line = next(i)
-    assert cmd == ('BOND', (tokens.element_token(element='H'),))
-    cmd, line = next(i) # FMAP
-    cmd, line = next(i) # PLAN
-    cmd, line = next(i) # WGHT
-    cmd, line = next(i) # EXTI
-    cmd, line = next(i) # FVAR
-    cmd, line = next(i)
-    assert cmd == ('REM', ())
-    cmd, line = next(i)
-    assert cmd == ('+', '/path/to/filename.ins')
-    cmd, line = next(i)
-    assert cmd == ('REM', ('Protracted example of residues on command',))
-    cmd, line = next(i)
-    assert cmd == ('HFIX', (tokens.residue_number_tok, 1), (23,))
-    cmd, line =  next(i)
-    assert cmd == ('HFIX', (tokens.residue_class_tok, 'N'), (43,))
-    cmd, line = next(i)
-    assert cmd == ('EQIV', (1, '1-X, -Y, -Z'))
-    cmd, line = next(i)
-    assert cmd == ('CONF', (tokens.atomname_token(name='C4'),
-                            tokens.atomname_token(name='N'),
-                            tokens.atomname_token(name='H'),
-                            tokens.atomname_token(name='O2', symmetry=1) ) )
-    cmd, line = next(i)
-    assert cmd == ('DFIX', (tokens.residue_number_tok, 1),
-                   (1.5, tokens.atomname_token(name='C2'),
-                    tokens.atomname_token(name='C3')))
-    cmd, line = next(i)
-    assert cmd == ('__ATOM__',
-                   ('O2', 3, 0.362893, 0.160589, -0.035913, 11,
-                          0.03926, 0.02517, 0.02140,
-                          -0.00415, -0.00810, 0.01009))
-    cmd, line = next(i)
-    assert cmd == ('__ATOM__',
-                   ('O3', 3, 0.696722, 0.119176, 0.260657, 11,
-                          0.02838, 0.02133, 0.02918,
-                          0.00011, -0.01030, -0.00048))
-    cmd, line = next(i) # C1
-    cmd, line = next(i) # C4
-    cmd, line =  next(i)
-    assert cmd == ('RESI', (1,))
-    cmd, line = next(i) # C2
-    cmd, line = next(i) # C3
-    cmd, line =  next(i)
-    assert cmd == ('RESI', ('N',))
-    cmd, line = next(i) # N
-    cmd, line = next(i) # HKLF
+    stream = shelx.command_stream(file=StringIO(ins_mundane_tiny))
+    i = iter(stream)
     try:
-      cmd, line = next(i)
-      raise AssertionError
+        cmd, line = next(i)
+        assert cmd == ("TITL", ("in Pbca",))
+        cmd, line = next(i)
+        assert cmd == ("CELL", (0.71073, 7.35, 9.541, 12.842, 90, 90, 90))
+        cmd, line = next(i)
+        assert cmd == ("ZERR", (4, 0.002, 0.002, 0.003, 0, 0, 0))
+        cmd, line = next(i)
+        assert cmd == ("LATT", (1,))
+        cmd, line = next(i)
+        assert cmd == ("SYMM", ("0.5-X, -Y, 0.5+Z",))
+        cmd, line = next(i)
+        assert cmd == ("SYMM", ("-X, 0.5+Y, 0.5-Z",))
+        cmd, line = next(i)
+        assert cmd == ("SYMM", ("1/2+X, 0.5-Y, -Z",))
+        cmd, line = next(i)
+        assert cmd == (
+            "SFAC",
+            (
+                "C",
+                "H",
+                "O",
+                "N",
+            ),
+        )
+        cmd, line = next(i)
+        assert cmd == ("UNIT", (32, 40, 16, 8))
+        cmd, line = next(i)
+        assert cmd == ("TEMP", (-153,))
+        cmd, line = next(i)
+        assert cmd == ("L.S.", (4,))
+        cmd, line = next(i)
+        assert cmd == ("BOND", (tokens.element_token(element="H"),))
+        cmd, line = next(i)  # FMAP
+        cmd, line = next(i)  # PLAN
+        cmd, line = next(i)  # WGHT
+        cmd, line = next(i)  # EXTI
+        cmd, line = next(i)  # FVAR
+        cmd, line = next(i)
+        assert cmd == ("REM", ())
+        cmd, line = next(i)
+        assert cmd == ("+", "/path/to/filename.ins")
+        cmd, line = next(i)
+        assert cmd == ("REM", ("Protracted example of residues on command",))
+        cmd, line = next(i)
+        assert cmd == ("HFIX", (tokens.residue_number_tok, 1), (23,))
+        cmd, line = next(i)
+        assert cmd == ("HFIX", (tokens.residue_class_tok, "N"), (43,))
+        cmd, line = next(i)
+        assert cmd == ("EQIV", (1, "1-X, -Y, -Z"))
+        cmd, line = next(i)
+        assert cmd == (
+            "CONF",
+            (
+                tokens.atomname_token(name="C4"),
+                tokens.atomname_token(name="N"),
+                tokens.atomname_token(name="H"),
+                tokens.atomname_token(name="O2", symmetry=1),
+            ),
+        )
+        cmd, line = next(i)
+        assert cmd == (
+            "DFIX",
+            (tokens.residue_number_tok, 1),
+            (1.5, tokens.atomname_token(name="C2"), tokens.atomname_token(name="C3")),
+        )
+        cmd, line = next(i)
+        assert cmd == (
+            "__ATOM__",
+            (
+                "O2",
+                3,
+                0.362893,
+                0.160589,
+                -0.035913,
+                11,
+                0.03926,
+                0.02517,
+                0.02140,
+                -0.00415,
+                -0.00810,
+                0.01009,
+            ),
+        )
+        cmd, line = next(i)
+        assert cmd == (
+            "__ATOM__",
+            (
+                "O3",
+                3,
+                0.696722,
+                0.119176,
+                0.260657,
+                11,
+                0.02838,
+                0.02133,
+                0.02918,
+                0.00011,
+                -0.01030,
+                -0.00048,
+            ),
+        )
+        cmd, line = next(i)  # C1
+        cmd, line = next(i)  # C4
+        cmd, line = next(i)
+        assert cmd == ("RESI", (1,))
+        cmd, line = next(i)  # C2
+        cmd, line = next(i)  # C3
+        cmd, line = next(i)
+        assert cmd == ("RESI", ("N",))
+        cmd, line = next(i)  # N
+        cmd, line = next(i)  # HKLF
+        try:
+            cmd, line = next(i)
+            raise AssertionError
+        except StopIteration:
+            pass
     except StopIteration:
-      pass
-  except StopIteration:
-    raise AssertionError
+        raise AssertionError
+
 
 def exercise_lexing_bis():
-  stream = shelx.command_stream(file=StringIO(ins_equal_sign_in_rem))
-  i = iter(stream)
-  try:
-    cmd, line = next(i)
-    assert cmd == ('REM',
-                   ('Solution 1  R1  0.100,  Alpha = 0.0015  in P2(1)',))
-    cmd, line = next(i)
-    assert cmd == ('REM', ('C13 O10',))
-    cmd, line = next(i)
-    assert cmd == ('TITL', ('SUCROSE IN P2(1)',))
-  except StopIteration:
-    raise AssertionError
+    stream = shelx.command_stream(file=StringIO(ins_equal_sign_in_rem))
+    i = iter(stream)
+    try:
+        cmd, line = next(i)
+        assert cmd == ("REM", ("Solution 1  R1  0.100,  Alpha = 0.0015  in P2(1)",))
+        cmd, line = next(i)
+        assert cmd == ("REM", ("C13 O10",))
+        cmd, line = next(i)
+        assert cmd == ("TITL", ("SUCROSE IN P2(1)",))
+    except StopIteration:
+        raise AssertionError
+
 
 def exercise_crystal_symmetry_parsing():
-  stream = shelx.command_stream(file=StringIO(ins_mundane_tiny))
-  builder = iotbx.builders.crystal_symmetry_builder()
-  stream = shelx.crystal_symmetry_parser(stream, builder)
-  stream = shelx.wavelength_parser(stream.filtered_commands(), builder)
-  stream.parse()
-  assert builder.crystal_symmetry.is_similar_symmetry(
-    crystal.symmetry(
-      unit_cell=uctbx.unit_cell((7.350, 9.541, 12.842, 90, 90, 90)),
-      space_group_symbol='Pbca'),
-    relative_length_tolerance=1e-15,
-    absolute_angle_tolerance=1e-15)
-  cs = crystal_symmetry_from_ins.extract_from(
-    file=StringIO(ins_mundane_tiny))
-  assert cs.is_similar_symmetry(builder.crystal_symmetry)
-  assert approx_equal(builder.wavelength_in_angstrom, 0.71073, eps=5e-6)
+    stream = shelx.command_stream(file=StringIO(ins_mundane_tiny))
+    builder = iotbx.builders.crystal_symmetry_builder()
+    stream = shelx.crystal_symmetry_parser(stream, builder)
+    stream = shelx.wavelength_parser(stream.filtered_commands(), builder)
+    stream.parse()
+    assert builder.crystal_symmetry.is_similar_symmetry(
+        crystal.symmetry(
+            unit_cell=uctbx.unit_cell((7.350, 9.541, 12.842, 90, 90, 90)),
+            space_group_symbol="Pbca",
+        ),
+        relative_length_tolerance=1e-15,
+        absolute_angle_tolerance=1e-15,
+    )
+    cs = crystal_symmetry_from_ins.extract_from(file=StringIO(ins_mundane_tiny))
+    assert cs.is_similar_symmetry(builder.crystal_symmetry)
+    assert approx_equal(builder.wavelength_in_angstrom, 0.71073, eps=5e-6)
 
-  stream = shelx.command_stream(file=StringIO(ins_P1))
-  l = shelx.crystal_symmetry_parser(
-    stream,
-    builder=iotbx.builders.crystal_symmetry_builder())
-  l.parse()
-  assert l.builder.crystal_symmetry.is_similar_symmetry(
-    crystal.symmetry(
-      unit_cell=uctbx.unit_cell((1,2,3,99,100,101)),
-      space_group_symbol='P1'),
-    relative_length_tolerance=1e-15,
-    absolute_angle_tolerance=1e-15)
-  cs = crystal_symmetry_from_ins.extract_from(
-    file=StringIO(ins_P1))
-  assert cs.is_similar_symmetry(l.builder.crystal_symmetry)
+    stream = shelx.command_stream(file=StringIO(ins_P1))
+    l = shelx.crystal_symmetry_parser(
+        stream, builder=iotbx.builders.crystal_symmetry_builder()
+    )
+    l.parse()
+    assert l.builder.crystal_symmetry.is_similar_symmetry(
+        crystal.symmetry(
+            unit_cell=uctbx.unit_cell((1, 2, 3, 99, 100, 101)), space_group_symbol="P1"
+        ),
+        relative_length_tolerance=1e-15,
+        absolute_angle_tolerance=1e-15,
+    )
+    cs = crystal_symmetry_from_ins.extract_from(file=StringIO(ins_P1))
+    assert cs.is_similar_symmetry(l.builder.crystal_symmetry)
+
 
 def exercise_instruction_parsing():
-  alternatives = (None,)
-  try:
-    _ = iotbx.builders.mixin_builder_class(
-      "builder_to_test_instruction_parsing",
-      iotbx.builders.reflection_data_source_builder,
-      iotbx.builders.weighting_scheme_builder,
-      iotbx.builders.twinning_builder)
-    alternatives += (_(),)
-  except AttributeError:
-    pass
-  for builder in alternatives:
-    stream = shelx.command_stream(file=StringIO(ins_aspirin))
-    l = shelx.instruction_parser(stream, builder)
-    l.parse()
-    ins = l.instructions
-    assert ins['hklf']['s'] == 1
-    assert ins['hklf']['matrix'].as_xyz() == 'z,x+y,x'
-    assert ins['hklf']['n'] == 4
-    assert ins['omit_hkl'] == [[2, 3, 4], [-1, -3, 2]]
-    assert ins['omit']['s'] == -2
-    assert ins['omit']['two_theta'] == 56
-    assert ins['wght'] == {'a':0.0687,'b':0.4463,
-                           'c':0, 'd':0, 'e':0, 'f':1/3}
-    assert ins['merg'] == 2
-    assert ins['twin']['matrix'].as_xyz() == '-x,y,-z'
-    assert ins['twin']['n'] == 2
-    assert ins['basf'] == (0.352,)
-    assert ins['temp'] == -60
-    if builder:
-      assert builder.temperature_in_celsius == ins['temp']
-      ws = builder.weighting_scheme
-      assert isinstance(
-        ws,
-        iotbx.builders.least_squares.mainstream_shelx_weighting)
-      assert ws.a == ins['wght']['a']
-      assert ws.b == ins['wght']['b']
-      assert builder.reflection_file_format == "hklf4"
-      assert builder.data_change_of_basis_op.as_hkl()== "l,h+k,h"
+    alternatives = (None,)
+    try:
+        _ = iotbx.builders.mixin_builder_class(
+            "builder_to_test_instruction_parsing",
+            iotbx.builders.reflection_data_source_builder,
+            iotbx.builders.weighting_scheme_builder,
+            iotbx.builders.twinning_builder,
+        )
+        alternatives += (_(),)
+    except AttributeError:
+        pass
+    for builder in alternatives:
+        stream = shelx.command_stream(file=StringIO(ins_aspirin))
+        l = shelx.instruction_parser(stream, builder)
+        l.parse()
+        ins = l.instructions
+        assert ins["hklf"]["s"] == 1
+        assert ins["hklf"]["matrix"].as_xyz() == "z,x+y,x"
+        assert ins["hklf"]["n"] == 4
+        assert ins["omit_hkl"] == [[2, 3, 4], [-1, -3, 2]]
+        assert ins["omit"]["s"] == -2
+        assert ins["omit"]["two_theta"] == 56
+        assert ins["wght"] == {
+            "a": 0.0687,
+            "b": 0.4463,
+            "c": 0,
+            "d": 0,
+            "e": 0,
+            "f": 1 / 3,
+        }
+        assert ins["merg"] == 2
+        assert ins["twin"]["matrix"].as_xyz() == "-x,y,-z"
+        assert ins["twin"]["n"] == 2
+        assert ins["basf"] == (0.352,)
+        assert ins["temp"] == -60
+        if builder:
+            assert builder.temperature_in_celsius == ins["temp"]
+            ws = builder.weighting_scheme
+            assert isinstance(
+                ws, iotbx.builders.least_squares.mainstream_shelx_weighting
+            )
+            assert ws.a == ins["wght"]["a"]
+            assert ws.b == ins["wght"]["b"]
+            assert builder.reflection_file_format == "hklf4"
+            assert builder.data_change_of_basis_op.as_hkl() == "l,h+k,h"
 
-  if len(alternatives) != 2: return
-  builder = alternatives[-1]
+    if len(alternatives) != 2:
+        return
+    builder = alternatives[-1]
 
-  ins = StringIO(
-    "HKLF 4 1  "
-    "0.0000  0.0000  0.3330  1.0000  0.0000  0.0000  0.0000  1.0000 -0.3330")
-  stream = shelx.command_stream(file=ins)
-  stream = shelx.instruction_parser(stream, builder)
-  stream.parse()
-  assert builder.data_change_of_basis_op.as_xyz() == "y+3*z,x,y"
+    ins = StringIO(
+        "HKLF 4 1  "
+        "0.0000  0.0000  0.3330  1.0000  0.0000  0.0000  0.0000  1.0000 -0.3330"
+    )
+    stream = shelx.command_stream(file=ins)
+    stream = shelx.instruction_parser(stream, builder)
+    stream.parse()
+    assert builder.data_change_of_basis_op.as_xyz() == "y+3*z,x,y"
 
-  ins = StringIO("HKLF 4 1 -1 2 0 -1 0 0 0 -1 1")
-  stream = shelx.command_stream(file=ins)
-  stream = shelx.instruction_parser(stream, builder)
-  stream.parse()
-  assert builder.data_change_of_basis_op.as_abc() == '-a+2*b,-a,-b+c'
+    ins = StringIO("HKLF 4 1 -1 2 0 -1 0 0 0 -1 1")
+    stream = shelx.command_stream(file=ins)
+    stream = shelx.instruction_parser(stream, builder)
+    stream.parse()
+    assert builder.data_change_of_basis_op.as_abc() == "-a+2*b,-a,-b+c"
 
 
 def exercise_xray_structure_parsing():
-  exercise_special_positions()
-  exercise_aspirin()
-  exercise_disordered()
-  exercise_invalid()
-  exercise_atom_with_peaks()
-  exercise_q_peaks()
+    exercise_special_positions()
+    exercise_aspirin()
+    exercise_disordered()
+    exercise_invalid()
+    exercise_atom_with_peaks()
+    exercise_q_peaks()
+
 
 def exercise_atom_with_peaks():
-  builder = iotbx.builders.crystal_structure_builder(set_grad_flags=True)
-  stream = shelx.command_stream(
-    file=StringIO(ins_with_atom_peak_heights))
-  stream = shelx.crystal_symmetry_parser(stream, builder)
-  stream = shelx.atom_parser(stream.filtered_commands(), builder=builder,
-                             strictly_shelxl=False)
-  stream.parse()
-  sc = builder.structure.scatterers()
+    builder = iotbx.builders.crystal_structure_builder(set_grad_flags=True)
+    stream = shelx.command_stream(file=StringIO(ins_with_atom_peak_heights))
+    stream = shelx.crystal_symmetry_parser(stream, builder)
+    stream = shelx.atom_parser(
+        stream.filtered_commands(), builder=builder, strictly_shelxl=False
+    )
+    stream.parse()
+    sc = builder.structure.scatterers()
 
-  assert sc[0].label == 'O001'
-  assert approx_equal(sc[0].site, (0.60914, 0.62292, 0.82801), eps=1e-5)
-  assert sc[0].occupancy == 1
-  assert sc[0].flags.use_u_iso()
-  assert approx_equal(sc[0].u_iso, 0.01991)
+    assert sc[0].label == "O001"
+    assert approx_equal(sc[0].site, (0.60914, 0.62292, 0.82801), eps=1e-5)
+    assert sc[0].occupancy == 1
+    assert sc[0].flags.use_u_iso()
+    assert approx_equal(sc[0].u_iso, 0.01991)
 
-  assert sc[-1].label == 'C00N'
-  assert approx_equal(sc[-1].site, (0.95213, 0.88631, 0.71108), eps=1e-5)
-  assert sc[-1].occupancy == 1
-  assert sc[-1].flags.use_u_iso()
-  assert approx_equal(sc[-1].u_iso, 0.02971)
+    assert sc[-1].label == "C00N"
+    assert approx_equal(sc[-1].site, (0.95213, 0.88631, 0.71108), eps=1e-5)
+    assert sc[-1].occupancy == 1
+    assert sc[-1].flags.use_u_iso()
+    assert approx_equal(sc[-1].u_iso, 0.02971)
+
 
 def exercise_q_peaks():
-  builder = iotbx.builders.crystal_structure_builder(set_grad_flags=True)
-  stream = shelx.command_stream(
-    file=StringIO(ins_with_q_peaks))
-  stream = shelx.crystal_symmetry_parser(stream, builder)
-  stream = shelx.atom_parser(stream.filtered_commands(), builder=builder,
-                             strictly_shelxl=False)
-  stream.parse()
-  uc = builder.structure.unit_cell()
-  sc = builder.structure.scatterers()
-  q = builder.electron_density_peaks
+    builder = iotbx.builders.crystal_structure_builder(set_grad_flags=True)
+    stream = shelx.command_stream(file=StringIO(ins_with_q_peaks))
+    stream = shelx.crystal_symmetry_parser(stream, builder)
+    stream = shelx.atom_parser(
+        stream.filtered_commands(), builder=builder, strictly_shelxl=False
+    )
+    stream.parse()
+    uc = builder.structure.unit_cell()
+    sc = builder.structure.scatterers()
+    q = builder.electron_density_peaks
 
-  assert len(sc) == 3
+    assert len(sc) == 3
 
-  assert sc[-1].label == 'O2'
-  assert approx_equal(sc[-1].site, (0.645870, 0.883988, 0.489582), eps=1e-5)
-  assert shelx_u_cif(uc, sc[-1].u_star) == (
-    "0.01055   0.00848   0.00946   0.00007   0.00427   -0.00235")
+    assert sc[-1].label == "O2"
+    assert approx_equal(sc[-1].site, (0.645870, 0.883988, 0.489582), eps=1e-5)
+    assert shelx_u_cif(uc, sc[-1].u_star) == (
+        "0.01055   0.00848   0.00946   0.00007   0.00427   -0.00235"
+    )
 
-  assert len(q) == 3
+    assert len(q) == 3
 
-  assert approx_equal(q[0].site, (0.615600, 0.695100, 0.623900), eps=1e-6)
-  assert approx_equal(q[0].height, 0.64, eps=1e-2)
+    assert approx_equal(q[0].site, (0.615600, 0.695100, 0.623900), eps=1e-6)
+    assert approx_equal(q[0].height, 0.64, eps=1e-2)
 
-  assert approx_equal(q[1].site, (0.526800, 0.678600, 0.431500), eps=1e-6)
-  assert approx_equal(q[1].height, 0.63, eps=1e-2)
+    assert approx_equal(q[1].site, (0.526800, 0.678600, 0.431500), eps=1e-6)
+    assert approx_equal(q[1].height, 0.63, eps=1e-2)
 
-  assert approx_equal(q[2].site, (0.620800, 1.025100, 0.211700), eps=1e-6)
-  assert approx_equal(q[2].height, 0.46, eps=1e-2)
+    assert approx_equal(q[2].site, (0.620800, 1.025100, 0.211700), eps=1e-6)
+    assert approx_equal(q[2].height, 0.46, eps=1e-2)
+
 
 def exercise_special_positions():
-  structure = xray.structure.from_shelx(
-    file=StringIO(ins_special_positions))
-  occupancies = [ sc.occupancy for sc in structure.scatterers() ]
-  multiplicities = [ sc.multiplicity() for sc in structure.scatterers() ]
-  assert multiplicities == [ 2, 2, 2, 2, 6 ]
-  assert approx_equal(occupancies, [ 1, 0.9999, 1, 1, 1 ], eps=1e-15)
+    structure = xray.structure.from_shelx(file=StringIO(ins_special_positions))
+    occupancies = [sc.occupancy for sc in structure.scatterers()]
+    multiplicities = [sc.multiplicity() for sc in structure.scatterers()]
+    assert multiplicities == [2, 2, 2, 2, 6]
+    assert approx_equal(occupancies, [1, 0.9999, 1, 1, 1], eps=1e-15)
+
 
 def exercise_aspirin():
-  for set_grad_flags in (False, True):
-    structure = xray.structure.from_shelx(
-      file=StringIO(ins_aspirin),
-      set_grad_flags=set_grad_flags)
-    isinstance(structure, xray.structure)
-    assert structure.crystal_symmetry().is_similar_symmetry(
-      crystal.symmetry(
-        unit_cell=uctbx.unit_cell((11.492, 6.621, 11.453, 90, 95.615, 90)),
-        space_group_symbol='P2(1)/c'),
-      relative_length_tolerance=1e-15,
-      absolute_angle_tolerance=1e-15)
-    scatterers = structure.scatterers()
-    unit_cell = structure.unit_cell()
-    assert len(scatterers) == 21
-    scatterer_labelled = dict([ (s.label, s) for s in scatterers ])
-    o2 = scatterer_labelled['O2']
-    assert o2.site == (0.879181, 0.140375, 0.051044)
-    assert o2.occupancy == 1
-    assert not o2.flags.use_u_iso() and o2.flags.use_u_aniso()
-    assert shelx_u_cif(unit_cell, o2.u_star) == (
-      "0.05893   0.05202   0.05656   0.01670   0.01559   0.01156")
-      # copied from the .lst file
-    h2 = scatterer_labelled['H2']
-    assert h2.flags.use_u_iso() and not h2.flags.use_u_aniso()
-    assert approx_equal(h2.u_iso, 0.08277, eps=1e-5)
-    c3 = scatterer_labelled['C3']
-    assert c3.flags.use_u_iso() and not c3.flags.use_u_aniso()
-    h3 = scatterer_labelled['H3']
-    assert approx_equal(h3.u_iso, 0.06952, eps=1e-5)
-    h9a, h9b, h9c = [ scatterer_labelled[lbl]
-                      for lbl in ('H9A', 'H9B', 'H9C') ]
-    assert [ h.flags.use_u_iso() for h in (h9a, h9b, h9c) ]
-    assert h9a.u_iso == h9b.u_iso == h9c.u_iso
-    c9 = scatterer_labelled['C9']
-    assert approx_equal(h9a.u_iso, 1.5*c9.u_iso_or_equiv(unit_cell))
-    if not set_grad_flags:
-      for scatt in scatterers:
-        f = scatt.flags
-        assert not f.grad_site()
-        assert not f.grad_occupancy()
-        assert not f.grad_u_iso()
-        assert not f.grad_u_aniso()
-        assert not f.grad_fp()
-        assert not f.grad_fdp()
-    else:
-      for scatt in scatterers:
-        f = scatt.flags
-        assert f.grad_site() or scatt.label == 'C7'
-        assert not f.grad_occupancy()
-        assert are_equivalent(f.use_u_iso(),
-                              f.grad_u_iso() and not f.grad_u_aniso())
-        assert are_equivalent(f.use_u_aniso(),
-                              not f.grad_u_iso() and f.grad_u_aniso())
-        assert not f.grad_fp()
-        assert not f.grad_fdp()
+    for set_grad_flags in (False, True):
+        structure = xray.structure.from_shelx(
+            file=StringIO(ins_aspirin), set_grad_flags=set_grad_flags
+        )
+        isinstance(structure, xray.structure)
+        assert structure.crystal_symmetry().is_similar_symmetry(
+            crystal.symmetry(
+                unit_cell=uctbx.unit_cell((11.492, 6.621, 11.453, 90, 95.615, 90)),
+                space_group_symbol="P2(1)/c",
+            ),
+            relative_length_tolerance=1e-15,
+            absolute_angle_tolerance=1e-15,
+        )
+        scatterers = structure.scatterers()
+        unit_cell = structure.unit_cell()
+        assert len(scatterers) == 21
+        scatterer_labelled = dict([(s.label, s) for s in scatterers])
+        o2 = scatterer_labelled["O2"]
+        assert o2.site == (0.879181, 0.140375, 0.051044)
+        assert o2.occupancy == 1
+        assert not o2.flags.use_u_iso() and o2.flags.use_u_aniso()
+        assert shelx_u_cif(unit_cell, o2.u_star) == (
+            "0.05893   0.05202   0.05656   0.01670   0.01559   0.01156"
+        )
+        # copied from the .lst file
+        h2 = scatterer_labelled["H2"]
+        assert h2.flags.use_u_iso() and not h2.flags.use_u_aniso()
+        assert approx_equal(h2.u_iso, 0.08277, eps=1e-5)
+        c3 = scatterer_labelled["C3"]
+        assert c3.flags.use_u_iso() and not c3.flags.use_u_aniso()
+        h3 = scatterer_labelled["H3"]
+        assert approx_equal(h3.u_iso, 0.06952, eps=1e-5)
+        h9a, h9b, h9c = [scatterer_labelled[lbl] for lbl in ("H9A", "H9B", "H9C")]
+        assert [h.flags.use_u_iso() for h in (h9a, h9b, h9c)]
+        assert h9a.u_iso == h9b.u_iso == h9c.u_iso
+        c9 = scatterer_labelled["C9"]
+        assert approx_equal(h9a.u_iso, 1.5 * c9.u_iso_or_equiv(unit_cell))
+        if not set_grad_flags:
+            for scatt in scatterers:
+                f = scatt.flags
+                assert not f.grad_site()
+                assert not f.grad_occupancy()
+                assert not f.grad_u_iso()
+                assert not f.grad_u_aniso()
+                assert not f.grad_fp()
+                assert not f.grad_fdp()
+        else:
+            for scatt in scatterers:
+                f = scatt.flags
+                assert f.grad_site() or scatt.label == "C7"
+                assert not f.grad_occupancy()
+                assert are_equivalent(
+                    f.use_u_iso(), f.grad_u_iso() and not f.grad_u_aniso()
+                )
+                assert are_equivalent(
+                    f.use_u_aniso(), not f.grad_u_iso() and f.grad_u_aniso()
+                )
+                assert not f.grad_fp()
+                assert not f.grad_fdp()
+
 
 def exercise_disordered():
-  for set_grad_flags in (False, True):
-    builder = iotbx.builders.crystal_structure_builder(
-      set_grad_flags=set_grad_flags)
-    stream = shelx.command_stream(file=StringIO(ins_disordered))
-    cs_parser = shelx.crystal_symmetry_parser(stream, builder)
-    xs_parser = shelx.atom_parser(cs_parser.filtered_commands(), builder)
-    xs_parser.parse()
-    structure = builder.structure
-    assert structure.crystal_symmetry().is_similar_symmetry(
-      crystal.symmetry(
-        unit_cell=uctbx.unit_cell((6.033, 6.830, 7.862,
-                                   107.70, 103.17, 95.81)),
-        space_group_symbol='P-1'),
-      relative_length_tolerance=1e-15,
-      absolute_angle_tolerance=1e-15)
-    scatterers = structure.scatterers()
-    unit_cell = structure.unit_cell()
-    assert len(scatterers) == 15
-    scatterer_labelled = dict([ (s.label, s) for s in scatterers ])
-    br2, br3 = [ scatterer_labelled[x] for x in ('BR2', 'BR3') ]
-    assert br2.occupancy == br3.occupancy
-    assert approx_equal(br2.occupancy, 0.25054)
-    if set_grad_flags:
-      assert br2.flags.grad_occupancy()
-      assert br3.flags.grad_occupancy()
-    c12, h121, h122, h123 = [ scatterer_labelled[x]
-                              for x in ('C12', 'H121', 'H122', 'H123') ]
-    assert c12.occupancy == h121.occupancy == h122.occupancy == h123.occupancy
-    assert approx_equal(c12.occupancy, 1-br2.occupancy)
-    if set_grad_flags:
-      for a in (c12, h121, h122, h123):
-        assert a.flags.grad_occupancy()
-    assert approx_equal(builder.conformer_indices,
-                        [2, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
-    assert builder.sym_excl_indices.count(0) == structure.scatterers().size()
+    for set_grad_flags in (False, True):
+        builder = iotbx.builders.crystal_structure_builder(
+            set_grad_flags=set_grad_flags
+        )
+        stream = shelx.command_stream(file=StringIO(ins_disordered))
+        cs_parser = shelx.crystal_symmetry_parser(stream, builder)
+        xs_parser = shelx.atom_parser(cs_parser.filtered_commands(), builder)
+        xs_parser.parse()
+        structure = builder.structure
+        assert structure.crystal_symmetry().is_similar_symmetry(
+            crystal.symmetry(
+                unit_cell=uctbx.unit_cell((6.033, 6.830, 7.862, 107.70, 103.17, 95.81)),
+                space_group_symbol="P-1",
+            ),
+            relative_length_tolerance=1e-15,
+            absolute_angle_tolerance=1e-15,
+        )
+        scatterers = structure.scatterers()
+        unit_cell = structure.unit_cell()
+        assert len(scatterers) == 15
+        scatterer_labelled = dict([(s.label, s) for s in scatterers])
+        br2, br3 = [scatterer_labelled[x] for x in ("BR2", "BR3")]
+        assert br2.occupancy == br3.occupancy
+        assert approx_equal(br2.occupancy, 0.25054)
+        if set_grad_flags:
+            assert br2.flags.grad_occupancy()
+            assert br3.flags.grad_occupancy()
+        c12, h121, h122, h123 = [
+            scatterer_labelled[x] for x in ("C12", "H121", "H122", "H123")
+        ]
+        assert c12.occupancy == h121.occupancy == h122.occupancy == h123.occupancy
+        assert approx_equal(c12.occupancy, 1 - br2.occupancy)
+        if set_grad_flags:
+            for a in (c12, h121, h122, h123):
+                assert a.flags.grad_occupancy()
+        assert approx_equal(
+            builder.conformer_indices, [2, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]
+        )
+        assert builder.sym_excl_indices.count(0) == structure.scatterers().size()
+
 
 def exercise_invalid():
-  for set_grad_flags in (False, True):
-    try:
-      structure = xray.structure.from_shelx(
-        file=StringIO(ins_invalid_scatt),
-        set_grad_flags=set_grad_flags)
-      raise Exception_expected
-    except RuntimeError as e:
-      assert str(e) == "ShelX: illegal argument '0.3.' at line 3"
+    for set_grad_flags in (False, True):
+        try:
+            structure = xray.structure.from_shelx(
+                file=StringIO(ins_invalid_scatt), set_grad_flags=set_grad_flags
+            )
+            raise Exception_expected
+        except RuntimeError as e:
+            assert str(e) == "ShelX: illegal argument '0.3.' at line 3"
 
-    try:
-      structure = xray.structure.from_shelx(
-        file=StringIO(ins_invalid_scatt_1),
-        set_grad_flags=set_grad_flags)
-      raise Exception_expected
-    except RuntimeError as e:
-      assert str(e) == ("ShelX: wrong number of parameters "
-                        "for scatterer at line 3")
+        try:
+            structure = xray.structure.from_shelx(
+                file=StringIO(ins_invalid_scatt_1), set_grad_flags=set_grad_flags
+            )
+            raise Exception_expected
+        except RuntimeError as e:
+            assert str(e) == (
+                "ShelX: wrong number of parameters " "for scatterer at line 3"
+            )
 
-    try:
-      structure = xray.structure.from_shelx(
-        file=StringIO(ins_missing_sfac),
-        set_grad_flags=set_grad_flags)
-      raise Exception_expected
-    except RuntimeError as e:
-      assert e.args[0].startswith('ShelX:')
+        try:
+            structure = xray.structure.from_shelx(
+                file=StringIO(ins_missing_sfac), set_grad_flags=set_grad_flags
+            )
+            raise Exception_expected
+        except RuntimeError as e:
+            assert e.args[0].startswith("ShelX:")
 
-  structure = xray.structure.from_shelx(
-    file=StringIO(ins_disordered_with_part_sof))
-  occ = 0.89064
-  for sc in structure.scatterers():
-    if sc.label in ('CL2', 'C28', 'H28A', 'H28B'):
-      assert approx_equal(sc.occupancy, occ)
-    elif sc.label in ('CL2B', 'C28B'):
-      assert approx_equal(sc.occupancy, 1-occ)
+    structure = xray.structure.from_shelx(file=StringIO(ins_disordered_with_part_sof))
+    occ = 0.89064
+    for sc in structure.scatterers():
+        if sc.label in ("CL2", "C28", "H28A", "H28B"):
+            assert approx_equal(sc.occupancy, occ)
+        elif sc.label in ("CL2B", "C28B"):
+            assert approx_equal(sc.occupancy, 1 - occ)
+
 
 def exercise_afix_parsing():
-  import smtbx.refinement.constraints.geometrical.hydrogens as _
-  builder = iotbx.builders.constrained_crystal_structure_builder()
-  stream = shelx.command_stream(file=StringIO(ins_aspirin))
-  l_cs = shelx.crystal_symmetry_parser(stream, builder)
-  l_afix = shelx.afix_parser(l_cs.filtered_commands(), builder)
-  l_xs = shelx.atom_parser(l_afix.filtered_commands(), builder)
-  l_xs.parse()
-  expected_geometrical_constraints = [
-    _.staggered_terminal_tetrahedral_xh_site(
-      constrained_site_indices=(1,),
-      pivot=0),
-    _.secondary_planar_xh_site(
-      constrained_site_indices=(6,),
-      pivot=5),
-    _.secondary_planar_xh_site(
-      constrained_site_indices=(10,),
-      pivot=9),
-    _.secondary_planar_xh_site(
-      constrained_site_indices=(13,),
-      pivot=12),
-    _.secondary_planar_xh_site(
-      constrained_site_indices=(16,),
-      pivot=15),
-    _.terminal_tetrahedral_xh3_sites(
-      constrained_site_indices=(18,19,20),
-      pivot=17,
-      rotating=True)
+    import smtbx.refinement.constraints.geometrical.hydrogens as _
+
+    builder = iotbx.builders.constrained_crystal_structure_builder()
+    stream = shelx.command_stream(file=StringIO(ins_aspirin))
+    l_cs = shelx.crystal_symmetry_parser(stream, builder)
+    l_afix = shelx.afix_parser(l_cs.filtered_commands(), builder)
+    l_xs = shelx.atom_parser(l_afix.filtered_commands(), builder)
+    l_xs.parse()
+    expected_geometrical_constraints = [
+        _.staggered_terminal_tetrahedral_xh_site(
+            constrained_site_indices=(1,), pivot=0
+        ),
+        _.secondary_planar_xh_site(constrained_site_indices=(6,), pivot=5),
+        _.secondary_planar_xh_site(constrained_site_indices=(10,), pivot=9),
+        _.secondary_planar_xh_site(constrained_site_indices=(13,), pivot=12),
+        _.secondary_planar_xh_site(constrained_site_indices=(16,), pivot=15),
+        _.terminal_tetrahedral_xh3_sites(
+            constrained_site_indices=(18, 19, 20), pivot=17, rotating=True
+        ),
     ]
-  geometrical_constraints = [
-    c for c in builder.constraints
-    if c.__module__ == 'smtbx.refinement.constraints.geometrical.hydrogens' ]
-  assert len(geometrical_constraints) == len(expected_geometrical_constraints)
-  for result, expected in zip(geometrical_constraints,
-                              expected_geometrical_constraints):
-    assert (result == expected)
+    geometrical_constraints = [
+        c
+        for c in builder.constraints
+        if c.__module__ == "smtbx.refinement.constraints.geometrical.hydrogens"
+    ]
+    assert len(geometrical_constraints) == len(expected_geometrical_constraints)
+    for result, expected in zip(
+        geometrical_constraints, expected_geometrical_constraints
+    ):
+        assert result == expected
+
 
 def exercise_u_iso_proportional_to_u_eq_parsing():
-  import smtbx.refinement.constraints.adp as _
-  builder = iotbx.builders.constrained_crystal_structure_builder()
-  stream = shelx.command_stream(file=StringIO(ins_aspirin))
-  l_cs = shelx.crystal_symmetry_parser(stream, builder)
-  l_xs = shelx.atom_parser(l_cs.filtered_commands(), builder)
-  l_xs.parse()
-  expected_u_iso_constraints = [
-    _.u_iso_proportional_to_pivot_u_eq(
-      u_iso_scatterer_idx=1,
-      u_eq_scatterer_idx=0,
-      multiplier=1.5),
-    _.u_iso_proportional_to_pivot_u_eq(
-      u_iso_scatterer_idx=6,
-      u_eq_scatterer_idx=5,
-      multiplier=1.5),
-    _.u_iso_proportional_to_pivot_u_eq(
-      u_iso_scatterer_idx=10,
-      u_eq_scatterer_idx=9,
-      multiplier=1.5),
-    _.u_iso_proportional_to_pivot_u_eq(
-      u_iso_scatterer_idx=13,
-      u_eq_scatterer_idx=12,
-      multiplier=1.5),
-    _.u_iso_proportional_to_pivot_u_eq(
-      u_iso_scatterer_idx=16,
-      u_eq_scatterer_idx=15,
-      multiplier=1.5),
-    _.u_iso_proportional_to_pivot_u_eq(
-      u_iso_scatterer_idx=18,
-      u_eq_scatterer_idx=17,
-      multiplier=1.5),
-    _.u_iso_proportional_to_pivot_u_eq(
-      u_iso_scatterer_idx=19,
-      u_eq_scatterer_idx=17,
-      multiplier=1.5),
-    _.u_iso_proportional_to_pivot_u_eq(
-      u_iso_scatterer_idx=20,
-      u_eq_scatterer_idx=17,
-      multiplier=1.5),
-  ]
-  u_iso_constraints = [
-    c for c in builder.constraints
-    if c.__module__ == 'smtbx.refinement.constraints.adp' ]
-  assert len(u_iso_constraints) == len(expected_u_iso_constraints)
-  for result, expected in zip(u_iso_constraints, expected_u_iso_constraints):
-    assert result == expected
+    import smtbx.refinement.constraints.adp as _
+
+    builder = iotbx.builders.constrained_crystal_structure_builder()
+    stream = shelx.command_stream(file=StringIO(ins_aspirin))
+    l_cs = shelx.crystal_symmetry_parser(stream, builder)
+    l_xs = shelx.atom_parser(l_cs.filtered_commands(), builder)
+    l_xs.parse()
+    expected_u_iso_constraints = [
+        _.u_iso_proportional_to_pivot_u_eq(
+            u_iso_scatterer_idx=1, u_eq_scatterer_idx=0, multiplier=1.5
+        ),
+        _.u_iso_proportional_to_pivot_u_eq(
+            u_iso_scatterer_idx=6, u_eq_scatterer_idx=5, multiplier=1.5
+        ),
+        _.u_iso_proportional_to_pivot_u_eq(
+            u_iso_scatterer_idx=10, u_eq_scatterer_idx=9, multiplier=1.5
+        ),
+        _.u_iso_proportional_to_pivot_u_eq(
+            u_iso_scatterer_idx=13, u_eq_scatterer_idx=12, multiplier=1.5
+        ),
+        _.u_iso_proportional_to_pivot_u_eq(
+            u_iso_scatterer_idx=16, u_eq_scatterer_idx=15, multiplier=1.5
+        ),
+        _.u_iso_proportional_to_pivot_u_eq(
+            u_iso_scatterer_idx=18, u_eq_scatterer_idx=17, multiplier=1.5
+        ),
+        _.u_iso_proportional_to_pivot_u_eq(
+            u_iso_scatterer_idx=19, u_eq_scatterer_idx=17, multiplier=1.5
+        ),
+        _.u_iso_proportional_to_pivot_u_eq(
+            u_iso_scatterer_idx=20, u_eq_scatterer_idx=17, multiplier=1.5
+        ),
+    ]
+    u_iso_constraints = [
+        c
+        for c in builder.constraints
+        if c.__module__ == "smtbx.refinement.constraints.adp"
+    ]
+    assert len(u_iso_constraints) == len(expected_u_iso_constraints)
+    for result, expected in zip(u_iso_constraints, expected_u_iso_constraints):
+        assert result == expected
+
 
 def exercise_restraint_parsing():
-  import smtbx.refinement.restraints
-  def parse_restraints(ins_name):
+    import smtbx.refinement.restraints
+
+    def parse_restraints(ins_name):
+        builder = iotbx.builders.restrained_crystal_structure_builder()
+        stream = shelx.command_stream(file=StringIO(ins_name))
+        l_cs = shelx.crystal_symmetry_parser(stream, builder)
+        l_afix = shelx.afix_parser(l_cs.filtered_commands(), builder)
+        l_xs = shelx.atom_parser(l_afix.filtered_commands(), builder)
+        l_restraints = shelx.restraint_parser(l_xs.filtered_commands(), builder)
+        l_restraints.parse()
+        assert isinstance(
+            builder.restraints_manager, smtbx.refinement.restraints.manager
+        )
+        return builder.proxies()
+
+    # exercise DFIX, DANG
+    proxies = parse_restraints(ins_dfix_across_symm)
+    shared_bond_proxy = proxies["bond"]
+    assert len(shared_bond_proxy) == 3
+    assert approx_equal(shared_bond_proxy[0].distance_ideal, 1.75)
+    assert approx_equal(shared_bond_proxy[1].distance_ideal, 1.75)
+    assert approx_equal(shared_bond_proxy[2].distance_ideal, 1.75)
+    assert shared_bond_proxy[0].i_seqs == (3, 0)
+    assert shared_bond_proxy[1].i_seqs == (3, 2)
+    assert shared_bond_proxy[2].i_seqs == (1, 3)
+    assert approx_equal(shared_bond_proxy[0].weight, 2500.0)
+    assert approx_equal(shared_bond_proxy[1].weight, 1 / (0.03 * 0.03))
+    assert approx_equal(shared_bond_proxy[2].weight, 2500.0)
+    assert shared_bond_proxy[0].rt_mx_ji == sgtbx.rt_mx("-x+1,y,-z+1/2")
+    assert shared_bond_proxy[1].rt_mx_ji == sgtbx.rt_mx("-x+1,y,-z+1/2")
+    assert shared_bond_proxy[2].rt_mx_ji is None
+    proxies = parse_restraints(ins_dfix_multiple)
+    shared_bond_proxy = proxies["bond"]
+    assert shared_bond_proxy.size() == 2
+    # invalid DFIX instructions
+    try:
+        proxies = parse_restraints(ins_invalid_dfix)
+    except RuntimeError as e:
+        assert str(e) == "ShelX: Invalid DFIX instruction at line 3"
+    try:
+        proxies = parse_restraints(ins_invalid_dfix_2)
+    except RuntimeError as e:
+        assert str(e) == "ShelX: Invalid DFIX instruction at line 3"
+    # exercise FLAT
+    proxies = parse_restraints(ins_flat)
+    shared_planarity_proxy = proxies["planarity"]
+    assert shared_planarity_proxy.size() == 2
+    assert approx_equal(shared_planarity_proxy[0].i_seqs, (0, 1, 2, 3, 4, 5, 6))
+    assert approx_equal(shared_planarity_proxy[1].i_seqs, (7, 8, 9, 10, 11, 12, 13))
+    assert shared_planarity_proxy[0].sym_ops is None
+    assert shared_planarity_proxy[1].sym_ops is None
+    assert approx_equal(
+        shared_planarity_proxy[0].weights, (100, 100, 100, 100, 100, 100, 100)
+    )
+    assert approx_equal(
+        shared_planarity_proxy[1].weights, (100, 100, 100, 100, 100, 100, 100)
+    )
+    # invalid FLAT
+    try:
+        proxies = parse_restraints(ins_invalid_flat)
+    except RuntimeError as e:
+        assert str(e) == "ShelX: Invalid FLAT instruction at line 3"
+    # SADI simple
+    proxies = parse_restraints(ins_sadi)
+    shared_bond_similarity_proxy = proxies["bond_similarity"]
+    assert shared_bond_similarity_proxy.size() == 1
+    assert approx_equal(shared_bond_similarity_proxy[0].i_seqs, ((0, 2), (1, 3)))
+    assert shared_bond_similarity_proxy[0].sym_ops is None
+    assert approx_equal(shared_bond_similarity_proxy[0].weights, (625.0, 625.0))
+    # SADI with symmetry
+    proxies = parse_restraints(ins_sadi_with_sym)
+    shared_bond_similarity_proxy = proxies["bond_similarity"]
+    assert shared_bond_similarity_proxy.size() == 1
+    assert approx_equal(shared_bond_similarity_proxy[0].i_seqs, ((2, 0), (1, 3)))
+    assert shared_bond_similarity_proxy[0].sym_ops == (
+        sgtbx.rt_mx("1-X,+Y,0.5-Z"),
+        sgtbx.rt_mx("1-X,+Y,0.5-Z"),
+    )
+    assert approx_equal(shared_bond_similarity_proxy[0].weights, (2500.0, 2500.0))
+    # SIMU simple
+    proxies = parse_restraints(ins_simu_simple)
+    shared_apd_similarity_proxy = proxies["adp_similarity"]
+    assert shared_apd_similarity_proxy.size() == 3
+    assert shared_apd_similarity_proxy[0].i_seqs == (0, 1)
+    assert shared_apd_similarity_proxy[1].i_seqs == (1, 2)
+    assert shared_apd_similarity_proxy[2].i_seqs == (2, 3)
+    assert approx_equal(shared_apd_similarity_proxy[0].weight, 156.25)
+    assert approx_equal(shared_apd_similarity_proxy[1].weight, 625.0)
+    assert approx_equal(shared_apd_similarity_proxy[2].weight, 156.25)
+    # SIMU with sigma given
+    proxies = parse_restraints(ins_simu_s)
+    shared_apd_similarity_proxy = proxies["adp_similarity"]
+    assert shared_apd_similarity_proxy.size() == 3
+    assert approx_equal(shared_apd_similarity_proxy[0].weight, 1 / (0.06 * 0.06))
+    assert approx_equal(shared_apd_similarity_proxy[1].weight, 1 / (0.03 * 0.03))
+    assert approx_equal(shared_apd_similarity_proxy[2].weight, 1 / (0.06 * 0.06))
+    # SIMU with sigma and sigma terminal
+    proxies = parse_restraints(ins_simu_s_st)
+    shared_apd_similarity_proxy = proxies["adp_similarity"]
+    assert shared_apd_similarity_proxy.size() == 3
+    assert approx_equal(shared_apd_similarity_proxy[0].weight, 1 / (0.07 * 0.07))
+    assert approx_equal(shared_apd_similarity_proxy[1].weight, 1 / (0.03 * 0.03))
+    assert approx_equal(shared_apd_similarity_proxy[2].weight, 1 / (0.07 * 0.07))
+    # SIMU with sigma and sigma terminal and dmax
+    proxies = parse_restraints(ins_simu_s_st_dmax)
+    shared_apd_similarity_proxy = proxies["adp_similarity"]
+    assert shared_apd_similarity_proxy.size() == 3
+    assert approx_equal(shared_apd_similarity_proxy[0].weight, 1 / (0.07 * 0.07))
+    assert approx_equal(shared_apd_similarity_proxy[1].weight, 1 / (0.03 * 0.03))
+    assert approx_equal(shared_apd_similarity_proxy[2].weight, 1 / (0.07 * 0.07))
+    # SIMU with just atoms
+    proxies = parse_restraints(ins_simu_atoms)
+    shared_apd_similarity_proxy = proxies["adp_similarity"]
+    assert shared_apd_similarity_proxy.size() == 2
+    assert shared_apd_similarity_proxy[0].i_seqs == (0, 1)
+    assert shared_apd_similarity_proxy[1].i_seqs == (1, 2)
+    assert approx_equal(shared_apd_similarity_proxy[0].weight, 156.25)
+    assert approx_equal(shared_apd_similarity_proxy[1].weight, 625.0)
+    # SIMU with sigma and atoms
+    proxies = parse_restraints(ins_simu_s_atoms)
+    shared_apd_similarity_proxy = proxies["adp_similarity"]
+    assert shared_apd_similarity_proxy.size() == 2
+    assert shared_apd_similarity_proxy[0].i_seqs == (0, 1)
+    assert shared_apd_similarity_proxy[1].i_seqs == (1, 2)
+    assert approx_equal(shared_apd_similarity_proxy[0].weight, 1 / (0.06 * 0.06))
+    assert approx_equal(shared_apd_similarity_proxy[1].weight, 1 / (0.03 * 0.03))
+    # SIMU with sigma, sigma terminal and atoms
+    proxies = parse_restraints(ins_simu_s_st_atoms)
+    shared_apd_similarity_proxy = proxies["adp_similarity"]
+    assert shared_apd_similarity_proxy.size() == 2
+    assert shared_apd_similarity_proxy[0].i_seqs == (0, 1)
+    assert shared_apd_similarity_proxy[1].i_seqs == (1, 2)
+    assert approx_equal(shared_apd_similarity_proxy[0].weight, 1 / (0.07 * 0.07))
+    assert approx_equal(shared_apd_similarity_proxy[1].weight, 1 / (0.03 * 0.03))
+    # SIMU with sigma, sigma terminal dmax and atoms
+    proxies = parse_restraints(ins_simu_s_st_dmax_atoms)
+    shared_apd_similarity_proxy = proxies["adp_similarity"]
+    assert shared_apd_similarity_proxy.size() == 2
+    assert shared_apd_similarity_proxy[0].i_seqs == (0, 1)
+    assert shared_apd_similarity_proxy[1].i_seqs == (1, 2)
+    assert approx_equal(shared_apd_similarity_proxy[0].weight, 1 / (0.07 * 0.07))
+    assert approx_equal(shared_apd_similarity_proxy[1].weight, 1 / (0.03 * 0.03))
+    # DELU simple
+    proxies = parse_restraints(ins_delu_simple)
+    shared_rigid_bond_proxy = proxies["rigid_bond"]
+    assert shared_rigid_bond_proxy.size() == 5
+    expected_i_seqs = ((0, 1), (0, 2), (1, 2), (1, 3), (2, 3))
+    for i in range(5):
+        assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigid_bond_proxy[i].weight, 10000)
+    # DELU with s1
+    proxies = parse_restraints(ins_delu_s1)
+    shared_rigid_bond_proxy = proxies["rigid_bond"]
+    assert shared_rigid_bond_proxy.size() == 5
+    for i in range(5):
+        assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigid_bond_proxy[i].weight, 2500)
+    # DELU with s1 and s2
+    proxies = parse_restraints(ins_delu_s1_s2)
+    shared_rigid_bond_proxy = proxies["rigid_bond"]
+    assert shared_rigid_bond_proxy.size() == 5
+    expected_weights = (10000, 2500, 10000, 2500, 10000)
+    for i in range(5):
+        assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigid_bond_proxy[i].weight, expected_weights[i])
+    # DELU with atoms
+    proxies = parse_restraints(ins_delu_atoms)
+    shared_rigid_bond_proxy = proxies["rigid_bond"]
+    assert shared_rigid_bond_proxy.size() == 3
+    for i in range(3):
+        assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigid_bond_proxy[i].weight, 10000)
+    # DELU with s1 and atoms
+    proxies = parse_restraints(ins_delu_s1_atoms)
+    shared_rigid_bond_proxy = proxies["rigid_bond"]
+    assert shared_rigid_bond_proxy.size() == 3
+    for i in range(3):
+        assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigid_bond_proxy[i].weight, 2500)
+    # DELU with s1, s2 and atoms
+    proxies = parse_restraints(ins_delu_s1_s2_atoms)
+    shared_rigid_bond_proxy = proxies["rigid_bond"]
+    assert shared_rigid_bond_proxy.size() == 3
+    for i in range(3):
+        assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigid_bond_proxy[i].weight, expected_weights[i])
+
+    # RIGU simple
+    proxies = parse_restraints(ins_rigu_simple)
+    shared_rigu_proxy = proxies["rigu"]
+    assert shared_rigu_proxy.size() == 5
+    expected_i_seqs = ((0, 1), (0, 2), (1, 2), (1, 3), (2, 3))
+    for i in range(5):
+        assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigu_proxy[i].weight, 62500)
+    # RIGU with s1
+    proxies = parse_restraints(ins_rigu_s1)
+    shared_rigu_proxy = proxies["rigu"]
+    assert shared_rigu_proxy.size() == 5
+    for i in range(5):
+        assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigu_proxy[i].weight, 2500)
+    # RIGU with s1 and s2
+    proxies = parse_restraints(ins_rigu_s1_s2)
+    shared_rigu_proxy = proxies["rigu"]
+    assert shared_rigu_proxy.size() == 5
+    expected_weights = (10000, 2500, 10000, 2500, 10000)
+    for i in range(5):
+        assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigu_proxy[i].weight, expected_weights[i])
+    # RIGU with atoms
+    proxies = parse_restraints(ins_rigu_atoms)
+    shared_rigu_proxy = proxies["rigu"]
+    assert shared_rigu_proxy.size() == 3
+    for i in range(3):
+        assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigu_proxy[i].weight, 62500)
+    # RIGU with s1 and atoms
+    proxies = parse_restraints(ins_rigu_s1_atoms)
+    shared_rigu_proxy = proxies["rigu"]
+    assert shared_rigu_proxy.size() == 3
+    for i in range(3):
+        assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigu_proxy[i].weight, 2500)
+    # RIGU with s1, s2 and atoms
+    proxies = parse_restraints(ins_rigu_s1_s2_atoms)
+    shared_rigu_proxy = proxies["rigu"]
+    assert shared_rigu_proxy.size() == 3
+    for i in range(3):
+        assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
+        assert approx_equal(shared_rigu_proxy[i].weight, expected_weights[i])
+
+    # ISOR simple
+    proxies = parse_restraints(ins_isor_simple)
+    shared_isotropic_adp_proxy = proxies["isotropic_adp"]
+    assert shared_isotropic_adp_proxy.size() == 4
+    expected_i_seqs = (0, 1, 2, 3)
+    expected_weights = (25, 100, 100, 25)
+    for i in range(4):
+        assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
+        assert approx_equal(shared_isotropic_adp_proxy[i].weight, expected_weights[i])
+    # ISOR with s
+    proxies = parse_restraints(ins_isor_s)
+    shared_isotropic_adp_proxy = proxies["isotropic_adp"]
+    assert shared_isotropic_adp_proxy.size() == 4
+    expected_weights = (6.25, 25, 25, 6.25)
+    for i in range(4):
+        assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
+        assert approx_equal(shared_isotropic_adp_proxy[i].weight, expected_weights[i])
+    # ISOR with s and st
+    proxies = parse_restraints(ins_isor_s_st)
+    shared_isotropic_adp_proxy = proxies["isotropic_adp"]
+    assert shared_isotropic_adp_proxy.size() == 4
+    expected_weights = (1 / (0.3 * 0.3), 25, 25, 1 / (0.3 * 0.3))
+    for i in range(4):
+        assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
+        assert approx_equal(shared_isotropic_adp_proxy[i].weight, expected_weights[i])
+    # ISOR with atoms
+    proxies = parse_restraints(ins_isor_atoms)
+    shared_isotropic_adp_proxy = proxies["isotropic_adp"]
+    assert shared_isotropic_adp_proxy.size() == 3
+    expected_i_seqs = (0, 1, 2)
+    expected_weights = (25, 100, 100)
+    for i in range(3):
+        assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
+        assert approx_equal(shared_isotropic_adp_proxy[i].weight, expected_weights[i])
+    # ISOR with s and atoms
+    proxies = parse_restraints(ins_isor_s_atoms)
+    shared_isotropic_adp_proxy = proxies["isotropic_adp"]
+    assert shared_isotropic_adp_proxy.size() == 3
+    expected_i_seqs = (0, 1, 2)
+    expected_weights = (6.25, 25, 25)
+    for i in range(3):
+        assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
+        assert approx_equal(shared_isotropic_adp_proxy[i].weight, expected_weights[i])
+    # ISOR with s, st and atoms
+    proxies = parse_restraints(ins_isor_s_st_atoms)
+    shared_isotropic_adp_proxy = proxies["isotropic_adp"]
+    assert shared_isotropic_adp_proxy.size() == 3
+    expected_i_seqs = (0, 1, 2)
+    expected_weights = (1 / (0.3 * 0.3), 25, 25)
+    for i in range(3):
+        assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
+        assert approx_equal(shared_isotropic_adp_proxy[i].weight, expected_weights[i])
+
+
+def exercise_residues():
+    proxies = parse_restraints(ins_residues)
+    planarity_proxies = proxies["planarity"]
+    assert planarity_proxies.size() == 2
+    p = planarity_proxies[1]
+    assert approx_equal(p.i_seqs, [3, 1, 4, 2, 5])
+    assert approx_equal(p.weights, [4] * len(p.weights))
+    p = planarity_proxies[0]
+    assert approx_equal(p.i_seqs, [15, 16, 17, 18, 12, 13, 14, 11, 10, 9, 8])
+    assert approx_equal(p.weights, [100] * len(p.weights))
+    assert p.sym_ops is None
+    bond_proxies = proxies["bond"]
+    assert len(bond_proxies) == 10
+    p = bond_proxies[0]
+    assert p.distance_ideal == 2.24
+    assert p.i_seqs == (9, 11)
+    assert approx_equal(p.weight, 100)
+    p = bond_proxies[2]
+    assert p.distance_ideal == 2.425
+    assert p.i_seqs == (1, 4)
+    assert approx_equal(p.weight, 1479.2899408284025)
+    p = bond_proxies[3]
+    assert p.distance_ideal == 2.250
+    assert p.i_seqs == (3, 4)
+    assert approx_equal(p.weight, 3460.207612456747)
+    p = bond_proxies[6]
+    assert p.i_seqs == (2, 5)
+    assert approx_equal(p.distance_ideal, 2.435)
+    assert approx_equal(p.weight, 625.0)
+    p = bond_proxies[9]
+    assert p.i_seqs == (2, 4)
+    assert approx_equal(p.distance_ideal, 1.329)
+    assert approx_equal(p.weight, 2500.0)
+    adp_sim_proxies = proxies["adp_similarity"]
+    assert len(adp_sim_proxies) == 19
+    p = adp_sim_proxies[0]
+    assert p.i_seqs == (0, 1)
+    assert approx_equal(p.weight, 25)
+    rigid_bond = proxies["rigid_bond"]
+    assert rigid_bond.size() == 43
+    p = rigid_bond[1]
+    assert p.i_seqs == (0, 2)
+    assert approx_equal(p.weight, 10000)
+    isot = proxies["isotropic_adp"]
+    assert isot.size() == 4
+    p = isot[0]
+    assert p.i_seqs == (19,)
+    assert approx_equal(p.weight, 25)
+    p = isot[-1]
+    assert p.i_seqs == (22,)
+    assert approx_equal(p.weight, 25)
+
+
+def parse_restraints(ins_name):
+    import smtbx.refinement.restraints
+
     builder = iotbx.builders.restrained_crystal_structure_builder()
     stream = shelx.command_stream(file=StringIO(ins_name))
     l_cs = shelx.crystal_symmetry_parser(stream, builder)
@@ -493,497 +894,126 @@ def exercise_restraint_parsing():
     l_xs = shelx.atom_parser(l_afix.filtered_commands(), builder)
     l_restraints = shelx.restraint_parser(l_xs.filtered_commands(), builder)
     l_restraints.parse()
-    assert isinstance(builder.restraints_manager,
-                      smtbx.refinement.restraints.manager)
+    builder = l_restraints.builder
+    assert isinstance(builder.restraints_manager, smtbx.refinement.restraints.manager)
     return builder.proxies()
-  # exercise DFIX, DANG
-  proxies = parse_restraints(ins_dfix_across_symm)
-  shared_bond_proxy = proxies['bond']
-  assert len(shared_bond_proxy) == 3
-  assert approx_equal(shared_bond_proxy[0].distance_ideal, 1.75)
-  assert approx_equal(shared_bond_proxy[1].distance_ideal, 1.75)
-  assert approx_equal(shared_bond_proxy[2].distance_ideal, 1.75)
-  assert shared_bond_proxy[0].i_seqs == (3,0)
-  assert shared_bond_proxy[1].i_seqs == (3,2)
-  assert shared_bond_proxy[2].i_seqs == (1,3)
-  assert approx_equal(shared_bond_proxy[0].weight, 2500.0)
-  assert approx_equal(shared_bond_proxy[1].weight, 1/(0.03*0.03))
-  assert approx_equal(shared_bond_proxy[2].weight, 2500.0)
-  assert shared_bond_proxy[0].rt_mx_ji == sgtbx.rt_mx('-x+1,y,-z+1/2')
-  assert shared_bond_proxy[1].rt_mx_ji == sgtbx.rt_mx('-x+1,y,-z+1/2')
-  assert shared_bond_proxy[2].rt_mx_ji is None
-  proxies = parse_restraints(ins_dfix_multiple)
-  shared_bond_proxy = proxies['bond']
-  assert shared_bond_proxy.size() == 2
-  # invalid DFIX instructions
-  try:
-    proxies = parse_restraints(ins_invalid_dfix)
-  except RuntimeError as e:
-    assert str(e) == "ShelX: Invalid DFIX instruction at line 3"
-  try:
-    proxies = parse_restraints(ins_invalid_dfix_2)
-  except RuntimeError as e:
-    assert str(e) == "ShelX: Invalid DFIX instruction at line 3"
-  # exercise FLAT
-  proxies = parse_restraints(ins_flat)
-  shared_planarity_proxy = proxies['planarity']
-  assert shared_planarity_proxy.size() == 2
-  assert approx_equal(shared_planarity_proxy[0].i_seqs,
-                      (0, 1, 2, 3, 4, 5, 6))
-  assert approx_equal(shared_planarity_proxy[1].i_seqs,
-                      (7, 8, 9, 10, 11, 12, 13))
-  assert shared_planarity_proxy[0].sym_ops is None
-  assert shared_planarity_proxy[1].sym_ops is None
-  assert approx_equal(shared_planarity_proxy[0].weights,
-                      (100, 100, 100, 100, 100, 100, 100))
-  assert approx_equal(shared_planarity_proxy[1].weights,
-                      (100, 100, 100, 100, 100, 100, 100))
-  # invalid FLAT
-  try:
-    proxies = parse_restraints(ins_invalid_flat)
-  except RuntimeError as e:
-    assert str(e) == "ShelX: Invalid FLAT instruction at line 3"
-  # SADI simple
-  proxies = parse_restraints(ins_sadi)
-  shared_bond_similarity_proxy\
-      = proxies['bond_similarity']
-  assert shared_bond_similarity_proxy.size() == 1
-  assert approx_equal(
-    shared_bond_similarity_proxy[0].i_seqs, ((0,2), (1,3)))
-  assert shared_bond_similarity_proxy[0].sym_ops is None
-  assert approx_equal(
-    shared_bond_similarity_proxy[0].weights, (625.0, 625.0))
-  # SADI with symmetry
-  proxies = parse_restraints(ins_sadi_with_sym)
-  shared_bond_similarity_proxy\
-      = proxies['bond_similarity']
-  assert shared_bond_similarity_proxy.size() == 1
-  assert approx_equal(
-    shared_bond_similarity_proxy[0].i_seqs, ((2,0), (1,3)))
-  assert shared_bond_similarity_proxy[0].sym_ops\
-    == (sgtbx.rt_mx('1-X,+Y,0.5-Z'),sgtbx.rt_mx('1-X,+Y,0.5-Z'))
-  assert approx_equal(
-    shared_bond_similarity_proxy[0].weights, (2500.0, 2500.0))
-  # SIMU simple
-  proxies = parse_restraints(ins_simu_simple)
-  shared_apd_similarity_proxy \
-      = proxies['adp_similarity']
-  assert shared_apd_similarity_proxy.size() == 3
-  assert shared_apd_similarity_proxy[0].i_seqs == (0,1)
-  assert shared_apd_similarity_proxy[1].i_seqs == (1,2)
-  assert shared_apd_similarity_proxy[2].i_seqs == (2,3)
-  assert approx_equal(shared_apd_similarity_proxy[0].weight, 156.25)
-  assert approx_equal(shared_apd_similarity_proxy[1].weight, 625.0)
-  assert approx_equal(shared_apd_similarity_proxy[2].weight, 156.25)
-  # SIMU with sigma given
-  proxies = parse_restraints(ins_simu_s)
-  shared_apd_similarity_proxy \
-      = proxies['adp_similarity']
-  assert shared_apd_similarity_proxy.size() == 3
-  assert approx_equal(shared_apd_similarity_proxy[0].weight, 1/(0.06*0.06))
-  assert approx_equal(shared_apd_similarity_proxy[1].weight, 1/(0.03*0.03))
-  assert approx_equal(shared_apd_similarity_proxy[2].weight, 1/(0.06*0.06))
-  # SIMU with sigma and sigma terminal
-  proxies = parse_restraints(ins_simu_s_st)
-  shared_apd_similarity_proxy \
-      = proxies['adp_similarity']
-  assert shared_apd_similarity_proxy.size() == 3
-  assert approx_equal(shared_apd_similarity_proxy[0].weight, 1/(0.07*0.07))
-  assert approx_equal(shared_apd_similarity_proxy[1].weight, 1/(0.03*0.03))
-  assert approx_equal(shared_apd_similarity_proxy[2].weight, 1/(0.07*0.07))
-  # SIMU with sigma and sigma terminal and dmax
-  proxies = parse_restraints(ins_simu_s_st_dmax)
-  shared_apd_similarity_proxy \
-      = proxies['adp_similarity']
-  assert shared_apd_similarity_proxy.size() == 3
-  assert approx_equal(shared_apd_similarity_proxy[0].weight, 1/(0.07*0.07))
-  assert approx_equal(shared_apd_similarity_proxy[1].weight, 1/(0.03*0.03))
-  assert approx_equal(shared_apd_similarity_proxy[2].weight, 1/(0.07*0.07))
-  # SIMU with just atoms
-  proxies = parse_restraints(ins_simu_atoms)
-  shared_apd_similarity_proxy \
-      = proxies['adp_similarity']
-  assert shared_apd_similarity_proxy.size() == 2
-  assert shared_apd_similarity_proxy[0].i_seqs == (0,1)
-  assert shared_apd_similarity_proxy[1].i_seqs == (1,2)
-  assert approx_equal(shared_apd_similarity_proxy[0].weight, 156.25)
-  assert approx_equal(shared_apd_similarity_proxy[1].weight, 625.0)
-  # SIMU with sigma and atoms
-  proxies = parse_restraints(ins_simu_s_atoms)
-  shared_apd_similarity_proxy \
-      = proxies['adp_similarity']
-  assert shared_apd_similarity_proxy.size() == 2
-  assert shared_apd_similarity_proxy[0].i_seqs == (0,1)
-  assert shared_apd_similarity_proxy[1].i_seqs == (1,2)
-  assert approx_equal(shared_apd_similarity_proxy[0].weight, 1/(0.06*0.06))
-  assert approx_equal(shared_apd_similarity_proxy[1].weight, 1/(0.03*0.03))
-  # SIMU with sigma, sigma terminal and atoms
-  proxies = parse_restraints(ins_simu_s_st_atoms)
-  shared_apd_similarity_proxy \
-      = proxies['adp_similarity']
-  assert shared_apd_similarity_proxy.size() == 2
-  assert shared_apd_similarity_proxy[0].i_seqs == (0,1)
-  assert shared_apd_similarity_proxy[1].i_seqs == (1,2)
-  assert approx_equal(shared_apd_similarity_proxy[0].weight, 1/(0.07*0.07))
-  assert approx_equal(shared_apd_similarity_proxy[1].weight, 1/(0.03*0.03))
-  # SIMU with sigma, sigma terminal dmax and atoms
-  proxies = parse_restraints(ins_simu_s_st_dmax_atoms)
-  shared_apd_similarity_proxy \
-      = proxies['adp_similarity']
-  assert shared_apd_similarity_proxy.size() == 2
-  assert shared_apd_similarity_proxy[0].i_seqs == (0,1)
-  assert shared_apd_similarity_proxy[1].i_seqs == (1,2)
-  assert approx_equal(shared_apd_similarity_proxy[0].weight, 1/(0.07*0.07))
-  assert approx_equal(shared_apd_similarity_proxy[1].weight, 1/(0.03*0.03))
-  # DELU simple
-  proxies = parse_restraints(ins_delu_simple)
-  shared_rigid_bond_proxy \
-      = proxies['rigid_bond']
-  assert shared_rigid_bond_proxy.size() == 5
-  expected_i_seqs = ((0,1),(0,2),(1,2),(1,3),(2,3))
-  for i in range(5):
-    assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigid_bond_proxy[i].weight, 10000)
-  # DELU with s1
-  proxies = parse_restraints(ins_delu_s1)
-  shared_rigid_bond_proxy \
-      = proxies['rigid_bond']
-  assert shared_rigid_bond_proxy.size() == 5
-  for i in range(5):
-    assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigid_bond_proxy[i].weight, 2500)
-  # DELU with s1 and s2
-  proxies = parse_restraints(ins_delu_s1_s2)
-  shared_rigid_bond_proxy \
-      = proxies['rigid_bond']
-  assert shared_rigid_bond_proxy.size() == 5
-  expected_weights = (10000,2500,10000,2500,10000)
-  for i in range(5):
-    assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigid_bond_proxy[i].weight,
-                        expected_weights[i])
-  # DELU with atoms
-  proxies = parse_restraints(ins_delu_atoms)
-  shared_rigid_bond_proxy \
-      = proxies['rigid_bond']
-  assert shared_rigid_bond_proxy.size() == 3
-  for i in range(3):
-    assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigid_bond_proxy[i].weight,10000)
-  # DELU with s1 and atoms
-  proxies = parse_restraints(ins_delu_s1_atoms)
-  shared_rigid_bond_proxy \
-      = proxies['rigid_bond']
-  assert shared_rigid_bond_proxy.size() == 3
-  for i in range(3):
-    assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigid_bond_proxy[i].weight,2500)
-  # DELU with s1, s2 and atoms
-  proxies = parse_restraints(ins_delu_s1_s2_atoms)
-  shared_rigid_bond_proxy \
-      = proxies['rigid_bond']
-  assert shared_rigid_bond_proxy.size() == 3
-  for i in range(3):
-    assert shared_rigid_bond_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigid_bond_proxy[i].weight,
-                        expected_weights[i])
 
-  # RIGU simple
-  proxies = parse_restraints(ins_rigu_simple)
-  shared_rigu_proxy \
-      = proxies['rigu']
-  assert shared_rigu_proxy.size() == 5
-  expected_i_seqs = ((0,1),(0,2),(1,2),(1,3),(2,3))
-  for i in range(5):
-    assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigu_proxy[i].weight, 62500)
-  # RIGU with s1
-  proxies = parse_restraints(ins_rigu_s1)
-  shared_rigu_proxy \
-      = proxies['rigu']
-  assert shared_rigu_proxy.size() == 5
-  for i in range(5):
-    assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigu_proxy[i].weight, 2500)
-  # RIGU with s1 and s2
-  proxies = parse_restraints(ins_rigu_s1_s2)
-  shared_rigu_proxy \
-      = proxies['rigu']
-  assert shared_rigu_proxy.size() == 5
-  expected_weights = (10000,2500,10000,2500,10000)
-  for i in range(5):
-    assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigu_proxy[i].weight,
-                        expected_weights[i])
-  # RIGU with atoms
-  proxies = parse_restraints(ins_rigu_atoms)
-  shared_rigu_proxy \
-      = proxies['rigu']
-  assert shared_rigu_proxy.size() == 3
-  for i in range(3):
-    assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigu_proxy[i].weight,62500)
-  # RIGU with s1 and atoms
-  proxies = parse_restraints(ins_rigu_s1_atoms)
-  shared_rigu_proxy \
-      = proxies['rigu']
-  assert shared_rigu_proxy.size() == 3
-  for i in range(3):
-    assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigu_proxy[i].weight,2500)
-  # RIGU with s1, s2 and atoms
-  proxies = parse_restraints(ins_rigu_s1_s2_atoms)
-  shared_rigu_proxy \
-      = proxies['rigu']
-  assert shared_rigu_proxy.size() == 3
-  for i in range(3):
-    assert shared_rigu_proxy[i].i_seqs == expected_i_seqs[i]
-    assert approx_equal(shared_rigu_proxy[i].weight,
-                        expected_weights[i])
-
-  # ISOR simple
-  proxies = parse_restraints(ins_isor_simple)
-  shared_isotropic_adp_proxy \
-      = proxies['isotropic_adp']
-  assert shared_isotropic_adp_proxy.size() == 4
-  expected_i_seqs = (0,1,2,3)
-  expected_weights = (25,100,100,25)
-  for i in range(4):
-    assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
-    assert approx_equal(shared_isotropic_adp_proxy[i].weight,
-                        expected_weights[i])
-  # ISOR with s
-  proxies = parse_restraints(ins_isor_s)
-  shared_isotropic_adp_proxy \
-      = proxies['isotropic_adp']
-  assert shared_isotropic_adp_proxy.size() == 4
-  expected_weights = (6.25,25,25,6.25)
-  for i in range(4):
-    assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
-    assert approx_equal(shared_isotropic_adp_proxy[i].weight,
-                        expected_weights[i])
-  # ISOR with s and st
-  proxies = parse_restraints(ins_isor_s_st)
-  shared_isotropic_adp_proxy \
-      = proxies['isotropic_adp']
-  assert shared_isotropic_adp_proxy.size() == 4
-  expected_weights = (1/(0.3*0.3), 25, 25, 1/(0.3*0.3))
-  for i in range(4):
-    assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
-    assert approx_equal(shared_isotropic_adp_proxy[i].weight,
-                        expected_weights[i])
-  # ISOR with atoms
-  proxies = parse_restraints(ins_isor_atoms)
-  shared_isotropic_adp_proxy \
-      = proxies['isotropic_adp']
-  assert shared_isotropic_adp_proxy.size() == 3
-  expected_i_seqs = (0,1,2)
-  expected_weights = (25,100,100)
-  for i in range(3):
-    assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
-    assert approx_equal(shared_isotropic_adp_proxy[i].weight,
-                        expected_weights[i])
-  # ISOR with s and atoms
-  proxies = parse_restraints(ins_isor_s_atoms)
-  shared_isotropic_adp_proxy \
-      = proxies['isotropic_adp']
-  assert shared_isotropic_adp_proxy.size() == 3
-  expected_i_seqs = (0,1,2)
-  expected_weights = (6.25,25,25)
-  for i in range(3):
-    assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
-    assert approx_equal(shared_isotropic_adp_proxy[i].weight,
-                        expected_weights[i])
-  # ISOR with s, st and atoms
-  proxies = parse_restraints(ins_isor_s_st_atoms)
-  shared_isotropic_adp_proxy \
-      = proxies['isotropic_adp']
-  assert shared_isotropic_adp_proxy.size() == 3
-  expected_i_seqs = (0,1,2)
-  expected_weights = (1/(0.3*0.3), 25, 25)
-  for i in range(3):
-    assert shared_isotropic_adp_proxy[i].i_seqs[0] == expected_i_seqs[i]
-    assert approx_equal(shared_isotropic_adp_proxy[i].weight,
-                        expected_weights[i])
-
-def exercise_residues():
-  proxies = parse_restraints(ins_residues)
-  planarity_proxies = proxies['planarity']
-  assert planarity_proxies.size() == 2
-  p = planarity_proxies[1]
-  assert approx_equal(p.i_seqs, [3, 1, 4, 2, 5])
-  assert approx_equal(p.weights, [4]*len(p.weights))
-  p = planarity_proxies[0]
-  assert approx_equal(p.i_seqs, [15, 16, 17, 18, 12, 13, 14, 11, 10, 9, 8])
-  assert approx_equal(p.weights, [100]*len(p.weights))
-  assert p.sym_ops is None
-  bond_proxies = proxies['bond']
-  assert len(bond_proxies) == 10
-  p = bond_proxies[0]
-  assert p.distance_ideal == 2.24
-  assert p.i_seqs == (9, 11)
-  assert approx_equal(p.weight, 100)
-  p = bond_proxies[2]
-  assert p.distance_ideal == 2.425
-  assert p.i_seqs == (1, 4)
-  assert approx_equal(p.weight, 1479.2899408284025)
-  p = bond_proxies[3]
-  assert p.distance_ideal == 2.250
-  assert p.i_seqs == (3, 4)
-  assert approx_equal(p.weight, 3460.207612456747)
-  p = bond_proxies[6]
-  assert p.i_seqs == (2, 5)
-  assert approx_equal(p.distance_ideal, 2.435)
-  assert approx_equal(p.weight, 625.0)
-  p = bond_proxies[9]
-  assert p.i_seqs == (2, 4)
-  assert approx_equal(p.distance_ideal, 1.329)
-  assert approx_equal(p.weight, 2500.0)
-  adp_sim_proxies = proxies['adp_similarity']
-  assert len(adp_sim_proxies) == 19
-  p = adp_sim_proxies[0]
-  assert p.i_seqs == (0, 1)
-  assert approx_equal(p.weight, 25)
-  rigid_bond = proxies['rigid_bond']
-  assert rigid_bond.size() == 43
-  p = rigid_bond[1]
-  assert p.i_seqs == (0, 2)
-  assert approx_equal(p.weight, 10000)
-  isot = proxies['isotropic_adp']
-  assert isot.size() == 4
-  p = isot[0]
-  assert p.i_seqs == (19,)
-  assert approx_equal(p.weight, 25)
-  p = isot[-1]
-  assert p.i_seqs == (22,)
-  assert approx_equal(p.weight, 25)
-
-
-
-
-def parse_restraints(ins_name):
-  import smtbx.refinement.restraints
-  builder = iotbx.builders.restrained_crystal_structure_builder()
-  stream = shelx.command_stream(file=StringIO(ins_name))
-  l_cs = shelx.crystal_symmetry_parser(stream, builder)
-  l_afix = shelx.afix_parser(l_cs.filtered_commands(), builder)
-  l_xs = shelx.atom_parser(l_afix.filtered_commands(), builder)
-  l_restraints = shelx.restraint_parser(
-    l_xs.filtered_commands(), builder)
-  l_restraints.parse()
-  builder = l_restraints.builder
-  assert isinstance(builder.restraints_manager,
-                    smtbx.refinement.restraints.manager)
-  return builder.proxies()
 
 def shelx_u_cif(unit_cell, u_star):
-  u_cif = adptbx.u_star_as_u_cif(unit_cell, u_star)
-  u_cif = u_cif[0:3] + (u_cif[-1], u_cif[-2], u_cif[-3])
-  return (" "*3).join([ "%.5f" % x for x in  u_cif ])
+    u_cif = adptbx.u_star_as_u_cif(unit_cell, u_star)
+    u_cif = u_cif[0:3] + (u_cif[-1], u_cif[-2], u_cif[-3])
+    return (" " * 3).join(["%.5f" % x for x in u_cif])
+
 
 def exercise_constrained_occupancies():
-  from smtbx.refinement.constraints.occupancy import \
-    occupancy_pair_affine_constraint
-  builder = iotbx.builders.constrained_crystal_structure_builder()
-  stream = shelx.command_stream(file=StringIO(ins_thpp))
-  l_cs = shelx.crystal_symmetry_parser(stream, builder)
-  l_xs = shelx.atom_parser(l_cs.filtered_commands(), builder)
-  l_xs.parse()
-  assert len(builder.constraints) == 2
-  sc = builder.structure.scatterers()
-  dsu = [(sc[c.scatterer_indices[0]].label, c) for c in builder.constraints]
-  dsu.sort()
-  constraints = [c for _,c in dsu]
-  c0, c1 = constraints
-  assert isinstance(c0, occupancy_pair_affine_constraint)
-  assert c0.scatterer_indices == (len(sc) - 4, len(sc) - 2)
-  assert c0.linear_form == ((1,1), 1)
-  assert isinstance(c1, occupancy_pair_affine_constraint)
-  assert c1.scatterer_indices == (3, len(sc) - 1)
-  assert c1.linear_form == ((1,1), 1)
+    from smtbx.refinement.constraints.occupancy import occupancy_pair_affine_constraint
+
+    builder = iotbx.builders.constrained_crystal_structure_builder()
+    stream = shelx.command_stream(file=StringIO(ins_thpp))
+    l_cs = shelx.crystal_symmetry_parser(stream, builder)
+    l_xs = shelx.atom_parser(l_cs.filtered_commands(), builder)
+    l_xs.parse()
+    assert len(builder.constraints) == 2
+    sc = builder.structure.scatterers()
+    dsu = [(sc[c.scatterer_indices[0]].label, c) for c in builder.constraints]
+    dsu.sort()
+    constraints = [c for _, c in dsu]
+    c0, c1 = constraints
+    assert isinstance(c0, occupancy_pair_affine_constraint)
+    assert c0.scatterer_indices == (len(sc) - 4, len(sc) - 2)
+    assert c0.linear_form == ((1, 1), 1)
+    assert isinstance(c1, occupancy_pair_affine_constraint)
+    assert c1.scatterer_indices == (3, len(sc) - 1)
+    assert c1.linear_form == ((1, 1), 1)
+
 
 def exercise_wavelength():
-  from iotbx.shelx.parsers import wavelength_parser
-  builder = iotbx.builders.crystal_structure_builder()
-  stream = shelx.command_stream(file=StringIO(ins_aspirin))
-  stream = wavelength_parser(stream, builder)
-  stream.parse()
-  assert approx_equal(builder.wavelength_in_angstrom, 0.71073)
+    from iotbx.shelx.parsers import wavelength_parser
+
+    builder = iotbx.builders.crystal_structure_builder()
+    stream = shelx.command_stream(file=StringIO(ins_aspirin))
+    stream = wavelength_parser(stream, builder)
+    stream.parse()
+    assert approx_equal(builder.wavelength_in_angstrom, 0.71073)
+
 
 def run():
-  exercise_lexing()
-  exercise_lexing_bis()
-  exercise_instruction_parsing()
-  import libtbx.load_env
-  if (not libtbx.env.has_module(name="smtbx")):
-    print("Skipping some tests: smtbx module is not available.")
-  else:
-    exercise_restraint_parsing()
-    exercise_constrained_occupancies()
-    exercise_u_iso_proportional_to_u_eq_parsing()
-    exercise_afix_parsing()
-    exercise_residues()
-  exercise_xray_structure_parsing()
-  exercise_crystal_symmetry_parsing()
-  exercise_wavelength()
-  print('OK')
+    exercise_lexing()
+    exercise_lexing_bis()
+    exercise_instruction_parsing()
+    import libtbx.load_env
+
+    if not libtbx.env.has_module(name="smtbx"):
+        print("Skipping some tests: smtbx module is not available.")
+    else:
+        exercise_restraint_parsing()
+        exercise_constrained_occupancies()
+        exercise_u_iso_proportional_to_u_eq_parsing()
+        exercise_afix_parsing()
+        exercise_residues()
+    exercise_xray_structure_parsing()
+    exercise_crystal_symmetry_parsing()
+    exercise_wavelength()
+    print("OK")
+
 
 ins_mundane_tiny = (
-"TITL in Pbca\n"
-"CELL0.71073   7.350   9.541  12.842  90.000  90.000  90.000\n"
-"ZERR    4.00   0.002   0.002   0.003   0.000   0.000   0.000\n"
-"LATT  1\n"
-"\n"
-"SYMM 0.5-X, -Y, 0.5+Z\n"
-"SYMM -X, 0.5+Y, 0.5-Z\n"
-"SYMM 1/2+X, 0.5-y, -Z\n"
-"SFAC C H O N\n"
-"UNIT 32 40 16 8\n"
-"TEMP -153\n"
-" skipped\n"
-"L.S. 4\n"
-"BOND $H\n"
-"FMAP 2 ! Fo - Fc\n"
-"PLAN 5\n"
-"WGHT    0.054500    0.220600\n"
-"EXTI    0.034016\n"
-"FVAR       0.89220\n"
-"REM\n"
-"+/path/to/filename.ins\n"
-"REM  Protracted example of residues on command\n"
-"HFIX_1 23\n"
-"HFIX_N 43\n"
-"EQIV $1 1-X, -Y, -Z\n"
-"CONF C4 N H O2_$1\n"
-"DFIX_1 1.5 C2 C3\n"
-"O2    3    0.362893    0.160589   -0.035913    11.00000    0.03926    0.02517 =\n"
-"         0.02140   -0.00415   -0.00810    0.01009\n"
-"O3    3    0.696722    0.119176    0.260657    = some garbage\n"
-" 11.00000    0.02838    0.02133 =\n"
-"         0.02918    0.00011   -0.01030   -0.00048\n"
-"C1    1    0.432360    0.196651    0.046472    11.00000    0.02226    0.01792 =\n"
-"         0.01857    0.00058    0.00123    0.00249\n"
-"C4    1    0.601261    0.176489    0.196615    11.00000    0.01844    0.01705 =\n"
-"         0.02123   -0.00033   -0.00071   -0.00284\n"
-"RESI 1\n"
-"C2    1    0.411568    0.336421    0.100062    11.00000    0.02867    0.01555 =\n"
-"         0.02069    0.00053   -0.00070    0.00268\n"
-"C3    1    0.522448    0.322965    0.200394    11.00000    0.02158    0.01556 =\n"
-"         0.02255   -0.00189   -0.00049   -0.00115\n"
-"RESI N\n"
-"N     4    0.544830    0.114061    0.104838    11.00000    0.02004    0.01586 =\n"
-"         0.01943   -0.00094   -0.00096    0.00161\n"
-" \n"
-"HKLF 4 \n"
-"END\n"
-"     \n"
-"WGHT      0.0536      0.2259 \n"
-"REM Highest difference peak  0.330,  deepest hole -0.210,  1-sigma level  0.046\n"
-"Q1    1   0.5622  0.2496  0.2006  11.00000  0.05    0.33\n"
-"Q2    1   0.4189  0.2682  0.0749  11.00000  0.05    0.33\n"
-"Q3    1   0.5706  0.1441  0.1462  11.00000  0.05    0.29\n"
-"Q4    1   0.4966  0.1552  0.0716  11.00000  0.05    0.29\n"
-"Q5    1   0.4666  0.3316  0.1506  11.00000  0.05    0.26\n")
+    "TITL in Pbca\n"
+    "CELL0.71073   7.350   9.541  12.842  90.000  90.000  90.000\n"
+    "ZERR    4.00   0.002   0.002   0.003   0.000   0.000   0.000\n"
+    "LATT  1\n"
+    "\n"
+    "SYMM 0.5-X, -Y, 0.5+Z\n"
+    "SYMM -X, 0.5+Y, 0.5-Z\n"
+    "SYMM 1/2+X, 0.5-y, -Z\n"
+    "SFAC C H O N\n"
+    "UNIT 32 40 16 8\n"
+    "TEMP -153\n"
+    " skipped\n"
+    "L.S. 4\n"
+    "BOND $H\n"
+    "FMAP 2 ! Fo - Fc\n"
+    "PLAN 5\n"
+    "WGHT    0.054500    0.220600\n"
+    "EXTI    0.034016\n"
+    "FVAR       0.89220\n"
+    "REM\n"
+    "+/path/to/filename.ins\n"
+    "REM  Protracted example of residues on command\n"
+    "HFIX_1 23\n"
+    "HFIX_N 43\n"
+    "EQIV $1 1-X, -Y, -Z\n"
+    "CONF C4 N H O2_$1\n"
+    "DFIX_1 1.5 C2 C3\n"
+    "O2    3    0.362893    0.160589   -0.035913    11.00000    0.03926    0.02517 =\n"
+    "         0.02140   -0.00415   -0.00810    0.01009\n"
+    "O3    3    0.696722    0.119176    0.260657    = some garbage\n"
+    " 11.00000    0.02838    0.02133 =\n"
+    "         0.02918    0.00011   -0.01030   -0.00048\n"
+    "C1    1    0.432360    0.196651    0.046472    11.00000    0.02226    0.01792 =\n"
+    "         0.01857    0.00058    0.00123    0.00249\n"
+    "C4    1    0.601261    0.176489    0.196615    11.00000    0.01844    0.01705 =\n"
+    "         0.02123   -0.00033   -0.00071   -0.00284\n"
+    "RESI 1\n"
+    "C2    1    0.411568    0.336421    0.100062    11.00000    0.02867    0.01555 =\n"
+    "         0.02069    0.00053   -0.00070    0.00268\n"
+    "C3    1    0.522448    0.322965    0.200394    11.00000    0.02158    0.01556 =\n"
+    "         0.02255   -0.00189   -0.00049   -0.00115\n"
+    "RESI N\n"
+    "N     4    0.544830    0.114061    0.104838    11.00000    0.02004    0.01586 =\n"
+    "         0.01943   -0.00094   -0.00096    0.00161\n"
+    " \n"
+    "HKLF 4 \n"
+    "END\n"
+    "     \n"
+    "WGHT      0.0536      0.2259 \n"
+    "REM Highest difference peak  0.330,  deepest hole -0.210,  1-sigma level  0.046\n"
+    "Q1    1   0.5622  0.2496  0.2006  11.00000  0.05    0.33\n"
+    "Q2    1   0.4189  0.2682  0.0749  11.00000  0.05    0.33\n"
+    "Q3    1   0.5706  0.1441  0.1462  11.00000  0.05    0.29\n"
+    "Q4    1   0.4966  0.1552  0.0716  11.00000  0.05    0.29\n"
+    "Q5    1   0.4666  0.3316  0.1506  11.00000  0.05    0.26\n"
+)
 
 ins_special_positions = """TITL cr4 in P6(3)
 CELL 0.71073   5.1534   5.1534   8.6522  90.000  90.000 120.000
@@ -1011,10 +1041,11 @@ HKLF 4
 """
 
 ins_P1 = (
-"TITL P1\n"
-"CELL 0.71073   1 2 3 99 100 101\n"
-"ZERR    4.00   0.002   0.002   0.003   0.000   0.000   0.000\n"
-"SFAC C H O N\n")
+    "TITL P1\n"
+    "CELL 0.71073   1 2 3 99 100 101\n"
+    "ZERR    4.00   0.002   0.002   0.003   0.000   0.000   0.000\n"
+    "SFAC C H O N\n"
+)
 
 ins_aspirin = """TITL aspirin in P2(1)/c
 CELL 0.71073 11.492 6.621 11.453 90.0 95.615 90.0
@@ -1190,7 +1221,7 @@ SFAC C O
 O 4 0.1 0.2 0.3 11
 """
 
-ins_dfix_across_symm="""\
+ins_dfix_across_symm = """\
 TITL s031 in C2/c #15
 CELL 0.71073 28.3148 15.8506 18.226 90 118.092 90
 ZERR 4 0.0006 0.0003 0.0004 0 0.001 0
@@ -1233,7 +1264,7 @@ C3    1     0.00000  0.25000  0.25000  11.00000  0.05233
 C4    1     0.00000  0.25000  0.25000  11.00000  0.05233
 """
 
-ins_flat="""\
+ins_flat = """\
 TITL fred in P2(1)/c
 CELL 0.71073 15.149 11.4915 16.2458 90 99.462 90
 ZERR 3 0.0054 0.0043 0.006 0 0.007 0
@@ -1279,8 +1310,10 @@ C47   1     0.32637  0.52368  0.16222  10.25000  0.03065  0.05189  0.02130 =
 HKLF 4
 """
 
+
 def template_ins(instruction):
-  return """\
+    return (
+        """\
 CELL 0 5 10 15 90 90 90
 SFAC C
 %s
@@ -1292,7 +1325,10 @@ C3    1     0.28897  0.41092  0.11289  10.75000  0.06042  0.09876  0.06719 =
  0.05095  0.03457  0.04942
 C4    1     0.30734  0.50229  0.16767  10.75000  0.08796  0.14534  0.06011 =
  0.03723  0.02945  0.07980
-""" %instruction
+"""
+        % instruction
+    )
+
 
 ins_simu_simple = template_ins("SIMU")
 ins_simu_s = template_ins("SIMU 0.03")
@@ -1300,34 +1336,29 @@ ins_simu_s_st = template_ins("SIMU 0.03 0.07")
 ins_simu_s_st_dmax = template_ins("SIMU 0.03 0.07 1.8")
 ins_simu_atoms = template_ins("SIMU C1 C2 C3")
 ins_simu_s_atoms = template_ins("SIMU 0.03 C1 C2 C3")
-ins_simu_s_st_atoms = template_ins(
-  "SIMU 0.03 0.07 C1 C2 C3")
-ins_simu_s_st_dmax_atoms = template_ins(
-  "SIMU 0.03 0.07 1.7 C1 C2 C3")
+ins_simu_s_st_atoms = template_ins("SIMU 0.03 0.07 C1 C2 C3")
+ins_simu_s_st_dmax_atoms = template_ins("SIMU 0.03 0.07 1.7 C1 C2 C3")
 
 ins_delu_simple = template_ins("DELU")
 ins_delu_s1 = template_ins("DELU 0.02")
 ins_delu_s1_s2 = template_ins("DELU 0.01 0.02")
 ins_delu_atoms = template_ins("DELU C1 C2 C3")
 ins_delu_s1_atoms = template_ins("DELU 0.02 C1 C2 C3")
-ins_delu_s1_s2_atoms = template_ins(
-  "DELU 0.01 0.02 C1 C2 C3")
+ins_delu_s1_s2_atoms = template_ins("DELU 0.01 0.02 C1 C2 C3")
 
 ins_rigu_simple = template_ins("RIGU")
 ins_rigu_s1 = template_ins("RIGU 0.02")
 ins_rigu_s1_s2 = template_ins("RIGU 0.01 0.02")
 ins_rigu_atoms = template_ins("RIGU C1 C2 C3")
 ins_rigu_s1_atoms = template_ins("RIGU 0.02 C1 C2 C3")
-ins_rigu_s1_s2_atoms = template_ins(
-  "RIGU 0.01 0.02 C1 C2 C3")
+ins_rigu_s1_s2_atoms = template_ins("RIGU 0.01 0.02 C1 C2 C3")
 
 ins_isor_simple = template_ins("ISOR")
 ins_isor_s = template_ins("ISOR 0.2")
 ins_isor_s_st = template_ins("ISOR 0.2 0.3")
 ins_isor_atoms = template_ins("ISOR C1 C2 C3")
 ins_isor_s_atoms = template_ins("ISOR 0.2 C1 C2 C3")
-ins_isor_s_st_atoms = template_ins(
-  "ISOR 0.2 0.3 C1 C2 C3")
+ins_isor_s_st_atoms = template_ins("ISOR 0.2 0.3 C1 C2 C3")
 
 ins_dfix_multiple = template_ins("DFIX 1.7 C1 C2 C3 C4")
 ins_invalid_dfix = template_ins("DFIX C1 C2")
@@ -1575,5 +1606,5 @@ END
 """
 
 
-if __name__ == '__main__':
-  run()
+if __name__ == "__main__":
+    run()

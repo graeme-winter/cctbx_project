@@ -5,5 +5,4 @@ import sys
 from mmtbx.validation import analyze_peptides
 
 if __name__ == "__main__":
-  analyze_peptides.run(args=sys.argv[1:])
-
+    analyze_peptides.run(args=sys.argv[1:])

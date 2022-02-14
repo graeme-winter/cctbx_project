@@ -4,14 +4,15 @@ from mmtbx import monomer_library
 import mmtbx.monomer_library.server
 import mmtbx.monomer_library.pdb_interpretation
 import sys
+
 try:
-  from six.moves import cPickle as pickle
+    from six.moves import cPickle as pickle
 except ImportError:
-  import pickle
+    import pickle
 from six.moves import cStringIO as StringIO
 from libtbx.test_utils import show_diff
 import iotbx.pdb
-from libtbx.utils import null_out # import dependency
+from libtbx.utils import null_out  # import dependency
 from time import time
 from libtbx.test_utils import approx_equal
 
@@ -140,130 +141,149 @@ ATOM     17  CB  ALA A   4       0.656   2.148   1.711  1.00  9.80           C
 END
 """
 
-def make_initial_grm(mon_lib_srv, ener_lib, records):
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv    = mon_lib_srv,
-    ener_lib       = ener_lib,
-    raw_records    = records,
-    force_symmetry = True)
 
-  geometry = processed_pdb_file.geometry_restraints_manager(
-    show_energies      = True,
-    plain_pairs_radius = 5.0)
-  xrs = processed_pdb_file.xray_structure()
-  return geometry, xrs
+def make_initial_grm(mon_lib_srv, ener_lib, records):
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        raw_records=records,
+        force_symmetry=True,
+    )
+
+    geometry = processed_pdb_file.geometry_restraints_manager(
+        show_energies=True, plain_pairs_radius=5.0
+    )
+    xrs = processed_pdb_file.xray_structure()
+    return geometry, xrs
+
 
 def make_geo_pickle_unpickle(geometry, xrs, prefix):
-  init_out = StringIO()
-  from_file_out = StringIO()
-  geometry.show_sorted(
-      sites_cart=xrs.sites_cart(),
-      site_labels=xrs.scatterers().extract_labels(),
-      f=init_out)
-  energy_original = geometry.energies_sites(sites_cart=xrs.sites_cart())
-  t0 = time()
-  #import code, traceback; code.interact(local=locals(), banner="".join( traceback.format_stack(limit=10) ) )
-  pklstr = pickle.dumps(geometry)
-  t1 = time()
-  grm_from_file = pickle.loads(pklstr)
-  t2 = time()
-  # Fails here:
-  energy_from_pickle = grm_from_file.energies_sites(sites_cart=xrs.sites_cart())
-  assert approx_equal(energy_original.target, energy_from_pickle.target)
-  print("Time pickling/unpickling: %.4f, %.4f" % (t1-t0, t2-t1))
-  grm_from_file.show_sorted(
-      sites_cart=xrs.sites_cart(),
-      site_labels=xrs.scatterers().extract_labels(),
-      f=from_file_out)
-  # print "INITIAL"
-  init_v = init_out.getvalue()
-  # print init_v
-  # print "="*50
-  # print "From disc"
-  from_file_v = from_file_out.getvalue()
-  # print from_file_v
-  # STOP()
-  assert not show_diff(init_v, from_file_v)
-  return grm_from_file
+    init_out = StringIO()
+    from_file_out = StringIO()
+    geometry.show_sorted(
+        sites_cart=xrs.sites_cart(),
+        site_labels=xrs.scatterers().extract_labels(),
+        f=init_out,
+    )
+    energy_original = geometry.energies_sites(sites_cart=xrs.sites_cart())
+    t0 = time()
+    # import code, traceback; code.interact(local=locals(), banner="".join( traceback.format_stack(limit=10) ) )
+    pklstr = pickle.dumps(geometry)
+    t1 = time()
+    grm_from_file = pickle.loads(pklstr)
+    t2 = time()
+    # Fails here:
+    energy_from_pickle = grm_from_file.energies_sites(sites_cart=xrs.sites_cart())
+    assert approx_equal(energy_original.target, energy_from_pickle.target)
+    print("Time pickling/unpickling: %.4f, %.4f" % (t1 - t0, t2 - t1))
+    grm_from_file.show_sorted(
+        sites_cart=xrs.sites_cart(),
+        site_labels=xrs.scatterers().extract_labels(),
+        f=from_file_out,
+    )
+    # print "INITIAL"
+    init_v = init_out.getvalue()
+    # print init_v
+    # print "="*50
+    # print "From disc"
+    from_file_v = from_file_out.getvalue()
+    # print from_file_v
+    # STOP()
+    assert not show_diff(init_v, from_file_v)
+    return grm_from_file
+
 
 def test_simple_protein(
-    mon_lib_srv, ener_lib, prefix="tst_grm_pickling_simple_protein"):
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
-  make_geo_pickle_unpickle(geometry, xrs, prefix)
+    mon_lib_srv, ener_lib, prefix="tst_grm_pickling_simple_protein"
+):
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
+    make_geo_pickle_unpickle(geometry, xrs, prefix)
+
 
 def test_nucleic_acid(mon_lib_srv, ener_lib, prefix="tst_grm_pickling_na"):
-  open("%s.pdb" % prefix, "w").\
-      write(raw_records2)
-  from mmtbx import monomer_library
-  params = monomer_library.pdb_interpretation.master_params.extract()
-  params.secondary_structure.enabled=True
-  processed_pdb_file = monomer_library.pdb_interpretation.run(
-    args=["%s.pdb" % prefix],
-    params=params,
-    strict_conflict_handling=False,
-    log=sys.stdout)
-  geo = processed_pdb_file.geometry_restraints_manager()
-  assert geo.get_n_hbond_proxies() == 6
-  assert geo.get_n_hangle_proxies() == 12
-  assert geo.get_n_stacking_proxies() == 2
-  assert geo.get_n_parallelity_bp_proxies() == 2
-  make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+    open("%s.pdb" % prefix, "w").write(raw_records2)
+    from mmtbx import monomer_library
+
+    params = monomer_library.pdb_interpretation.master_params.extract()
+    params.secondary_structure.enabled = True
+    processed_pdb_file = monomer_library.pdb_interpretation.run(
+        args=["%s.pdb" % prefix],
+        params=params,
+        strict_conflict_handling=False,
+        log=sys.stdout,
+    )
+    geo = processed_pdb_file.geometry_restraints_manager()
+    assert geo.get_n_hbond_proxies() == 6
+    assert geo.get_n_hangle_proxies() == 12
+    assert geo.get_n_stacking_proxies() == 2
+    assert geo.get_n_parallelity_bp_proxies() == 2
+    make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+
 
 def test_ramachandran(mon_lib_srv, ener_lib, prefix="tst_grm_pickling_rama"):
-  open("%s.pdb" % prefix, "w").\
-    write(raw_records3)
-  from mmtbx import monomer_library
-  params = monomer_library.pdb_interpretation.master_params.extract()
-  params.peptide_link.ramachandran_restraints=True
-  processed_pdb_file = monomer_library.pdb_interpretation.run(
-    args=["%s.pdb" % prefix],
-    params=params,
-    strict_conflict_handling=False,
-    log=sys.stdout)
-  geo = processed_pdb_file.geometry_restraints_manager()
-  assert geo.get_n_ramachandran_proxies() == 1
-  make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+    open("%s.pdb" % prefix, "w").write(raw_records3)
+    from mmtbx import monomer_library
+
+    params = monomer_library.pdb_interpretation.master_params.extract()
+    params.peptide_link.ramachandran_restraints = True
+    processed_pdb_file = monomer_library.pdb_interpretation.run(
+        args=["%s.pdb" % prefix],
+        params=params,
+        strict_conflict_handling=False,
+        log=sys.stdout,
+    )
+    geo = processed_pdb_file.geometry_restraints_manager()
+    assert geo.get_n_ramachandran_proxies() == 1
+    make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+
 
 def test_cbeta(mon_lib_srv, ener_lib, prefix="tst_grm_pickling_cbeta"):
-  open("%s.pdb" % prefix, "w").\
-    write(raw_records3)
-  from mmtbx import monomer_library
-  params = monomer_library.pdb_interpretation.master_params.extract()
-  params.c_beta_restraints=True
-  processed_pdb_file = monomer_library.pdb_interpretation.run(
-    args=["%s.pdb" % prefix],
-    params=params,
-    strict_conflict_handling=False,
-    log=sys.stdout)
-  geo = processed_pdb_file.geometry_restraints_manager()
-  assert geo.get_n_c_beta_torsion_proxies() == 6
-  make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+    open("%s.pdb" % prefix, "w").write(raw_records3)
+    from mmtbx import monomer_library
 
-def test_reference_coordinate(mon_lib_srv, ener_lib, prefix="tst_grm_pickling_ref_coor"):
-  from mmtbx.geometry_restraints import reference
-  # for some strange reason without importing this the code doesn't work...
-  from cctbx import adp_restraints # import dependency
+    params = monomer_library.pdb_interpretation.master_params.extract()
+    params.c_beta_restraints = True
+    processed_pdb_file = monomer_library.pdb_interpretation.run(
+        args=["%s.pdb" % prefix],
+        params=params,
+        strict_conflict_handling=False,
+        log=sys.stdout,
+    )
+    geo = processed_pdb_file.geometry_restraints_manager()
+    assert geo.get_n_c_beta_torsion_proxies() == 6
+    make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
 
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records3)
-  params = monomer_library.pdb_interpretation.master_params.extract()
-  params.reference_coordinate_restraints.enabled=False
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    params=params,
-    strict_conflict_handling=False,
-    pdb_inp=pdb_inp,
-    log=sys.stdout)
-  geo = processed_pdb_file.geometry_restraints_manager()
-  pdb_hierarchy = processed_pdb_file.all_chain_proxies.pdb_hierarchy
-  sites_cart = pdb_hierarchy.atoms().extract_xyz()
-  rcp = reference.add_coordinate_restraints(sites_cart=sites_cart)
-  geo.adopt_reference_coordinate_restraints_in_place(rcp)
-  # print "number of rcr proxies:", geo.get_n_reference_coordinate_proxies()
-  make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+
+def test_reference_coordinate(
+    mon_lib_srv, ener_lib, prefix="tst_grm_pickling_ref_coor"
+):
+    from mmtbx.geometry_restraints import reference
+
+    # for some strange reason without importing this the code doesn't work...
+    from cctbx import adp_restraints  # import dependency
+
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records3)
+    params = monomer_library.pdb_interpretation.master_params.extract()
+    params.reference_coordinate_restraints.enabled = False
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        params=params,
+        strict_conflict_handling=False,
+        pdb_inp=pdb_inp,
+        log=sys.stdout,
+    )
+    geo = processed_pdb_file.geometry_restraints_manager()
+    pdb_hierarchy = processed_pdb_file.all_chain_proxies.pdb_hierarchy
+    sites_cart = pdb_hierarchy.atoms().extract_xyz()
+    rcp = reference.add_coordinate_restraints(sites_cart=sites_cart)
+    geo.adopt_reference_coordinate_restraints_in_place(rcp)
+    # print "number of rcr proxies:", geo.get_n_reference_coordinate_proxies()
+    make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+
 
 def test_secondary_structure(mon_lib_srv, ener_lib, prefix="tst_grm_pickling_ss"):
-  pdb_str = """
+    pdb_str = """
 HELIX    2   2 ASP A   37  GLY A   48  1                                  12
 CRYST1  113.068  113.068   53.292  90.00  90.00  90.00 I 41          8
 ATOM    266  N   ASP A  37       6.265  61.752  14.145  1.00 35.17           N
@@ -352,38 +372,43 @@ ATOM    348  C   GLY A  48      17.323  52.969  22.286  1.00 34.43           C
 ATOM    349  O   GLY A  48      18.512  52.912  22.607  1.00 34.93           O
   """
 
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  params = monomer_library.pdb_interpretation.master_params.extract()
-  params.secondary_structure.enabled=True
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    params=params,
-    strict_conflict_handling=False,
-    pdb_inp=pdb_inp,
-    log=sys.stdout)
-  geo = processed_pdb_file.geometry_restraints_manager()
-  assert geo.get_n_hbond_proxies() == 8
-  make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    params = monomer_library.pdb_interpretation.master_params.extract()
+    params.secondary_structure.enabled = True
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        params=params,
+        strict_conflict_handling=False,
+        pdb_inp=pdb_inp,
+        log=sys.stdout,
+    )
+    geo = processed_pdb_file.geometry_restraints_manager()
+    assert geo.get_n_hbond_proxies() == 8
+    make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+
 
 def test_secondary_structure_2(mon_lib_srv, ener_lib, prefix="tst_grm_pickling_ss2"):
-  from iotbx.pdb.tst_secondary_structure import pdb_1ywf_sample_strings
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_1ywf_sample_strings)
-  params = monomer_library.pdb_interpretation.master_params.extract()
-  params.secondary_structure.enabled=True
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    params=params,
-    strict_conflict_handling=False,
-    pdb_inp=pdb_inp,
-    log=sys.stdout)
-  geo = processed_pdb_file.geometry_restraints_manager()
-  assert geo.get_n_hbond_proxies() == 103, geo.get_n_hbond_proxies()
-  make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+    from iotbx.pdb.tst_secondary_structure import pdb_1ywf_sample_strings
+
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_1ywf_sample_strings)
+    params = monomer_library.pdb_interpretation.master_params.extract()
+    params.secondary_structure.enabled = True
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        params=params,
+        strict_conflict_handling=False,
+        pdb_inp=pdb_inp,
+        log=sys.stdout,
+    )
+    geo = processed_pdb_file.geometry_restraints_manager()
+    assert geo.get_n_hbond_proxies() == 103, geo.get_n_hbond_proxies()
+    make_geo_pickle_unpickle(geo, processed_pdb_file.xray_structure(), prefix)
+
 
 def test_across_symmetry(mon_lib_srv, ener_lib, prefix="tst_across_symmetry"):
-  raw_records1 = """\
+    raw_records1 = """\
 CRYST1   60.800   60.800   97.000  90.00  90.00 120.00 P 32 2 1      6
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
@@ -403,69 +428,78 @@ ATOM   1058  NZ  LYS A 135      29.396  13.756 -12.899  1.00 46.18           N
 HETATM 1406  O   HOH A 282      32.366  19.942  24.727  1.00 38.09           O
 END
 """
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
-  make_geo_pickle_unpickle(geometry, xrs, prefix)
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
+    make_geo_pickle_unpickle(geometry, xrs, prefix)
+
 
 def test_reference_model(mon_lib_srv, ener_lib, prefix="tst_reference_model"):
-  from mmtbx.geometry_restraints.torsion_restraints.tst_reference_model import \
-      model_raw_records, reference_raw_records
-  from mmtbx.geometry_restraints.torsion_restraints.reference_model import \
-    reference_model
-  import mmtbx.model
-  # mstream = StringIO()
-  from libtbx.utils import multi_out
-  mstream = multi_out()
-  mstream.register("stdout", sys.stdout)
-  mstream_file_name = "polder.log"
-  mstreamfile = open(mstream_file_name, "w")
-  mstream.register("logfile", mstreamfile)
+    from mmtbx.geometry_restraints.torsion_restraints.tst_reference_model import (
+        model_raw_records,
+        reference_raw_records,
+    )
+    from mmtbx.geometry_restraints.torsion_restraints.reference_model import (
+        reference_model,
+    )
+    import mmtbx.model
 
-  work_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  work_params.reference_model.enabled = True
-  work_params.reference_model.use_starting_model_as_reference = True
-  work_params.reference_model.fix_outliers = False
-  pdb_inp = iotbx.pdb.input(lines=model_raw_records.split('\n'), source_info=None)
-  model = mmtbx.model.manager(model_input = pdb_inp)
-  model.process(pdb_interpretation_params=work_params,
-    make_restraints=True)
-  reference_hierarchy_list = []
-  tmp_hierarchy = iotbx.pdb.input(
-    source_info=None,
-    lines=reference_raw_records.split('\n')).construct_hierarchy()
-  reference_hierarchy_list.append(tmp_hierarchy)
-  rm = reference_model(
-         model = model,
-         reference_hierarchy_list=reference_hierarchy_list,
-         params=work_params.reference_model,
-         log=mstream)
-  assert rm.get_n_proxies() == 5, "Got %d, expected 5" % rm.get_n_proxies()
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, model_raw_records)
-  geometry.adopt_reference_dihedral_manager(rm)
-  make_geo_pickle_unpickle(geometry, xrs, prefix)
+    # mstream = StringIO()
+    from libtbx.utils import multi_out
+
+    mstream = multi_out()
+    mstream.register("stdout", sys.stdout)
+    mstream_file_name = "polder.log"
+    mstreamfile = open(mstream_file_name, "w")
+    mstream.register("logfile", mstreamfile)
+
+    work_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    work_params.reference_model.enabled = True
+    work_params.reference_model.use_starting_model_as_reference = True
+    work_params.reference_model.fix_outliers = False
+    pdb_inp = iotbx.pdb.input(lines=model_raw_records.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(pdb_interpretation_params=work_params, make_restraints=True)
+    reference_hierarchy_list = []
+    tmp_hierarchy = iotbx.pdb.input(
+        source_info=None, lines=reference_raw_records.split("\n")
+    ).construct_hierarchy()
+    reference_hierarchy_list.append(tmp_hierarchy)
+    rm = reference_model(
+        model=model,
+        reference_hierarchy_list=reference_hierarchy_list,
+        params=work_params.reference_model,
+        log=mstream,
+    )
+    assert rm.get_n_proxies() == 5, "Got %d, expected 5" % rm.get_n_proxies()
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, model_raw_records)
+    geometry.adopt_reference_dihedral_manager(rm)
+    make_geo_pickle_unpickle(geometry, xrs, prefix)
+
 
 def exercise_all(args):
-  mon_lib_srv = None
-  ener_lib = None
-  try:
-    mon_lib_srv = monomer_library.server.server()
-    ener_lib = monomer_library.server.ener_lib()
-  except Exception:
-    print("Can not initialize monomer_library, skipping test.")
-    return 0
-  import libtbx.load_env
-  if libtbx.env.find_in_repositories(relative_path="chem_data") is None:
-    print("Skipping exercise(): chem_data directory not available")
-    return
+    mon_lib_srv = None
+    ener_lib = None
+    try:
+        mon_lib_srv = monomer_library.server.server()
+        ener_lib = monomer_library.server.ener_lib()
+    except Exception:
+        print("Can not initialize monomer_library, skipping test.")
+        return 0
+    import libtbx.load_env
 
-  test_simple_protein(mon_lib_srv, ener_lib)
-  test_nucleic_acid(mon_lib_srv, ener_lib)
-  # test_ramachandran(mon_lib_srv, ener_lib)
-  # test_cbeta(mon_lib_srv, ener_lib)
-  # test_reference_coordinate(mon_lib_srv, ener_lib)
-  # test_secondary_structure(mon_lib_srv, ener_lib)
-  # test_secondary_structure_2(mon_lib_srv, ener_lib)
-  # test_across_symmetry(mon_lib_srv, ener_lib)
-  test_reference_model(mon_lib_srv, ener_lib)
+    if libtbx.env.find_in_repositories(relative_path="chem_data") is None:
+        print("Skipping exercise(): chem_data directory not available")
+        return
 
-if (__name__ == "__main__"):
-  exercise_all(sys.argv[1:])
+    test_simple_protein(mon_lib_srv, ener_lib)
+    test_nucleic_acid(mon_lib_srv, ener_lib)
+    # test_ramachandran(mon_lib_srv, ener_lib)
+    # test_cbeta(mon_lib_srv, ener_lib)
+    # test_reference_coordinate(mon_lib_srv, ener_lib)
+    # test_secondary_structure(mon_lib_srv, ener_lib)
+    # test_secondary_structure_2(mon_lib_srv, ener_lib)
+    # test_across_symmetry(mon_lib_srv, ener_lib)
+    test_reference_model(mon_lib_srv, ener_lib)
+
+
+if __name__ == "__main__":
+    exercise_all(sys.argv[1:])

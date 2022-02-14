@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from iotbx import pdb
 from libtbx.test_utils import show_diff
@@ -9,87 +8,88 @@ import os.path
 from mmtbx.validation import ramalyze
 import time
 
-def exercise_ramalyze():
-  from mmtbx.rotamer.rotamer_eval import find_rotarama_data_dir
-  regression_pdb = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/jcm.pdb",
-    test=os.path.isfile)
-  if (regression_pdb is None):
-    print("Skipping exercise_ramalyze(): input pdb (jcm.pdb) not available")
-    return
-  if (find_rotarama_data_dir(optional=True) is None):
-    print("Skipping exercise_ramalyze(): rotarama_data directory not available")
-    return
-  from iotbx import file_reader
-  # Exercise 1
-  pdb_in = file_reader.any_file(file_name=regression_pdb)
-  hierarchy = pdb_in.file_object.hierarchy
-  pdb_io = pdb.input(file_name=regression_pdb)
-  hierarchy.atoms().reset_i_seq()
-  r = ramalyze.ramalyze(
-    pdb_hierarchy=hierarchy,
-    outliers_only=True)
-  out = StringIO()
-  r.show_old_output(out=out)
-  output = out.getvalue()
-  assert output.count("OUTLIER") == 100
-  assert output.count("Favored") == 0
-  assert output.count("Allowed") == 0
-  assert output.count("General") == 64
-  assert output.count("Glycine") == 6
-  assert output.count("Trans-proline") == 1
-  assert output.count("Cis-proline") == 0
-  assert output.count("Pre-proline") == 4
-  assert output.count("Isoleucine or valine") == 25
-  assert (len(r.outlier_selection()) == 494)
-  outlier_ids = set([])
-  atoms = hierarchy.atoms()
-  for i_seq in r.outlier_selection():
-    atom = atoms[i_seq]
-    atom_group = atoms[i_seq].parent()
-    outlier_ids.add(atom_group.id_str())
-  outliers1 = sorted([ o.atom_group_id_str() for o in r.results ])
-  outliers2 = sorted(list(outlier_ids))
-  assert (outliers1 == outliers2)
 
-  r = ramalyze.ramalyze(
-    pdb_hierarchy=hierarchy,
-    outliers_only=False)
-  for unpickle in [False, True] :
-    if unpickle :
-      r = loads(dumps(r))
-    for outlier in r.results :
-      assert (len(outlier.xyz) == 3)
+def exercise_ramalyze():
+    from mmtbx.rotamer.rotamer_eval import find_rotarama_data_dir
+
+    regression_pdb = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/jcm.pdb", test=os.path.isfile
+    )
+    if regression_pdb is None:
+        print("Skipping exercise_ramalyze(): input pdb (jcm.pdb) not available")
+        return
+    if find_rotarama_data_dir(optional=True) is None:
+        print("Skipping exercise_ramalyze(): rotarama_data directory not available")
+        return
+    from iotbx import file_reader
+
+    # Exercise 1
+    pdb_in = file_reader.any_file(file_name=regression_pdb)
+    hierarchy = pdb_in.file_object.hierarchy
+    pdb_io = pdb.input(file_name=regression_pdb)
+    hierarchy.atoms().reset_i_seq()
+    r = ramalyze.ramalyze(pdb_hierarchy=hierarchy, outliers_only=True)
     out = StringIO()
-    r.show_old_output(out=out, verbose=False)
+    r.show_old_output(out=out)
     output = out.getvalue()
     assert output.count("OUTLIER") == 100
-    assert output.count("Favored") == 463
-    assert output.count("Allowed") == 162
-    assert output.count("General") == 514
-    assert output.count("Glycine") == 39
-    assert output.count("Trans-proline") == 23
+    assert output.count("Favored") == 0
+    assert output.count("Allowed") == 0
+    assert output.count("General") == 64
+    assert output.count("Glycine") == 6
+    assert output.count("Trans-proline") == 1
     assert output.count("Cis-proline") == 0
-    assert output.count("Pre-proline") == 21
-    assert output.count("Isoleucine or valine") == 128
-    numtotal = r.get_phi_psi_residues_count()
-    assert r.get_outliers_count_and_fraction()  == (100, 100./numtotal)
-    assert r.get_allowed_count_and_fraction()   == (162, 162./numtotal)
-    assert r.get_favored_count_and_fraction()   == (463, 463./numtotal)
-    assert r.get_general_count_and_fraction()   == (514, 514./numtotal)
-    assert r.get_gly_count_and_fraction()       == (39, 39./numtotal)
-    assert r.get_trans_pro_count_and_fraction() == (23, 23./numtotal)
-    assert r.get_cis_pro_count_and_fraction()   == (0, 0./numtotal)
-    assert r.get_prepro_count_and_fraction()    == (21, 21./numtotal)
-    assert r.get_ileval_count_and_fraction()    == (128, 128./numtotal)
-    #assert numtotal == 75+154+494 #reasons for this math unclear
-    assert numtotal == 725
-    output_lines = output.splitlines()
-    assert len(output_lines) == 725
-    selected_lines = []
-    for x in [0, 1, 168, 169, 715, 716, 717, 718, 719, 720, 721, 722, 723, 724]:
-      selected_lines.append(output_lines[x])
-    assert not show_diff("\n".join(selected_lines), """\
+    assert output.count("Pre-proline") == 4
+    assert output.count("Isoleucine or valine") == 25
+    assert len(r.outlier_selection()) == 494
+    outlier_ids = set([])
+    atoms = hierarchy.atoms()
+    for i_seq in r.outlier_selection():
+        atom = atoms[i_seq]
+        atom_group = atoms[i_seq].parent()
+        outlier_ids.add(atom_group.id_str())
+    outliers1 = sorted([o.atom_group_id_str() for o in r.results])
+    outliers2 = sorted(list(outlier_ids))
+    assert outliers1 == outliers2
+
+    r = ramalyze.ramalyze(pdb_hierarchy=hierarchy, outliers_only=False)
+    for unpickle in [False, True]:
+        if unpickle:
+            r = loads(dumps(r))
+        for outlier in r.results:
+            assert len(outlier.xyz) == 3
+        out = StringIO()
+        r.show_old_output(out=out, verbose=False)
+        output = out.getvalue()
+        assert output.count("OUTLIER") == 100
+        assert output.count("Favored") == 463
+        assert output.count("Allowed") == 162
+        assert output.count("General") == 514
+        assert output.count("Glycine") == 39
+        assert output.count("Trans-proline") == 23
+        assert output.count("Cis-proline") == 0
+        assert output.count("Pre-proline") == 21
+        assert output.count("Isoleucine or valine") == 128
+        numtotal = r.get_phi_psi_residues_count()
+        assert r.get_outliers_count_and_fraction() == (100, 100.0 / numtotal)
+        assert r.get_allowed_count_and_fraction() == (162, 162.0 / numtotal)
+        assert r.get_favored_count_and_fraction() == (463, 463.0 / numtotal)
+        assert r.get_general_count_and_fraction() == (514, 514.0 / numtotal)
+        assert r.get_gly_count_and_fraction() == (39, 39.0 / numtotal)
+        assert r.get_trans_pro_count_and_fraction() == (23, 23.0 / numtotal)
+        assert r.get_cis_pro_count_and_fraction() == (0, 0.0 / numtotal)
+        assert r.get_prepro_count_and_fraction() == (21, 21.0 / numtotal)
+        assert r.get_ileval_count_and_fraction() == (128, 128.0 / numtotal)
+        # assert numtotal == 75+154+494 #reasons for this math unclear
+        assert numtotal == 725
+        output_lines = output.splitlines()
+        assert len(output_lines) == 725
+        selected_lines = []
+        for x in [0, 1, 168, 169, 715, 716, 717, 718, 719, 720, 721, 722, 723, 724]:
+            selected_lines.append(output_lines[x])
+        assert not show_diff(
+            "\n".join(selected_lines),
+            """\
  A  15  SER:35.07:-83.26:131.88:Favored:General
  A  16  SER:0.74:-111.53:71.36:Allowed:General
  A 191  ASP:2.66:-42.39:121.87:Favored:Pre-proline
@@ -103,60 +103,59 @@ def exercise_ramalyze():
  B 374  ALA:0.13:-37.21:-36.12:Allowed:General
  B 375  LEU:11.84:-89.81:-41.45:Favored:General
  B 376  ASN:84.33:-58.30:-41.39:Favored:General
- B 377  GLU:30.88:-56.79:-21.74:Favored:General""")
-    assert (len(r.outlier_selection()) == 494)
+ B 377  GLU:30.88:-56.79:-21.74:Favored:General""",
+        )
+        assert len(r.outlier_selection()) == 494
 
-  # Exercise 2
-  regression_pdb = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/pdb1jxt.ent",
-    test=os.path.isfile)
-  pdb_in = file_reader.any_file(file_name=regression_pdb)
-  hierarchy = pdb_in.file_object.hierarchy
-  hierarchy.atoms().reset_i_seq()
-  r = ramalyze.ramalyze(
-    pdb_hierarchy=hierarchy,
-    outliers_only=True)
-  out = StringIO()
-  r.show_old_output(out=out)
-  output = out.getvalue()
-  assert output.count("Favored") == 0
-  assert output.count("Allowed") == 0
-  assert output.count("OUTLIER") == 0
-  r = ramalyze.ramalyze(
-    pdb_hierarchy=hierarchy,
-    outliers_only=False)
-  for unpickle in [False, True] :
-    if unpickle :
-      r = loads(dumps(r))
+    # Exercise 2
+    regression_pdb = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/pdb1jxt.ent", test=os.path.isfile
+    )
+    pdb_in = file_reader.any_file(file_name=regression_pdb)
+    hierarchy = pdb_in.file_object.hierarchy
+    hierarchy.atoms().reset_i_seq()
+    r = ramalyze.ramalyze(pdb_hierarchy=hierarchy, outliers_only=True)
     out = StringIO()
-    r.show_old_output(out=out, verbose=False)
+    r.show_old_output(out=out)
     output = out.getvalue()
-    assert output.count("Favored") == 50
-    assert output.count("Allowed") == 1
+    assert output.count("Favored") == 0
+    assert output.count("Allowed") == 0
     assert output.count("OUTLIER") == 0
-    assert output.count("General") == 29
-    assert output.count("Glycine") == 4
-    assert output.count("Trans-proline") == 5
-    assert output.count("Cis-proline") == 0
-    assert output.count("Pre-proline") == 5
-    assert output.count("Isoleucine or valine") == 8
-    numtotal = r.get_phi_psi_residues_count()
-    assert r.get_outliers_count_and_fraction()  == (0, 0./numtotal)
-    assert r.get_allowed_count_and_fraction()   == (1, 1./numtotal)
-    assert r.get_favored_count_and_fraction()   == (43, 43./numtotal)
-    #print r.get_general_count_and_fraction()
-    assert r.get_general_count_and_fraction()   == (25, 25./numtotal)
-    assert r.get_gly_count_and_fraction()       == (4, 4./numtotal)
-    assert r.get_trans_pro_count_and_fraction() == (5, 5./numtotal)
-    assert r.get_cis_pro_count_and_fraction()   == (0, 0./numtotal)
-    assert r.get_prepro_count_and_fraction()    == (5, 5./numtotal)
-    assert r.get_ileval_count_and_fraction()    == (5, 5./numtotal)
-    output_lines = output.splitlines()
-    assert len(output_lines) == 51
-    selected_lines = []
-    for x in [0, 1, 5, 6, 7, 8, 9, 47, 48, 49, 50]:
-      selected_lines.append(output_lines[x])
-    assert not show_diff("\n".join(selected_lines), """\
+    r = ramalyze.ramalyze(pdb_hierarchy=hierarchy, outliers_only=False)
+    for unpickle in [False, True]:
+        if unpickle:
+            r = loads(dumps(r))
+        out = StringIO()
+        r.show_old_output(out=out, verbose=False)
+        output = out.getvalue()
+        assert output.count("Favored") == 50
+        assert output.count("Allowed") == 1
+        assert output.count("OUTLIER") == 0
+        assert output.count("General") == 29
+        assert output.count("Glycine") == 4
+        assert output.count("Trans-proline") == 5
+        assert output.count("Cis-proline") == 0
+        assert output.count("Pre-proline") == 5
+        assert output.count("Isoleucine or valine") == 8
+        numtotal = r.get_phi_psi_residues_count()
+        assert r.get_outliers_count_and_fraction() == (0, 0.0 / numtotal)
+        assert r.get_allowed_count_and_fraction() == (1, 1.0 / numtotal)
+        assert r.get_favored_count_and_fraction() == (43, 43.0 / numtotal)
+        # print r.get_general_count_and_fraction()
+        assert r.get_general_count_and_fraction() == (25, 25.0 / numtotal)
+        assert r.get_gly_count_and_fraction() == (4, 4.0 / numtotal)
+        assert r.get_trans_pro_count_and_fraction() == (5, 5.0 / numtotal)
+        assert r.get_cis_pro_count_and_fraction() == (0, 0.0 / numtotal)
+        assert r.get_prepro_count_and_fraction() == (5, 5.0 / numtotal)
+        assert r.get_ileval_count_and_fraction() == (5, 5.0 / numtotal)
+        output_lines = output.splitlines()
+        assert len(output_lines) == 51
+        selected_lines = []
+        for x in [0, 1, 5, 6, 7, 8, 9, 47, 48, 49, 50]:
+            selected_lines.append(output_lines[x])
+        assert not show_diff(
+            "\n".join(selected_lines),
+            """\
  A   2 ATHR:33.85:-106.92:144.23:Favored:General
  A   3 ACYS:47.07:-132.54:137.26:Favored:General
  A   7 AILE:98.76:-61.91:-44.35:Favored:Isoleucine or valine
@@ -167,11 +166,14 @@ def exercise_ramalyze():
  A  43 AASP:51.81:-94.64:5.45:Favored:General
  A  43 BASP:56.98:-88.69:-0.12:Favored:General
  A  44  TYR:1.76:-133.10:58.75:Allowed:General
- A  45  ALA:57.37:-86.61:-8.57:Favored:General""")
+ A  45  ALA:57.37:-86.61:-8.57:Favored:General""",
+        )
 
-  # Exercise 3: 2plx excerpt (unusual icode usage)
-  import iotbx.pdb.hierarchy
-  pdb_io = iotbx.pdb.hierarchy.input(pdb_string="""\
+    # Exercise 3: 2plx excerpt (unusual icode usage)
+    import iotbx.pdb.hierarchy
+
+    pdb_io = iotbx.pdb.hierarchy.input(
+        pdb_string="""\
 ATOM   1468  N   GLY A 219       3.721  21.322  10.752  1.00 14.12           N
 ATOM   1469  CA  GLY A 219       3.586  21.486  12.188  1.00 14.85           C
 ATOM   1470  C   GLY A 219       4.462  20.538  12.995  1.00 15.63           C
@@ -200,39 +202,52 @@ ATOM   1492  N   LYS A 222      -1.537  14.773  13.694  1.00 14.34           N
 ATOM   1493  CA  LYS A 222      -2.053  13.536  13.125  1.00 15.07           C
 ATOM   1494  C   LYS A 222      -1.679  13.455  11.655  1.00 14.88           C
 ATOM   1495  O   LYS A 222      -1.856  14.424  10.883  1.00 14.32           O
-""")
-  r = ramalyze.ramalyze(
-    pdb_hierarchy=pdb_io.hierarchy,
-    outliers_only=False)
-  assert (len(r.results) == 3)
+"""
+    )
+    r = ramalyze.ramalyze(pdb_hierarchy=pdb_io.hierarchy, outliers_only=False)
+    assert len(r.results) == 3
+
 
 def exercise_favored_regions():
-  assert ramalyze.get_favored_regions(0) == [(-99, 119), (-63, -43), (53, 43), (60,-120)]
+    assert ramalyze.get_favored_regions(0) == [
+        (-99, 119),
+        (-63, -43),
+        (53, 43),
+        (60, -120),
+    ]
+
 
 def exercise_constants():
-  #
-  # if this test fails, somebody changed ramalyze constants. The same constants
-  # are declared also in mmtbx/validation/ramachandran/rama8000_tables.h
-  # It is essential to keep both places consistent.
-  #
-  assert ramalyze.res_types == ["general", "glycine", "cis-proline",
-      "trans-proline", "pre-proline", "isoleucine or valine"]
-  assert ramalyze.RAMA_GENERAL == 0
-  assert ramalyze.RAMA_GLYCINE == 1
-  assert ramalyze.RAMA_CISPRO == 2
-  assert ramalyze.RAMA_TRANSPRO == 3
-  assert ramalyze.RAMA_PREPRO == 4
-  assert ramalyze.RAMA_ILE_VAL == 5
-  assert ramalyze.RAMALYZE_OUTLIER == 0
-  assert ramalyze.RAMALYZE_ALLOWED == 1
-  assert ramalyze.RAMALYZE_FAVORED == 2
-  assert ramalyze.RAMALYZE_ANY == 3
-  assert ramalyze.RAMALYZE_NOT_FAVORED == 4
+    #
+    # if this test fails, somebody changed ramalyze constants. The same constants
+    # are declared also in mmtbx/validation/ramachandran/rama8000_tables.h
+    # It is essential to keep both places consistent.
+    #
+    assert ramalyze.res_types == [
+        "general",
+        "glycine",
+        "cis-proline",
+        "trans-proline",
+        "pre-proline",
+        "isoleucine or valine",
+    ]
+    assert ramalyze.RAMA_GENERAL == 0
+    assert ramalyze.RAMA_GLYCINE == 1
+    assert ramalyze.RAMA_CISPRO == 2
+    assert ramalyze.RAMA_TRANSPRO == 3
+    assert ramalyze.RAMA_PREPRO == 4
+    assert ramalyze.RAMA_ILE_VAL == 5
+    assert ramalyze.RAMALYZE_OUTLIER == 0
+    assert ramalyze.RAMALYZE_ALLOWED == 1
+    assert ramalyze.RAMALYZE_FAVORED == 2
+    assert ramalyze.RAMALYZE_ANY == 3
+    assert ramalyze.RAMALYZE_NOT_FAVORED == 4
 
-if (__name__ == "__main__"):
-  t0=time.time()
-  exercise_ramalyze()
-  exercise_favored_regions()
-  exercise_constants()
-  print("Time: %6.4f"%(time.time()-t0))
-  print("OK")
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise_ramalyze()
+    exercise_favored_regions()
+    exercise_constants()
+    print("Time: %6.4f" % (time.time() - t0))
+    print("OK")

@@ -166,39 +166,54 @@ HETATM 2910  C10 MCMaC   6     -15.654  27.180  19.937  1.00 42.32      C    C
 HETATM 2911  O1  MCMaC   6     -19.260  27.832  17.578  1.00 46.61      C    O
 HETATM 2912  O2  MCMaC   6     -19.248  29.950  18.344  1.00 44.55      C    O
 """
-def exercise_1(prefix="tst_pdb_link_records_1"):
-  with open('%s_mcm.cif' % prefix, 'w') as f:
-    f.write(restr_cif_txt)
-  with open('%s.pdb' % prefix, 'w') as f:
-    f.write(pdb_1c_id)
-  cmd = "phenix.geometry_minimization %s.pdb %s_mcm.cif write_geo=False" % (prefix, prefix)
-  assert not easy_run.call(cmd)
-  assert_lines_in_file('%s_minimized.pdb' % prefix,
-      "LINK         C   ALY C   5                 N   MCM C   6 ",
-      remove_white_spaces=False)
-#LINK         O   GLY A  49                NA    NA A6001     1555   1555  2.98
-#LINK         C   ALY C   5                 N   MCM C   6
-#LINK         C   ALYaC   5                 N   MCMaC   6
-def exercise_2(prefix="tst_pdb_link_records_2"):
-  with open('%s_mcm.cif' % prefix, 'w') as f:
-    f.write(restr_cif_txt)
-  with open('%s.pdb' % prefix, 'w') as f:
-    f.write(pdb_2c_id)
-  cmd = "phenix.geometry_minimization %s.pdb %s_mcm.cif write_geo=False" % (prefix, prefix)
-  assert not easy_run.call(cmd)
-  assert_lines_in_file('%s_minimized.pdb' % prefix,
-      "LINK         C   ALYaC   5                 N   MCMaC   6 ",
-      remove_white_spaces=False)
 
-if __name__ == '__main__':
-  mon_lib_srv = None
-  ener_lib = None
-  try:
-    mon_lib_srv = monomer_library.server.server()
-    ener_lib = monomer_library.server.ener_lib()
-  except: # intentional
-    print("Can not initialize monomer_library, skipping test.")
-  if mon_lib_srv is not None and ener_lib is not None:
-    exercise_1()
-    exercise_2()
-    print("OK")
+
+def exercise_1(prefix="tst_pdb_link_records_1"):
+    with open("%s_mcm.cif" % prefix, "w") as f:
+        f.write(restr_cif_txt)
+    with open("%s.pdb" % prefix, "w") as f:
+        f.write(pdb_1c_id)
+    cmd = "phenix.geometry_minimization %s.pdb %s_mcm.cif write_geo=False" % (
+        prefix,
+        prefix,
+    )
+    assert not easy_run.call(cmd)
+    assert_lines_in_file(
+        "%s_minimized.pdb" % prefix,
+        "LINK         C   ALY C   5                 N   MCM C   6 ",
+        remove_white_spaces=False,
+    )
+
+
+# LINK         O   GLY A  49                NA    NA A6001     1555   1555  2.98
+# LINK         C   ALY C   5                 N   MCM C   6
+# LINK         C   ALYaC   5                 N   MCMaC   6
+def exercise_2(prefix="tst_pdb_link_records_2"):
+    with open("%s_mcm.cif" % prefix, "w") as f:
+        f.write(restr_cif_txt)
+    with open("%s.pdb" % prefix, "w") as f:
+        f.write(pdb_2c_id)
+    cmd = "phenix.geometry_minimization %s.pdb %s_mcm.cif write_geo=False" % (
+        prefix,
+        prefix,
+    )
+    assert not easy_run.call(cmd)
+    assert_lines_in_file(
+        "%s_minimized.pdb" % prefix,
+        "LINK         C   ALYaC   5                 N   MCMaC   6 ",
+        remove_white_spaces=False,
+    )
+
+
+if __name__ == "__main__":
+    mon_lib_srv = None
+    ener_lib = None
+    try:
+        mon_lib_srv = monomer_library.server.server()
+        ener_lib = monomer_library.server.ener_lib()
+    except:  # intentional
+        print("Can not initialize monomer_library, skipping test.")
+    if mon_lib_srv is not None and ener_lib is not None:
+        exercise_1()
+        exercise_2()
+        print("OK")

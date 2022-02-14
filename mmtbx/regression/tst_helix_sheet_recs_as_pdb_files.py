@@ -131,20 +131,22 @@ ATOM    122  OE2 GLU E  16      13.420  18.711  19.730  1.00 20.00           O
 TER
 """
 
-def exercise(prefix="tst_helix_sheet_recs_as_pdb_files"):
-  of = open(prefix+".pdb", "w")
-  print(pdb_str, file=of)
-  of.close()
-  xrs1 = iotbx.pdb.input(file_name=prefix+".pdb").xray_structure_simple()
-  easy_run.call("phenix.helix_sheet_recs_as_pdb_files %s"%(prefix+".pdb"))
-  xrs2 = iotbx.pdb.input(
-    file_name="HELIX_1_1_ALA_E_1_ALA_E_16_1_16.pdb").xray_structure_simple(crystal_symmetry=xrs1.crystal_symmetry())
-  fc1 = xrs1.structure_factors(d_min=3).f_calc()
-  fc2 = fc1.structure_factors_from_scatterers(
-    xray_structure=xrs2).f_calc()
-  fc1=flex.abs(abs(fc1).data())
-  fc2=flex.abs(abs(fc2).data())
-  assert flex.sum(flex.abs(fc1-fc2))/flex.sum(flex.abs(fc1+fc2)) < 1.e-3
 
-if (__name__ == "__main__"):
-  exercise()
+def exercise(prefix="tst_helix_sheet_recs_as_pdb_files"):
+    of = open(prefix + ".pdb", "w")
+    print(pdb_str, file=of)
+    of.close()
+    xrs1 = iotbx.pdb.input(file_name=prefix + ".pdb").xray_structure_simple()
+    easy_run.call("phenix.helix_sheet_recs_as_pdb_files %s" % (prefix + ".pdb"))
+    xrs2 = iotbx.pdb.input(
+        file_name="HELIX_1_1_ALA_E_1_ALA_E_16_1_16.pdb"
+    ).xray_structure_simple(crystal_symmetry=xrs1.crystal_symmetry())
+    fc1 = xrs1.structure_factors(d_min=3).f_calc()
+    fc2 = fc1.structure_factors_from_scatterers(xray_structure=xrs2).f_calc()
+    fc1 = flex.abs(abs(fc1).data())
+    fc2 = flex.abs(abs(fc2).data())
+    assert flex.sum(flex.abs(fc1 - fc2)) / flex.sum(flex.abs(fc1 + fc2)) < 1.0e-3
+
+
+if __name__ == "__main__":
+    exercise()

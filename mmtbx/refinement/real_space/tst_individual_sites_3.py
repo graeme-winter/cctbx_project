@@ -499,63 +499,71 @@ ATOM    240  C4   DG B  16       6.936  14.354   3.721  1.00  5.38           C
 TER
 """
 
+
 def get_pdb_inputs(pdb_str, restraints):
-  ppf = mmtbx.utils.process_pdb_file_srv(log=False).process_pdb_files(
-    raw_records=pdb_str.splitlines())[0]
-  xrs = ppf.xray_structure(show_summary = False)
-  restraints_manager=None
-  if(restraints):
-    restraints_manager = mmtbx.restraints.manager(
-      geometry      = ppf.geometry_restraints_manager(show_energies = False),
-      normalization = True)
-  return group_args(
-    ph  = ppf.all_chain_proxies.pdb_hierarchy,
-    grm = restraints_manager,
-    xrs = xrs)
+    ppf = mmtbx.utils.process_pdb_file_srv(log=False).process_pdb_files(
+        raw_records=pdb_str.splitlines()
+    )[0]
+    xrs = ppf.xray_structure(show_summary=False)
+    restraints_manager = None
+    if restraints:
+        restraints_manager = mmtbx.restraints.manager(
+            geometry=ppf.geometry_restraints_manager(show_energies=False),
+            normalization=True,
+        )
+    return group_args(
+        ph=ppf.all_chain_proxies.pdb_hierarchy, grm=restraints_manager, xrs=xrs
+    )
+
 
 def get_map(xrs):
-  f_calc = xrs.structure_factors(d_min = 1.2).f_calc()
-  fft_map = f_calc.fft_map(resolution_factor=0.25)
-  fft_map.apply_sigma_scaling()
-  return fft_map.real_map_unpadded()
+    f_calc = xrs.structure_factors(d_min=1.2).f_calc()
+    fft_map = f_calc.fft_map(resolution_factor=0.25)
+    fft_map.apply_sigma_scaling()
+    return fft_map.real_map_unpadded()
+
 
 def exercise():
-  """
-  Exercise refine "easy" with DNA/RNA.
-  """
-  pi_good = get_pdb_inputs(pdb_str=pdb_str_answer, restraints=False)
-  map_data = get_map(xrs=pi_good.xrs)
-  xrs_good = pi_good.xrs.deep_copy_scatterers()
-  pi_good.ph.write_pdb_file(file_name="answer.pdb",
-    crystal_symmetry=xrs_good.crystal_symmetry())
-  #
-  pi_poor = get_pdb_inputs(pdb_str=pdb_str_poor, restraints=True)
-  pi_poor.ph.write_pdb_file(file_name="poor.pdb")
-  xrs_poor = pi_poor.xrs.deep_copy_scatterers()
-  #
-  d = xrs_good.distances(other=xrs_poor)
-  print(d.min_max_mean().as_tuple())
-  assert flex.max(d)>2
-  assert flex.mean(d)>0.7
-  #
-  xrs_refined = xrs_poor
-  for i in range(3):
-    ero = individual_sites.easy(
-      map_data                    = map_data,
-      xray_structure              = xrs_refined,
-      pdb_hierarchy               = pi_poor.ph,
-      geometry_restraints_manager = pi_poor.grm)
-    xrs_refined = ero.xray_structure
-  # comapre
-  d = xrs_good.distances(other=xrs_refined)
-  print(d.min_max_mean().as_tuple())
-  assert flex.max(d)<0.15
-  assert flex.mean(d)<0.03
-  ero.pdb_hierarchy.write_pdb_file(file_name="refined.pdb",
-    crystal_symmetry=xrs_good.crystal_symmetry())
+    """
+    Exercise refine "easy" with DNA/RNA.
+    """
+    pi_good = get_pdb_inputs(pdb_str=pdb_str_answer, restraints=False)
+    map_data = get_map(xrs=pi_good.xrs)
+    xrs_good = pi_good.xrs.deep_copy_scatterers()
+    pi_good.ph.write_pdb_file(
+        file_name="answer.pdb", crystal_symmetry=xrs_good.crystal_symmetry()
+    )
+    #
+    pi_poor = get_pdb_inputs(pdb_str=pdb_str_poor, restraints=True)
+    pi_poor.ph.write_pdb_file(file_name="poor.pdb")
+    xrs_poor = pi_poor.xrs.deep_copy_scatterers()
+    #
+    d = xrs_good.distances(other=xrs_poor)
+    print(d.min_max_mean().as_tuple())
+    assert flex.max(d) > 2
+    assert flex.mean(d) > 0.7
+    #
+    xrs_refined = xrs_poor
+    for i in range(3):
+        ero = individual_sites.easy(
+            map_data=map_data,
+            xray_structure=xrs_refined,
+            pdb_hierarchy=pi_poor.ph,
+            geometry_restraints_manager=pi_poor.grm,
+        )
+        xrs_refined = ero.xray_structure
+    # comapre
+    d = xrs_good.distances(other=xrs_refined)
+    print(d.min_max_mean().as_tuple())
+    assert flex.max(d) < 0.15
+    assert flex.mean(d) < 0.03
+    ero.pdb_hierarchy.write_pdb_file(
+        file_name="refined.pdb", crystal_symmetry=xrs_good.crystal_symmetry()
+    )
 
-if(__name__ == "__main__"):
-  timer = user_plus_sys_time()
-  exercise()
-  print("Time: %6.2f" % timer.elapsed())
-  print("OK")
+
+if __name__ == "__main__":
+    timer = user_plus_sys_time()
+    exercise()
+    print("Time: %6.2f" % timer.elapsed())
+    print("OK")

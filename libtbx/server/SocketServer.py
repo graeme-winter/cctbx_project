@@ -161,8 +161,7 @@ class TCPServer:
         """Constructor.  May be extended, do not override."""
         self.server_address = server_address
         self.RequestHandlerClass = RequestHandlerClass
-        self.socket = socket.socket(self.address_family,
-                                    self.socket_type)
+        self.socket = socket.socket(self.address_family, self.socket_type)
         self.server_bind()
         self.server_activate()
 
@@ -172,7 +171,7 @@ class TCPServer:
         May be overridden.
 
         """
-        #print self.server_address
+        # print self.server_address
         self.socket.bind(self.server_address)
 
     def server_activate(self):
@@ -250,12 +249,13 @@ class TCPServer:
         The default is to print a traceback and continue.
 
         """
-        print('-'*40)
-        print('Exception happened during processing of request from', end=' ')
+        print("-" * 40)
+        print("Exception happened during processing of request from", end=" ")
         print(client_address)
         import traceback
+
         traceback.print_exc()
-        print('-'*40)
+        print("-" * 40)
 
 
 class UDPServer(TCPServer):
@@ -285,7 +285,8 @@ class ForkingMixIn:
         """Internal routine to wait for died children."""
         while self.active_children:
             pid, status = os.waitpid(0, os.WNOHANG)
-            if not pid: break
+            if not pid:
+                break
             self.active_children.remove(pid)
 
     def process_request(self, request, client_address):
@@ -306,8 +307,7 @@ class ForkingMixIn:
                 os._exit(0)
             except Exception:
                 try:
-                    self.handle_error(request,
-                                      client_address)
+                    self.handle_error(request, client_address)
                 finally:
                     os._exit(1)
 
@@ -320,18 +320,28 @@ class ThreadingMixIn:
         """Start a new thread to process the request."""
         import thread, threading
 
-        t=threading.Thread(target=self.finish_request,
-                                args=(request, client_address))
+        t = threading.Thread(target=self.finish_request, args=(request, client_address))
         t.setDaemon(1)
         t.start()
 
-class ForkingUDPServer(ForkingMixIn, UDPServer): pass
-class ForkingTCPServer(ForkingMixIn, TCPServer): pass
 
-class ThreadingUDPServer(ThreadingMixIn, UDPServer): pass
-class ThreadingTCPServer(ThreadingMixIn, TCPServer): pass
+class ForkingUDPServer(ForkingMixIn, UDPServer):
+    pass
 
-if hasattr(socket, 'AF_UNIX'):
+
+class ForkingTCPServer(ForkingMixIn, TCPServer):
+    pass
+
+
+class ThreadingUDPServer(ThreadingMixIn, UDPServer):
+    pass
+
+
+class ThreadingTCPServer(ThreadingMixIn, TCPServer):
+    pass
+
+
+if hasattr(socket, "AF_UNIX"):
 
     class UnixStreamServer(TCPServer):
         address_family = socket.AF_UNIX
@@ -339,9 +349,12 @@ if hasattr(socket, 'AF_UNIX'):
     class UnixDatagramServer(UDPServer):
         address_family = socket.AF_UNIX
 
-    class ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer): pass
+    class ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer):
+        pass
 
-    class ThreadingUnixDatagramServer(ThreadingMixIn, UnixDatagramServer): pass
+    class ThreadingUnixDatagramServer(ThreadingMixIn, UnixDatagramServer):
+        pass
+
 
 class BaseRequestHandler:
 
@@ -370,7 +383,7 @@ class BaseRequestHandler:
             self.handle()
             self.finish()
         finally:
-            sys.exc_info()[2] = None    # Help garbage collection
+            sys.exc_info()[2] = None  # Help garbage collection
 
     def setup(self):
         pass
@@ -399,8 +412,8 @@ class StreamRequestHandler(BaseRequestHandler):
 
     def setup(self):
         self.connection = self.request
-        self.rfile = self.connection.makefile('rb', 0)
-        self.wfile = self.connection.makefile('wb', 0)
+        self.rfile = self.connection.makefile("rb", 0)
+        self.wfile = self.connection.makefile("wb", 0)
 
     def finish(self):
         self.wfile.flush()
@@ -414,6 +427,7 @@ class DatagramRequestHandler(BaseRequestHandler):
 
     def setup(self):
         from six.moves import cStringIO as StringIO
+
         self.packet, self.socket = self.request
         self.rfile = StringIO(self.packet)
         self.wfile = StringIO(self.packet)

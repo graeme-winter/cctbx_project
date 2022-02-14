@@ -100,32 +100,39 @@ TER
 ENDMDL
 END
 """
-#cctbx.diffuse pdb=m.pdb probabilities=0.5,0.5 resolution=4.0 prefix=tst
+# cctbx.diffuse pdb=m.pdb probabilities=0.5,0.5 resolution=4.0 prefix=tst
 def exercise():
-  fo = open("tst_diffuse.pdb","w")
-  print(pdb_str, file=fo)
-  fo.close()
-  cmd = " ".join([
-    "cctbx.diffuse",
-    "pdb=tst_diffuse.pdb",
-    "probabilities=0.5,0.5",
-    "resolution=4.0",
-    "prefix=tst_diffuse"])
-  if 0: print(cmd)
-  easy_run.call(cmd)
-  mas = iotbx.mtz.object(file_name="tst_diffuse.mtz").as_miller_arrays()
-  assert len(mas) == 1
-  ma = mas[0]
-  assert ma.data().size() == 937, ma.data().size()
-  assert approx_equal(ma.d_max_min(), (32.728, 4.0), 1.e-3)
-  assert approx_equal((ma.data()/1000.).min_max_mean().as_tuple(),
-    (0.001, 6.118, 0.35456), 1.e-3)
-  assert ma.info().labels == ['I', 'SIGI']
-  assert approx_equal(ma.unit_cell().parameters(),
-    (50.84,42.77,28.95,90.0,90.0,90.0), 1.e-2)
+    fo = open("tst_diffuse.pdb", "w")
+    print(pdb_str, file=fo)
+    fo.close()
+    cmd = " ".join(
+        [
+            "cctbx.diffuse",
+            "pdb=tst_diffuse.pdb",
+            "probabilities=0.5,0.5",
+            "resolution=4.0",
+            "prefix=tst_diffuse",
+        ]
+    )
+    if 0:
+        print(cmd)
+    easy_run.call(cmd)
+    mas = iotbx.mtz.object(file_name="tst_diffuse.mtz").as_miller_arrays()
+    assert len(mas) == 1
+    ma = mas[0]
+    assert ma.data().size() == 937, ma.data().size()
+    assert approx_equal(ma.d_max_min(), (32.728, 4.0), 1.0e-3)
+    assert approx_equal(
+        (ma.data() / 1000.0).min_max_mean().as_tuple(), (0.001, 6.118, 0.35456), 1.0e-3
+    )
+    assert ma.info().labels == ["I", "SIGI"]
+    assert approx_equal(
+        ma.unit_cell().parameters(), (50.84, 42.77, 28.95, 90.0, 90.0, 90.0), 1.0e-2
+    )
 
-if __name__ == '__main__':
-  t0 = time.time()
-  exercise()
-  print("Time: %5.2f"%(time.time()-t0))
-  print("OK")
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Time: %5.2f" % (time.time() - t0))
+    print("OK")

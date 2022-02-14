@@ -243,60 +243,63 @@ ATOM   3      C  "C4'" . U   A  1  6    ? -79.547  -81.252  -25.987 1.00 96.14  
 
 
 def exercise():
-  pdb_inp1 = iotbx.pdb.input(source_info=None, lines=test_pdb)
-  pdb_inp2 = iotbx.pdb.input(source_info=None, lines=test_cif)
-  model1 = mmtbx.model.manager(pdb_inp1)
-  model2 = mmtbx.model.manager(pdb_inp2)
-  model1_crystal_symmetry=model1.crystal_symmetry()
+    pdb_inp1 = iotbx.pdb.input(source_info=None, lines=test_pdb)
+    pdb_inp2 = iotbx.pdb.input(source_info=None, lines=test_cif)
+    model1 = mmtbx.model.manager(pdb_inp1)
+    model2 = mmtbx.model.manager(pdb_inp2)
+    model1_crystal_symmetry = model1.crystal_symmetry()
 
-  trans_obj1 = iotbx.ncs.input(hierarchy=model1.get_hierarchy())
-  trans_obj2 = iotbx.ncs.input(hierarchy=model2.get_hierarchy())
+    trans_obj1 = iotbx.ncs.input(hierarchy=model1.get_hierarchy())
+    trans_obj2 = iotbx.ncs.input(hierarchy=model2.get_hierarchy())
 
-  nrg1 = trans_obj1.get_ncs_restraints_group_list()
-  nrg2 = trans_obj2.get_ncs_restraints_group_list()
+    nrg1 = trans_obj1.get_ncs_restraints_group_list()
+    nrg2 = trans_obj2.get_ncs_restraints_group_list()
 
-  x1 = nrg1.concatenate_rot_tran()
-  x2 = nrg2.concatenate_rot_tran()
+    x1 = nrg1.concatenate_rot_tran()
+    x2 = nrg2.concatenate_rot_tran()
 
-  x = (x1 - x2).as_double()
-  assert approx_equal(x.min_max_mean().as_tuple(), (0,0,0))
-  #
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=test_cif)
-  transform_info = pdb_inp.process_MTRIX_records()
-  results = transform_info.as_pdb_string()
+    x = (x1 - x2).as_double()
+    assert approx_equal(x.min_max_mean().as_tuple(), (0, 0, 0))
+    #
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_cif)
+    transform_info = pdb_inp.process_MTRIX_records()
+    results = transform_info.as_pdb_string()
 
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb)
-  transform_info = pdb_inp.process_MTRIX_records()
-  expected = transform_info.as_pdb_string()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb)
+    transform_info = pdb_inp.process_MTRIX_records()
+    expected = transform_info.as_pdb_string()
 
-  assert approx_equal(results,expected)
+    assert approx_equal(results, expected)
 
-  # test when there is only one mtrix
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=test_cif2)
-  transform_info = pdb_inp.process_MTRIX_records()
-  results = transform_info.as_pdb_string()
-  r = ""
-  for l in results.split('\n'):
-    r += l.strip() + '\n'
-  assert not show_diff(r, """MTRIX1   1 -0.999932 -0.011239  0.003138      174.44280
+    # test when there is only one mtrix
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_cif2)
+    transform_info = pdb_inp.process_MTRIX_records()
+    results = transform_info.as_pdb_string()
+    r = ""
+    for l in results.split("\n"):
+        r += l.strip() + "\n"
+    assert not show_diff(
+        r,
+        """MTRIX1   1 -0.999932 -0.011239  0.003138      174.44280
 MTRIX2   1  0.010826 -0.793178  0.608894       -1.51400
 MTRIX3   1 -0.004354  0.608886  0.793246        0.70450
-""")
-  m = mmtbx.model.manager(pdb_inp,
-   crystal_symmetry=model1_crystal_symmetry)
-  xrs = m.get_xray_structure()
-  m.set_xray_structure(xrs)
+""",
+    )
+    m = mmtbx.model.manager(pdb_inp, crystal_symmetry=model1_crystal_symmetry)
+    xrs = m.get_xray_structure()
+    m.set_xray_structure(xrs)
+
 
 def exercise_ncs_loop_1_elem():
-  """
-  Exercise the case when _struct_ncs_oper is a loop but contains only one row.
-  See the difference between test_cif2 and test_cif2_1
-  """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=test_cif2_1)
-  model = mmtbx.model.manager(pdb_inp)
+    """
+    Exercise the case when _struct_ncs_oper is a loop but contains only one row.
+    See the difference between test_cif2 and test_cif2_1
+    """
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_cif2_1)
+    model = mmtbx.model.manager(pdb_inp)
 
 
 if __name__ == "__main__":
-  exercise()
-  exercise_ncs_loop_1_elem()
-  print("OK")
+    exercise()
+    exercise_ncs_loop_1_elem()
+    print("OK")

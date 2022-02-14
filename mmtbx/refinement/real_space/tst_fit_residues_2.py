@@ -80,42 +80,48 @@ TER
 END
 """
 
-def exercise(d_min = 1.0, resolution_factor = 0.1, i_pdb = 0):
-  """
-  Run into a water clash if needed: water is considered as just a map peak.
-  """
-  t = mmtbx.refinement.real_space.setup_test(
-    pdb_answer        = pdb_answer,
-    pdb_poor          = pdb_poor,
-    i_pdb             = i_pdb,
-    d_min             = d_min,
-    residues          = ["TYR"],
-    resolution_factor = resolution_factor,
-    pdb_for_map       = pdb_for_map)
-  #
-  ph = t.ph_poor
-  for i in [1,2,3]:
-    result = mmtbx.refinement.real_space.fit_residues.run(
-      pdb_hierarchy     = ph,
-      vdw_radii         = t.vdw,
-      crystal_symmetry  = t.crystal_symmetry,
-      map_data          = t.target_map,
-      backbone_sample   = True,
-      rotatable_hd      = t.rotatable_hd,
-      rotamer_manager   = t.rotamer_manager,
-      sin_cos_table     = t.sin_cos_table,
-      mon_lib_srv       = t.mon_lib_srv)
-    ph = result.pdb_hierarchy
-  result.pdb_hierarchy.write_pdb_file(file_name = "refined_%s.pdb"%str(i_pdb),
-    crystal_symmetry = t.crystal_symmetry)
-  #
-  mmtbx.refinement.real_space.check_sites_match(
-    ph_answer          = t.ph_answer,
-    ph_refined         = result.pdb_hierarchy,
-    exclude_atom_names = ["CE1","CE2","CD1","CD2"],
-    tol                = 0.35)
 
-if(__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("Time: %6.4f"%(time.time()-t0))
+def exercise(d_min=1.0, resolution_factor=0.1, i_pdb=0):
+    """
+    Run into a water clash if needed: water is considered as just a map peak.
+    """
+    t = mmtbx.refinement.real_space.setup_test(
+        pdb_answer=pdb_answer,
+        pdb_poor=pdb_poor,
+        i_pdb=i_pdb,
+        d_min=d_min,
+        residues=["TYR"],
+        resolution_factor=resolution_factor,
+        pdb_for_map=pdb_for_map,
+    )
+    #
+    ph = t.ph_poor
+    for i in [1, 2, 3]:
+        result = mmtbx.refinement.real_space.fit_residues.run(
+            pdb_hierarchy=ph,
+            vdw_radii=t.vdw,
+            crystal_symmetry=t.crystal_symmetry,
+            map_data=t.target_map,
+            backbone_sample=True,
+            rotatable_hd=t.rotatable_hd,
+            rotamer_manager=t.rotamer_manager,
+            sin_cos_table=t.sin_cos_table,
+            mon_lib_srv=t.mon_lib_srv,
+        )
+        ph = result.pdb_hierarchy
+    result.pdb_hierarchy.write_pdb_file(
+        file_name="refined_%s.pdb" % str(i_pdb), crystal_symmetry=t.crystal_symmetry
+    )
+    #
+    mmtbx.refinement.real_space.check_sites_match(
+        ph_answer=t.ph_answer,
+        ph_refined=result.pdb_hierarchy,
+        exclude_atom_names=["CE1", "CE2", "CD1", "CD2"],
+        tol=0.35,
+    )
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Time: %6.4f" % (time.time() - t0))

@@ -16,167 +16,214 @@ from libtbx.test_utils import approx_equal
 from six.moves import range
 from six.moves import map
 
-__author__ = 'Youval'
+__author__ = "Youval"
 
 import libtbx.load_env
+
 have_phenix = False
 if libtbx.env.has_module(name="phenix"):
-  from phenix.command_line import simple_ncs_from_pdb
-  have_phenix = True
+    from phenix.command_line import simple_ncs_from_pdb
+
+    have_phenix = True
 
 
 class TestNcsGroupPreprocessing(unittest.TestCase):
-  """ Test spec and phil, NCS and ASU information processing"""
+    """Test spec and phil, NCS and ASU information processing"""
 
-  def setUp(self):
-    """ Create temporary folder for temp files produced during test """
-    self.currnet_dir = os.getcwd()
-    now = datetime.now().strftime("%I%p_%m_%d_%Y")
-    self.tempdir = 'TestNcsGroupPreprocessing_{}'.format(now)
-    if not os.path.isdir(self.tempdir):
-      os.mkdir(self.tempdir)
-    os.chdir(self.tempdir)
-    # self.pdb_obj = pdb.hierarchy.input(pdb_string=test_pdb_ncs_spec)
-    self.pdb_inp = pdb.input(source_info=None, lines=test_pdb_ncs_spec)
-    self.ph = self.pdb_inp.construct_hierarchy()
-    self.pdb_inp = pdb.input(source_info=None, lines=test_pdb_ncs_spec)
+    def setUp(self):
+        """Create temporary folder for temp files produced during test"""
+        self.currnet_dir = os.getcwd()
+        now = datetime.now().strftime("%I%p_%m_%d_%Y")
+        self.tempdir = "TestNcsGroupPreprocessing_{}".format(now)
+        if not os.path.isdir(self.tempdir):
+            os.mkdir(self.tempdir)
+        os.chdir(self.tempdir)
+        # self.pdb_obj = pdb.hierarchy.input(pdb_string=test_pdb_ncs_spec)
+        self.pdb_inp = pdb.input(source_info=None, lines=test_pdb_ncs_spec)
+        self.ph = self.pdb_inp.construct_hierarchy()
+        self.pdb_inp = pdb.input(source_info=None, lines=test_pdb_ncs_spec)
 
-  def test_phil_processing(self):
-    """ Verify that phil parameters are properly processed
-    need to supply exclude_selection=None because model consist only from UNK
-    residues. """
-    # print sys._getframe().f_code.co_name
-    # read file and create pdb object
-    pdb_inp = pdb.input(source_info=None, lines=pdb_test_data2)
-    phil_groups = ncs_group_master_phil.fetch(
-        iotbx.phil.parse(pdb_test_data2_phil)).extract()
-    p = iotbx.ncs.input.get_default_params()
-    p.ncs_search.exclude_selection=None
-    p.ncs_search.minimum_number_of_atoms_in_copy=0
-    trans_obj = iotbx.ncs.input(
-        ncs_phil_groups=phil_groups.ncs_group,
-        hierarchy=pdb_inp.construct_hierarchy(),
-        params=p.ncs_search)
-    nrgl = trans_obj.get_ncs_restraints_group_list()
-    # nrgl._show()
-    sels = nrgl.get_array_of_str_selections()
-    assert sels == [["chain 'A'", "chain 'D'", "chain 'G'"],
-        ["chain 'B' or chain 'C'", "chain 'E' or chain 'F'", "chain 'H' or chain 'I'"]]
+    def test_phil_processing(self):
+        """Verify that phil parameters are properly processed
+        need to supply exclude_selection=None because model consist only from UNK
+        residues."""
+        # print sys._getframe().f_code.co_name
+        # read file and create pdb object
+        pdb_inp = pdb.input(source_info=None, lines=pdb_test_data2)
+        phil_groups = ncs_group_master_phil.fetch(
+            iotbx.phil.parse(pdb_test_data2_phil)
+        ).extract()
+        p = iotbx.ncs.input.get_default_params()
+        p.ncs_search.exclude_selection = None
+        p.ncs_search.minimum_number_of_atoms_in_copy = 0
+        trans_obj = iotbx.ncs.input(
+            ncs_phil_groups=phil_groups.ncs_group,
+            hierarchy=pdb_inp.construct_hierarchy(),
+            params=p.ncs_search,
+        )
+        nrgl = trans_obj.get_ncs_restraints_group_list()
+        # nrgl._show()
+        sels = nrgl.get_array_of_str_selections()
+        assert sels == [
+            ["chain 'A'", "chain 'D'", "chain 'G'"],
+            [
+                "chain 'B' or chain 'C'",
+                "chain 'E' or chain 'F'",
+                "chain 'H' or chain 'I'",
+            ],
+        ]
 
-  def test_superpos_pdb(self):
-    """  verify creation of transformations using superpose_pdb
-    need to supply exclude_selection=None because model consist only from UNK
-    residues. """
-    # print sys._getframe().f_code.co_name
-    # read file and create pdb object
-    pdb_inp = pdb.input(source_info=None, lines=pdb_test_data1)
-    phil_groups = ncs_group_master_phil.fetch(
-        iotbx.phil.parse(pdb_test_data1_phil)).extract()
-    p = iotbx.ncs.input.get_default_params()
-    p.ncs_search.exclude_selection=None
-    p.ncs_search.minimum_number_of_atoms_in_copy=0
-    trans_obj = ncs.input(
-        ncs_phil_groups=phil_groups.ncs_group,
-        hierarchy=pdb_inp.construct_hierarchy(),
-        params=p.ncs_search)
-    nrgl = trans_obj.get_ncs_restraints_group_list()
-    # nrgl._show()
-    sels = nrgl.get_array_of_str_selections()
-    assert sels == [["chain 'A'", "chain 'C'", "chain 'E'"],
-        ["chain 'B'", "chain 'D'", "chain 'F'"]]
-    self.assertTrue(approx_equal(nrgl[0].copies[0].r,
-        matrix.sqr(
-      [0.309017,-0.809017,0.5,0.809017,0.5,0.309017,-0.5,0.309017,0.809017]), eps=0.01))
+    def test_superpos_pdb(self):
+        """verify creation of transformations using superpose_pdb
+        need to supply exclude_selection=None because model consist only from UNK
+        residues."""
+        # print sys._getframe().f_code.co_name
+        # read file and create pdb object
+        pdb_inp = pdb.input(source_info=None, lines=pdb_test_data1)
+        phil_groups = ncs_group_master_phil.fetch(
+            iotbx.phil.parse(pdb_test_data1_phil)
+        ).extract()
+        p = iotbx.ncs.input.get_default_params()
+        p.ncs_search.exclude_selection = None
+        p.ncs_search.minimum_number_of_atoms_in_copy = 0
+        trans_obj = ncs.input(
+            ncs_phil_groups=phil_groups.ncs_group,
+            hierarchy=pdb_inp.construct_hierarchy(),
+            params=p.ncs_search,
+        )
+        nrgl = trans_obj.get_ncs_restraints_group_list()
+        # nrgl._show()
+        sels = nrgl.get_array_of_str_selections()
+        assert sels == [
+            ["chain 'A'", "chain 'C'", "chain 'E'"],
+            ["chain 'B'", "chain 'D'", "chain 'F'"],
+        ]
+        self.assertTrue(
+            approx_equal(
+                nrgl[0].copies[0].r,
+                matrix.sqr(
+                    [
+                        0.309017,
+                        -0.809017,
+                        0.5,
+                        0.809017,
+                        0.5,
+                        0.309017,
+                        -0.5,
+                        0.309017,
+                        0.809017,
+                    ]
+                ),
+                eps=0.01,
+            )
+        )
 
-  def test_spec_reading(self):
-    """ verify creating and processing spec
-    This is ncs.ncs - specific functionality
-    """
-    if have_phenix:
-      xrs = self.pdb_inp.xray_structure_simple()
-      xrs_unit_cell = xrs.orthorhombic_unit_cell_around_centered_scatterers(
-        buffer_size=8)
-      self.ph.adopt_xray_structure(xrs_unit_cell)
-      of = open("test_ncs_spec.pdb", "w")
-      print(self.ph.as_pdb_string(crystal_symmetry=xrs.crystal_symmetry()), file=of)
-      of.close()
-      # create a spec file
-      ncs_from_pdb=simple_ncs_from_pdb.run(
-        args=["pdb_in=test_ncs_spec.pdb", "write_spec_files=True"],
-        log=null_out())
-    else:
-      print("phenix not available, skipping test_spec_reading()")
-      pass
+    def test_spec_reading(self):
+        """verify creating and processing spec
+        This is ncs.ncs - specific functionality
+        """
+        if have_phenix:
+            xrs = self.pdb_inp.xray_structure_simple()
+            xrs_unit_cell = xrs.orthorhombic_unit_cell_around_centered_scatterers(
+                buffer_size=8
+            )
+            self.ph.adopt_xray_structure(xrs_unit_cell)
+            of = open("test_ncs_spec.pdb", "w")
+            print(
+                self.ph.as_pdb_string(crystal_symmetry=xrs.crystal_symmetry()), file=of
+            )
+            of.close()
+            # create a spec file
+            ncs_from_pdb = simple_ncs_from_pdb.run(
+                args=["pdb_in=test_ncs_spec.pdb", "write_spec_files=True"],
+                log=null_out(),
+            )
+        else:
+            print("phenix not available, skipping test_spec_reading()")
+            pass
 
-  def test_processing_of_asu_2(self):
-    """ processing complete ASU
-    If MTRIX records are present, they are ignored
-    This maybe ncs.ncs - specific functionality, not clear yet.
-    """
-    # print sys._getframe().f_code.co_name
-    # reading and processing the spec file
-    trans_obj = ncs.input(hierarchy = self.pdb_inp.construct_hierarchy())
-    nrgl = trans_obj.get_ncs_restraints_group_list()
-    # nrgl._show()
-    sels = nrgl.get_array_of_str_selections()
-    assert sels == [["chain 'A'", "chain 'B'", "chain 'C'"],
-        ["chain 'D'", "chain 'E'"]]
+    def test_processing_of_asu_2(self):
+        """processing complete ASU
+        If MTRIX records are present, they are ignored
+        This maybe ncs.ncs - specific functionality, not clear yet.
+        """
+        # print sys._getframe().f_code.co_name
+        # reading and processing the spec file
+        trans_obj = ncs.input(hierarchy=self.pdb_inp.construct_hierarchy())
+        nrgl = trans_obj.get_ncs_restraints_group_list()
+        # nrgl._show()
+        sels = nrgl.get_array_of_str_selections()
+        assert sels == [
+            ["chain 'A'", "chain 'B'", "chain 'C'"],
+            ["chain 'D'", "chain 'E'"],
+        ]
 
-  def test_print_ncs_phil_param(self):
-    """ Verify correct printout of NCS phil parameters.
-    need to supply exclude_selection=None because model consist only from UNK
-    residues. """
-    # print sys._getframe().f_code.co_name
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_test_data2)
-    phil_groups = ncs_group_master_phil.fetch(
-        iotbx.phil.parse(pdb_test_data2_phil)).extract()
-    p = iotbx.ncs.input.get_default_params()
-    p.ncs_search.exclude_selection=None
-    p.ncs_search.minimum_number_of_atoms_in_copy=0
-    trans_obj = ncs.input(
-      ncs_phil_groups=phil_groups.ncs_group,
-      hierarchy=pdb_inp.construct_hierarchy(),
-      params = p.ncs_search)
-    result = trans_obj.print_ncs_phil_param(write=False)
-    # print "="*50
-    # print "resutl"
-    # print result
-    # print "="*50
-    test = (pdb_test_data2_phil == result)
-    test = test or (pdb_test_data2_phil_reverse == result)
-    self.assertTrue(test)
-    #
+    def test_print_ncs_phil_param(self):
+        """Verify correct printout of NCS phil parameters.
+        need to supply exclude_selection=None because model consist only from UNK
+        residues."""
+        # print sys._getframe().f_code.co_name
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_test_data2)
+        phil_groups = ncs_group_master_phil.fetch(
+            iotbx.phil.parse(pdb_test_data2_phil)
+        ).extract()
+        p = iotbx.ncs.input.get_default_params()
+        p.ncs_search.exclude_selection = None
+        p.ncs_search.minimum_number_of_atoms_in_copy = 0
+        trans_obj = ncs.input(
+            ncs_phil_groups=phil_groups.ncs_group,
+            hierarchy=pdb_inp.construct_hierarchy(),
+            params=p.ncs_search,
+        )
+        result = trans_obj.print_ncs_phil_param(write=False)
+        # print "="*50
+        # print "resutl"
+        # print result
+        # print "="*50
+        test = pdb_test_data2_phil == result
+        test = test or (pdb_test_data2_phil_reverse == result)
+        self.assertTrue(test)
+        #
 
-  def test_finding_partial_ncs(self):
-    # print sys._getframe().f_code.co_name
-    params = ncs.input.get_default_params()
-    params.ncs_search.chain_similarity_threshold = 0.2
-    ncs_inp = ncs.input(
-      hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy(),
-      params = params.ncs_search)
-    nrgl = ncs_inp.get_ncs_restraints_group_list()
-    # nrgl._show()
-    sels = nrgl.get_array_of_str_selections()
-    print(sels)
-    assert sels == [[
-        "(chain 'A' and (name N or name CA or name C or name O ))",
-        "chain 'B'",
-        "(chain 'C' and (name N or name CA or name C or name O ))"]]
+    def test_finding_partial_ncs(self):
+        # print sys._getframe().f_code.co_name
+        params = ncs.input.get_default_params()
+        params.ncs_search.chain_similarity_threshold = 0.2
+        ncs_inp = ncs.input(
+            hierarchy=iotbx.pdb.input(
+                source_info=None, lines=pdb_str
+            ).construct_hierarchy(),
+            params=params.ncs_search,
+        )
+        nrgl = ncs_inp.get_ncs_restraints_group_list()
+        # nrgl._show()
+        sels = nrgl.get_array_of_str_selections()
+        print(sels)
+        assert sels == [
+            [
+                "(chain 'A' and (name N or name CA or name C or name O ))",
+                "chain 'B'",
+                "(chain 'C' and (name N or name CA or name C or name O ))",
+            ]
+        ]
 
-  def test_format_string_longer_than_80(self):
-    """ Check that strings longer that 80 characters are split correctly """
-    # print sys._getframe().f_code.co_name
-    s = [str (x) for x in range(50)]
-    s = ''.join(s)
-    result = format_80(s)
-    expected = '0123456789101112131415161718192021222324252627282930313233' \
-               '3435363738394041424344 \\ \n4546474849'
-    self.assertEqual(result,expected)
+    def test_format_string_longer_than_80(self):
+        """Check that strings longer that 80 characters are split correctly"""
+        # print sys._getframe().f_code.co_name
+        s = [str(x) for x in range(50)]
+        s = "".join(s)
+        result = format_80(s)
+        expected = (
+            "0123456789101112131415161718192021222324252627282930313233"
+            "3435363738394041424344 \\ \n4546474849"
+        )
+        self.assertEqual(result, expected)
 
-  def tearDown(self):
-    """ remove temp files and folder """
-    os.chdir(self.currnet_dir)
-    shutil.rmtree(self.tempdir)
+    def tearDown(self):
+        """remove temp files and folder"""
+        os.chdir(self.currnet_dir)
+        shutil.rmtree(self.tempdir)
+
 
 pdb_str = """\
 CRYST1   26.628   30.419   28.493  90.00  90.00  90.00 P 1
@@ -207,7 +254,7 @@ TER      24      THR C   1
 END
 """
 
-pdb_test_data1="""\
+pdb_test_data1 = """\
 ATOM    749  O   UNK A  90      28.392  67.262  97.682  1.00  0.00           O
 ATOM    750  N   UNK A  91      30.420  66.924  98.358  1.00  0.00           N
 TER
@@ -225,7 +272,7 @@ ATOM   1495  N   UNK F  67       7.362 108.699  49.412  1.00  0.00           N
 TER
 """
 
-pdb_str2="""\
+pdb_str2 = """\
 CRYST1  106.820   62.340  114.190  90.00  90.00  90.00 P 21 21 21   16
 SCALE1      0.009361  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.016041  0.000000        0.00000
@@ -242,7 +289,7 @@ ATOM      9  OE2 GLU A   1      63.997  34.492  30.232  1.00207.79           O
 END
 """
 
-pdb_test_data1_phil = '''\
+pdb_test_data1_phil = """\
 ncs_group {
   reference = 'chain A'
   selection = 'chain C'
@@ -253,9 +300,9 @@ ncs_group {
   selection = 'chain D'
   selection = 'chain F'
 }
-'''
+"""
 
-pdb_test_data2="""\
+pdb_test_data2 = """\
 ATOM    749  O   UNK A  90      28.392  67.262  97.682  1.00  0.00           O
 ATOM    750  N   UNK B  91      30.420  66.924  98.358  1.00  0.00           N
 ATOM    750  N   UNK X  93      38.420  76.924  58.358  1.00  0.00           N
@@ -271,7 +318,7 @@ ATOM   1495  N   UNK I  67       7.362 108.699  49.412  1.00  0.00           N
 TER
 """
 
-pdb_test_data2_phil = '''\
+pdb_test_data2_phil = """\
 ncs_group {
   reference = chain 'A'
   selection = chain 'D'
@@ -282,9 +329,9 @@ ncs_group {
   selection = chain 'E' or chain 'F'
   selection = chain 'H' or chain 'I'
 }
-'''
+"""
 
-pdb_test_data2_phil_reverse = '''\
+pdb_test_data2_phil_reverse = """\
 ncs_group {
   reference = chain 'B' or chain 'C'
   selection = chain 'E' or chain 'F'
@@ -295,9 +342,9 @@ ncs_group {
   selection = chain 'D'
   selection = chain 'G'
 }
-'''
+"""
 
-test_phil_3 = '''\
+test_phil_3 = """\
 ncs_group {
   reference = chain D and (resseq 1:7)
   selection = chain E and (resseq 1:7)
@@ -307,9 +354,9 @@ ncs_group {
   selection = chain B and (resseq 151:159)
   selection = chain C and (resseq 151:159)
 }
-'''
+"""
 
-user_phil3 = '''\
+user_phil3 = """\
 ncs_group {
   reference = 'chain A'
   selection = 'chain B'
@@ -319,9 +366,9 @@ ncs_group {
   reference = 'chain B'
   selection = 'chain D'
 }
-'''
+"""
 
-user_phil4 = '''\
+user_phil4 = """\
 ncs_group {
   reference = 'chain A'
   selection = 'chain C'
@@ -331,9 +378,9 @@ ncs_group {
   reference = 'chain B'
   selection = 'chain D'
 }
-'''
+"""
 
-user_phil5 = '''\
+user_phil5 = """\
 ncs_group {
   reference = 'chain A'
   selection = 'chain C'
@@ -343,9 +390,9 @@ ncs_group {
   reference = 'chain C'
   selection = 'chain E'
 }
-'''
+"""
 
-test_pdb_ncs_spec = '''\
+test_pdb_ncs_spec = """\
 CRYST1  577.812  448.715  468.790  90.00  90.00  90.00 P 1
 SCALE1      0.001731  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.002229  0.000000        0.00000
@@ -404,10 +451,10 @@ ATOM      5  CA  THR E   5       9.101  -9.092   9.421  1.00 20.00           C
 ATOM      6  CA  THR E   6       9.001  -8.000  10.343  1.00 20.00           C
 ATOM      7  CA  THR E   7       8.964  -8.565   8.000  1.00 20.00           C
 TER
-'''
+"""
 
 
-test_ncs_spec = '''\
+test_ncs_spec = """\
 
 Summary of NCS information
 Fri Jun 13 13:18:12 2014
@@ -483,22 +530,24 @@ MATCHING 7
 
 
 
-'''
+"""
+
 
 def run_selected_tests():
-  """  Run selected tests
+    """Run selected tests
 
-  1) List in "tests" the names of the particular test you want to run
-  2) Comment out unittest.main()
-  3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
-  """
-  tests = ['test_finding_partial_ncs']
-  suite = unittest.TestSuite(list(map(TestNcsGroupPreprocessing,tests)))
-  return suite
+    1) List in "tests" the names of the particular test you want to run
+    2) Comment out unittest.main()
+    3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
+    """
+    tests = ["test_finding_partial_ncs"]
+    suite = unittest.TestSuite(list(map(TestNcsGroupPreprocessing, tests)))
+    return suite
 
-if __name__=='__main__':
-  # use for individual tests
-  # unittest.TextTestRunner().run(run_selected_tests())
 
-  # Use to run all tests
-  unittest.main(verbosity=0)
+if __name__ == "__main__":
+    # use for individual tests
+    # unittest.TextTestRunner().run(run_selected_tests())
+
+    # Use to run all tests
+    unittest.main(verbosity=0)

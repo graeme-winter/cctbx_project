@@ -97,44 +97,51 @@ from libtbx import easy_run
 import libtbx.load_env
 import sys, os
 
-def run(args):
-  assert len(args) == 0
-  tmpdir = "scitbx_rigid_body_essence"
-  if (not os.path.isdir(tmpdir)):
-    os.mkdir(tmpdir)
-  os.chdir(tmpdir)
-  scitbx_dist = libtbx.env.dist_path(module_name="scitbx")
-  def cp(file_name, target="."):
-    copy_file(os.path.join(scitbx_dist, file_name), target)
-  cp("matrix/__init__.py", "scitbx_matrix.py")
-  cp("rigid_body/essence/featherstone.py")
-  cp("rigid_body/essence/spatial_lib.py")
-  cp("rigid_body/essence/joint_lib.py")
-  cp("rigid_body/essence/body_lib.py")
-  cp("rigid_body/essence/tst_basic.py")
-  open("README.txt", "w").write(__doc__)
-  os.chdir("..")
-  if (   os.name == "nt"
-      or not libtbx.env.has_module(name="docutils")):
-    return
-  remove_files("scitbx_rigid_body_essence.tgz")
-  remove_files("scitbx_rigid_body_essence.zip")
-  easy_run.fully_buffered(
-    command="tar zcf scitbx_rigid_body_essence.tgz scitbx_rigid_body_essence")\
-      .raise_if_errors_or_output()
-  assert os.path.isfile("scitbx_rigid_body_essence.tgz")
-  easy_run.fully_buffered(
-    command="zip -r scitbx_rigid_body_essence.zip scitbx_rigid_body_essence")\
-      .raise_if_errors()
-  assert os.path.isfile("scitbx_rigid_body_essence.zip")
-  os.chdir("scitbx_rigid_body_essence")
-  easy_run.fully_buffered(
-    command="docutils.rst2html README.txt > README.html")\
-      .raise_if_errors()
-  remove_files("README.txt")
-  print(file=open(".htaccess", "w").write("""\
-Options Indexes
-"""))
 
-if (__name__ == "__main__"):
-  run(sys.argv[1:])
+def run(args):
+    assert len(args) == 0
+    tmpdir = "scitbx_rigid_body_essence"
+    if not os.path.isdir(tmpdir):
+        os.mkdir(tmpdir)
+    os.chdir(tmpdir)
+    scitbx_dist = libtbx.env.dist_path(module_name="scitbx")
+
+    def cp(file_name, target="."):
+        copy_file(os.path.join(scitbx_dist, file_name), target)
+
+    cp("matrix/__init__.py", "scitbx_matrix.py")
+    cp("rigid_body/essence/featherstone.py")
+    cp("rigid_body/essence/spatial_lib.py")
+    cp("rigid_body/essence/joint_lib.py")
+    cp("rigid_body/essence/body_lib.py")
+    cp("rigid_body/essence/tst_basic.py")
+    open("README.txt", "w").write(__doc__)
+    os.chdir("..")
+    if os.name == "nt" or not libtbx.env.has_module(name="docutils"):
+        return
+    remove_files("scitbx_rigid_body_essence.tgz")
+    remove_files("scitbx_rigid_body_essence.zip")
+    easy_run.fully_buffered(
+        command="tar zcf scitbx_rigid_body_essence.tgz scitbx_rigid_body_essence"
+    ).raise_if_errors_or_output()
+    assert os.path.isfile("scitbx_rigid_body_essence.tgz")
+    easy_run.fully_buffered(
+        command="zip -r scitbx_rigid_body_essence.zip scitbx_rigid_body_essence"
+    ).raise_if_errors()
+    assert os.path.isfile("scitbx_rigid_body_essence.zip")
+    os.chdir("scitbx_rigid_body_essence")
+    easy_run.fully_buffered(
+        command="docutils.rst2html README.txt > README.html"
+    ).raise_if_errors()
+    remove_files("README.txt")
+    print(
+        file=open(".htaccess", "w").write(
+            """\
+Options Indexes
+"""
+        )
+    )
+
+
+if __name__ == "__main__":
+    run(sys.argv[1:])

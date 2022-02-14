@@ -12,6 +12,7 @@ COMM = MPI.COMM_WORLD
 
 if COMM.rank > 0:
     import warnings
+
     warnings.filterwarnings("ignore")
 
 
@@ -37,7 +38,6 @@ phil_scope = parse(philz)
 
 
 class Script:
-
     def __init__(self):
         from dials.util.options import OptionParser
 
@@ -50,33 +50,37 @@ class Script:
                 read_experiments=False,
                 read_reflections=False,
                 check_format=False,
-                epilog=help_message)
+                epilog=help_message,
+            )
         self.parser = COMM.bcast(self.parser)
-        self.params, _ = self.parser.parse_args(show_diff_phil=COMM.rank==0)
+        self.params, _ = self.parser.parse_args(show_diff_phil=COMM.rank == 0)
 
     def run(self):
-        #self.params = None
-        #if COMM.rank == 0:
-        #self.params = COMM.bcast(self.params)
+        # self.params = None
+        # if COMM.rank == 0:
+        # self.params = COMM.bcast(self.params)
         if self.params.pandas_table is None:
             raise ValueError("Pandas table input required")
 
         refine_starttime = time.time()
         if not self.params.refiner.randomize_devices:
-            self.params.simulator.device_id = COMM.rank % self.params.refiner.num_devices
+            self.params.simulator.device_id = (
+                COMM.rank % self.params.refiner.num_devices
+            )
         refiner = ensemble_refine_launcher.global_refiner_from_parameters(self.params)
-        print("Time to refine experiment: %f" % (time.time()- refine_starttime))
+        print("Time to refine experiment: %f" % (time.time() - refine_starttime))
 
-        #TODO save MTZ
+        # TODO save MTZ
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         from line_profiler import LineProfiler
     except ImportError:
         LineProfiler = None
     from simtbx.diffBragg.refiners import stage_two_refiner
     from simtbx.diffBragg import hopper_utils
+
     with show_mail_on_error():
         script = Script()
         RUN = script.run
@@ -84,7 +88,9 @@ if __name__ == '__main__':
         if LineProfiler is not None and script.params.profile:
             lp = LineProfiler()
             lp.add_function(ensemble_refine_launcher.RefineLauncher.launch_refiner)
-            lp.add_function(stage_two_refiner.StageTwoRefiner._compute_functional_and_gradients)
+            lp.add_function(
+                stage_two_refiner.StageTwoRefiner._compute_functional_and_gradients
+            )
             lp.add_function(stage_two_refiner.StageTwoRefiner._run_diffBragg_current)
             lp.add_function(stage_two_refiner.StageTwoRefiner._update_Fcell)
             lp.add_function(stage_two_refiner.StageTwoRefiner._scale_pixel_data)
@@ -96,7 +102,7 @@ if __name__ == '__main__':
 
         if script.params.outdir is None:
             od = script.params.refiner.io.output_dir
-            script.params.outdir = od if od is not None else '.'
+            script.params.outdir = od if od is not None else "."
 
         if script.params.logging.logname is None:
             script.params.logging.logname = "main_stage2.log"
@@ -112,7 +118,18 @@ if __name__ == '__main__':
         if lp is not None:
             stats = lp.get_stats()
             from simtbx.diffBragg import hopper_utils
-            hopper_utils.print_profile(stats,
-                    ["launch_refiner", "_compute_functional_and_gradients", "_run_diffBragg_current",
-                     "_update_Fcell", "_scale_pixel_data", "_Fcell_derivatives", "_mpi_aggregation",
-                     "GatherFromExperiment", "_setup"])
+
+            hopper_utils.print_profile(
+                stats,
+                [
+                    "launch_refiner",
+                    "_compute_functional_and_gradients",
+                    "_run_diffBragg_current",
+                    "_update_Fcell",
+                    "_scale_pixel_data",
+                    "_Fcell_derivatives",
+                    "_mpi_aggregation",
+                    "GatherFromExperiment",
+                    "_setup",
+                ],
+            )

@@ -59,7 +59,8 @@ advancedsettings = PyEmbeddedImage(
     "0f6DhRkZb3oMg4oFCxisqzsxdnNNOYBkumHAwSPJ2fc6/jueVlZGltF79AtX5NA2w3T5PCmu"
     "VAwjBTGTQJLFMEzEMBExNCJahMR/tCgFjgJHC31K6T6ldX9cEx1sa20tF7l1WWbGs4d6e9eu"
     "6e1dLRgXk0zzggXgNuk1k2WjBGSjShIICX09jiGq37zY3W9qLTYipohhI0P7aRESO4fEqpD4"
-    "aUOpRItrkRgaB5G4TkrWw/v7NuYEg88VmCZuw8SQRAH+P6SkFWFFBULWAAAAAElFTkSuQmCC")
+    "aUOpRItrkRgaB5G4TkrWw/v7NuYEg88VmCZuw8SQRAH+P6SkFWFFBULWAAAAAElFTkSuQmCC"
+)
 
 save_all = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAHmUlEQVRYhZ2XTYglVxXHf+dW"
@@ -99,7 +100,8 @@ save_all = PyEmbeddedImage(
     "h0++Zy/tbK0/DrwXuAB0z7/wZ/ve939wVBAdDodSVkWSHh0OKXRKKRUiNG07GM2NStyTaiRq"
     "I7guOzx74sR9BwGEorgaAgD3Hx5AUkpzKaUyhLAILAELwAgYAhUHOhmBBpj26zKwDey4e5NS"
     "oiiKgwD+n+ECqCRb1TtpyKRteuehXwDaB9GRSb332zKEUPX3+C/o5pPFQkg1SgAAAABJRU5E"
-    "rkJggg==")
+    "rkJggg=="
+)
 
 hkl_file = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAAvpQTFRF"
@@ -124,7 +126,8 @@ hkl_file = PyEmbeddedImage(
     "iMJZAFjyEjMjFXvpQXSLYwCFJVJBEyJNuUkKgJ/TaUe78/l4/Npur9f3X3qjCiNcwdZ/yBxh"
     "HxvSsyBgttYTBUE561kAsOOisN6/yhyfJD1qgXuYcw1EkKxDeliuJwVw7oq6L2MALBZz55z2"
     "SGx3cwCWIuatYG4EglbIpJwkQUwBPKlQYFkqpCBohaSw9xz2AWDVE+zDThG0oplD73YGYN2I"
-    "Blh9Hz2wXvVSggDwMiYSAAcU3cbuwDyP1kM/fvQHQgcvwPJisBMAAAAASUVORK5CYII=")
+    "Blh9Hz2wXvVSggDwMiYSAAcU3cbuwDyP1kM/fvQHQgcvwPJisBMAAAAASUVORK5CYII="
+)
 
 hklview_2d = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAAZiS0dE"
@@ -146,7 +149,8 @@ hklview_2d = PyEmbeddedImage(
     "yWQYGxtjZGSk/kup9BJp7nmVgUYharbzWuwsZlp2fiX4CQMVHXhViKo7rl3XHi7VdSgUIhQK"
     "1Z0FwWCQTCZzrsPIOA2b9UBtEgBOpxOn09nyhap6/Onl8/nw+XznkmIhQO7m8nhvXufeD0l2"
     "9vOXcid4y9rL+7du8t3jJII73/9ypdt8e+ja1Uu9mGztPuPFQenRm7vha7f/APVHmKiUVF97"
-    "AAAAAElFTkSuQmCC")
+    "AAAAAElFTkSuQmCC"
+)
 
 clear_left = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAA"
@@ -166,7 +170,8 @@ clear_left = PyEmbeddedImage(
     "j1heXjZtPisqAfIQ+XyeNzA6AwCYm5uDEALz8/N4fX0tjPm+j8XFRdOudRYwRJqmhaOW83re"
     "iFLKjAGAbdsFyNnZ2YINjoYvAfIQ+TzB68hhxfsiDwjAQDJcfnz0K/zLw4ghRvoKYlXG85t2"
     "9N3aAFUQFc+V+sbNeCIPTApRB2q01P4qJqLvP/z+oIg6lP+yTP2/4Adg6gAfe1qwcw05VlEA"
-    "AAAASUVORK5CYII=")
+    "AAAASUVORK5CYII="
+)
 
 hklview_3d = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAAZiS0dE"
@@ -212,7 +217,8 @@ hklview_3d = PyEmbeddedImage(
     "JPRRWhOZdz06Nx5z9BDlkxv6EauNUv36XMj70JvFfNJH9umDSCDYI+pxZs3Ae2cH0dhi8t1/"
     "uDDoVs7GK37Sz4KLL3A+BeclMfYBTHY3EhjMoSOEPZ3Y48cQm38n/p4thLky5sMu7OEafXcd"
     "VsTCDizCjjKmvRdz4DDiFwn840hYvDDI+h0oHUE1Nzd/pT8m/5f/AISoXHZwsQ+WAAAAAElF"
-    "TkSuQmCC")
+    "TkSuQmCC"
+)
 
 search = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAF5klEQVRYhcWWf3BU1RXHP29/"
@@ -244,7 +250,8 @@ search = PyEmbeddedImage(
     "CKvLlfei+906qWs4Ij09vdLZ3SMDPt+++oYjE644wGcQrm3uujr5qPGkhCIRGfD5pLfXu+PI"
     "+8eSrzhAHMKSnZ299a1D7ointU2i8SL2bHn5H68KQBzCnJ6evmXv/pqg74Im6zdsOAZkXjWA"
     "OITRZrM9XTx//kvApIvtl7UQ/TcpimKJ7zz/SNvVBBhL/wLUCyocOuqwfwAAAABJRU5ErkJg"
-    "gg==")
+    "gg=="
+)
 
 pdb_file = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAKT2lDQ1BQaG90b3Nob3AgSUND"
@@ -326,7 +333,8 @@ pdb_file = PyEmbeddedImage(
     "XmJKsSE7wc1jfyb+4RjLV+7m9uNjHN/xa1bs2AFzjQEp4iz0863coLQmEY/zxQPbWMLPsO0M"
     "DfUL+dHhwxKtqanqAl2tHYuIKm4m5aN3+S5BQCQaxQZ8vBmAnm2rIuPytS5Ip9PJy5cvn/R9"
     "3yp3SThcFtNfEgtK0ZxMMp5IMD48XD6cLohGo57rutU74d69e7/x3/PNmzeXnP8HnfAAl2hN"
-    "AloAAAAASUVORK5CYII=")
+    "AloAAAAASUVORK5CYII="
+)
 
 img_file = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAAZiS0dE"
@@ -356,7 +364,8 @@ img_file = PyEmbeddedImage(
     "MbIss5VBTSkMQ4RhiCiKIISYKKP5We7F3SHhOjDX+3Qo5xxJkli+0IwHYEk5F68k013JZlWx"
     "mxf3IlHqTjI3ApJXriqmg11N4T4714uMsZ8I0GYXBTLk6gTrOedLPezEOKHmRr4oy90f5/rd"
     "hXvpZWTe6eZvR0TGRQeWGpGrXCmKJbnuDrA5l9ycu7w4QfL/XrXcIUOqh4THPEXUZucvpnPe"
-    "LL0h/wc3DLvFAY/bOAAAAABJRU5ErkJggg==")
+    "LL0h/wc3DLvFAY/bOAAAAABJRU5ErkJggg=="
+)
 
 viewmag = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACFElEQVQ4jZWT30tTcRjGn+85"
@@ -369,7 +378,8 @@ viewmag = PyEmbeddedImage(
     "ZhcLkiR9MW0BgDYWDMW+GvxL0RVyLDjOQGBgxKyFht+QjBDi2OyzqZDnoO+40qjKhlGiUcrM"
     "j46OJPoHBm5GFmJH2p3aWauifP8nwUbbbDYFQEdTk3Wz2+2WSMJisUyfPuPnu/cfFkju2rhf"
     "M1Yt2+32uUDgAj9Hosu5fN5aN4AkNKfzzdWhIebyhVQ8vqjUDQAgVFV9PTx8gyQjyWS6vaFm"
-    "NSZileLdqqrzxVIpcffO7eyf31iPhBAyqjdk/AIEL4Xptl+gaQAAAABJRU5ErkJggg==")
+    "NSZileLdqqrzxVIpcffO7eyf31iPhBAyqjdk/AIEL4Xptl+gaQAAAABJRU5ErkJggg=="
+)
 
 symmetry = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAADnRFWHRTb2Z0d2FyZQBQeU1P"
@@ -422,4 +432,5 @@ symmetry = PyEmbeddedImage(
     "v8a0v0gA+LyIsQlxN6vut5uzVp/Hrv4JDgJCxbPhqIGfHilVyzhJpFTxkbnla94DK1IfNveM"
     "/6h1gsLf378CGPAUP78D0/0xREQh3s0WI3hcjHAQ4CuLFSUbfkBa+ZvkTdpMqxl7eyjErMpk"
     "MEPXbko9VAz1znwU/WbHgQD6K1yGed4SjHQRYSyfBGfBMEJF2QnQZoS67J5h/4JT2P+/mv4m"
-    "bXkR7POzfr/+A+DZZBN1kMZbAAAAAElFTkSuQmCC")
+    "bXkR7POzfr/+A+DZZBN1kMZbAAAAAElFTkSuQmCC"
+)

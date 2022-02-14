@@ -1,20 +1,21 @@
-
 from __future__ import absolute_import, division, print_function
 from libtbx.test_utils import Exception_expected
 from libtbx.utils import null_out, Sorry
 from libtbx import easy_run
 from six.moves import range
 
+
 def exercise_main():
-  from mmtbx.refinement import select_best_starting_model
-  from iotbx import file_reader
-  from cctbx import uctbx
-  from cctbx import sgtbx
-  from scitbx.array_family import flex
-  import random
-  unit_cell = (24.937, 8.866, 25.477, 90.00, 107.08, 90.00)
-  space_group = "P21"
-  pdb_base = """\
+    from mmtbx.refinement import select_best_starting_model
+    from iotbx import file_reader
+    from cctbx import uctbx
+    from cctbx import sgtbx
+    from scitbx.array_family import flex
+    import random
+
+    unit_cell = (24.937, 8.866, 25.477, 90.00, 107.08, 90.00)
+    space_group = "P21"
+    pdb_base = """\
 CRYST1   24.937    8.866   25.477  90.00 107.08  90.00 P 1 21 1
 SCALE1      0.040101  0.000000  0.012321        0.00000
 SCALE2      0.000000  0.112790  0.000000        0.00000
@@ -80,15 +81,15 @@ ATOM     58  OH  TYR A   7      -3.768  -3.572 -10.335  1.00 14.93           O
 ATOM     59  OXT TYR A   7     -11.378  -1.149  -7.601  1.00 15.89           O
 TER
 """
-  pdb_base_water = """\
+    pdb_base_water = """\
 HETATM   64  O   HOH S   1     -10.466  -2.347  -3.168  1.00 17.57           O
 HETATM   65  O   HOH S   2       6.469   1.081  -7.070  1.00 21.27           O
 HETATM   66  O   HOH S   3     -11.809   0.108  -9.956  1.00 27.52           O
 HETATM   67  O   HOH S   4       1.580  -3.455 -11.035  1.00 44.76           O
 END
 """
-  open("tst_start_model_base.pdb", "w").write(pdb_base+pdb_base_water)
-  params = """
+    open("tst_start_model_base.pdb", "w").write(pdb_base + pdb_base_water)
+    params = """
     high_resolution = 1.75
     add_sigmas = True
     pdb_file = tst_start_model_base.pdb
@@ -98,103 +99,116 @@ END
       file_name = tst_start_model_base.mtz
     }
   """
-  open("tst_start_model_fmodel.eff", "w").write(params)
-  assert (easy_run.fully_buffered(
-    "phenix.fmodel tst_start_model_fmodel.eff"
-  ).raise_if_errors().return_code == 0)
-  mtz_in = file_reader.any_file("tst_start_model_base.mtz")
-  f_obs = mtz_in.file_server.miller_arrays[0]
-  symm = f_obs.crystal_symmetry().customized_copy(
-    space_group_info=sgtbx.space_group_info("P2"))
-  f_obs = f_obs.customized_copy(crystal_symmetry=symm)
-  random.seed(12345) # XXX makes results more predictable
-  flags = f_obs.generate_r_free_flags(fraction=0.1)
-  mtz_data = f_obs.as_mtz_dataset(
-    column_root_label="F")
-  mtz_data.add_miller_array(flags,
-    column_root_label="FreeR_flag")
-  mtz_data.mtz_object().write("tst_start_model.mtz")
-  pdb_in = file_reader.any_file("tst_start_model_base.pdb")
-  hierarchy_in = pdb_in.file_object.hierarchy
-  xrs_in = pdb_in.file_object.xray_structure_simple()
-  selection = hierarchy_in.atom_selection_cache().selection
-  # Model 1: very few changes, but shifted by (1,0,0.5)
-  symm2 = xrs_in.crystal_symmetry().customized_copy(
-    unit_cell=uctbx.unit_cell((24.932, 8.841, 25.501, 90.00, 107.5, 90.00)))
-  #u_iso = xrs_in.extract_u_iso_or_u_equiv()
-  #xrs_out = xrs_in.deep_copy_scatterers().set_u_iso(
-  #  selection=flex.bool(u_iso.size(), True), values=u_iso*1.1)
-  xrs_out = xrs_in.deep_copy_scatterers()
-  sites_cart = xrs_out.sites_cart()
-  sites_cart += flex.vec3_double(sites_cart.size(), (1.0, 0.0, 0.5))
-  xrs_out.set_sites_cart(sites_cart)
-  hierarchy_out = hierarchy_in.deep_copy()
-  hierarchy_out.adopt_xray_structure(xrs_out)
-  open("tst_start_model_1.pdb", "w").write(
-    hierarchy_out.as_pdb_string(crystal_symmetry=symm2))
-  # Model 2: no sidechains
-  mc_sele = selection("(name N or name C or name O or name CA or name CB)")
-  hierarchy_out = hierarchy_in.select(mc_sele)
-  xrs_out = xrs_in.select(mc_sele)
-  open("tst_start_model_2.pdb", "w").write(
-    hierarchy_out.as_pdb_string(crystal_symmetry=xrs_out))
-  # Model 3: P1 symmetry
-  symm3 = xrs_in.crystal_symmetry().customized_copy(
-    space_group_info=sgtbx.space_group_info("P1"))
-  open("tst_start_model_3.pdb", "w").write(
-    hierarchy_out.as_pdb_string(crystal_symmetry=symm3))
-  # Model 4: shaken coordinates and ADPs
-  def random_double(size, factor=1):
-    d = flex.double()
-    for x in range(size):
-      d.append(random.random() * factor)
-    return d
-  xrs_out = xrs_in.customized_copy()
-  xrs_out.shake_sites_in_place(0.3, random_double=random_double)
-  xrs_out.shake_adp()
-  hierarchy_out = hierarchy_in.deep_copy()
-  hierarchy_out.adopt_xray_structure(xrs_out)
-  open("tst_start_model_4.pdb", "w").write(
-    hierarchy_out.as_pdb_string(crystal_symmetry=xrs_out))
-  # Model 5: perfect, but missing CRYST1
-  open("tst_start_model_5.pdb", "w").write(hierarchy_in.as_pdb_string())
-  # run method
-  params = select_best_starting_model.master_phil.extract()
-  params.rigid_body_refine = False
-  model_names = [
-    "tst_start_model_1.pdb",
-    "tst_start_model_2.pdb",
-    "tst_start_model_3.pdb",
-    "tst_start_model_4.pdb",
-    "tst_start_model_5.pdb",
-  ]
-  result = select_best_starting_model.select_model(
-    model_names=model_names,
-    model_data=None,
-    f_obs=f_obs,
-    r_free_flags=flags,
-    params=params,
-    skip_twin_detection=True,
-    log=null_out())
-  # result.show(verbose=True)
-  assert (result.best_model_name == "tst_start_model_4.pdb"), result.best_model_name
-  params.rigid_body_refine = True
-  result = select_best_starting_model.select_model(
-    model_names=model_names,
-    model_data=None,
-    f_obs=f_obs,
-    r_free_flags=flags,
-    params=params,
-    skip_twin_detection=True,
-    log=null_out())
-  # result.show(verbose=True)
-  assert (result.best_model_name == "tst_start_model_1.pdb"), result.best_model_name
+    open("tst_start_model_fmodel.eff", "w").write(params)
+    assert (
+        easy_run.fully_buffered("phenix.fmodel tst_start_model_fmodel.eff")
+        .raise_if_errors()
+        .return_code
+        == 0
+    )
+    mtz_in = file_reader.any_file("tst_start_model_base.mtz")
+    f_obs = mtz_in.file_server.miller_arrays[0]
+    symm = f_obs.crystal_symmetry().customized_copy(
+        space_group_info=sgtbx.space_group_info("P2")
+    )
+    f_obs = f_obs.customized_copy(crystal_symmetry=symm)
+    random.seed(12345)  # XXX makes results more predictable
+    flags = f_obs.generate_r_free_flags(fraction=0.1)
+    mtz_data = f_obs.as_mtz_dataset(column_root_label="F")
+    mtz_data.add_miller_array(flags, column_root_label="FreeR_flag")
+    mtz_data.mtz_object().write("tst_start_model.mtz")
+    pdb_in = file_reader.any_file("tst_start_model_base.pdb")
+    hierarchy_in = pdb_in.file_object.hierarchy
+    xrs_in = pdb_in.file_object.xray_structure_simple()
+    selection = hierarchy_in.atom_selection_cache().selection
+    # Model 1: very few changes, but shifted by (1,0,0.5)
+    symm2 = xrs_in.crystal_symmetry().customized_copy(
+        unit_cell=uctbx.unit_cell((24.932, 8.841, 25.501, 90.00, 107.5, 90.00))
+    )
+    # u_iso = xrs_in.extract_u_iso_or_u_equiv()
+    # xrs_out = xrs_in.deep_copy_scatterers().set_u_iso(
+    #  selection=flex.bool(u_iso.size(), True), values=u_iso*1.1)
+    xrs_out = xrs_in.deep_copy_scatterers()
+    sites_cart = xrs_out.sites_cart()
+    sites_cart += flex.vec3_double(sites_cart.size(), (1.0, 0.0, 0.5))
+    xrs_out.set_sites_cart(sites_cart)
+    hierarchy_out = hierarchy_in.deep_copy()
+    hierarchy_out.adopt_xray_structure(xrs_out)
+    open("tst_start_model_1.pdb", "w").write(
+        hierarchy_out.as_pdb_string(crystal_symmetry=symm2)
+    )
+    # Model 2: no sidechains
+    mc_sele = selection("(name N or name C or name O or name CA or name CB)")
+    hierarchy_out = hierarchy_in.select(mc_sele)
+    xrs_out = xrs_in.select(mc_sele)
+    open("tst_start_model_2.pdb", "w").write(
+        hierarchy_out.as_pdb_string(crystal_symmetry=xrs_out)
+    )
+    # Model 3: P1 symmetry
+    symm3 = xrs_in.crystal_symmetry().customized_copy(
+        space_group_info=sgtbx.space_group_info("P1")
+    )
+    open("tst_start_model_3.pdb", "w").write(
+        hierarchy_out.as_pdb_string(crystal_symmetry=symm3)
+    )
+    # Model 4: shaken coordinates and ADPs
+    def random_double(size, factor=1):
+        d = flex.double()
+        for x in range(size):
+            d.append(random.random() * factor)
+        return d
+
+    xrs_out = xrs_in.customized_copy()
+    xrs_out.shake_sites_in_place(0.3, random_double=random_double)
+    xrs_out.shake_adp()
+    hierarchy_out = hierarchy_in.deep_copy()
+    hierarchy_out.adopt_xray_structure(xrs_out)
+    open("tst_start_model_4.pdb", "w").write(
+        hierarchy_out.as_pdb_string(crystal_symmetry=xrs_out)
+    )
+    # Model 5: perfect, but missing CRYST1
+    open("tst_start_model_5.pdb", "w").write(hierarchy_in.as_pdb_string())
+    # run method
+    params = select_best_starting_model.master_phil.extract()
+    params.rigid_body_refine = False
+    model_names = [
+        "tst_start_model_1.pdb",
+        "tst_start_model_2.pdb",
+        "tst_start_model_3.pdb",
+        "tst_start_model_4.pdb",
+        "tst_start_model_5.pdb",
+    ]
+    result = select_best_starting_model.select_model(
+        model_names=model_names,
+        model_data=None,
+        f_obs=f_obs,
+        r_free_flags=flags,
+        params=params,
+        skip_twin_detection=True,
+        log=null_out(),
+    )
+    # result.show(verbose=True)
+    assert result.best_model_name == "tst_start_model_4.pdb", result.best_model_name
+    params.rigid_body_refine = True
+    result = select_best_starting_model.select_model(
+        model_names=model_names,
+        model_data=None,
+        f_obs=f_obs,
+        r_free_flags=flags,
+        params=params,
+        skip_twin_detection=True,
+        log=null_out(),
+    )
+    # result.show(verbose=True)
+    assert result.best_model_name == "tst_start_model_1.pdb", result.best_model_name
+
 
 def exercise_misc():
-  from mmtbx.refinement import select_best_starting_model
-  from iotbx import file_reader
-  import iotbx.pdb.hierarchy
-  pdb_str = """\
+    from mmtbx.refinement import select_best_starting_model
+    from iotbx import file_reader
+    import iotbx.pdb.hierarchy
+
+    pdb_str = """\
 REMARK this is a remark record!
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1
 SCALE1      0.045585  0.000000  0.014006        0.00000
@@ -329,92 +343,97 @@ HETATM  124  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 TER
 END
 """
-  pdb_file = "tst_start_model_misc.pdb"
-  open(pdb_file, "w").write(pdb_str)
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_file)
-  pdb_hierarchy = pdb_in.hierarchy
-  xray_structure = pdb_in.input.xray_structure_simple()
-  hd_sel = xray_structure.hd_selection()
-  assert hd_sel.count(True) == 55
-  xray_structure.convert_to_anisotropic(selection=~hd_sel)
-  pdb_hierarchy.adopt_xray_structure(xray_structure)
-  hierarchy_new, xrs_new = select_best_starting_model.strip_model(
-    pdb_hierarchy=pdb_hierarchy,
-    xray_structure=xray_structure,
-    output_file="tst_start_model_misc_new.pdb",
-    log=null_out())
-  # basic changes
-  hd_sel = xray_structure.hd_selection()
-  assert hd_sel.count(True) == 55 # should be left alone
-  assert xrs_new.hd_selection().count(True) == 0
-  sel = hierarchy_new.atom_selection_cache().selection
-  mse_sel = sel("resname MSE")
-  assert mse_sel.count(True) == 0
-  hoh_sel = sel("resname HOH")
-  assert hoh_sel.count(True) == 0
-  alt_sel = sel("altloc 'B'")
-  assert alt_sel.count(True) == 0
-  cl_sel = sel("element CL")
-  assert cl_sel.count(True) == 1
-  occ_xrs = xrs_new.scatterers().extract_occupancies()
-  occ_pdb = hierarchy_new.atoms().extract_occ()
-  assert occ_xrs.all_eq(occ_pdb) and occ_xrs.all_eq(1.0)
-  assert xrs_new.use_u_aniso().all_eq(False)
-  # remove all ligands
-  assert xray_structure.hd_selection().count(True) == 55
-  hierarchy_new, xrs_new = select_best_starting_model.strip_model(
-    pdb_hierarchy=pdb_hierarchy,
-    xray_structure=xray_structure,
-    remove_ligands=True,
-    remove_hydrogens=False,
-    output_file="tst_start_model_misc_new2.pdb",
-    log=null_out())
-  sel = hierarchy_new.atom_selection_cache().selection
-  assert sel("resname CL").count(True) == 0
-  assert xrs_new.hd_selection().count(True) == 48
-  # multi-model hierarchy
-  model2 = pdb_hierarchy.models()[0].detached_copy()
-  pdb_hierarchy.append_model(model2)
-  try :
+    pdb_file = "tst_start_model_misc.pdb"
+    open(pdb_file, "w").write(pdb_str)
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_file)
+    pdb_hierarchy = pdb_in.hierarchy
+    xray_structure = pdb_in.input.xray_structure_simple()
+    hd_sel = xray_structure.hd_selection()
+    assert hd_sel.count(True) == 55
+    xray_structure.convert_to_anisotropic(selection=~hd_sel)
+    pdb_hierarchy.adopt_xray_structure(xray_structure)
     hierarchy_new, xrs_new = select_best_starting_model.strip_model(
-      pdb_hierarchy=pdb_hierarchy,
-      xray_structure=xray_structure,
-      log=null_out())
-  except Sorry :
-    pass
-  else :
-    raise Exception_expected
-  # both structure and file name passed
-  try :
+        pdb_hierarchy=pdb_hierarchy,
+        xray_structure=xray_structure,
+        output_file="tst_start_model_misc_new.pdb",
+        log=null_out(),
+    )
+    # basic changes
+    hd_sel = xray_structure.hd_selection()
+    assert hd_sel.count(True) == 55  # should be left alone
+    assert xrs_new.hd_selection().count(True) == 0
+    sel = hierarchy_new.atom_selection_cache().selection
+    mse_sel = sel("resname MSE")
+    assert mse_sel.count(True) == 0
+    hoh_sel = sel("resname HOH")
+    assert hoh_sel.count(True) == 0
+    alt_sel = sel("altloc 'B'")
+    assert alt_sel.count(True) == 0
+    cl_sel = sel("element CL")
+    assert cl_sel.count(True) == 1
+    occ_xrs = xrs_new.scatterers().extract_occupancies()
+    occ_pdb = hierarchy_new.atoms().extract_occ()
+    assert occ_xrs.all_eq(occ_pdb) and occ_xrs.all_eq(1.0)
+    assert xrs_new.use_u_aniso().all_eq(False)
+    # remove all ligands
+    assert xray_structure.hd_selection().count(True) == 55
     hierarchy_new, xrs_new = select_best_starting_model.strip_model(
-      pdb_hierarchy=pdb_hierarchy,
-      xray_structure=xray_structure,
-      file_name=pdb_file,
-      log=null_out())
-  except AssertionError :
-    pass
-  else :
-    raise Exception_expected
-  # preserve REMARK
-  hierarchy_new, xrs_new = select_best_starting_model.strip_model(
-    file_name=pdb_file,
-    preserve_remarks=True,
-    output_file="tst_start_model_misc_new.pdb",
-    log=null_out())
-  pdb_new = iotbx.pdb.hierarchy.input(file_name="tst_start_model_misc_new.pdb")
-  assert len(pdb_new.input.remark_section()) == 1
-  # reset HETATM
-  hierarchy_new, xrs_new = select_best_starting_model.strip_model(
-    file_name=pdb_file,
-    preserve_remarks=True,
-    reset_hetatm_flag=True,
-    output_file="tst_start_model_misc_new.pdb",
-    log=null_out())
-  lines = open("tst_start_model_misc_new.pdb").readlines()
-  for line in lines :
-    assert (not line.startswith("HETATM"))
+        pdb_hierarchy=pdb_hierarchy,
+        xray_structure=xray_structure,
+        remove_ligands=True,
+        remove_hydrogens=False,
+        output_file="tst_start_model_misc_new2.pdb",
+        log=null_out(),
+    )
+    sel = hierarchy_new.atom_selection_cache().selection
+    assert sel("resname CL").count(True) == 0
+    assert xrs_new.hd_selection().count(True) == 48
+    # multi-model hierarchy
+    model2 = pdb_hierarchy.models()[0].detached_copy()
+    pdb_hierarchy.append_model(model2)
+    try:
+        hierarchy_new, xrs_new = select_best_starting_model.strip_model(
+            pdb_hierarchy=pdb_hierarchy, xray_structure=xray_structure, log=null_out()
+        )
+    except Sorry:
+        pass
+    else:
+        raise Exception_expected
+    # both structure and file name passed
+    try:
+        hierarchy_new, xrs_new = select_best_starting_model.strip_model(
+            pdb_hierarchy=pdb_hierarchy,
+            xray_structure=xray_structure,
+            file_name=pdb_file,
+            log=null_out(),
+        )
+    except AssertionError:
+        pass
+    else:
+        raise Exception_expected
+    # preserve REMARK
+    hierarchy_new, xrs_new = select_best_starting_model.strip_model(
+        file_name=pdb_file,
+        preserve_remarks=True,
+        output_file="tst_start_model_misc_new.pdb",
+        log=null_out(),
+    )
+    pdb_new = iotbx.pdb.hierarchy.input(file_name="tst_start_model_misc_new.pdb")
+    assert len(pdb_new.input.remark_section()) == 1
+    # reset HETATM
+    hierarchy_new, xrs_new = select_best_starting_model.strip_model(
+        file_name=pdb_file,
+        preserve_remarks=True,
+        reset_hetatm_flag=True,
+        output_file="tst_start_model_misc_new.pdb",
+        log=null_out(),
+    )
+    lines = open("tst_start_model_misc_new.pdb").readlines()
+    for line in lines:
+        assert not line.startswith("HETATM")
 
-if (__name__ == "__main__"):
-  exercise_misc()
-  exercise_main()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_misc()
+    exercise_main()
+    print("OK")

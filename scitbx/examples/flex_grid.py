@@ -13,24 +13,27 @@ from __future__ import absolute_import, division, print_function
 
 from scitbx.array_family.flex import grid
 
+
 def show(g):
-  print("origin:", g.origin())
-  print(" focus:", g.focus())
-  print("  last:", g.last())
-  print("   all:", g.all())
-  print()
+    print("origin:", g.origin())
+    print(" focus:", g.focus())
+    print("  last:", g.last())
+    print("   all:", g.all())
+    print()
+
 
 def run():
-  print(__doc__)
-  g = grid((3,4,6))
-  show(g)
-  g.set_focus((3,4,5))
-  show(g)
-  g = grid((-2,-3,-4), (3,4,6))
-  show(g)
-  g.set_focus((3,4,5))
-  show(g)
-  print("OK")
+    print(__doc__)
+    g = grid((3, 4, 6))
+    show(g)
+    g.set_focus((3, 4, 5))
+    show(g)
+    g = grid((-2, -3, -4), (3, 4, 6))
+    show(g)
+    g.set_focus((3, 4, 5))
+    show(g)
+    print("OK")
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

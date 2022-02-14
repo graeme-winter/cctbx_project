@@ -201,60 +201,67 @@ TER
 END
 """
 
+
 def exercise_00():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=m1_in_str)
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  pdb_hierarchy.atoms().reset_i_seq()
-  sel_strings=mmtbx.refinement.rigid_body.rigid_groups_from_pdb_chains(
-    pdb_hierarchy=pdb_hierarchy)
-  answer = [
-    "(chain 'L' and resid -1 through 28)",
-    "(chain 'H' and resid 1 through 36)",
-    "(chain ' ' and resid 226 through 228)"]
-  for sel_string in sel_strings:
-    assert sel_string in answer
-  assert len(sel_strings) == 3
-  selection = pdb_hierarchy.atom_selection_cache().selection(
-    string=" or ".join(answer))
-  xrs_1 = pdb_inp.xray_structure_simple().select(selection = selection)
-  xrs_2 = iotbx.pdb.input(source_info=None,
-    lines=m1_out_str).xray_structure_simple()
-  assert approx_equal(
-    xrs_1.structure_factors(d_min=2).f_calc().data(),
-    xrs_2.structure_factors(d_min=2).f_calc().data())
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=m1_in_str)
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    pdb_hierarchy.atoms().reset_i_seq()
+    sel_strings = mmtbx.refinement.rigid_body.rigid_groups_from_pdb_chains(
+        pdb_hierarchy=pdb_hierarchy
+    )
+    answer = [
+        "(chain 'L' and resid -1 through 28)",
+        "(chain 'H' and resid 1 through 36)",
+        "(chain ' ' and resid 226 through 228)",
+    ]
+    for sel_string in sel_strings:
+        assert sel_string in answer
+    assert len(sel_strings) == 3
+    selection = pdb_hierarchy.atom_selection_cache().selection(
+        string=" or ".join(answer)
+    )
+    xrs_1 = pdb_inp.xray_structure_simple().select(selection=selection)
+    xrs_2 = iotbx.pdb.input(source_info=None, lines=m1_out_str).xray_structure_simple()
+    assert approx_equal(
+        xrs_1.structure_factors(d_min=2).f_calc().data(),
+        xrs_2.structure_factors(d_min=2).f_calc().data(),
+    )
+
 
 def exercise_01():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=m2_in_str)
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  pdb_hierarchy.atoms().reset_i_seq()
-  sel_strings=mmtbx.refinement.rigid_body.rigid_groups_from_pdb_chains(
-    pdb_hierarchy=pdb_hierarchy)
-  answer = [
-    "(chain 'A' and resid 1 through 3)",
-    "(chain 'B' and resid 7 through 9)"]
-  for sel_string in sel_strings:
-    assert sel_string in answer
-  assert len(sel_strings) == 2
-  selection = pdb_hierarchy.atom_selection_cache().selection(
-    string=" or ".join(answer))
-  xrs_1 = pdb_inp.xray_structure_simple().select(selection = selection)
-  xrs_2 = iotbx.pdb.input(source_info=None,
-    lines=m2_out_str).xray_structure_simple()
-  assert approx_equal(
-    xrs_1.structure_factors(d_min=2).f_calc().data(),
-    xrs_2.structure_factors(d_min=2).f_calc().data())
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=m2_in_str)
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    pdb_hierarchy.atoms().reset_i_seq()
+    sel_strings = mmtbx.refinement.rigid_body.rigid_groups_from_pdb_chains(
+        pdb_hierarchy=pdb_hierarchy
+    )
+    answer = ["(chain 'A' and resid 1 through 3)", "(chain 'B' and resid 7 through 9)"]
+    for sel_string in sel_strings:
+        assert sel_string in answer
+    assert len(sel_strings) == 2
+    selection = pdb_hierarchy.atom_selection_cache().selection(
+        string=" or ".join(answer)
+    )
+    xrs_1 = pdb_inp.xray_structure_simple().select(selection=selection)
+    xrs_2 = iotbx.pdb.input(source_info=None, lines=m2_out_str).xray_structure_simple()
+    assert approx_equal(
+        xrs_1.structure_factors(d_min=2).f_calc().data(),
+        xrs_2.structure_factors(d_min=2).f_calc().data(),
+    )
+
 
 def exercise_02():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=m3_in_str)
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  pdb_hierarchy.atoms().reset_i_seq()
-  sel_strings=mmtbx.refinement.rigid_body.rigid_groups_from_pdb_chains(
-    pdb_hierarchy=pdb_hierarchy,
-    group_all_by_chain=True)
-  assert sel_strings == ["(chain 'L' and not (resname HOH or resname WAT))"]
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=m3_in_str)
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    pdb_hierarchy.atoms().reset_i_seq()
+    sel_strings = mmtbx.refinement.rigid_body.rigid_groups_from_pdb_chains(
+        pdb_hierarchy=pdb_hierarchy, group_all_by_chain=True
+    )
+    assert sel_strings == ["(chain 'L' and not (resname HOH or resname WAT))"]
 
-if (__name__ == "__main__"):
-  exercise_00()
-  exercise_01()
-  exercise_02()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_00()
+    exercise_01()
+    exercise_02()
+    print("OK")

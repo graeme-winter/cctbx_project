@@ -5,9 +5,11 @@ from mmtbx.validation.omegalyze import omegalyze
 from libtbx.program_template import ProgramTemplate
 from libtbx.utils import Sorry
 
+
 class Program(ProgramTemplate):
-  prog = os.getenv('LIBTBX_DISPATCHER_NAME')
-  description="""
+    prog = os.getenv("LIBTBX_DISPATCHER_NAME")
+    description = (
+        """
 %(prog)s file.pdb [params.eff] [options ...]
 
 Options:
@@ -43,9 +45,11 @@ Options:
 Example:
 
   %(prog)s model=1ubq.pdb kinemage=True
-""" % locals()
+"""
+        % locals()
+    )
 
-  master_phil_str = """
+    master_phil_str = """
     nontrans_only = True
       .type = bool
       .help = "Controls whether trans peptides are stored and printed"
@@ -62,37 +66,39 @@ Example:
       .type = path
       .help = "Path for output file"
 """
-  datatypes = ['model','phil']
-  data_manager_options = ['model_skip_expand_with_mtrix']
+    datatypes = ["model", "phil"]
+    data_manager_options = ["model_skip_expand_with_mtrix"]
 
-  def validate(self):
-    self.data_manager.has_models(raise_sorry=True)
+    def validate(self):
+        self.data_manager.has_models(raise_sorry=True)
 
-  def run(self):
-    f = None
-    if self.params.result_file is not None:
-      try:
-        f = open(self.params.result_file, 'w')
-        self.logger.register('file', f)
-      except IOError:
-        raise Sorry("The output file could not be opened")
-    hierarchy = self.data_manager.get_model().get_hierarchy()
-    hierarchy.atoms().reset_i_seq()
+    def run(self):
+        f = None
+        if self.params.result_file is not None:
+            try:
+                f = open(self.params.result_file, "w")
+                self.logger.register("file", f)
+            except IOError:
+                raise Sorry("The output file could not be opened")
+        hierarchy = self.data_manager.get_model().get_hierarchy()
+        hierarchy.atoms().reset_i_seq()
 
-    result = omegalyze(
-      pdb_hierarchy=hierarchy,
-      nontrans_only=self.params.nontrans_only,
-      out=self.logger,
-      quiet=False)
-    if self.params.kinemage:
-      print(result.as_kinemage(), file=self.logger)
-    elif self.params.oneline:
-      result.summary_only(out=self.logger, pdbid=self.data_manager.get_default_model_name())#params.model)
-    elif self.params.text:
-      result.show_old_output(out=self.logger, verbose=True)
-    if f:
-      try:
-        f.close()
-      except Exception:
-        raise Sorry("Could not close output file")
-
+        result = omegalyze(
+            pdb_hierarchy=hierarchy,
+            nontrans_only=self.params.nontrans_only,
+            out=self.logger,
+            quiet=False,
+        )
+        if self.params.kinemage:
+            print(result.as_kinemage(), file=self.logger)
+        elif self.params.oneline:
+            result.summary_only(
+                out=self.logger, pdbid=self.data_manager.get_default_model_name()
+            )  # params.model)
+        elif self.params.text:
+            result.show_old_output(out=self.logger, verbose=True)
+        if f:
+            try:
+                f.close()
+            except Exception:
+                raise Sorry("Could not close output file")

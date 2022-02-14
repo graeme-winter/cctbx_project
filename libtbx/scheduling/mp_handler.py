@@ -2,107 +2,110 @@ from __future__ import absolute_import, division, print_function
 
 import multiprocessing
 
-class stderr_capturing_process(multiprocessing.Process):
-  """
-  A Process-specialization that adds the .err attribute
-  """
 
-  def __init__(
-    self,
-    group = None,
-    target = None,
-    name = None,
-    propagate_error_message = False,
-    args = (),
-    kwargs = {},
+class stderr_capturing_process(multiprocessing.Process):
+    """
+    A Process-specialization that adds the .err attribute
+    """
+
+    def __init__(
+        self,
+        group=None,
+        target=None,
+        name=None,
+        propagate_error_message=False,
+        args=(),
+        kwargs={},
     ):
 
-    super( stderr_capturing_process, self ).__init__(group, target, name, args, kwargs)
-    self.propagate_error_message = propagate_error_message
+        super(stderr_capturing_process, self).__init__(
+            group, target, name, args, kwargs
+        )
+        self.propagate_error_message = propagate_error_message
 
-    import tempfile
-    import os
-    ( fd, self.errfile ) = tempfile.mkstemp()
-    os.close( fd )
+        import tempfile
+        import os
 
+        (fd, self.errfile) = tempfile.mkstemp()
+        os.close(fd)
 
-  def run(self):
+    def run(self):
 
-    stderr = open( self.errfile, "w" )
-    import sys
-    stderr_fileno = sys.stderr.fileno()
-    sys.stderr = stderr # adjust Python level
-    import os
-    os.dup2( stderr.fileno(), stderr_fileno ) # adjust OS level
+        stderr = open(self.errfile, "w")
+        import sys
 
-    super( stderr_capturing_process, self ).run()
+        stderr_fileno = sys.stderr.fileno()
+        sys.stderr = stderr  # adjust Python level
+        import os
 
+        os.dup2(stderr.fileno(), stderr_fileno)  # adjust OS level
 
-  def join(self, timeout = None):
+        super(stderr_capturing_process, self).run()
 
-    super( stderr_capturing_process, self ).join( timeout )
+    def join(self, timeout=None):
 
-    if not self.errfile:
-      return
+        super(stderr_capturing_process, self).join(timeout)
 
-    try:
-      stderr = open( self.errfile )
-      self.stacktrace = stderr.read()
+        if not self.errfile:
+            return
 
-    except IOError:
-      self.stacktrace = ""
+        try:
+            stderr = open(self.errfile)
+            self.stacktrace = stderr.read()
 
-    else:
-      stderr.close()
+        except IOError:
+            self.stacktrace = ""
 
-      import os
-      os.remove( self.errfile )
+        else:
+            stderr.close()
 
-    finally:
-      self.errfile = None
+            import os
 
-    if self.propagate_error_message and self.stacktrace:
-      import sys
-      sys.stderr.write( self.stacktrace )
-      sys.stderr.write( "\n" )
+            os.remove(self.errfile)
+
+        finally:
+            self.errfile = None
+
+        if self.propagate_error_message and self.stacktrace:
+            import sys
+
+            sys.stderr.write(self.stacktrace)
+            sys.stderr.write("\n")
 
 
 class fifo_qfactory(object):
-  """
-  Creator pattern for multiprocessing.Queue, also include destruction
+    """
+    Creator pattern for multiprocessing.Queue, also include destruction
 
-  Note this is a singleton object
-  """
+    Note this is a singleton object
+    """
 
-  @staticmethod
-  def create():
+    @staticmethod
+    def create():
 
-    return multiprocessing.Queue()
+        return multiprocessing.Queue()
 
+    @staticmethod
+    def destroy(queue):
 
-  @staticmethod
-  def destroy(queue):
-
-    pass
+        pass
 
 
 class managed_qfactory(object):
-  """
-  Creator pattern for multiprocessing.Manager.Queue, also include destruction
+    """
+    Creator pattern for multiprocessing.Manager.Queue, also include destruction
 
-  Note this is not a singleton object
-  """
+    Note this is not a singleton object
+    """
 
-  def __init__(self):
+    def __init__(self):
 
-    self.manager = multiprocessing.Manager()
+        self.manager = multiprocessing.Manager()
 
+    def create(self):
 
-  def create(self):
+        return self.manager.Queue()
 
-    return self.manager.Queue()
+    def destroy(self, queue):
 
-
-  def destroy(self, queue):
-
-    pass
+        pass

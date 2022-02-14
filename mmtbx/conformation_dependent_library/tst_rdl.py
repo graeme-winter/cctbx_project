@@ -8,10 +8,12 @@ from iotbx import pdb
 
 import libtbx.load_env
 
-from mmtbx.conformation_dependent_library.testing_utils import get_geometry_restraints_manager
+from mmtbx.conformation_dependent_library.testing_utils import (
+    get_geometry_restraints_manager,
+)
 
 pdbs = {
-  "3sgs" : """
+    "3sgs": """
 CRYST1    4.821   19.500   21.004  90.00  94.23  90.00 P 1 21 1      2
 ATOM      1  N   GLY A   1       2.186  -1.809  10.234  1.00 10.29           N
 ATOM      2  CA  GLY A   1       2.320  -0.815   9.141  1.00  9.80           C
@@ -59,7 +61,7 @@ ATOM     43  CG2 VAL A   6       2.539   1.722  -6.216  1.00 16.27           C
 ATOM     44  OXT VAL A   6       0.534  -0.718  -9.323  1.00 17.23           O
 END
 """,
-  "mse.pdb" : """
+    "mse.pdb": """
 HETATM  104  N   MSE A  15       9.964  48.917  17.420  1.00  8.74           N
 HETATM  105  CA  MSE A  15      10.216  47.479  17.369  1.00  8.79           C
 HETATM  106  C   MSE A  15      11.068  47.049  18.526  1.00  8.17           C
@@ -69,7 +71,7 @@ HETATM  109  CG  MSE A  15      10.029  47.299  14.827  1.00 10.59           C
 HETATM  110 SE   MSE A  15       8.751  45.831  14.563  1.00 15.23          SE
 HETATM  111  CE  MSE A  15      10.035  44.485  13.975  1.00 10.87           C
 """,
-  "met.pdb" : """
+    "met.pdb": """
 ATOM    104  N   MET A  15       9.964  48.917  17.420  1.00  8.74           N
 ATOM    105  CA  MET A  15      10.216  47.479  17.369  1.00  8.79           C
 ATOM    106  C   MET A  15      11.068  47.049  18.526  1.00  8.17           C
@@ -79,7 +81,7 @@ ATOM    109  CG  MET A  15      10.029  47.299  14.827  1.00 10.59           C
 ATOM    110  SD  MET A  15       8.751  45.831  14.563  1.00 15.23           S
 ATOM    111  CE  MET A  15      10.035  44.485  13.975  1.00 10.87           C
 """,
-  "tyr.pdb" : """
+    "tyr.pdb": """
 ATOM   1235  N   TYR A 150       9.126  58.830  20.254  1.00 12.80           N
 ATOM   1236  CA  TYR A 150       8.222  58.422  19.190  1.00 12.53           C
 ATOM   1237  C   TYR A 150       8.121  56.907  19.022  1.00 13.12           C
@@ -93,66 +95,70 @@ ATOM   1244  CE2 TYR A 150       7.692  57.012  14.796  1.00 17.26           C
 ATOM   1245  CZ  TYR A 150       6.401  57.437  14.581  1.00 18.47           C
 ATOM   1246  OH  TYR A 150       5.685  56.901  13.541  1.00 20.26           O
 """,
-  }
+}
+
 
 def run(filename):
-  print(filename)
-  if 0:
-    print("RDL")
-    for aa in sorted(rdl_database):
-      print("  %s" % aa)
-      for key, value in rdl_database[aa].items():
-        print("    %s" % key)
-        for names, values in rdl_database[aa][key].items():
-          print("      %s : %s" % (names, values))
-    assert 0
-  #
-  if filename=="3sgs.pdb":
-    from libtbx import easy_run
-    f=open("mse.pdb", "w")
-    f.write(pdbs["mse.pdb"])
-    f.close()
-    f=open("met.pdb", "w")
-    f.write(pdbs["met.pdb"])
-    f.close()
-    cmd="phenix.pdb_interpretation rdl=True write_geo=1 mse.pdb"
-    print(cmd)
-    easy_run.call(cmd)
-    cmd="phenix.pdb_interpretation rdl=True write_geo=1 met.pdb"
-    print(cmd)
-    easy_run.call(cmd)
-  #
-  pdb_inp = pdb.input(filename)
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  geometry_restraints_manager = get_geometry_restraints_manager(filename)
-  pdb_hierarchy.reset_i_seq_if_necessary()
-  rdl.update_restraints(pdb_hierarchy,
-                        geometry_restraints_manager,
-                        assert_rotamer_found=True,
-                        verbose=True,
+    print(filename)
+    if 0:
+        print("RDL")
+        for aa in sorted(rdl_database):
+            print("  %s" % aa)
+            for key, value in rdl_database[aa].items():
+                print("    %s" % key)
+                for names, values in rdl_database[aa][key].items():
+                    print("      %s : %s" % (names, values))
+        assert 0
+    #
+    if filename == "3sgs.pdb":
+        from libtbx import easy_run
+
+        f = open("mse.pdb", "w")
+        f.write(pdbs["mse.pdb"])
+        f.close()
+        f = open("met.pdb", "w")
+        f.write(pdbs["met.pdb"])
+        f.close()
+        cmd = "phenix.pdb_interpretation rdl=True write_geo=1 mse.pdb"
+        print(cmd)
+        easy_run.call(cmd)
+        cmd = "phenix.pdb_interpretation rdl=True write_geo=1 met.pdb"
+        print(cmd)
+        easy_run.call(cmd)
+    #
+    pdb_inp = pdb.input(filename)
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    geometry_restraints_manager = get_geometry_restraints_manager(filename)
+    pdb_hierarchy.reset_i_seq_if_necessary()
+    rdl.update_restraints(
+        pdb_hierarchy,
+        geometry_restraints_manager,
+        assert_rotamer_found=True,
+        verbose=True,
     )
-  print("OK")
+    print("OK")
 
-
-  mmtbx_dir = libtbx.env.dist_path("mmtbx")
-  props = os.path.join(mmtbx_dir,"rotamer","rotamer_names.props")
-  f=open(props, "r")
-  props = f.readlines()
-  f.close()
-  for prop in props:
-    print(prop)
-    key = prop.split("=")[0]
-    residue, rotamer_name = key.split()
-    residue = residue.upper()
-    if residue in ["MSE"]: continue
-    assert residue in rdl_database
-    assert rotamer_name in rdl_database[residue]
-
-if __name__=="__main__":
-  if len(sys.argv)==1:
-    f=open("3sgs.pdb", "w")
-    f.write(pdbs["3sgs"])
+    mmtbx_dir = libtbx.env.dist_path("mmtbx")
+    props = os.path.join(mmtbx_dir, "rotamer", "rotamer_names.props")
+    f = open(props, "r")
+    props = f.readlines()
     f.close()
-    run("3sgs.pdb")
-  else:
-    run(sys.argv[1])
+    for prop in props:
+        print(prop)
+        key = prop.split("=")[0]
+        residue, rotamer_name = key.split()
+        residue = residue.upper()
+        if residue in ["MSE"]:
+            continue
+        assert residue in rdl_database
+        assert rotamer_name in rdl_database[residue]
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        f = open("3sgs.pdb", "w")
+        f.write(pdbs["3sgs"])
+        f.close()
+        run("3sgs.pdb")
+    else:
+        run(sys.argv[1])

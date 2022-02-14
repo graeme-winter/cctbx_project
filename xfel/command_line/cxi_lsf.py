@@ -10,19 +10,19 @@ import sys
 
 
 def run(argv=None):
-  import libtbx.load_env
+    import libtbx.load_env
 
-  from os import path
-  from libtbx import easy_run
+    from os import path
+    from libtbx import easy_run
 
-  if argv is None:
-    argv = sys.argv
+    if argv is None:
+        argv = sys.argv
 
-  # Absolute path to the executable Bourne-shell script.
-  lsf_sh = libtbx.env.under_dist('xfel', path.join('cxi', 'lsf.sh'))
+    # Absolute path to the executable Bourne-shell script.
+    lsf_sh = libtbx.env.under_dist("xfel", path.join("cxi", "lsf.sh"))
 
-  return easy_run.call(' '.join([lsf_sh] + argv[1:]))
+    return easy_run.call(" ".join([lsf_sh] + argv[1:]))
 
 
-if __name__ == '__main__':
-  sys.exit(run())
+if __name__ == "__main__":
+    sys.exit(run())

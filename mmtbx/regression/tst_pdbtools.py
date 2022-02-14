@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, print_function
-#import libtbx.load_env
+
+# import libtbx.load_env
 import sys, os, math
 from cctbx.array_family import flex
 from libtbx.utils import remove_files
 from mmtbx import utils
-from libtbx.test_utils import approx_equal, not_approx_equal, run_command, \
-  show_diff
+from libtbx.test_utils import approx_equal, not_approx_equal, run_command, show_diff
 import iotbx.pdb.hierarchy
 from scitbx.array_family import flex
 from cctbx import adptbx
@@ -16,34 +16,36 @@ from six.moves import zip
 from libtbx import easy_run
 
 full_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-full_params.pdb_interpretation.flip_symmetric_amino_acids=False
+full_params.pdb_interpretation.flip_symmetric_amino_acids = False
+
 
 class xray_structure_plus(object):
-  def __init__(self, file_name):
-    log = StringIO()
-    pdb_inp = iotbx.pdb.input(file_name=file_name)
-    self.model = mmtbx.model.manager(model_input = pdb_inp, log = log)
-    self.model.process(pdb_interpretation_params = full_params)
-    self.xray_structure = self.model.get_xray_structure()
-    uc = self.model.get_xray_structure().unit_cell()
-    self.occ           = self.xray_structure.scatterers().extract_occupancies()
-    self.u_iso            = self.xray_structure.scatterers().extract_u_iso()
-    self.u_cart           = self.xray_structure.scatterers().extract_u_cart(uc)
-    self.sites_cart       = self.xray_structure.sites_cart()
-    self.use_u_iso        = self.xray_structure.use_u_iso()
-    self.use_u_aniso      = self.xray_structure.use_u_aniso()
-    self.u_iso_used       = self.u_iso.select(self.use_u_iso)
-    self.u_cart_used      = self.u_cart.select(self.use_u_aniso)
-    self.u_iso_not_used   = self.u_iso.select(~self.use_u_iso)
-    self.u_cart_not_used  = self.u_cart.select(~self.use_u_aniso)
+    def __init__(self, file_name):
+        log = StringIO()
+        pdb_inp = iotbx.pdb.input(file_name=file_name)
+        self.model = mmtbx.model.manager(model_input=pdb_inp, log=log)
+        self.model.process(pdb_interpretation_params=full_params)
+        self.xray_structure = self.model.get_xray_structure()
+        uc = self.model.get_xray_structure().unit_cell()
+        self.occ = self.xray_structure.scatterers().extract_occupancies()
+        self.u_iso = self.xray_structure.scatterers().extract_u_iso()
+        self.u_cart = self.xray_structure.scatterers().extract_u_cart(uc)
+        self.sites_cart = self.xray_structure.sites_cart()
+        self.use_u_iso = self.xray_structure.use_u_iso()
+        self.use_u_aniso = self.xray_structure.use_u_aniso()
+        self.u_iso_used = self.u_iso.select(self.use_u_iso)
+        self.u_cart_used = self.u_cart.select(self.use_u_aniso)
+        self.u_iso_not_used = self.u_iso.select(~self.use_u_iso)
+        self.u_cart_not_used = self.u_cart.select(~self.use_u_aniso)
 
-  def selection(self, selection_strings):
-    return utils.get_atom_selections(iselection       = False,
-                                     model = self.model,
-                                     selection_strings= selection_strings)[0]
+    def selection(self, selection_strings):
+        return utils.get_atom_selections(
+            iselection=False, model=self.model, selection_strings=selection_strings
+        )[0]
+
 
 def exercise_basic():
-  pdb_str = """
+    pdb_str = """
 CRYST1   12.000   11.000   13.000  80.00 70.00 100.00 P 1           1
 ATOM      1  CB  PHE A   1       7.767   5.853   7.671  1.00 17.45           C
 ANISOU    1  CB  PHE A   1     1090   2307   3233   1244   1260   2218       C
@@ -107,325 +109,383 @@ ATOM     15  CA  PHE C   3      10.000  10.000   7.000  1.00 51.73           C
 ANISOU   15  CA  PHE C   3     2963   6697   9995   3440   3985   6975       C
 END
 """
-  verbose=False
-  file_name = "exercise_basic_pdbtools.pdb"
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  pi.write_pdb_file(file_name=file_name)
-  output = "exercise_basic_pdbtools_mod.pdb"
-  xrsp_init = xray_structure_plus(file_name = file_name)
-  assert file_name.find('"') < 0
-  base = \
-      'phenix.pdbtools "%s" suffix=none output.prefix=%s '%(file_name, output.replace(".pdb",""))
-  for selection_str in [None, "chain A or chain C"]:
-    selection = xrsp_init.selection(selection_strings = selection_str)
-    if(selection_str is None):
-      assert selection.size() == selection.count(True)
-    else:
-      assert selection.size() == 36 and selection.count(True) == 24
+    verbose = False
+    file_name = "exercise_basic_pdbtools.pdb"
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    pi.write_pdb_file(file_name=file_name)
+    output = "exercise_basic_pdbtools_mod.pdb"
+    xrsp_init = xray_structure_plus(file_name=file_name)
+    assert file_name.find('"') < 0
+    base = 'phenix.pdbtools "%s" suffix=none output.prefix=%s ' % (
+        file_name,
+        output.replace(".pdb", ""),
+    )
+    for selection_str in [None, "chain A or chain C"]:
+        selection = xrsp_init.selection(selection_strings=selection_str)
+        if selection_str is None:
+            assert selection.size() == selection.count(True)
+        else:
+            assert selection.size() == 36 and selection.count(True) == 24
+        #
+        cmd = base + 'adp.randomize=true modify.selection="%s"' % str(selection_str)
+        print(cmd)
+        check_adp_rand(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        cmd = base + 'adp.set_b_iso=10.0 modify.selection="%s"' % str(selection_str)
+        print(cmd)
+        check_adp_set_b_iso(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        cmd = base + 'adp.shift_b_iso=20.0 modify.selection="%s"' % str(selection_str)
+        print(cmd)
+        check_adp_rand(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        cmd = base + 'adp.scale_adp=2.0 modify.selection="%s"' % str(selection_str)
+        print(cmd)
+        check_adp_rand(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        cmd = base + 'adp.convert_to_iso=true modify.selection="%s"' % str(
+            selection_str
+        )
+        print(cmd)
+        check_adp_to_iso(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        cmd = base + 'adp.convert_to_aniso=true modify.selection="%s"' % str(
+            selection_str
+        )
+        print(cmd)
+        check_adp_to_aniso(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        shake = 1.5
+        cmd = base + 'sites.shake=%s modify.selection="%s"' % (
+            str(shake),
+            str(selection_str),
+        )
+        print(cmd)
+        check_sites_shake(
+            cmd, xrsp_init, output, selection, selection_str, shake, verbose
+        )
+        #
+        cmd = (
+            base
+            + 'sites.rotate="1,2,3" sites.translate="4,5,6" modify.selection="%s"'
+            % (str(selection_str))
+        )
+        print(cmd)
+        check_sites_rt(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        cmd = base + 'occupancies.randomize=true modify.selection="%s"' % (
+            str(selection_str)
+        )
+        print(cmd)
+        check_occ_randomize(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        cmd = base + 'occupancies.set=0.75 modify.selection="%s"' % (str(selection_str))
+        print(cmd)
+        check_occ_set(cmd, xrsp_init, output, selection, selection_str, verbose)
+        #
+        remove_selection_str = "element C"
+        cmd = base + 'remove="%s" modify.selection="%s"' % (
+            str(remove_selection_str),
+            str(selection_str),
+        )
+        print(cmd)
+        check_remove_selection(
+            cmd,
+            xrsp_init,
+            output,
+            selection,
+            selection_str,
+            remove_selection_str,
+            verbose,
+        )
+        #
+        keep_selection_str = "element C"
+        cmd = base + 'keep="%s" modify.selection="%s"' % (
+            str(keep_selection_str),
+            str(selection_str),
+        )
+        print(cmd)
+        check_keep_selection(
+            cmd,
+            xrsp_init,
+            output,
+            selection,
+            selection_str,
+            keep_selection_str,
+            verbose,
+        )
+        #
     #
-    cmd = base + 'adp.randomize=true modify.selection="%s"'%str(selection_str)
+    cmd = base
     print(cmd)
-    check_adp_rand(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
+    check_all_none(cmd, xrsp_init, output, verbose)
     #
-    cmd = base + 'adp.set_b_iso=10.0 modify.selection="%s"'%str(selection_str)
-    print(cmd)
-    check_adp_set_b_iso(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
-    #
-    cmd = base + 'adp.shift_b_iso=20.0 modify.selection="%s"'%str(selection_str)
-    print(cmd)
-    check_adp_rand(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
-    #
-    cmd = base + 'adp.scale_adp=2.0 modify.selection="%s"'%str(selection_str)
-    print(cmd)
-    check_adp_rand(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
-    #
-    cmd = base + 'adp.convert_to_iso=true modify.selection="%s"'%str(selection_str)
-    print(cmd)
-    check_adp_to_iso(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
-    #
-    cmd = base + 'adp.convert_to_aniso=true modify.selection="%s"'%str(selection_str)
-    print(cmd)
-    check_adp_to_aniso(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
-    #
-    shake = 1.5
-    cmd = base+'sites.shake=%s modify.selection="%s"'%(str(shake), str(selection_str))
-    print(cmd)
-    check_sites_shake(
-      cmd, xrsp_init, output, selection, selection_str, shake, verbose)
-    #
-    cmd = base+'sites.rotate="1,2,3" sites.translate="4,5,6" modify.selection="%s"'%(
-                                                            str(selection_str))
-    print(cmd)
-    check_sites_rt(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
-    #
-    cmd = base+'occupancies.randomize=true modify.selection="%s"'%(str(selection_str))
-    print(cmd)
-    check_occ_randomize(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
-    #
-    cmd = base+'occupancies.set=0.75 modify.selection="%s"'%(str(selection_str))
-    print(cmd)
-    check_occ_set(
-      cmd, xrsp_init, output, selection, selection_str, verbose)
-    #
-    remove_selection_str = "element C"
-    cmd = base+'remove="%s" modify.selection="%s"'%(
-      str(remove_selection_str), str(selection_str))
-    print(cmd)
-    check_remove_selection(
-      cmd, xrsp_init, output, selection, selection_str,
-      remove_selection_str, verbose)
-    #
-    keep_selection_str = "element C"
-    cmd = base+'keep="%s" modify.selection="%s"'%(
-      str(keep_selection_str), str(selection_str))
-    print(cmd)
-    check_keep_selection(
-      cmd, xrsp_init, output, selection, selection_str,
-      keep_selection_str, verbose)
-    #
-  #
-  cmd = base
-  print(cmd)
-  check_all_none(cmd, xrsp_init, output, verbose)
-  #
-  cmd = base
-  check_keep_remove_conflict(cmd, output, verbose)
+    cmd = base
+    check_keep_remove_conflict(cmd, output, verbose)
+
 
 def check_adp_rand(
-      cmd, xrsp_init, output, selection, selection_str, verbose,
-      tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.occ,        xrsp_init.occ,tolerance)
-  assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart,tolerance)
-  assert approx_equal(xrsp.use_u_iso,  xrsp_init.use_u_iso,tolerance)
-  assert approx_equal(xrsp.use_u_aniso,xrsp_init.use_u_aniso,tolerance)
-  assert approx_equal(xrsp.u_iso_not_used,  xrsp_init.u_iso_not_used,tolerance)
-  assert approx_equal(xrsp.u_cart_not_used,xrsp_init.u_cart_not_used,tolerance)
-  if(selection_str is None):
-    assert not_approx_equal(xrsp.u_iso_used,  xrsp_init.u_iso_used,tolerance)
-    assert not_approx_equal(xrsp.u_cart_used, xrsp_init.u_cart_used,tolerance)
-  else:
-    arg1 = xrsp.u_iso_used.select(selection.select(xrsp.use_u_iso))
-    arg2 = xrsp_init.u_iso_used.select(selection.select(xrsp_init.use_u_iso))
-    if(arg1.size() > 0): assert not_approx_equal(arg1, arg2,tolerance)
-    arg1 =xrsp.u_cart_used.select(selection.select(xrsp.use_u_aniso))
-    arg2 =xrsp_init.u_cart_used.select(selection.select(xrsp_init.use_u_aniso))
-    if(arg1.size() > 0): assert not_approx_equal(arg1, arg2,tolerance)
+    cmd, xrsp_init, output, selection, selection_str, verbose, tolerance=1.0e-3
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.occ, xrsp_init.occ, tolerance)
+    assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart, tolerance)
+    assert approx_equal(xrsp.use_u_iso, xrsp_init.use_u_iso, tolerance)
+    assert approx_equal(xrsp.use_u_aniso, xrsp_init.use_u_aniso, tolerance)
+    assert approx_equal(xrsp.u_iso_not_used, xrsp_init.u_iso_not_used, tolerance)
+    assert approx_equal(xrsp.u_cart_not_used, xrsp_init.u_cart_not_used, tolerance)
+    if selection_str is None:
+        assert not_approx_equal(xrsp.u_iso_used, xrsp_init.u_iso_used, tolerance)
+        assert not_approx_equal(xrsp.u_cart_used, xrsp_init.u_cart_used, tolerance)
+    else:
+        arg1 = xrsp.u_iso_used.select(selection.select(xrsp.use_u_iso))
+        arg2 = xrsp_init.u_iso_used.select(selection.select(xrsp_init.use_u_iso))
+        if arg1.size() > 0:
+            assert not_approx_equal(arg1, arg2, tolerance)
+        arg1 = xrsp.u_cart_used.select(selection.select(xrsp.use_u_aniso))
+        arg2 = xrsp_init.u_cart_used.select(selection.select(xrsp_init.use_u_aniso))
+        if arg1.size() > 0:
+            assert not_approx_equal(arg1, arg2, tolerance)
+
 
 def check_adp_set_b_iso(
-      cmd, xrsp_init, output, selection, selection_str, verbose,
-      tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.occ,        xrsp_init.occ,tolerance)
-  assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart,tolerance)
-  assert approx_equal(xrsp.use_u_iso,  xrsp_init.use_u_iso,tolerance)
-  assert approx_equal(xrsp.use_u_aniso,xrsp_init.use_u_aniso,tolerance)
-  assert approx_equal(xrsp.u_iso_not_used,  xrsp_init.u_iso_not_used,tolerance)
-  assert approx_equal(xrsp.u_cart_not_used,xrsp_init.u_cart_not_used,tolerance)
-  if(selection_str is None):
-    assert not_approx_equal(xrsp.u_iso_used,  xrsp_init.u_iso_used,tolerance)
-    for ucart in xrsp.u_cart:
-      b_iso = adptbx.u_as_b(adptbx.u_cart_as_u_iso(ucart))
-      if b_iso > 0: assert approx_equal(b_iso, 10, 0.005)
-      else: assert approx_equal(b_iso, -78.956, 0.005)
-  else:
-    arg1 = xrsp.u_iso_used.select(selection.select(xrsp.use_u_iso))
-    arg2 = xrsp_init.u_iso_used.select(selection.select(xrsp_init.use_u_iso))
-    if(arg1.size() > 0): assert not_approx_equal(arg1, arg2,tolerance)
-    for ucart in xrsp.u_cart:
-      b_iso = adptbx.u_as_b(adptbx.u_cart_as_u_iso(ucart))
-      if b_iso > 0: assert approx_equal(b_iso, 10, 0.005)
-      else: assert approx_equal(b_iso, -78.956, 0.005)
+    cmd, xrsp_init, output, selection, selection_str, verbose, tolerance=1.0e-3
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.occ, xrsp_init.occ, tolerance)
+    assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart, tolerance)
+    assert approx_equal(xrsp.use_u_iso, xrsp_init.use_u_iso, tolerance)
+    assert approx_equal(xrsp.use_u_aniso, xrsp_init.use_u_aniso, tolerance)
+    assert approx_equal(xrsp.u_iso_not_used, xrsp_init.u_iso_not_used, tolerance)
+    assert approx_equal(xrsp.u_cart_not_used, xrsp_init.u_cart_not_used, tolerance)
+    if selection_str is None:
+        assert not_approx_equal(xrsp.u_iso_used, xrsp_init.u_iso_used, tolerance)
+        for ucart in xrsp.u_cart:
+            b_iso = adptbx.u_as_b(adptbx.u_cart_as_u_iso(ucart))
+            if b_iso > 0:
+                assert approx_equal(b_iso, 10, 0.005)
+            else:
+                assert approx_equal(b_iso, -78.956, 0.005)
+    else:
+        arg1 = xrsp.u_iso_used.select(selection.select(xrsp.use_u_iso))
+        arg2 = xrsp_init.u_iso_used.select(selection.select(xrsp_init.use_u_iso))
+        if arg1.size() > 0:
+            assert not_approx_equal(arg1, arg2, tolerance)
+        for ucart in xrsp.u_cart:
+            b_iso = adptbx.u_as_b(adptbx.u_cart_as_u_iso(ucart))
+            if b_iso > 0:
+                assert approx_equal(b_iso, 10, 0.005)
+            else:
+                assert approx_equal(b_iso, -78.956, 0.005)
+
 
 def check_adp_to_iso(
-      cmd, xrsp_init, output, selection, selection_str, verbose,
-      tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.occ,        xrsp_init.occ,tolerance)
-  assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart,tolerance)
-  assert not_approx_equal(xrsp.use_u_iso,  xrsp_init.use_u_iso,tolerance)
-  assert not_approx_equal(xrsp.use_u_aniso,xrsp_init.use_u_aniso,tolerance)
-  assert xrsp.u_iso_not_used.size() == 0
-  assert xrsp_init.u_iso_not_used.size() > 0
-  assert xrsp.u_cart_used.size() == 0
-  assert xrsp_init.u_cart_used.size() > 0
+    cmd, xrsp_init, output, selection, selection_str, verbose, tolerance=1.0e-3
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.occ, xrsp_init.occ, tolerance)
+    assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart, tolerance)
+    assert not_approx_equal(xrsp.use_u_iso, xrsp_init.use_u_iso, tolerance)
+    assert not_approx_equal(xrsp.use_u_aniso, xrsp_init.use_u_aniso, tolerance)
+    assert xrsp.u_iso_not_used.size() == 0
+    assert xrsp_init.u_iso_not_used.size() > 0
+    assert xrsp.u_cart_used.size() == 0
+    assert xrsp_init.u_cart_used.size() > 0
+
 
 def check_adp_to_aniso(
-      cmd, xrsp_init, output, selection, selection_str, verbose,
-      tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.occ,        xrsp_init.occ,tolerance)
-  assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart,tolerance)
-  if(selection_str is None):
-    assert not_approx_equal(xrsp.use_u_iso,  xrsp_init.use_u_iso,tolerance)
-    assert not_approx_equal(xrsp.use_u_aniso,xrsp_init.use_u_aniso,tolerance)
-    assert xrsp.u_iso_used.size() == 0
-    assert xrsp_init.u_iso_used.size() > 0
-    assert xrsp.u_cart_not_used.size() == 0
-    assert xrsp_init.u_cart_not_used.size() > 0
-  else:
-    assert approx_equal(xrsp.use_u_iso,  xrsp_init.use_u_iso,tolerance)
-    assert approx_equal(xrsp.use_u_aniso,xrsp_init.use_u_aniso,tolerance)
+    cmd, xrsp_init, output, selection, selection_str, verbose, tolerance=1.0e-3
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.occ, xrsp_init.occ, tolerance)
+    assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart, tolerance)
+    if selection_str is None:
+        assert not_approx_equal(xrsp.use_u_iso, xrsp_init.use_u_iso, tolerance)
+        assert not_approx_equal(xrsp.use_u_aniso, xrsp_init.use_u_aniso, tolerance)
+        assert xrsp.u_iso_used.size() == 0
+        assert xrsp_init.u_iso_used.size() > 0
+        assert xrsp.u_cart_not_used.size() == 0
+        assert xrsp_init.u_cart_not_used.size() > 0
+    else:
+        assert approx_equal(xrsp.use_u_iso, xrsp_init.use_u_iso, tolerance)
+        assert approx_equal(xrsp.use_u_aniso, xrsp_init.use_u_aniso, tolerance)
+
 
 def check_sites_shake(
-      cmd, xrsp_init, output, selection, selection_str, shake, verbose,
-      tolerance=1.e-2):
-  remove_files(output)
-  print(cmd)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.occ,    xrsp_init.occ,tolerance)
-  assert approx_equal(xrsp.u_iso,  xrsp_init.u_iso,tolerance)
-  assert approx_equal(xrsp.u_cart, xrsp_init.u_cart,tolerance)
-  if(selection_str is None):
-    diff = xrsp.sites_cart - xrsp_init.sites_cart
-    assert approx_equal(
-                      math.sqrt(flex.mean(diff.dot())), shake, 1.e-3,tolerance)
-  else:
-    diff = xrsp.sites_cart - xrsp_init.sites_cart
-    assert approx_equal(
-              math.sqrt(flex.mean(diff.select(selection).dot())), shake, 1.e-3)
-    assert approx_equal(
-              math.sqrt(flex.mean(diff.select(~selection).dot())),0.,tolerance)
+    cmd, xrsp_init, output, selection, selection_str, shake, verbose, tolerance=1.0e-2
+):
+    remove_files(output)
+    print(cmd)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.occ, xrsp_init.occ, tolerance)
+    assert approx_equal(xrsp.u_iso, xrsp_init.u_iso, tolerance)
+    assert approx_equal(xrsp.u_cart, xrsp_init.u_cart, tolerance)
+    if selection_str is None:
+        diff = xrsp.sites_cart - xrsp_init.sites_cart
+        assert approx_equal(math.sqrt(flex.mean(diff.dot())), shake, 1.0e-3, tolerance)
+    else:
+        diff = xrsp.sites_cart - xrsp_init.sites_cart
+        assert approx_equal(
+            math.sqrt(flex.mean(diff.select(selection).dot())), shake, 1.0e-3
+        )
+        assert approx_equal(
+            math.sqrt(flex.mean(diff.select(~selection).dot())), 0.0, tolerance
+        )
+
 
 def check_sites_rt(
-      cmd, xrsp_init, output, selection, selection_str, verbose,
-      tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.occ,    xrsp_init.occ,tolerance)
-  assert approx_equal(xrsp.u_iso,  xrsp_init.u_iso,tolerance)
-  assert approx_equal(xrsp.u_cart, xrsp_init.u_cart,tolerance)
-  if(selection_str is None):
-    diff = xrsp.sites_cart - xrsp_init.sites_cart
-    assert math.sqrt(flex.mean(diff.dot())) > 1.0
-  else:
-    diff = xrsp.sites_cart - xrsp_init.sites_cart
-    assert math.sqrt(flex.mean(diff.select(selection).dot())) > 1.0
-    assert approx_equal(
-              math.sqrt(flex.mean(diff.select(~selection).dot())),0.,tolerance)
+    cmd, xrsp_init, output, selection, selection_str, verbose, tolerance=1.0e-3
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.occ, xrsp_init.occ, tolerance)
+    assert approx_equal(xrsp.u_iso, xrsp_init.u_iso, tolerance)
+    assert approx_equal(xrsp.u_cart, xrsp_init.u_cart, tolerance)
+    if selection_str is None:
+        diff = xrsp.sites_cart - xrsp_init.sites_cart
+        assert math.sqrt(flex.mean(diff.dot())) > 1.0
+    else:
+        diff = xrsp.sites_cart - xrsp_init.sites_cart
+        assert math.sqrt(flex.mean(diff.select(selection).dot())) > 1.0
+        assert approx_equal(
+            math.sqrt(flex.mean(diff.select(~selection).dot())), 0.0, tolerance
+        )
+
 
 def check_occ_randomize(
-      cmd, xrsp_init, output, selection,selection_str, verbose,
-      tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.sites_cart,xrsp_init.sites_cart,tolerance)
-  assert approx_equal(xrsp.u_iso,     xrsp_init.u_iso,tolerance)
-  assert approx_equal(xrsp.u_cart,    xrsp_init.u_cart,tolerance)
-  if(selection_str is None):
-    diff = flex.abs(xrsp.occ - xrsp_init.occ)
-    assert flex.mean(diff) > 0.0
-    assert flex.max(diff) > 0.0
-  else:
-    diff = flex.abs(xrsp.occ - xrsp_init.occ)
-    assert flex.mean(diff) > 0.0
-    assert flex.max(diff) > 0.0
-    assert approx_equal(flex.mean(diff.select(~selection)),0.,tolerance)
+    cmd, xrsp_init, output, selection, selection_str, verbose, tolerance=1.0e-3
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart, tolerance)
+    assert approx_equal(xrsp.u_iso, xrsp_init.u_iso, tolerance)
+    assert approx_equal(xrsp.u_cart, xrsp_init.u_cart, tolerance)
+    if selection_str is None:
+        diff = flex.abs(xrsp.occ - xrsp_init.occ)
+        assert flex.mean(diff) > 0.0
+        assert flex.max(diff) > 0.0
+    else:
+        diff = flex.abs(xrsp.occ - xrsp_init.occ)
+        assert flex.mean(diff) > 0.0
+        assert flex.max(diff) > 0.0
+        assert approx_equal(flex.mean(diff.select(~selection)), 0.0, tolerance)
+
 
 def check_occ_set(
-      cmd, xrsp_init, output, selection,selection_str, verbose,
-      tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.sites_cart,xrsp_init.sites_cart,tolerance)
-  assert approx_equal(xrsp.u_iso,     xrsp_init.u_iso,tolerance)
-  assert approx_equal(xrsp.u_cart,    xrsp_init.u_cart,tolerance)
-  if(selection_str is None):
-    diff = flex.abs(xrsp.occ - xrsp_init.occ)
-    assert flex.mean(diff) > 0.0
-    assert flex.max(diff) > 0.0
-  else:
-    occ_init = xrsp_init.occ
-    occ_mod  = xrsp.occ
-    assert occ_init.all_eq(1.0)
-    assert occ_mod.select(~selection).all_eq(1.0)
-    assert occ_mod.select(selection).all_eq(0.75)
+    cmd, xrsp_init, output, selection, selection_str, verbose, tolerance=1.0e-3
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart, tolerance)
+    assert approx_equal(xrsp.u_iso, xrsp_init.u_iso, tolerance)
+    assert approx_equal(xrsp.u_cart, xrsp_init.u_cart, tolerance)
+    if selection_str is None:
+        diff = flex.abs(xrsp.occ - xrsp_init.occ)
+        assert flex.mean(diff) > 0.0
+        assert flex.max(diff) > 0.0
+    else:
+        occ_init = xrsp_init.occ
+        occ_mod = xrsp.occ
+        assert occ_init.all_eq(1.0)
+        assert occ_mod.select(~selection).all_eq(1.0)
+        assert occ_mod.select(selection).all_eq(0.75)
+
 
 def check_remove_selection(
-      cmd, xrsp_init, output, selection, selection_str,
-      remove_selection_str, verbose, tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  remove_selection = ~xrsp_init.selection(
-                                      selection_strings = remove_selection_str)
-  assert remove_selection.size() > remove_selection.count(True)
-  assert approx_equal(xrsp.sites_cart,
-                      xrsp_init.sites_cart.select(remove_selection),tolerance)
-  assert approx_equal(
-                    xrsp.occ, xrsp_init.occ.select(remove_selection),tolerance)
-  assert approx_equal(
-                xrsp.u_iso, xrsp_init.u_iso.select(remove_selection),tolerance)
-  assert approx_equal(
-              xrsp.u_cart, xrsp_init.u_cart.select(remove_selection),tolerance)
-  sct1 = xrsp_init.xray_structure.scatterers().extract_scattering_types()
-  assert sct1.count("C") > 0
-  sct2 = xrsp.xray_structure.scatterers().extract_scattering_types()
-  assert sct2.count("C") == 0
-  assert sct2.size() == remove_selection.count(True)
-  assert sct1.size() > sct2.size()
+    cmd,
+    xrsp_init,
+    output,
+    selection,
+    selection_str,
+    remove_selection_str,
+    verbose,
+    tolerance=1.0e-3,
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    remove_selection = ~xrsp_init.selection(selection_strings=remove_selection_str)
+    assert remove_selection.size() > remove_selection.count(True)
+    assert approx_equal(
+        xrsp.sites_cart, xrsp_init.sites_cart.select(remove_selection), tolerance
+    )
+    assert approx_equal(xrsp.occ, xrsp_init.occ.select(remove_selection), tolerance)
+    assert approx_equal(xrsp.u_iso, xrsp_init.u_iso.select(remove_selection), tolerance)
+    assert approx_equal(
+        xrsp.u_cart, xrsp_init.u_cart.select(remove_selection), tolerance
+    )
+    sct1 = xrsp_init.xray_structure.scatterers().extract_scattering_types()
+    assert sct1.count("C") > 0
+    sct2 = xrsp.xray_structure.scatterers().extract_scattering_types()
+    assert sct2.count("C") == 0
+    assert sct2.size() == remove_selection.count(True)
+    assert sct1.size() > sct2.size()
+
 
 def check_keep_selection(
-      cmd, xrsp_init, output, selection, selection_str,
-      keep_selection_str, verbose, tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  keep_selection = xrsp_init.selection(selection_strings = keep_selection_str)
-  assert approx_equal(xrsp.sites_cart,
-                      xrsp_init.sites_cart.select(keep_selection),tolerance)
-  assert approx_equal(xrsp.occ, xrsp_init.occ.select(keep_selection),tolerance)
-  assert approx_equal(
-    xrsp.u_iso, xrsp_init.u_iso.select(keep_selection),tolerance)
-  assert approx_equal(
-    xrsp.u_cart, xrsp_init.u_cart.select(keep_selection),tolerance)
-  sct1 = xrsp_init.xray_structure.scatterers().extract_scattering_types()
-  assert sct1.count("C") > 0 and sct1.size() > sct1.count("C")
-  sct2 = xrsp.xray_structure.scatterers().extract_scattering_types()
-  assert sct2.count("C") == sct2.size()
-  assert sct1.size() > keep_selection.count(True)
-  assert sct1.size() > sct2.size()
+    cmd,
+    xrsp_init,
+    output,
+    selection,
+    selection_str,
+    keep_selection_str,
+    verbose,
+    tolerance=1.0e-3,
+):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    keep_selection = xrsp_init.selection(selection_strings=keep_selection_str)
+    assert approx_equal(
+        xrsp.sites_cart, xrsp_init.sites_cart.select(keep_selection), tolerance
+    )
+    assert approx_equal(xrsp.occ, xrsp_init.occ.select(keep_selection), tolerance)
+    assert approx_equal(xrsp.u_iso, xrsp_init.u_iso.select(keep_selection), tolerance)
+    assert approx_equal(xrsp.u_cart, xrsp_init.u_cart.select(keep_selection), tolerance)
+    sct1 = xrsp_init.xray_structure.scatterers().extract_scattering_types()
+    assert sct1.count("C") > 0 and sct1.size() > sct1.count("C")
+    sct2 = xrsp.xray_structure.scatterers().extract_scattering_types()
+    assert sct2.count("C") == sct2.size()
+    assert sct1.size() > keep_selection.count(True)
+    assert sct1.size() > sct2.size()
 
-def check_all_none(cmd, xrsp_init, output, verbose, tolerance=1.e-3):
-  remove_files(output)
-  run_command(command=cmd, verbose=verbose)
-  xrsp = xray_structure_plus(file_name = output)
-  assert approx_equal(xrsp.occ,         xrsp_init.occ,tolerance)
-  assert approx_equal(xrsp.sites_cart,  xrsp_init.sites_cart,tolerance)
-  assert approx_equal(xrsp.use_u_iso,   xrsp_init.use_u_iso,tolerance)
-  assert approx_equal(xrsp.use_u_aniso, xrsp_init.use_u_aniso,tolerance)
-  assert approx_equal(xrsp.u_iso,       xrsp_init.u_iso,tolerance)
-  assert approx_equal(xrsp.u_cart,      xrsp_init.u_cart,tolerance)
+
+def check_all_none(cmd, xrsp_init, output, verbose, tolerance=1.0e-3):
+    remove_files(output)
+    run_command(command=cmd, verbose=verbose)
+    xrsp = xray_structure_plus(file_name=output)
+    assert approx_equal(xrsp.occ, xrsp_init.occ, tolerance)
+    assert approx_equal(xrsp.sites_cart, xrsp_init.sites_cart, tolerance)
+    assert approx_equal(xrsp.use_u_iso, xrsp_init.use_u_iso, tolerance)
+    assert approx_equal(xrsp.use_u_aniso, xrsp_init.use_u_aniso, tolerance)
+    assert approx_equal(xrsp.u_iso, xrsp_init.u_iso, tolerance)
+    assert approx_equal(xrsp.u_cart, xrsp_init.u_cart, tolerance)
+
 
 def check_keep_remove_conflict(cmd, output, verbose):
-  cmd += " keep=all remove=all "
-  print(cmd)
-  r = easy_run.go(cmd)
-  assert r.stdout_lines[-1]==\
-    "Sorry: 'keep' and 'remove' keywords cannot be used simultaneously."
+    cmd += " keep=all remove=all "
+    print(cmd)
+    r = easy_run.go(cmd)
+    assert (
+        r.stdout_lines[-1]
+        == "Sorry: 'keep' and 'remove' keywords cannot be used simultaneously."
+    )
+
 
 def exercise_multiple():
-  pdb_str = """\
+    pdb_str = """\
 ATOM      1  O   HOH A   2       5.131   5.251   5.823  1.00 10.00           O
 ATOM      2  CA  LYS B  32      10.574   8.177  11.768  1.00 11.49           C
 ATOM      3  CB  LYS B  32       9.193   8.732  12.170  1.00 12.23           C
@@ -436,10 +496,10 @@ ATOM      7  O   HOH C   4       4.132   9.963   7.800  1.00 15.00           O
 TER
 END
 """
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  ph_met_in = pi.construct_hierarchy()
-  pi.write_pdb_file(file_name="exercise_multiple.pdb")
-  params = """\
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph_met_in = pi.construct_hierarchy()
+    pi.write_pdb_file(file_name="exercise_multiple.pdb")
+    params = """\
 modify{
 adp {
   atom_selection = chain A
@@ -470,24 +530,25 @@ occupancies
 }
 }
 """
-  open("params", "w").write(params)
-  cmd = 'phenix.pdbtools exercise_multiple.pdb params'
-  print(cmd)
-  result = run_command(command=cmd, verbose=False)
-  lines = [l.strip() for l in result.stdout_lines]
-  expected_lines = [
-    "Randomizing ADP: selected atoms: 1 of 7",
-    "Adding shift = 10.00 to all ADP: selected atoms: 2 of 7",
-    "Shaking sites (RMS = 1.500): selected atoms: 2 of 7",
-    "Rigid body shift: selected atoms: 5 of 7",
-    "Randomizing occupancies: selected atoms: 1 of 7",
-    "Setting occupancies to:    0.100: selected atoms: 4 of 7"
-  ]
-  for line in expected_lines:
-    assert line in lines
+    open("params", "w").write(params)
+    cmd = "phenix.pdbtools exercise_multiple.pdb params"
+    print(cmd)
+    result = run_command(command=cmd, verbose=False)
+    lines = [l.strip() for l in result.stdout_lines]
+    expected_lines = [
+        "Randomizing ADP: selected atoms: 1 of 7",
+        "Adding shift = 10.00 to all ADP: selected atoms: 2 of 7",
+        "Shaking sites (RMS = 1.500): selected atoms: 2 of 7",
+        "Rigid body shift: selected atoms: 5 of 7",
+        "Randomizing occupancies: selected atoms: 1 of 7",
+        "Setting occupancies to:    0.100: selected atoms: 4 of 7",
+    ]
+    for line in expected_lines:
+        assert line in lines
+
 
 def exercise_no_cryst1():
-  pdb_str = """
+    pdb_str = """
 ATOM      1  N  AMET B  37       7.525   5.296   6.399  1.00 10.00           N
 ATOM      2  CA AMET B  37       6.533   6.338   6.634  1.00 10.00           C
 ATOM      3  C  AMET B  37       6.175   7.044   5.330  1.00 10.00           C
@@ -507,30 +568,31 @@ ATOM      8  CE BMET B  37       8.775   5.000  10.645  1.00 10.00           C
 TER
 END
   """
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  ph_met_in = pi.construct_hierarchy()
-  pi.write_pdb_file(file_name="exercise_no_cryst1.pdb")
-  cmd = 'phenix.pdbtools exercise_no_cryst1.pdb sites.rotate="0 0 0"'
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  lines1 = []
-  for line in open("exercise_no_cryst1.pdb","r").readlines():
-    line = line.strip()
-    assert line.count("CRYST1") == 0
-    if(line.startswith("ATOM") or line.startswith("HETATM")):
-      lines1.append(line)
-  lines2 = []
-  for line in open("exercise_no_cryst1_modified.pdb","r").readlines():
-    line = line.strip()
-    assert line.count("CRYST1") == 0
-    if(line.startswith("ATOM") or line.startswith("HETATM")):
-      lines2.append(line)
-  assert len(lines1) == len(lines2)
-  for l1,l2 in zip(lines1, lines2):
-    assert l1[11:70].strip() == l2[11:70].strip()
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph_met_in = pi.construct_hierarchy()
+    pi.write_pdb_file(file_name="exercise_no_cryst1.pdb")
+    cmd = 'phenix.pdbtools exercise_no_cryst1.pdb sites.rotate="0 0 0"'
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    lines1 = []
+    for line in open("exercise_no_cryst1.pdb", "r").readlines():
+        line = line.strip()
+        assert line.count("CRYST1") == 0
+        if line.startswith("ATOM") or line.startswith("HETATM"):
+            lines1.append(line)
+    lines2 = []
+    for line in open("exercise_no_cryst1_modified.pdb", "r").readlines():
+        line = line.strip()
+        assert line.count("CRYST1") == 0
+        if line.startswith("ATOM") or line.startswith("HETATM"):
+            lines2.append(line)
+    assert len(lines1) == len(lines2)
+    for l1, l2 in zip(lines1, lines2):
+        assert l1[11:70].strip() == l2[11:70].strip()
+
 
 def exercise_truncate_to_polyala():
-  pdb_str = """
+    pdb_str = """
 ATOM      1  N  AMET B  37       7.525   5.296   6.399  1.00 10.00           N
 ATOM      2  CA AMET B  37       6.533   6.338   6.634  1.00 10.00           C
 ATOM      3  C  AMET B  37       6.175   7.044   5.330  1.00 10.00           C
@@ -550,36 +612,40 @@ ATOM      8  CE BMET B  37       8.775   5.000  10.645  1.00 10.00           C
 TER
 END
   """
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  ph_met_in = pi.construct_hierarchy()
-  pi.write_pdb_file(file_name="exercise_exercise_truncate_to_polyala.pdb")
-  cmd = 'phenix.pdbtools exercise_exercise_truncate_to_polyala.pdb truncate_to_polyala=true'
-  print(cmd)
-  run_command(command=cmd)
-  gly_atom_names = [" N  ", " CA ", " C  ", " O  ", " CB "]
-  pdb_inp = iotbx.pdb.hierarchy.input(
-    file_name="exercise_exercise_truncate_to_polyala_modified.pdb")
-  for a in pdb_inp.hierarchy.atoms_with_labels():
-    assert a.name in gly_atom_names
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph_met_in = pi.construct_hierarchy()
+    pi.write_pdb_file(file_name="exercise_exercise_truncate_to_polyala.pdb")
+    cmd = "phenix.pdbtools exercise_exercise_truncate_to_polyala.pdb truncate_to_polyala=true"
+    print(cmd)
+    run_command(command=cmd)
+    gly_atom_names = [" N  ", " CA ", " C  ", " O  ", " CB "]
+    pdb_inp = iotbx.pdb.hierarchy.input(
+        file_name="exercise_exercise_truncate_to_polyala_modified.pdb"
+    )
+    for a in pdb_inp.hierarchy.atoms_with_labels():
+        assert a.name in gly_atom_names
+
 
 def exercise_set_charge():
-  from iotbx import file_reader
-  input_pdb = """
+    from iotbx import file_reader
+
+    input_pdb = """
 ATOM      1  CL  CL  X   1       0.000   0.000   0.000  1.00 20.00          CL
 END
 """
-  open("tmp_cl.pdb", "w").write(input_pdb)
-  cmd='phenix.pdbtools tmp_cl.pdb charge_selection="element Cl" charge=-1'
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  pdb_in = file_reader.any_file("tmp_cl_modified.pdb").file_object
-  hierarchy = pdb_in.hierarchy
-  xrs = pdb_in.xray_structure_simple()
-  assert (xrs.scatterers()[0].scattering_type == 'Cl1-')
-  assert (hierarchy.atoms()[0].charge == '1-')
+    open("tmp_cl.pdb", "w").write(input_pdb)
+    cmd = 'phenix.pdbtools tmp_cl.pdb charge_selection="element Cl" charge=-1'
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    pdb_in = file_reader.any_file("tmp_cl_modified.pdb").file_object
+    hierarchy = pdb_in.hierarchy
+    xrs = pdb_in.xray_structure_simple()
+    assert xrs.scatterers()[0].scattering_type == "Cl1-"
+    assert hierarchy.atoms()[0].charge == "1-"
+
 
 def exercise_renumber_residues():
-  input_pdb = """
+    input_pdb = """
 ATOM      1  O   GLY A   3       1.434   1.460   2.496  1.00  6.04           O
 ATOM      2  O   CYS A   7       2.196   4.467   3.911  1.00  4.51           O
 ATOM      3  O   CYS A   1      -1.433   4.734   5.405  1.00  7.85           O
@@ -597,7 +663,7 @@ ATOM     12  O   LEU C   0       5.613  12.448   6.864  1.00  7.32           O
 TER
 END
 """
-  expected_output_pdb = """ATOM      1  O   GLY A   1       1.434   1.460   2.496  1.00  6.04           O
+    expected_output_pdb = """ATOM      1  O   GLY A   1       1.434   1.460   2.496  1.00  6.04           O
 ATOM      2  O   CYS A   2       2.196   4.467   3.911  1.00  4.51           O
 ATOM      3  O   CYS A   3      -1.433   4.734   5.405  1.00  7.85           O
 TER
@@ -613,17 +679,20 @@ TER
 ATOM     12  O   LEU C   1       5.613  12.448   6.864  1.00  7.32           O
 TER
 """
-  ifn = "exercise_renumber_residues.pdb"
-  open(ifn,"w").write(input_pdb)
-  cmd = 'phenix.pdbtools "%s" renumber_residues=true'%ifn
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  for line1, line2 in zip(open("exercise_renumber_residues_modified.pdb").readlines(), expected_output_pdb.splitlines()):
-    line1 = line1.strip()
-    line2 = line2.strip()
-    assert line1 == line2,[line1, line2]
-  # now only a selected chain
-  expected_output_pdb_2 = """\
+    ifn = "exercise_renumber_residues.pdb"
+    open(ifn, "w").write(input_pdb)
+    cmd = 'phenix.pdbtools "%s" renumber_residues=true' % ifn
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    for line1, line2 in zip(
+        open("exercise_renumber_residues_modified.pdb").readlines(),
+        expected_output_pdb.splitlines(),
+    ):
+        line1 = line1.strip()
+        line2 = line2.strip()
+        assert line1 == line2, [line1, line2]
+    # now only a selected chain
+    expected_output_pdb_2 = """\
 ATOM      1  O   GLY A   3       1.434   1.460   2.496  1.00  6.04           O
 ATOM      2  O   CYS A   7       2.196   4.467   3.911  1.00  4.51           O
 ATOM      3  O   CYS A   1      -1.433   4.734   5.405  1.00  7.85           O
@@ -640,17 +709,17 @@ TER
 ATOM     12  O   LEU C   0       5.613  12.448   6.864  1.00  7.32           O
 TER
 """
-  cmd = "phenix.pdbtools \"%s\" renumber_residues=true modify.selection=\"chain B\"" % ifn
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  new_lines = open("exercise_renumber_residues_modified.pdb").readlines()
-  for line1, line2 in zip(new_lines, expected_output_pdb_2.splitlines()):
-    assert (line1.strip() == line2.strip())
-  cmd="phenix.pdbtools \"%s\" increment_resseq=10 modify.selection=\"chain B\"" % ifn
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  pdb_new = open("exercise_renumber_residues_modified.pdb").read()
-  expected_output_pdb_3 = """\
+    cmd = 'phenix.pdbtools "%s" renumber_residues=true modify.selection="chain B"' % ifn
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    new_lines = open("exercise_renumber_residues_modified.pdb").readlines()
+    for line1, line2 in zip(new_lines, expected_output_pdb_2.splitlines()):
+        assert line1.strip() == line2.strip()
+    cmd = 'phenix.pdbtools "%s" increment_resseq=10 modify.selection="chain B"' % ifn
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    pdb_new = open("exercise_renumber_residues_modified.pdb").read()
+    expected_output_pdb_3 = """\
 ATOM      1  O   GLY A   3       1.434   1.460   2.496  1.00  6.04           O
 ATOM      2  O   CYS A   7       2.196   4.467   3.911  1.00  4.51           O
 ATOM      3  O   CYS A   1      -1.433   4.734   5.405  1.00  7.85           O
@@ -668,10 +737,11 @@ ATOM     12  O   LEU C   0       5.613  12.448   6.864  1.00  7.32           O
 TER
 END
 """
-  assert not show_diff(pdb_new, expected_output_pdb_3)
+    assert not show_diff(pdb_new, expected_output_pdb_3)
+
 
 def exercise_neutralize_scatterers():
-  input_pdb = """ATOM      1  N   TYR    22      -0.813  -2.199   1.423  1.00  0.00           N
+    input_pdb = """ATOM      1  N   TYR    22      -0.813  -2.199   1.423  1.00  0.00           N
 ATOM      2  CA  TYR    22       0.612  -2.082   1.127  1.00  0.00           C
 ATOM      3  C   TYR    22       1.441  -2.790   2.171  1.00  0.00           C
 ATOM      4  O   TYR    22       0.927  -3.375   3.128  1.00  0.00           O
@@ -684,7 +754,7 @@ ATOM     10  CE2 TYR    22      -1.264   1.966  -0.549  1.00  0.00           C
 ATOM     11  CZ  TYR    22      -0.846   1.912  -1.877  1.00  0.00           C
 ATOM     12  OH  TYR    22      -1.452   2.696  -2.817  1.00  0.00           O1-
 """
-  expected_output_pdb = """ATOM      1  N   TYR    22      -0.813  -2.199   1.423  1.00 10.00           N
+    expected_output_pdb = """ATOM      1  N   TYR    22      -0.813  -2.199   1.423  1.00 10.00           N
 ATOM      2  CA  TYR    22       0.612  -2.082   1.127  1.00 10.00           C
 ATOM      3  C   TYR    22       1.441  -2.790   2.171  1.00 10.00           C
 ATOM      4  O   TYR    22       0.927  -3.375   3.128  1.00 10.00           O
@@ -697,21 +767,26 @@ ATOM     10  CE2 TYR    22      -1.264   1.966  -0.549  1.00 10.00           C
 ATOM     11  CZ  TYR    22      -0.846   1.912  -1.877  1.00 10.00           C
 ATOM     12  OH  TYR    22      -1.452   2.696  -2.817  1.00 10.00           O
 """
-  ifn = "exercise_neutralize_scatterers.pdb"
-  open(ifn,"w").write(input_pdb)
-  cmd = 'phenix.pdbtools "%s" neutralize_scatterers=true adp.set_b_iso=10'%ifn
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  for line1, line2 in zip(open(ifn.replace(".pdb","_modified.pdb")).readlines(), expected_output_pdb.splitlines()):
-    line1 = line1.strip()
-    line2 = line2.strip()
-    assert line1 == line2
+    ifn = "exercise_neutralize_scatterers.pdb"
+    open(ifn, "w").write(input_pdb)
+    cmd = 'phenix.pdbtools "%s" neutralize_scatterers=true adp.set_b_iso=10' % ifn
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    for line1, line2 in zip(
+        open(ifn.replace(".pdb", "_modified.pdb")).readlines(),
+        expected_output_pdb.splitlines(),
+    ):
+        line1 = line1.strip()
+        line2 = line2.strip()
+        assert line1 == line2
+
 
 def exercise_remove_atoms():
-  import random
-  random.seed(1)
-  flex.set_random_seed(1)
-  pdb_str = """
+    import random
+
+    random.seed(1)
+    flex.set_random_seed(1)
+    pdb_str = """
 ATOM      1  N  AMET B  37       7.525   5.296   6.399  1.00 10.00           N
 ATOM      2  CA AMET B  37       6.533   6.338   6.634  1.00 10.00           C
 ATOM      3  C  AMET B  37       6.175   7.044   5.330  1.00 10.00           C
@@ -763,45 +838,52 @@ ATOM      8  CE BMET B  39       8.775   5.000  10.645  1.00 10.00           C
 TER
 END
   """
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  ph_in = pi.construct_hierarchy()
-  s1 = ph_in.atoms_size()
-  pi.write_pdb_file(file_name="exercise_remove_atoms.pdb")
-  cmd = " ".join([
-    "phenix.pdbtools",
-    "exercise_remove_atoms.pdb",
-    "remove_fraction=0.1"])
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  pi = iotbx.pdb.input(file_name="exercise_remove_atoms_modified.pdb")
-  ph_in = pi.construct_hierarchy()
-  s2 = ph_in.atoms_size()
-  f = s2*100./s1
-  #
-  # UNSTABLE 2x
-  #
-  assert f>77 and f<100, f # was getting 79.16 on anaconda t96
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph_in = pi.construct_hierarchy()
+    s1 = ph_in.atoms_size()
+    pi.write_pdb_file(file_name="exercise_remove_atoms.pdb")
+    cmd = " ".join(
+        ["phenix.pdbtools", "exercise_remove_atoms.pdb", "remove_fraction=0.1"]
+    )
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    pi = iotbx.pdb.input(file_name="exercise_remove_atoms_modified.pdb")
+    ph_in = pi.construct_hierarchy()
+    s2 = ph_in.atoms_size()
+    f = s2 * 100.0 / s1
+    #
+    # UNSTABLE 2x
+    #
+    assert f > 77 and f < 100, f  # was getting 79.16 on anaconda t96
+
 
 def exercise_change_of_basis():
-  open("tmp_pdbtools_cb_op.pdb", "w").write("""\
+    open("tmp_pdbtools_cb_op.pdb", "w").write(
+        """\
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      1  N   GLY A   1      -9.009   4.612   6.102  1.00 16.77           N
 ATOM      2  CA  GLY A   1      -9.052   4.207   4.651  1.00 16.57           C
 ATOM      3  C   GLY A   1      -8.015   3.140   4.419  1.00 16.16           C
-ATOM      4  O   GLY A   1      -7.523   2.521   5.381  1.00 16.78           O  """)
-  cmd = "phenix.pdbtools tmp_pdbtools_cb_op.pdb change_of_basis='a,c,b'"
-  run_command(command=cmd, verbose=False)
-  lines = open("tmp_pdbtools_cb_op_modified.pdb").readlines()
-  for line in lines :
-    if line.startswith("CRYST1"):
-      assert (line.strip() ==
-        """CRYST1   21.937   23.477    4.866  90.00  90.00 107.08 P 1 1 21""")
-      break
+ATOM      4  O   GLY A   1      -7.523   2.521   5.381  1.00 16.78           O  """
+    )
+    cmd = "phenix.pdbtools tmp_pdbtools_cb_op.pdb change_of_basis='a,c,b'"
+    run_command(command=cmd, verbose=False)
+    lines = open("tmp_pdbtools_cb_op_modified.pdb").readlines()
+    for line in lines:
+        if line.startswith("CRYST1"):
+            assert (
+                line.strip()
+                == """CRYST1   21.937   23.477    4.866  90.00  90.00 107.08 P 1 1 21"""
+            )
+            break
+
 
 def exercise_mmcif_support():
-  from libtbx.test_utils import open_tmp_file
-  f = open_tmp_file(suffix="pdbtools.cif")
-  f.write("""\
+    from libtbx.test_utils import open_tmp_file
+
+    f = open_tmp_file(suffix="pdbtools.cif")
+    f.write(
+        """\
 data_phenix
 _space_group.name_H-M_alt         'C 1 2 1'
 _space_group.name_Hall            ' C 2y'
@@ -839,23 +921,31 @@ loop_
   ATOM     37  CA  .  PHE  A  5  ?   -6.05155  -0.46197   6.85390  1.000   9.57417  C  ?  A  ?   5  1
   ATOM     48  CA  .  ALA  A  6  ?   -9.57646  -0.10942   5.55847  1.000  17.73488  C  ?  A  ?   6  1
   ATOM     54  CA  .  LYS  B  1  ?   -8.86604  -5.20044   5.46515  1.000  16.15297  C  ?  B  ?   7  1
-""")
-  f.close()
-  cmd = " ".join(["phenix.pdbtools", "\"%s\"" % f.name,
-    "rename_chain_id.old_id=A",
-    "rename_chain_id.new_id=C"])
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  ofn = f.name[:].replace(".cif","_modified.cif")
-  assert os.path.isfile(ofn)
-  pdb_inp = iotbx.pdb.input(file_name=ofn)
-  assert pdb_inp.file_type() == "mmcif"
-  hierarchy = pdb_inp.construct_hierarchy()
-  assert [chain.id for chain in hierarchy.chains()] == ['C', 'B']
+"""
+    )
+    f.close()
+    cmd = " ".join(
+        [
+            "phenix.pdbtools",
+            '"%s"' % f.name,
+            "rename_chain_id.old_id=A",
+            "rename_chain_id.new_id=C",
+        ]
+    )
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    ofn = f.name[:].replace(".cif", "_modified.cif")
+    assert os.path.isfile(ofn)
+    pdb_inp = iotbx.pdb.input(file_name=ofn)
+    assert pdb_inp.file_type() == "mmcif"
+    hierarchy = pdb_inp.construct_hierarchy()
+    assert [chain.id for chain in hierarchy.chains()] == ["C", "B"]
+
 
 def exercise_mmcif_support_2(prefix="tst_pdbtools_mmcif2"):
-  f = open("%s.pdb" % prefix, 'w')
-  f.write("""\
+    f = open("%s.pdb" % prefix, "w")
+    f.write(
+        """\
 HELIX    1   1 GLN A   10  GLN A   14  5                                   5
 HELIX    2   2 ARG A   17  ASN A   29  1                                  13
 SHEET    1   A 2 GLN A  33  GLN A  38  0
@@ -902,31 +992,36 @@ ATOM      2  CA  GLN A  53      22.670  12.004   2.148  1.00 39.46           C
 ATOM      2  CA  GLN A  54      22.670  12.004   2.148  1.00 39.46           C
 ATOM      2  CA  GLN A  55      22.670  12.004   2.148  1.00 39.46           C
 ATOM      2  CA  GLN A  56      22.670  12.004   2.148  1.00 39.46           C
-""")
-  f.close()
-  cmd = " ".join([
-      "phenix.pdb_as_cif",
-      "%s.pdb" % prefix])
-  run_command(command=cmd, verbose=False)
-  cmd = " ".join([
-      "phenix.pdbtools",
-      "%s.cif" % prefix,
-      "suffix=none",
-      "output.prefix=%s" % prefix])
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  cif_f = open("%s.cif" % prefix, 'r')
-  cif_l = cif_f.readlines()
-  cif_f.close()
-  for l in ["_cell.angle_alpha                 90.000\n",
-      "  _struct_conf.pdbx_PDB_helix_id\n",
-      "  _struct_sheet.id\n",
-      "  _struct_sheet_range.id\n",
-      "  _atom_site.label_atom_id\n"]:
-    assert l in cif_l, "%s not in cif file!" % l
+"""
+    )
+    f.close()
+    cmd = " ".join(["phenix.pdb_as_cif", "%s.pdb" % prefix])
+    run_command(command=cmd, verbose=False)
+    cmd = " ".join(
+        [
+            "phenix.pdbtools",
+            "%s.cif" % prefix,
+            "suffix=none",
+            "output.prefix=%s" % prefix,
+        ]
+    )
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    cif_f = open("%s.cif" % prefix, "r")
+    cif_l = cif_f.readlines()
+    cif_f.close()
+    for l in [
+        "_cell.angle_alpha                 90.000\n",
+        "  _struct_conf.pdbx_PDB_helix_id\n",
+        "  _struct_sheet.id\n",
+        "  _struct_sheet_range.id\n",
+        "  _atom_site.label_atom_id\n",
+    ]:
+        assert l in cif_l, "%s not in cif file!" % l
+
 
 def exercise_move_waters():
-  pdb_in = """\
+    pdb_in = """\
 ATOM     16  O  AHOH A   2       5.131   5.251   5.823  0.60 10.00           O
 ATOM     60  CA  LYS A  32      10.574   8.177  11.768  1.00 11.49           C
 ATOM     63  CB ALYS A  32       9.197   8.686  12.246  0.29 14.71           C
@@ -948,7 +1043,7 @@ HETATM 6364  O   HOH B   4      29.343  12.806 185.898  1.00 35.57       B   O
 HETATM 6365  O  BHOH B   5      43.786  12.615 147.734  0.50 28.43       B   O
 HETATM 6366  O   HOH B   6      35.068  19.167 155.349  1.00 15.97       B   O
 """
-  pdb_out = """\
+    pdb_out = """\
 ATOM      1  CA  LYS A  32      10.574   8.177  11.768  1.00 11.49           C
 ATOM      2  CB ALYS A  32       9.197   8.686  12.246  0.29 14.71           C
 ATOM      3  CB BLYS A  32       9.193   8.732  12.170  0.71 12.23           C
@@ -972,31 +1067,33 @@ HETATM   19  O  BHOH B   5      43.786  12.615 147.734  0.50 28.43       B   O
 HETATM   20  O   HOH B   6      35.068  19.167 155.349  1.00 15.97       B   O
 END
 """
-  open("tst_pdbtools_move_waters.pdb", "w").write(pdb_in)
-  cmd = "phenix.pdbtools tst_pdbtools_move_waters.pdb move_waters_last=True"
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  pdb_new = open("tst_pdbtools_move_waters_modified.pdb").read()
-  assert pdb_new == pdb_out, pdb_new
+    open("tst_pdbtools_move_waters.pdb", "w").write(pdb_in)
+    cmd = "phenix.pdbtools tst_pdbtools_move_waters.pdb move_waters_last=True"
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    pdb_new = open("tst_pdbtools_move_waters_modified.pdb").read()
+    assert pdb_new == pdb_out, pdb_new
+
 
 def exercise_stop_for_unknowns():
-  pdb_in = """\
+    pdb_in = """\
 HETATM   16  O   UNK B   2      47.616  10.724 150.212  1.00 46.48       B   O
 HETATM   17  O   UNK B   3      46.408  16.672 146.066  0.50 12.81       B   O
 HETATM   18  O   UNK B   4      29.343  12.806 185.898  1.00 35.57       B   O
 HETATM   19  O   UNK B   5      43.786  12.615 147.734  0.50 28.43       B   O
 HETATM   20  O   UNK B   6      35.068  19.167 155.349  1.00 15.97       B   O
 """
-  open("tst_pdbtools_unknown.pdb", "w").write(pdb_in)
-  cmd = "phenix.pdbtools tst_pdbtools_unknown.pdb set_b_iso=20"
-  print(cmd)
-  run_command(command=cmd, sorry_expected=True)
-  cmd2 = cmd + " stop_for_unknowns=False"
-  print(cmd2)
-  run_command(command=cmd2)
+    open("tst_pdbtools_unknown.pdb", "w").write(pdb_in)
+    cmd = "phenix.pdbtools tst_pdbtools_unknown.pdb set_b_iso=20"
+    print(cmd)
+    run_command(command=cmd, sorry_expected=True)
+    cmd2 = cmd + " stop_for_unknowns=False"
+    print(cmd2)
+    run_command(command=cmd2)
+
 
 def exercise_remove_alt_confs():
-  pdb_in = """\
+    pdb_in = """\
 ATOM     16  O  AHOH A   2       5.131   5.251   5.823  0.60 10.00           O
 ATOM     60  CA  LYS A  32      10.574   8.177  11.768  1.00 11.49           C
 ATOM     63  CB ALYS A  32       9.197   8.686  12.246  0.29 14.71           C
@@ -1006,12 +1103,14 @@ ATOM     77  CB  VAL A  33      11.101   4.227  14.591  1.00 11.47           C
 ATOM     18  O   HOH A   3       1.132   5.963   7.065  1.00 15.00           O
 ATOM     19  O  BHOH A   4       4.132   9.963   7.800  0.50 15.00           O
 """
-  open("tst_pdbtools_alt_confs.pdb", "w").write(pdb_in)
-  cmd = "phenix.pdbtools tst_pdbtools_alt_confs.pdb remove_alt_confs=True"
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  pdb_new = open("tst_pdbtools_alt_confs_modified.pdb").read()
-  assert (pdb_new == """\
+    open("tst_pdbtools_alt_confs.pdb", "w").write(pdb_in)
+    cmd = "phenix.pdbtools tst_pdbtools_alt_confs.pdb remove_alt_confs=True"
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    pdb_new = open("tst_pdbtools_alt_confs_modified.pdb").read()
+    assert (
+        pdb_new
+        == """\
 ATOM      1  O   HOH A   2       5.131   5.251   5.823  1.00 10.00           O
 ATOM      2  CA  LYS A  32      10.574   8.177  11.768  1.00 11.49           C
 ATOM      3  CB  LYS A  32       9.197   8.686  12.246  1.00 14.71           C
@@ -1020,12 +1119,17 @@ ATOM      5  CB  VAL A  33      11.101   4.227  14.591  1.00 11.47           C
 ATOM      6  O   HOH A   3       1.132   5.963   7.065  1.00 15.00           O
 TER
 END
-""")
-  cmd = "phenix.pdbtools tst_pdbtools_alt_confs.pdb remove_alt_confs=True " +\
-    "always_keep_one_conformer=True"
-  run_command(command=cmd, verbose=False)
-  pdb_new = open("tst_pdbtools_alt_confs_modified.pdb").read()
-  assert (pdb_new == """\
+"""
+    )
+    cmd = (
+        "phenix.pdbtools tst_pdbtools_alt_confs.pdb remove_alt_confs=True "
+        + "always_keep_one_conformer=True"
+    )
+    run_command(command=cmd, verbose=False)
+    pdb_new = open("tst_pdbtools_alt_confs_modified.pdb").read()
+    assert (
+        pdb_new
+        == """\
 ATOM      1  O   HOH A   2       5.131   5.251   5.823  1.00 10.00           O
 ATOM      2  CA  LYS A  32      10.574   8.177  11.768  1.00 11.49           C
 ATOM      3  CB  LYS A  32       9.193   8.732  12.170  1.00 12.23           C
@@ -1035,10 +1139,12 @@ ATOM      6  O   HOH A   3       1.132   5.963   7.065  1.00 15.00           O
 ATOM      7  O   HOH A   4       4.132   9.963   7.800  1.00 15.00           O
 TER
 END
-""")
+"""
+    )
+
 
 def exercise_convert_met_to_semet():
-  pdb_str_met = """
+    pdb_str_met = """
 ATOM      1  N   MET B  37       7.525   5.296   6.399  1.00 10.00           N
 ATOM      2  CA  MET B  37       6.533   6.338   6.634  1.00 10.00           C
 ATOM      3  C   MET B  37       6.175   7.044   5.330  1.00 10.00           C
@@ -1050,61 +1156,72 @@ ATOM      8  CE  MET B  37       8.775   5.000  10.645  1.00 10.00           C
 TER
 END
   """
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str_met)
-  ph_met_in = pi.construct_hierarchy()
-  pi.write_pdb_file(file_name="exercise_convert_met_to_semet.pdb")
-  cmd = " ".join([
-    "phenix.pdbtools",
-    "exercise_convert_met_to_semet.pdb",
-    "convert_met_to_semet=true"])
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  pi_out = iotbx.pdb.input(
-    file_name="exercise_convert_met_to_semet_modified.pdb"
-    ).construct_hierarchy()
-  for rg in pi_out.residue_groups():
-      for rn in rg.unique_resnames():
-        assert rn=="MSE"
-  cmd = " ".join([
-    "phenix.pdbtools",
-    "exercise_convert_met_to_semet_modified.pdb",
-    "convert_semet_to_met=true"])
-  run_command(command=cmd, verbose=False)
-  pi_out = iotbx.pdb.input(
-    file_name="exercise_convert_met_to_semet_modified_modified.pdb"
-    ).construct_hierarchy()
-  for rg in pi_out.residue_groups():
-      for rn in rg.unique_resnames():
-        assert rn=="MET"
-
-def exercise_switch_rotamers(prefix="exercise_switch_rotamers"):
-  pdb_str_met = """
-ATOM      1  N   MET B  37       7.525   5.296   6.399  1.00 10.00           N
-ATOM      2  CA  MET B  37       6.533   6.338   6.634  1.00 10.00           C
-ATOM      3  C   MET B  37       6.175   7.044   5.330  1.00 10.00           C
-ATOM      4  O   MET B  37       5.000   7.200   5.000  1.00 10.00           O
-ATOM      5  CB  MET B  37       7.051   7.351   7.655  1.00 10.00           C
-ATOM      6  CG  MET B  37       7.377   6.750   9.013  1.00 10.00           C
-ATOM      7  SD  MET B  37       8.647   5.473   8.922  1.00 10.00           S
-ATOM      8  CE  MET B  37       8.775   5.000  10.645  1.00 10.00           C
-TER
-END
-  """
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str_met)
-  ph_met_in = pi.construct_hierarchy()
-  pi.write_pdb_file(file_name="%s.pdb"%prefix)
-  for o in ["max_distant","min_distant","exact_match","fix_outliers"]:
-    cmd = " ".join([
-      "phenix.pdbtools",
-      "%s.pdb"%prefix,
-      "switch_rotamers=%s"%o,
-      "suffix=none",
-      "output.prefix=%s_%s"%(o,prefix)])
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str_met)
+    ph_met_in = pi.construct_hierarchy()
+    pi.write_pdb_file(file_name="exercise_convert_met_to_semet.pdb")
+    cmd = " ".join(
+        [
+            "phenix.pdbtools",
+            "exercise_convert_met_to_semet.pdb",
+            "convert_met_to_semet=true",
+        ]
+    )
     print(cmd)
     run_command(command=cmd, verbose=False)
+    pi_out = iotbx.pdb.input(
+        file_name="exercise_convert_met_to_semet_modified.pdb"
+    ).construct_hierarchy()
+    for rg in pi_out.residue_groups():
+        for rn in rg.unique_resnames():
+            assert rn == "MSE"
+    cmd = " ".join(
+        [
+            "phenix.pdbtools",
+            "exercise_convert_met_to_semet_modified.pdb",
+            "convert_semet_to_met=true",
+        ]
+    )
+    run_command(command=cmd, verbose=False)
+    pi_out = iotbx.pdb.input(
+        file_name="exercise_convert_met_to_semet_modified_modified.pdb"
+    ).construct_hierarchy()
+    for rg in pi_out.residue_groups():
+        for rn in rg.unique_resnames():
+            assert rn == "MET"
+
+
+def exercise_switch_rotamers(prefix="exercise_switch_rotamers"):
+    pdb_str_met = """
+ATOM      1  N   MET B  37       7.525   5.296   6.399  1.00 10.00           N
+ATOM      2  CA  MET B  37       6.533   6.338   6.634  1.00 10.00           C
+ATOM      3  C   MET B  37       6.175   7.044   5.330  1.00 10.00           C
+ATOM      4  O   MET B  37       5.000   7.200   5.000  1.00 10.00           O
+ATOM      5  CB  MET B  37       7.051   7.351   7.655  1.00 10.00           C
+ATOM      6  CG  MET B  37       7.377   6.750   9.013  1.00 10.00           C
+ATOM      7  SD  MET B  37       8.647   5.473   8.922  1.00 10.00           S
+ATOM      8  CE  MET B  37       8.775   5.000  10.645  1.00 10.00           C
+TER
+END
+  """
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str_met)
+    ph_met_in = pi.construct_hierarchy()
+    pi.write_pdb_file(file_name="%s.pdb" % prefix)
+    for o in ["max_distant", "min_distant", "exact_match", "fix_outliers"]:
+        cmd = " ".join(
+            [
+                "phenix.pdbtools",
+                "%s.pdb" % prefix,
+                "switch_rotamers=%s" % o,
+                "suffix=none",
+                "output.prefix=%s_%s" % (o, prefix),
+            ]
+        )
+        print(cmd)
+        run_command(command=cmd, verbose=False)
+
 
 def exercise_segid_manipulations(prefix="tst_pdbtools_ex_segid"):
-  pdb_str_met = """
+    pdb_str_met = """
 ATOM      1  N   MET B  37       7.525   5.296   6.399  1.00 10.00      A    N
 ATOM      2  CA  MET B  37       6.533   6.338   6.634  1.00 10.00      A    C
 ATOM      3  C   MET B  37       6.175   7.044   5.330  1.00 10.00      A    C
@@ -1116,21 +1233,26 @@ ATOM      8  CE  MET B  37       8.775   5.000  10.645  1.00 10.00      A    C
 TER
 END
   """
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str_met)
-  ph_met_in = pi.construct_hierarchy()
-  pi.write_pdb_file(file_name="%s.pdb"%prefix)
-  for o  in ["clear_seg_id", "set_seg_id_to_chain_id"]:
-    cmd = " ".join([
-        "phenix.pdbtools",
-        "%s.pdb"%prefix,
-        "%s=True" % o,
-        "suffix=none",
-        "output.prefix=%s_%s"%(o,prefix)])
-    print(cmd)
-    run_command(command=cmd, verbose=False)
-    pdb_new = open("%s_%s.pdb"%(o,prefix)).read()
-    if o == "clear_seg_id":
-      assert (pdb_new == """\
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str_met)
+    ph_met_in = pi.construct_hierarchy()
+    pi.write_pdb_file(file_name="%s.pdb" % prefix)
+    for o in ["clear_seg_id", "set_seg_id_to_chain_id"]:
+        cmd = " ".join(
+            [
+                "phenix.pdbtools",
+                "%s.pdb" % prefix,
+                "%s=True" % o,
+                "suffix=none",
+                "output.prefix=%s_%s" % (o, prefix),
+            ]
+        )
+        print(cmd)
+        run_command(command=cmd, verbose=False)
+        pdb_new = open("%s_%s.pdb" % (o, prefix)).read()
+        if o == "clear_seg_id":
+            assert (
+                pdb_new
+                == """\
 ATOM      1  N   MET B  37       7.525   5.296   6.399  1.00 10.00           N
 ATOM      2  CA  MET B  37       6.533   6.338   6.634  1.00 10.00           C
 ATOM      3  C   MET B  37       6.175   7.044   5.330  1.00 10.00           C
@@ -1141,9 +1263,12 @@ ATOM      7  SD  MET B  37       8.647   5.473   8.922  1.00 10.00           S
 ATOM      8  CE  MET B  37       8.775   5.000  10.645  1.00 10.00           C
 TER
 END
-"""), pdb_new
-    else:
-      assert (pdb_new == """\
+"""
+            ), pdb_new
+        else:
+            assert (
+                pdb_new
+                == """\
 ATOM      1  N   MET B  37       7.525   5.296   6.399  1.00 10.00      B    N
 ATOM      2  CA  MET B  37       6.533   6.338   6.634  1.00 10.00      B    C
 ATOM      3  C   MET B  37       6.175   7.044   5.330  1.00 10.00      B    C
@@ -1154,11 +1279,12 @@ ATOM      7  SD  MET B  37       8.647   5.473   8.922  1.00 10.00      B    S
 ATOM      8  CE  MET B  37       8.775   5.000  10.645  1.00 10.00      B    C
 TER
 END
-"""), pdb_new
+"""
+            ), pdb_new
 
-def exercise_flip_symmetric_amino_acids(
-  prefix="exercise_flip_symmetric_amino_acids"):
-  pdb_str_in = """
+
+def exercise_flip_symmetric_amino_acids(prefix="exercise_flip_symmetric_amino_acids"):
+    pdb_str_in = """
 ATOM   3356  N   ARG H 228      20.811-103.620  24.514  1.00 56.77           N
 ATOM   3357  CA  ARG H 228      21.863-104.460  23.967  1.00 64.89           C
 ATOM   3358  C   ARG H 228      21.258-105.679  23.284  1.00 69.98           C
@@ -1173,7 +1299,7 @@ ATOM   3366  NH2 ARG H 228      27.205-104.163  27.694  1.00 65.11           N
 TER
 END
   """
-  pdb_str_out = """
+    pdb_str_out = """
 ATOM   3355  N   ARG H 228      20.811-103.620  24.514  1.00 56.77           N
 ATOM   3356  CA  ARG H 228      21.863-104.460  23.967  1.00 64.89           C
 ATOM   3357  C   ARG H 228      21.258-105.679  23.284  1.00 69.98           C
@@ -1188,41 +1314,47 @@ ATOM   3365  NH2 ARG H 228      26.790-102.145  28.717  1.00 64.08           N
 TER
 END
   """
-  pi = iotbx.pdb.input(source_info=None, lines=pdb_str_in)
-  ph_in = pi.construct_hierarchy()
-  pi.write_pdb_file(file_name="%s.pdb"%prefix)
-  cmd = " ".join([
-    "phenix.pdbtools",
-    "%s.pdb"%prefix,
-    "flip_symmetric_amino_acids=True",
-    "output.prefix=%s"%prefix])
-  print(cmd)
-  run_command(command=cmd, verbose=False)
-  h1 = iotbx.pdb.input(source_info=None, lines=pdb_str_out).construct_hierarchy()
-  h2 = iotbx.pdb.input(file_name=
-    "exercise_flip_symmetric_amino_acids_modified.pdb").construct_hierarchy()
-  assert h1.is_similar_hierarchy(h2)
-  ph_in.flip_symmetric_amino_acids()
-  assert h1.is_similar_hierarchy(ph_in)
+    pi = iotbx.pdb.input(source_info=None, lines=pdb_str_in)
+    ph_in = pi.construct_hierarchy()
+    pi.write_pdb_file(file_name="%s.pdb" % prefix)
+    cmd = " ".join(
+        [
+            "phenix.pdbtools",
+            "%s.pdb" % prefix,
+            "flip_symmetric_amino_acids=True",
+            "output.prefix=%s" % prefix,
+        ]
+    )
+    print(cmd)
+    run_command(command=cmd, verbose=False)
+    h1 = iotbx.pdb.input(source_info=None, lines=pdb_str_out).construct_hierarchy()
+    h2 = iotbx.pdb.input(
+        file_name="exercise_flip_symmetric_amino_acids_modified.pdb"
+    ).construct_hierarchy()
+    assert h1.is_similar_hierarchy(h2)
+    ph_in.flip_symmetric_amino_acids()
+    assert h1.is_similar_hierarchy(ph_in)
+
 
 def exercise(args):
-  exercise_flip_symmetric_amino_acids()
-  exercise_switch_rotamers()
-  exercise_mmcif_support_2()
-  exercise_basic()
-  exercise_multiple()
-  exercise_no_cryst1()
-  exercise_renumber_residues()
-  exercise_change_of_basis()
-  exercise_move_waters()
-  exercise_remove_alt_confs()
-  exercise_truncate_to_polyala()
-  exercise_convert_met_to_semet()
-  exercise_set_charge()
-  exercise_neutralize_scatterers()
-  exercise_remove_atoms()
-  exercise_mmcif_support()
-  exercise_segid_manipulations()
+    exercise_flip_symmetric_amino_acids()
+    exercise_switch_rotamers()
+    exercise_mmcif_support_2()
+    exercise_basic()
+    exercise_multiple()
+    exercise_no_cryst1()
+    exercise_renumber_residues()
+    exercise_change_of_basis()
+    exercise_move_waters()
+    exercise_remove_alt_confs()
+    exercise_truncate_to_polyala()
+    exercise_convert_met_to_semet()
+    exercise_set_charge()
+    exercise_neutralize_scatterers()
+    exercise_remove_atoms()
+    exercise_mmcif_support()
+    exercise_segid_manipulations()
 
-if (__name__ == "__main__"):
-  exercise(sys.argv[1:])
+
+if __name__ == "__main__":
+    exercise(sys.argv[1:])

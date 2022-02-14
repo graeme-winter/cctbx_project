@@ -449,31 +449,36 @@ geometry_restraints.motif_manipulation {
 }
 """
 
-def exercise():
-  verbose = "--verbose" in sys.argv[1:]
-  list_cif = server.mon_lib_list_cif()
-  srv = server.server(list_cif=list_cif)
-  open("tmp.cif", "w").write(tmp_cif)
-  srv.process_cif(file_name="tmp.cif")
-  comp_comp_id = srv.get_comp_comp_id_direct(comp_id="tst")
-  motif = comp_comp_id.as_geometry_restraints_motif()
-  out = StringIO()
-  motif.show(out=out)
-  if (verbose): sys.stdout.write(out.getvalue())
-  assert not show_diff(out.getvalue(), expected_out_tst_comp)
-  for link_link_id in srv.link_link_id_list:
-    out = StringIO()
-    link_link_id.as_geometry_restraints_motif_manipulation().show(out=out)
-    if (verbose): sys.stdout.write(out.getvalue())
-    if (link_link_id.chem_link.id == "tst_lnk"):
-      assert not show_diff(out.getvalue(), expected_out_tst_lnk)
-  for mod_mod_id in srv.mod_mod_id_list:
-    out = StringIO()
-    mod_mod_id.as_geometry_restraints_motif_manipulation().show(out=out)
-    if (verbose): sys.stdout.write(out.getvalue())
-    if (mod_mod_id.chem_mod.id == "tst_mod"):
-      assert not show_diff(out.getvalue(), expected_out_tst_mod)
-  print("OK")
 
-if (__name__ == "__main__"):
-  exercise()
+def exercise():
+    verbose = "--verbose" in sys.argv[1:]
+    list_cif = server.mon_lib_list_cif()
+    srv = server.server(list_cif=list_cif)
+    open("tmp.cif", "w").write(tmp_cif)
+    srv.process_cif(file_name="tmp.cif")
+    comp_comp_id = srv.get_comp_comp_id_direct(comp_id="tst")
+    motif = comp_comp_id.as_geometry_restraints_motif()
+    out = StringIO()
+    motif.show(out=out)
+    if verbose:
+        sys.stdout.write(out.getvalue())
+    assert not show_diff(out.getvalue(), expected_out_tst_comp)
+    for link_link_id in srv.link_link_id_list:
+        out = StringIO()
+        link_link_id.as_geometry_restraints_motif_manipulation().show(out=out)
+        if verbose:
+            sys.stdout.write(out.getvalue())
+        if link_link_id.chem_link.id == "tst_lnk":
+            assert not show_diff(out.getvalue(), expected_out_tst_lnk)
+    for mod_mod_id in srv.mod_mod_id_list:
+        out = StringIO()
+        mod_mod_id.as_geometry_restraints_motif_manipulation().show(out=out)
+        if verbose:
+            sys.stdout.write(out.getvalue())
+        if mod_mod_id.chem_mod.id == "tst_mod":
+            assert not show_diff(out.getvalue(), expected_out_tst_mod)
+    print("OK")
+
+
+if __name__ == "__main__":
+    exercise()

@@ -3,7 +3,7 @@ import os
 
 from iotbx.cif import restraint_file_merge
 
-scn1 = '''
+scn1 = """
 data_comp_list
 loop_
 _chem_comp.id
@@ -43,9 +43,9 @@ _chem_comp_angle.atom_id_3
 _chem_comp_angle.value_angle
 _chem_comp_angle.value_angle_esd
  SCN S C N 178.4 1.5
- '''
+ """
 
-scn2 = '''
+scn2 = """
  data_comp_list
 loop_
 _chem_comp.id
@@ -92,32 +92,38 @@ _chem_comp_angle.atom_id_3
 _chem_comp_angle.value_angle
 _chem_comp_angle.value_angle_esd
 SCN   N       C       S           180.00 3.000
-'''
+"""
+
 
 def main():
-  restraint_file_merge.run([scn1, scn2],
-                           'restraint_file_merge_01.cif',
-                           no_file_access=True,
-                           )
-  restraint_file_merge.run([scn2, scn1],
-                           'restraint_file_merge_02.cif',
-                           no_file_access=True,
-                           )
-  restraint_file_merge.run([scn1, scn2],
-                           'restraint_file_merge_03.cif',
-                           no_file_access=True,
-                           no_file_but_save=True,
-                           )
-  restraint_file_merge.run([scn2, scn1],
-                           'restraint_file_merge_04.cif',
-                           no_file_access=True,
-                           no_file_but_save=True,
-                           )
-  filenames = os.listdir('.')
-  assert 'restraint_file_merge_01.cif' not in filenames
-  assert 'restraint_file_merge_02.cif' not in filenames
-  assert 'restraint_file_merge_03.cif' in filenames
-  assert 'restraint_file_merge_04.cif' in filenames
+    restraint_file_merge.run(
+        [scn1, scn2],
+        "restraint_file_merge_01.cif",
+        no_file_access=True,
+    )
+    restraint_file_merge.run(
+        [scn2, scn1],
+        "restraint_file_merge_02.cif",
+        no_file_access=True,
+    )
+    restraint_file_merge.run(
+        [scn1, scn2],
+        "restraint_file_merge_03.cif",
+        no_file_access=True,
+        no_file_but_save=True,
+    )
+    restraint_file_merge.run(
+        [scn2, scn1],
+        "restraint_file_merge_04.cif",
+        no_file_access=True,
+        no_file_but_save=True,
+    )
+    filenames = os.listdir(".")
+    assert "restraint_file_merge_01.cif" not in filenames
+    assert "restraint_file_merge_02.cif" not in filenames
+    assert "restraint_file_merge_03.cif" in filenames
+    assert "restraint_file_merge_04.cif" in filenames
 
-if __name__ == '__main__':
-  main()
+
+if __name__ == "__main__":
+    main()

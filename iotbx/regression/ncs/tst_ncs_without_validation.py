@@ -160,62 +160,78 @@ END
 
 
 def exercise_1():
-  """
-  Pure NCS search with AC and water that should be dropped
-  """
-  h = iotbx.pdb.input(lines=pdb_str_1, source_info=None).construct_hierarchy()
-  ncs_inp = ncs.input(hierarchy = h)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  assert ncs_groups[0].master_iselection.size() == 50, ncs_groups[0].master_iselection.size()
-  assert ncs_groups[0].master_iselection.size() == ncs_groups[0].copies[0].iselection.size()
+    """
+    Pure NCS search with AC and water that should be dropped
+    """
+    h = iotbx.pdb.input(lines=pdb_str_1, source_info=None).construct_hierarchy()
+    ncs_inp = ncs.input(hierarchy=h)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert ncs_groups[0].master_iselection.size() == 50, ncs_groups[
+        0
+    ].master_iselection.size()
+    assert (
+        ncs_groups[0].master_iselection.size()
+        == ncs_groups[0].copies[0].iselection.size()
+    )
+
 
 def exercise_2():
-  """
-  Same as 1, but include water
-  """
-  search_params = ncs.input.get_default_params()
-  search_params.ncs_search.exclude_selection = "element H or element D"
-  h = iotbx.pdb.input(lines=pdb_str_1, source_info=None).construct_hierarchy()
-  ncs_inp = ncs.input(
-      hierarchy = h,
-      params=search_params.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  assert ncs_groups[0].master_iselection.size() == 57, ncs_groups[0].master_iselection.size()
-  assert ncs_groups[0].master_iselection.size() == ncs_groups[0].copies[0].iselection.size()
+    """
+    Same as 1, but include water
+    """
+    search_params = ncs.input.get_default_params()
+    search_params.ncs_search.exclude_selection = "element H or element D"
+    h = iotbx.pdb.input(lines=pdb_str_1, source_info=None).construct_hierarchy()
+    ncs_inp = ncs.input(hierarchy=h, params=search_params.ncs_search)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert ncs_groups[0].master_iselection.size() == 57, ncs_groups[
+        0
+    ].master_iselection.size()
+    assert (
+        ncs_groups[0].master_iselection.size()
+        == ncs_groups[0].copies[0].iselection.size()
+    )
+
 
 def exercise_3():
-  """
-  Same as 2, but also provide groups and don't check them allowing AC to be
-  included
-  """
+    """
+    Same as 2, but also provide groups and don't check them allowing AC to be
+    included
+    """
 
-  phil_str="""
+    phil_str = """
 ncs_group {
   reference = chain A
   selection = chain B
 }
 """
 
-  search_params = ncs.input.get_default_params()
-  search_params.ncs_search.exclude_selection = "element H or element D"
-  search_params.ncs_search.validate_user_supplied_groups = False
-  phil_groups = ncs_group_master_phil.fetch(
-      iotbx.phil.parse(phil_str)).extract()
-  h = iotbx.pdb.input(lines=pdb_str_1, source_info=None).construct_hierarchy()
-  ncs_inp = ncs.input(
-      hierarchy = h,
-      params=search_params.ncs_search,
-      ncs_phil_groups=phil_groups.ncs_group)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  assert ncs_groups[0].master_iselection.size() == 72, ncs_groups[0].master_iselection.size()
-  assert ncs_groups[0].master_iselection.size() == ncs_groups[0].copies[0].iselection.size()
-  assert h.atoms_size() == 72*2, h.atoms_size() # covers whole model
+    search_params = ncs.input.get_default_params()
+    search_params.ncs_search.exclude_selection = "element H or element D"
+    search_params.ncs_search.validate_user_supplied_groups = False
+    phil_groups = ncs_group_master_phil.fetch(iotbx.phil.parse(phil_str)).extract()
+    h = iotbx.pdb.input(lines=pdb_str_1, source_info=None).construct_hierarchy()
+    ncs_inp = ncs.input(
+        hierarchy=h,
+        params=search_params.ncs_search,
+        ncs_phil_groups=phil_groups.ncs_group,
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert ncs_groups[0].master_iselection.size() == 72, ncs_groups[
+        0
+    ].master_iselection.size()
+    assert (
+        ncs_groups[0].master_iselection.size()
+        == ncs_groups[0].copies[0].iselection.size()
+    )
+    assert h.atoms_size() == 72 * 2, h.atoms_size()  # covers whole model
 
-if (__name__ == "__main__"):
-  exercise_1()
-  exercise_2()
-  exercise_3()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_1()
+    exercise_2()
+    exercise_3()
+    print("OK")

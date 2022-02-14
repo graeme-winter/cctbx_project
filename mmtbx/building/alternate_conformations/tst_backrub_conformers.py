@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 import libtbx.phil
 from six.moves import cStringIO as StringIO
@@ -22,84 +21,94 @@ torsion_search {
   include scope mmtbx.building.alternate_conformations.conformer_generation.torsion_search_params
 }"""
 
+
 def master_phil():
-  return libtbx.phil.parse(master_params, process_includes=True)
+    return libtbx.phil.parse(master_params, process_includes=True)
+
 
 def exercise():
-  from mmtbx.building.alternate_conformations import conformer_generation
-  from mmtbx.monomer_library import server
-  import iotbx.pdb.hierarchy
-  generate_inputs()
-  params = master_phil().extract()
-  mon_lib_srv = server.server()
-  pdb_in = iotbx.pdb.hierarchy.input(file_name="ser_frag_single.pdb")
-  hierarchy = pdb_in.hierarchy
-  pdb_atoms = hierarchy.atoms()
-  pdb_atoms.reset_i_seq()
-  sites_cart = pdb_atoms.extract_xyz()
-  xrs = pdb_in.input.xray_structure_simple()
-  models = []
-  prev_res = next_res = next_next_res = None
-  for chain in hierarchy.only_model().chains():
-    residue_groups = chain.residue_groups()
-    n_rg = len(residue_groups)
-    for i_res, residue_group in enumerate(residue_groups):
-      sites_orig = sites_cart.deep_copy()
-      next_res = next_next_res = None
-      if (i_res < (n_rg - 1)):
-        next_res = residue_groups[i_res+1].atom_groups()[0]
-      if (i_res < (n_rg - 2)):
-        next_next_res = residue_groups[i_res+2].atom_groups()[0]
-      atom_groups = residue_group.atom_groups()
-      primary_conf = atom_groups[0]
-      out = StringIO()
-      confs = []
-      for conf in conformer_generation.generate_single_residue_confs(
-        atom_group=primary_conf,
-        sites_cart=sites_cart.deep_copy(),
-        mon_lib_srv=mon_lib_srv,
-        params=params.torsion_search,
-        prev_residue=prev_res,
-        next_residue=next_res,
-        next_next_residue=next_next_res,
-        backrub=True,
-        shear=False):
-          conf.show_summary(out=out)
-          confs.append(conf)
-      prev_res = primary_conf
-      if (confs is None):
-        continue
-      if (i_res == 1):
-        assert ("""  SER A  99     20.0    None       t""" in out.getvalue())
-      for conf in confs :
-        sites_new = sites_cart.set_selected(conf.sites_selection,
-          conf.sites_selected())
-        pdb_atoms.set_xyz(sites_new)
-        models.append(hierarchy.only_model().detached_copy())
-      confs = []
-      for conf in conformer_generation.generate_single_residue_confs(
-        atom_group=primary_conf,
-        sites_cart=sites_cart.deep_copy(),
-        mon_lib_srv=mon_lib_srv,
-        params=params.torsion_search,
-        prev_residue=prev_res,
-        next_residue=next_res,
-        next_next_residue=next_next_res,
-        backrub=True,
-        shear=False):
-          conf.show_summary(out=out)
-          confs.append(conf)
-      if (i_res == 1):
-        print(len(confs))
-  new_hierarchy = iotbx.pdb.hierarchy.root()
-  for i_model, conf in enumerate(models):
-    conf.id = str(i_model + 1)
-    new_hierarchy.append_model(conf)
-  open("ser_frag_naive_ensemble.pdb", "w").write(new_hierarchy.as_pdb_string())
+    from mmtbx.building.alternate_conformations import conformer_generation
+    from mmtbx.monomer_library import server
+    import iotbx.pdb.hierarchy
+
+    generate_inputs()
+    params = master_phil().extract()
+    mon_lib_srv = server.server()
+    pdb_in = iotbx.pdb.hierarchy.input(file_name="ser_frag_single.pdb")
+    hierarchy = pdb_in.hierarchy
+    pdb_atoms = hierarchy.atoms()
+    pdb_atoms.reset_i_seq()
+    sites_cart = pdb_atoms.extract_xyz()
+    xrs = pdb_in.input.xray_structure_simple()
+    models = []
+    prev_res = next_res = next_next_res = None
+    for chain in hierarchy.only_model().chains():
+        residue_groups = chain.residue_groups()
+        n_rg = len(residue_groups)
+        for i_res, residue_group in enumerate(residue_groups):
+            sites_orig = sites_cart.deep_copy()
+            next_res = next_next_res = None
+            if i_res < (n_rg - 1):
+                next_res = residue_groups[i_res + 1].atom_groups()[0]
+            if i_res < (n_rg - 2):
+                next_next_res = residue_groups[i_res + 2].atom_groups()[0]
+            atom_groups = residue_group.atom_groups()
+            primary_conf = atom_groups[0]
+            out = StringIO()
+            confs = []
+            for conf in conformer_generation.generate_single_residue_confs(
+                atom_group=primary_conf,
+                sites_cart=sites_cart.deep_copy(),
+                mon_lib_srv=mon_lib_srv,
+                params=params.torsion_search,
+                prev_residue=prev_res,
+                next_residue=next_res,
+                next_next_residue=next_next_res,
+                backrub=True,
+                shear=False,
+            ):
+                conf.show_summary(out=out)
+                confs.append(conf)
+            prev_res = primary_conf
+            if confs is None:
+                continue
+            if i_res == 1:
+                assert """  SER A  99     20.0    None       t""" in out.getvalue()
+            for conf in confs:
+                sites_new = sites_cart.set_selected(
+                    conf.sites_selection, conf.sites_selected()
+                )
+                pdb_atoms.set_xyz(sites_new)
+                models.append(hierarchy.only_model().detached_copy())
+            confs = []
+            for conf in conformer_generation.generate_single_residue_confs(
+                atom_group=primary_conf,
+                sites_cart=sites_cart.deep_copy(),
+                mon_lib_srv=mon_lib_srv,
+                params=params.torsion_search,
+                prev_residue=prev_res,
+                next_residue=next_res,
+                next_next_residue=next_next_res,
+                backrub=True,
+                shear=False,
+            ):
+                conf.show_summary(out=out)
+                confs.append(conf)
+            if i_res == 1:
+                print(len(confs))
+    new_hierarchy = iotbx.pdb.hierarchy.root()
+    for i_model, conf in enumerate(models):
+        conf.id = str(i_model + 1)
+        new_hierarchy.append_model(conf)
+    open("ser_frag_naive_ensemble.pdb", "w").write(new_hierarchy.as_pdb_string())
+
 
 def generate_inputs():
-  import iotbx.pdb.hierarchy
-  pdb_in = iotbx.pdb.hierarchy.input(source_info=None, pdb_string="""\
+    import iotbx.pdb.hierarchy
+
+    pdb_in = iotbx.pdb.hierarchy.input(
+        source_info=None,
+        pdb_string="""\
 REMARK derived from RT CypA structure (3k0n)
 ATOM   1831  N  AALA A  98       5.400   4.097   9.945  0.63 11.08           N
 ANISOU 1831  N  AALA A  98     1121   1491   1600    644    -58    486       N
@@ -196,22 +205,24 @@ ATOM   1914  HB3BALA A 100       8.741  13.346   7.615  0.37 20.38           H
 ATOM      0  HB1AALA A 100       8.737  13.325   7.665  0.63 17.08           H
 ATOM      0  HB1BALA A 100       8.793  13.327   7.811  0.37 17.08           H
 END
-""")
-  xrs = pdb_in.input.xray_structure_simple(cryst1_substitution_buffer_layer=5)
-  f = open("ser_frag.pdb", "w")
-  f.write(pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs))
-  f.close()
-  for chain in pdb_in.hierarchy.only_model().chains():
-    for residue_group in chain.residue_groups():
-      atom_groups = residue_group.atom_groups()
-      residue_group.remove_atom_group(atom_groups[1])
-      atom_groups[0].altloc = " "
-      for atom in residue_group.atoms():
-        atom.occ = 1.0
-  f = open("ser_frag_single.pdb", "w")
-  f.write(pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs))
-  f.close()
+""",
+    )
+    xrs = pdb_in.input.xray_structure_simple(cryst1_substitution_buffer_layer=5)
+    f = open("ser_frag.pdb", "w")
+    f.write(pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs))
+    f.close()
+    for chain in pdb_in.hierarchy.only_model().chains():
+        for residue_group in chain.residue_groups():
+            atom_groups = residue_group.atom_groups()
+            residue_group.remove_atom_group(atom_groups[1])
+            atom_groups[0].altloc = " "
+            for atom in residue_group.atoms():
+                atom.occ = 1.0
+    f = open("ser_frag_single.pdb", "w")
+    f.write(pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs))
+    f.close()
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

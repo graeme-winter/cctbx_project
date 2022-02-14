@@ -3,9 +3,10 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 
+
 def run(args):
-  assert len(args) == 0
-  unicode_text = u"""
+    assert len(args) == 0
+    unicode_text = u"""
 \u00C5 LATIN CAPITAL LETTER A WITH RING ABOVE
 \u00B0 DEGREE SIGN
 \u0391 GREEK CAPITAL LETTER ALPHA
@@ -64,7 +65,8 @@ def run(args):
 \u03C4 GREEK SMALL LETTER TAU
 \u03C5 GREEK SMALL LETTER UPSILON
 """
-  print(unicode_text.encode("utf-8", "strict"))
+    print(unicode_text.encode("utf-8", "strict"))
 
-if (__name__ == "__main__"):
-  run(args=sys.argv[1:])
+
+if __name__ == "__main__":
+    run(args=sys.argv[1:])

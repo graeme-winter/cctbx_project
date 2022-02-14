@@ -1,20 +1,38 @@
 from __future__ import division, print_function, absolute_import
 
 """read PRIME input"""
-#Define exceptions
-class ReadInputError(Exception): pass
-class InvalidData(ReadInputError): pass
-class InvalidCrystalSystem(ReadInputError): pass
-class InvalidPixelSize(ReadInputError): pass
-class InvalidRunNo(ReadInputError): pass
-class InvalidNumberOfResidues(ReadInputError): pass
+# Define exceptions
+class ReadInputError(Exception):
+    pass
+
+
+class InvalidData(ReadInputError):
+    pass
+
+
+class InvalidCrystalSystem(ReadInputError):
+    pass
+
+
+class InvalidPixelSize(ReadInputError):
+    pass
+
+
+class InvalidRunNo(ReadInputError):
+    pass
+
+
+class InvalidNumberOfResidues(ReadInputError):
+    pass
+
 
 import iotbx.phil
 from libtbx.utils import Usage, Sorry
 import sys, os, shutil, glob, tarfile
 from six.moves import cPickle as pickle
 
-master_phil = iotbx.phil.parse("""
+master_phil = iotbx.phil.parse(
+    """
 data = None
   .type = path
   .multiple = True
@@ -471,7 +489,8 @@ isoform_cluster
 rejections = None
   .type = str
   .help = Dict of integration filenames and their rejected miller indices.
-""")
+"""
+)
 
 txt_help = """**************************************************************************************************
 
@@ -494,146 +513,184 @@ For feedback, please contact monarin@stanford.edu.
 List of available parameters:
 """
 
+
 def process_input(argv=None, flag_mkdir=True):
-  user_phil = []
-  if argv == None:
-    master_phil.show()
-    raise Usage("Use the above list of parameters to generate your input file (.phil). For more information, run prime.postrefine -h.")
-  else:
-    for arg in argv:
-      if os.path.isfile(arg):
-        user_phil.append(iotbx.phil.parse(open(arg).read()))
-      elif (os.path.isdir(arg)) :
-        user_phil.append(iotbx.phil.parse("""data=\"%s\" """ % arg))
-      else :
-        if arg == '--help' or arg == '-h':
-          print (txt_help)
-          master_phil.show(attributes_level=1)
-          raise Usage("Run prime.run to generate a list of initial parameters.")
-        else:
-          try:
-            user_phil.append(iotbx.phil.parse(arg))
-          except RuntimeError as e :
-            raise Sorry("Unrecognized argument '%s' (error: %s)" % (arg, str(e)))
-  #setup phil parameters
-  working_phil = master_phil.fetch(sources=user_phil)
-  params = working_phil.extract()
-  if not params.data:
-    raise InvalidData("Error: Data is required. Please specify path to your data folder (data=/path/to/integration/results).")
-
-  #check target_crystal_system
-  crystal_system_dict = {'Triclinic': 0, 'Monoclinic': 0, 'Orthorhombic': 0, 'Tetragonal': 0, 'Trigonal': 0, 'Hexagonal': 0, 'Cubic':0}
-  if params.target_crystal_system is not None:
-    if params.target_crystal_system not in crystal_system_dict:
-      raise InvalidCrystalSystem("Error: Invalid input target_crystal_system. Please choose following options: Triclinic, Monoclinic, Orthorhombic, Tetragonal, Trigonal, Hexagonal, or Cubic.")
-
-  #check n_residues
-  if not params.n_residues:
-    raise InvalidNumberOfResidues("Error: Number of residues is required. Please specify number of residues of your structure in asymmetric unit (n_residues = xxx).")
-
-  #check pixel_size
-  if not params.pixel_size_mm:
-    #look in the new integration pickle format (2016-08-05)
-    try:
-      frame_files = read_pickles(params.data)
-      frame_0 = frame_files[0]
-      int_pickle = read_frame(frame_0)
-      params.pixel_size_mm = int_pickle['pixel_size']
-      print ('Info: Found pixel size in the integration pickles (override pixel_size_mm=%10.8f)'%(params.pixel_size_mm))
-    except Exception:
-      raise InvalidPixelSize("Error: Pixel size in millimeter is required. Use cctbx.image_viewer to view one of your images and note down the value (e.g. for marccd, set pixel_size_mm=0.079346).")
-
-  #check sigma rejection
-  if params.sigma_rejection < 5:
-      print("Warning: sigma below 5 will result in discarding too many reflections")
-
-  #generate run_no folder
-  if not params.run_no:
-    #use default name
-    default_run = 'Prime_Run_'
-    all_runs = glob.glob(default_run+'*')
-    new_run_no = 1
-    if all_runs: new_run_no = max([int(run_no.split('_')[-1]) for run_no in all_runs])+1
-    params.run_no = default_run+str(new_run_no)
-  elif os.path.exists(params.run_no):
-    print ("Warning: run number %s already exists."%(params.run_no))
-    run_overwrite = raw_input('Overwrite?: N/Y (Enter for default)')
-    if run_overwrite == 'Y':
-      shutil.rmtree(params.run_no)
+    user_phil = []
+    if argv == None:
+        master_phil.show()
+        raise Usage(
+            "Use the above list of parameters to generate your input file (.phil). For more information, run prime.postrefine -h."
+        )
     else:
-      raise InvalidRunNo("Error: Run number exists. Please specifiy different run no.")
+        for arg in argv:
+            if os.path.isfile(arg):
+                user_phil.append(iotbx.phil.parse(open(arg).read()))
+            elif os.path.isdir(arg):
+                user_phil.append(iotbx.phil.parse("""data=\"%s\" """ % arg))
+            else:
+                if arg == "--help" or arg == "-h":
+                    print(txt_help)
+                    master_phil.show(attributes_level=1)
+                    raise Usage(
+                        "Run prime.run to generate a list of initial parameters."
+                    )
+                else:
+                    try:
+                        user_phil.append(iotbx.phil.parse(arg))
+                    except RuntimeError as e:
+                        raise Sorry(
+                            "Unrecognized argument '%s' (error: %s)" % (arg, str(e))
+                        )
+    # setup phil parameters
+    working_phil = master_phil.fetch(sources=user_phil)
+    params = working_phil.extract()
+    if not params.data:
+        raise InvalidData(
+            "Error: Data is required. Please specify path to your data folder (data=/path/to/integration/results)."
+        )
 
-  #make result folders
-  if flag_mkdir:
-    os.makedirs(params.run_no)
-    os.makedirs(params.run_no+'/index_ambiguity')
-    os.makedirs(params.run_no+'/isoform_cluster')
-    os.makedirs(params.run_no+'/stats')
+    # check target_crystal_system
+    crystal_system_dict = {
+        "Triclinic": 0,
+        "Monoclinic": 0,
+        "Orthorhombic": 0,
+        "Tetragonal": 0,
+        "Trigonal": 0,
+        "Hexagonal": 0,
+        "Cubic": 0,
+    }
+    if params.target_crystal_system is not None:
+        if params.target_crystal_system not in crystal_system_dict:
+            raise InvalidCrystalSystem(
+                "Error: Invalid input target_crystal_system. Please choose following options: Triclinic, Monoclinic, Orthorhombic, Tetragonal, Trigonal, Hexagonal, or Cubic."
+            )
 
-  #capture input read out by phil
-  from six.moves import cStringIO as StringIO
-  class Capturing(list):
-    def __enter__(self):
-      self._stdout = sys.stdout
-      sys.stdout = self._stringio = StringIO()
-      return self
-    def __exit__(self, *args):
-      self.extend(self._stringio.getvalue().splitlines())
-      sys.stdout = self._stdout
+    # check n_residues
+    if not params.n_residues:
+        raise InvalidNumberOfResidues(
+            "Error: Number of residues is required. Please specify number of residues of your structure in asymmetric unit (n_residues = xxx)."
+        )
 
-  with Capturing() as output:
-    working_phil.show()
+    # check pixel_size
+    if not params.pixel_size_mm:
+        # look in the new integration pickle format (2016-08-05)
+        try:
+            frame_files = read_pickles(params.data)
+            frame_0 = frame_files[0]
+            int_pickle = read_frame(frame_0)
+            params.pixel_size_mm = int_pickle["pixel_size"]
+            print(
+                "Info: Found pixel size in the integration pickles (override pixel_size_mm=%10.8f)"
+                % (params.pixel_size_mm)
+            )
+        except Exception:
+            raise InvalidPixelSize(
+                "Error: Pixel size in millimeter is required. Use cctbx.image_viewer to view one of your images and note down the value (e.g. for marccd, set pixel_size_mm=0.079346)."
+            )
 
-  txt_out = 'prime.postrefine input:\n'
-  for one_output in output:
-    txt_out += one_output + '\n'
+    # check sigma rejection
+    if params.sigma_rejection < 5:
+        print("Warning: sigma below 5 will result in discarding too many reflections")
 
-  return params, txt_out
+    # generate run_no folder
+    if not params.run_no:
+        # use default name
+        default_run = "Prime_Run_"
+        all_runs = glob.glob(default_run + "*")
+        new_run_no = 1
+        if all_runs:
+            new_run_no = max([int(run_no.split("_")[-1]) for run_no in all_runs]) + 1
+        params.run_no = default_run + str(new_run_no)
+    elif os.path.exists(params.run_no):
+        print("Warning: run number %s already exists." % (params.run_no))
+        run_overwrite = raw_input("Overwrite?: N/Y (Enter for default)")
+        if run_overwrite == "Y":
+            shutil.rmtree(params.run_no)
+        else:
+            raise InvalidRunNo(
+                "Error: Run number exists. Please specifiy different run no."
+            )
+
+    # make result folders
+    if flag_mkdir:
+        os.makedirs(params.run_no)
+        os.makedirs(params.run_no + "/index_ambiguity")
+        os.makedirs(params.run_no + "/isoform_cluster")
+        os.makedirs(params.run_no + "/stats")
+
+    # capture input read out by phil
+    from six.moves import cStringIO as StringIO
+
+    class Capturing(list):
+        def __enter__(self):
+            self._stdout = sys.stdout
+            sys.stdout = self._stringio = StringIO()
+            return self
+
+        def __exit__(self, *args):
+            self.extend(self._stringio.getvalue().splitlines())
+            sys.stdout = self._stdout
+
+    with Capturing() as output:
+        working_phil.show()
+
+    txt_out = "prime.postrefine input:\n"
+    for one_output in output:
+        txt_out += one_output + "\n"
+
+    return params, txt_out
+
 
 def read_pickles(data):
-  frame_files = []
-  tar_files = []
-  for p in data:
-    is_tar = False
-    if p.find('tar') >= 0: is_tar = True
-    if os.path.isdir(p) == False:
-      if os.path.isfile(p):
-        #read all file paths in the given input file
-        with open(p,'r') as f: file_list = f.read().splitlines()
-      else:
-        # p is a glob
-        file_list = glob.glob(p)
-    else:
-      file_list = glob.glob(os.path.join(p,'*'))
-    frame_files.extend(file_list)
-  if len(frame_files) == 0:
-    raise InvalidData("Error: no integration results found in the specified data parameter.")
-  if not is_tar: return frame_files
-  #take care of tar files
-  for tar_filename in frame_files:
-    tarf = tarfile.open(name=tar_filename, mode='r')
-    for myindex in range(len(tarf.getmembers())):
-      tar_files.append(tar_filename+':ind'+str(myindex))
-  return tar_files
+    frame_files = []
+    tar_files = []
+    for p in data:
+        is_tar = False
+        if p.find("tar") >= 0:
+            is_tar = True
+        if os.path.isdir(p) == False:
+            if os.path.isfile(p):
+                # read all file paths in the given input file
+                with open(p, "r") as f:
+                    file_list = f.read().splitlines()
+            else:
+                # p is a glob
+                file_list = glob.glob(p)
+        else:
+            file_list = glob.glob(os.path.join(p, "*"))
+        frame_files.extend(file_list)
+    if len(frame_files) == 0:
+        raise InvalidData(
+            "Error: no integration results found in the specified data parameter."
+        )
+    if not is_tar:
+        return frame_files
+    # take care of tar files
+    for tar_filename in frame_files:
+        tarf = tarfile.open(name=tar_filename, mode="r")
+        for myindex in range(len(tarf.getmembers())):
+            tar_files.append(tar_filename + ":ind" + str(myindex))
+    return tar_files
+
 
 def read_frame(frame_file):
-  '''
-  A frame_file can be .pickle or .tar:ind#no.
-  Read accordingly and return integration pickle
-  '''
-  observations_pickle = None
-  try:
-    if frame_file.endswith('.pickle'):
-      observations_pickle = pickle.load(open(frame_file,"rb"))
-    else:
-      tar_filename, tar_index = frame_file.split(':ind')
-      tarf = tarfile.open(name=tar_filename, mode='r')
-      tar_member = tarf.extractfile(member=tarf.getmembers()[int(tar_index)])
-      observations_pickle = pickle.load(tar_member)
-  except Exception:
-    print ("Warning: unable to read %s"%(frame_file))
-    pass
-  if any([len(obs.data()) == 0 for obs in observations_pickle['observations']]):
-    print ("Empty file %s"%(frame_file))
-    return
-  return observations_pickle
+    """
+    A frame_file can be .pickle or .tar:ind#no.
+    Read accordingly and return integration pickle
+    """
+    observations_pickle = None
+    try:
+        if frame_file.endswith(".pickle"):
+            observations_pickle = pickle.load(open(frame_file, "rb"))
+        else:
+            tar_filename, tar_index = frame_file.split(":ind")
+            tarf = tarfile.open(name=tar_filename, mode="r")
+            tar_member = tarf.extractfile(member=tarf.getmembers()[int(tar_index)])
+            observations_pickle = pickle.load(tar_member)
+    except Exception:
+        print("Warning: unable to read %s" % (frame_file))
+        pass
+    if any([len(obs.data()) == 0 for obs in observations_pickle["observations"]]):
+        print("Empty file %s" % (frame_file))
+        return
+    return observations_pickle

@@ -144,61 +144,69 @@ TER      66      HOH S  19
 END
 """
 
-def exercise(d_min = 1.0, resolution_factor=0.2):
-  # Fit HOH or DOD into density map
-  #
-  # answer model and map
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_answer)
-  pdb_inp.write_pdb_file(file_name = "answer.pdb")
-  xrs_answer = pdb_inp.xray_structure_simple()
-  xrs_answer.switch_to_neutron_scattering_dictionary()
-  f_calc_answer = xrs_answer.structure_factors(d_min = d_min).f_calc()
-  fft_map = f_calc_answer.fft_map(resolution_factor=resolution_factor)
-  fft_map.apply_volume_scaling()
-  target_map = fft_map.real_map_unpadded()
-  mtz_dataset = f_calc_answer.as_mtz_dataset(column_root_label = "FCmap")
-  mtz_object = mtz_dataset.mtz_object()
-  mtz_object.write(file_name = "answer.mtz")
-  # poor model (DOD randomly shifted)
-  mon_lib_srv = monomer_library.server.server()
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv              = mon_lib_srv,
-    ener_lib                 = monomer_library.server.ener_lib(),
-    raw_records              = flex.std_string(pdb_poor.splitlines()),
-    strict_conflict_handling = True,
-    force_symmetry           = True,
-    log                      = None)
-  pdb_hierarchy_poor = processed_pdb_file.all_chain_proxies.pdb_hierarchy
-  xrs_poor = processed_pdb_file.xray_structure()
-  xrs_poor.switch_to_neutron_scattering_dictionary()
-  pdb_hierarchy_poor.write_pdb_file(file_name = "poor.pdb")
-  # real-space refine DOD to fit target_map best
-  mmtbx.refinement.real_space.fit_water.run(
-    pdb_hierarchy = pdb_hierarchy_poor,
-    target_map    = target_map,
-    unit_cell     = xrs_poor.unit_cell(),
-    real_space_gradients_delta = d_min*resolution_factor,
-    log = sys.stdout)
-  # best refined model
-  pdb_hierarchy_poor.write_pdb_file(file_name = "refined.pdb")
-  xrs_refined = pdb_hierarchy_poor.extract_xray_structure(
-    crystal_symmetry = xrs_poor.crystal_symmetry())
-  xrs_refined.switch_to_neutron_scattering_dictionary()
-  # check results
-  def r_factor(x,y):
-    x = abs(x).data()
-    y = abs(y).data()
-    n = flex.sum(flex.abs(x-y))
-    d = flex.sum(flex.abs(x+y))/2
-    return n/d
-  fc_poor = f_calc_answer.structure_factors_from_scatterers(
-    xray_structure = xrs_poor).f_calc()
-  fc_refined = f_calc_answer.structure_factors_from_scatterers(
-    xray_structure = xrs_refined).f_calc()
-  assert r_factor(f_calc_answer, fc_poor) > 0.45
-  assert r_factor(f_calc_answer, fc_refined) < 0.08
 
-if(__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("Time: %6.4f"%(time.time()-t0))
+def exercise(d_min=1.0, resolution_factor=0.2):
+    # Fit HOH or DOD into density map
+    #
+    # answer model and map
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_answer)
+    pdb_inp.write_pdb_file(file_name="answer.pdb")
+    xrs_answer = pdb_inp.xray_structure_simple()
+    xrs_answer.switch_to_neutron_scattering_dictionary()
+    f_calc_answer = xrs_answer.structure_factors(d_min=d_min).f_calc()
+    fft_map = f_calc_answer.fft_map(resolution_factor=resolution_factor)
+    fft_map.apply_volume_scaling()
+    target_map = fft_map.real_map_unpadded()
+    mtz_dataset = f_calc_answer.as_mtz_dataset(column_root_label="FCmap")
+    mtz_object = mtz_dataset.mtz_object()
+    mtz_object.write(file_name="answer.mtz")
+    # poor model (DOD randomly shifted)
+    mon_lib_srv = monomer_library.server.server()
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=monomer_library.server.ener_lib(),
+        raw_records=flex.std_string(pdb_poor.splitlines()),
+        strict_conflict_handling=True,
+        force_symmetry=True,
+        log=None,
+    )
+    pdb_hierarchy_poor = processed_pdb_file.all_chain_proxies.pdb_hierarchy
+    xrs_poor = processed_pdb_file.xray_structure()
+    xrs_poor.switch_to_neutron_scattering_dictionary()
+    pdb_hierarchy_poor.write_pdb_file(file_name="poor.pdb")
+    # real-space refine DOD to fit target_map best
+    mmtbx.refinement.real_space.fit_water.run(
+        pdb_hierarchy=pdb_hierarchy_poor,
+        target_map=target_map,
+        unit_cell=xrs_poor.unit_cell(),
+        real_space_gradients_delta=d_min * resolution_factor,
+        log=sys.stdout,
+    )
+    # best refined model
+    pdb_hierarchy_poor.write_pdb_file(file_name="refined.pdb")
+    xrs_refined = pdb_hierarchy_poor.extract_xray_structure(
+        crystal_symmetry=xrs_poor.crystal_symmetry()
+    )
+    xrs_refined.switch_to_neutron_scattering_dictionary()
+    # check results
+    def r_factor(x, y):
+        x = abs(x).data()
+        y = abs(y).data()
+        n = flex.sum(flex.abs(x - y))
+        d = flex.sum(flex.abs(x + y)) / 2
+        return n / d
+
+    fc_poor = f_calc_answer.structure_factors_from_scatterers(
+        xray_structure=xrs_poor
+    ).f_calc()
+    fc_refined = f_calc_answer.structure_factors_from_scatterers(
+        xray_structure=xrs_refined
+    ).f_calc()
+    assert r_factor(f_calc_answer, fc_poor) > 0.45
+    assert r_factor(f_calc_answer, fc_refined) < 0.08
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Time: %6.4f" % (time.time() - t0))

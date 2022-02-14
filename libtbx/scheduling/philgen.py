@@ -4,483 +4,478 @@ from libtbx.scheduling import SetupError
 
 # Module exception
 class ConfigurationError(SetupError):
-  """
-  Error in setting up the PHIL generator
-  """
+    """
+    Error in setting up the PHIL generator
+    """
+
 
 # Multiprocessing queue options
 def mp_fifo_queue():
 
-  from libtbx.scheduling import mp_handler
-  return mp_handler.fifo_qfactory
+    from libtbx.scheduling import mp_handler
+
+    return mp_handler.fifo_qfactory
 
 
 def mp_managed_queue():
 
-  from libtbx.scheduling import mp_handler
-  return mp_handler.managed_qfactory()
+    from libtbx.scheduling import mp_handler
+
+    return mp_handler.managed_qfactory()
 
 
 # Cluster queue options
 class cluster_file_queue(object):
+    def __init__(self, prefix="tmp", folder=".", waittime=0.1, multifile=None):
 
-  def __init__(self, prefix = "tmp", folder = ".", waittime = 0.1, multifile = None):
+        self.prefix = prefix
+        self.folder = folder
+        self.waittime = waittime
+        self.multifile = multifile
 
-    self.prefix = prefix
-    self.folder = folder
-    self.waittime = waittime
-    self.multifile = multifile
+    def __call__(self, params):
 
+        from libtbx.scheduling import file_queue
 
-  def __call__(self, params):
-
-    from libtbx.scheduling import file_queue
-    qfac = file_queue.qfactory(
-      prefix = self.prefix,
-      folder = self.folder,
-      waittime = self.waittime,
-      )
-
-    if self.multifile is not None:
-      mqfac = file_queue.mqfactory(
-        count = self.multifile,
-        prefix = self.prefix,
-        folder = self.folder,
-        waittime = self.waittime,
+        qfac = file_queue.qfactory(
+            prefix=self.prefix,
+            folder=self.folder,
+            waittime=self.waittime,
         )
 
-    else:
-      mqfac = qfac
+        if self.multifile is not None:
+            mqfac = file_queue.mqfactory(
+                count=self.multifile,
+                prefix=self.prefix,
+                folder=self.folder,
+                waittime=self.waittime,
+            )
 
-    return ( mqfac , qfac, mqfac )
+        else:
+            mqfac = qfac
 
+        return (mqfac, qfac, mqfac)
 
-  def __str__(self):
+    def __str__(self):
 
-    return ""
+        return ""
 
 
 class cluster_socket_queue(object):
+    def __init__(self, port=0, keylength=16):
 
-  def __init__(self, port = 0, keylength = 16):
+        self.port = port
+        self.keylength = keylength
 
-    self.port = port
-    self.keylength = keylength
+    def __call__(self, params):
 
+        from libtbx.scheduling import socket_queue
 
-  def __call__(self, params):
+        qfac = socket_queue.QFactory(port=self.port, keylength=self.keylength)
 
-    from libtbx.scheduling import socket_queue
-    qfac = socket_queue.QFactory( port = self.port, keylength = self.keylength )
+        return (qfac, qfac, qfac)
 
-    return ( qfac , qfac, qfac )
+    def __str__(self):
 
-
-  def __str__(self):
-
-    return ""
+        return ""
 
 
 # Pool lifecycle controller options
 def pool_unlimited_lifecycle():
 
-  from libtbx.scheduling import process_pool
-  return process_pool.unlimited
+    from libtbx.scheduling import process_pool
+
+    return process_pool.unlimited
 
 
 class pool_runtime_limit_lifecycle(object):
+    def __init__(self, value):
 
-  def __init__(self, value):
+        self.seconds = value
 
-    self.seconds = value
+    def __call__(self):
 
+        from libtbx.scheduling import process_pool
+        import functools
 
-  def __call__(self):
-
-    from libtbx.scheduling import process_pool
-    import functools
-    return functools.partial( process_pool.runtime_limit, seconds = self.seconds )
+        return functools.partial(process_pool.runtime_limit, seconds=self.seconds)
 
 
 class pool_wallclock_limit_lifecycle(object):
+    def __init__(self, value):
 
-  def __init__(self, value):
+        self.seconds = value
 
-    self.seconds = value
+    def __call__(self):
 
+        from libtbx.scheduling import process_pool
+        import functools
 
-  def __call__(self):
-
-    from libtbx.scheduling import process_pool
-    import functools
-    return functools.partial( process_pool.wallclock_limit, seconds = self.seconds )
+        return functools.partial(process_pool.wallclock_limit, seconds=self.seconds)
 
 
 class pool_jobcount_limit_lifecycle(object):
+    def __init__(self, value):
 
-  def __init__(self, value):
+        self.maxjobs = value
 
-    self.maxjobs = value
+    def __call__(self):
 
+        from libtbx.scheduling import process_pool
+        import functools
 
-  def __call__(self):
-
-    from libtbx.scheduling import process_pool
-    import functools
-    return functools.partial( process_pool.jobcount_limit, maxjobs = self.maxjobs )
+        return functools.partial(process_pool.jobcount_limit, maxjobs=self.maxjobs)
 
 
 # Pool autoscaling options
 def pool_constant_capacity(ncpus):
 
-  from libtbx.scheduling import process_pool
-  return process_pool.constant_capacity( capacity = ncpus )
+    from libtbx.scheduling import process_pool
+
+    return process_pool.constant_capacity(capacity=ncpus)
 
 
 class pool_upscaling_capacity(object):
+    def __init__(self, minimum=0, buffering=1):
 
-  def __init__(self, minimum = 0, buffering = 1):
+        self.minimum = minimum
+        self.buffering = buffering
 
-    self.minimum = minimum
-    self.buffering = buffering
+    def __call__(self, ncpus):
 
+        from libtbx.scheduling import process_pool
 
-  def __call__(self, ncpus):
-
-    from libtbx.scheduling import process_pool
-    return process_pool.upscaling_capacity(
-      minimum = self.minimum,
-      maximum = ncpus,
-      buffering = self.buffering,
-      )
+        return process_pool.upscaling_capacity(
+            minimum=self.minimum,
+            maximum=ncpus,
+            buffering=self.buffering,
+        )
 
 
 class pool_breathing_capacity(object):
+    def __init__(self, minimum=0, buffering=1, downsize_step=2, downsize_delay=5):
 
-  def __init__(self, minimum = 0, buffering = 1, downsize_step = 2, downsize_delay = 5):
+        self.minimum = minimum
+        self.buffering = buffering
+        self.downsize_step = downsize_step
+        self.downsize_delay = downsize_delay
 
-    self.minimum = minimum
-    self.buffering = buffering
-    self.downsize_step = downsize_step
-    self.downsize_delay = downsize_delay
+    def __call__(self, ncpus):
 
+        from libtbx.scheduling import process_pool
 
-  def __call__(self, ncpus):
-
-    from libtbx.scheduling import process_pool
-    return process_pool.breathing_capacity(
-      minimum = self.minimum,
-      maximum = ncpus,
-      buffering = self.buffering,
-      downsize_step = self.downsize_step,
-      downsize_delay = self.downsize_delay,
-      )
+        return process_pool.breathing_capacity(
+            minimum=self.minimum,
+            maximum=ncpus,
+            buffering=self.buffering,
+            downsize_step=self.downsize_step,
+            downsize_delay=self.downsize_delay,
+        )
 
 
 # Classes describing aspects of the system
 class constraint(object):
-  """
-  Properties of the call to be parallelized
-  """
+    """
+    Properties of the call to be parallelized
+    """
 
-  def __init__(
-    self,
-    pickleable_target = False,
-    pickleable_return_value = False,
-    offload_main_thread = False,
-    concurrent_python_execution = True
+    def __init__(
+        self,
+        pickleable_target=False,
+        pickleable_return_value=False,
+        offload_main_thread=False,
+        concurrent_python_execution=True,
     ):
 
-    self.pickleable_target = pickleable_target
-    self.pickleable_return_value = pickleable_return_value
-    self.offload_main_thread = offload_main_thread
-    self.concurrent_python_execution = concurrent_python_execution
+        self.pickleable_target = pickleable_target
+        self.pickleable_return_value = pickleable_return_value
+        self.offload_main_thread = offload_main_thread
+        self.concurrent_python_execution = concurrent_python_execution
 
 
 class ability(object):
-  """
-  Properties of the parallelization technology
-  """
+    """
+    Properties of the parallelization technology
+    """
 
-  def __init__(
-    self,
-    allows_startup_for_nonpickleable_target,
-    allows_transfer_for_nonpickleable_object,
-    allows_unlimited_capacity,
-    allows_concurrent_python_execution,
+    def __init__(
+        self,
+        allows_startup_for_nonpickleable_target,
+        allows_transfer_for_nonpickleable_object,
+        allows_unlimited_capacity,
+        allows_concurrent_python_execution,
     ):
 
-    self.allows_startup_for_nonpickleable_target = allows_startup_for_nonpickleable_target
-    self.allows_transfer_for_nonpickleable_object = allows_transfer_for_nonpickleable_object
-    self.allows_unlimited_capacity = allows_unlimited_capacity
-    self.allows_concurrent_python_execution = allows_concurrent_python_execution
+        self.allows_startup_for_nonpickleable_target = (
+            allows_startup_for_nonpickleable_target
+        )
+        self.allows_transfer_for_nonpickleable_object = (
+            allows_transfer_for_nonpickleable_object
+        )
+        self.allows_unlimited_capacity = allows_unlimited_capacity
+        self.allows_concurrent_python_execution = allows_concurrent_python_execution
 
 
 class setting(object):
-  """
-  Data for setting up a parallel run
-  """
+    """
+    Data for setting up a parallel run
+    """
 
-  def __init__(
-    self,
-    jfactory,
-    qfactory,
-    inqfactory,
-    outqfactory,
-    lifecycle,
+    def __init__(
+        self,
+        jfactory,
+        qfactory,
+        inqfactory,
+        outqfactory,
+        lifecycle,
     ):
 
-    self.jfactory = jfactory
-    self.qfactory = qfactory
-    self.inqfactory = inqfactory
-    self.outqfactory = outqfactory
-    self.lifecycle = lifecycle
+        self.jfactory = jfactory
+        self.qfactory = qfactory
+        self.inqfactory = inqfactory
+        self.outqfactory = outqfactory
+        self.lifecycle = lifecycle
 
 
 # Technologies
 class threading(object):
-  """
-  Phil generator for threading option
-  """
+    """
+    Phil generator for threading option
+    """
 
-  def __init__(
-    self,
-    capture_exception = False,
-    pool_lifecycle = pool_unlimited_lifecycle,
+    def __init__(
+        self,
+        capture_exception=False,
+        pool_lifecycle=pool_unlimited_lifecycle,
     ):
 
-    self.capture_exception = capture_exception
-    self.pool_lifecycle = pool_lifecycle
+        self.capture_exception = capture_exception
+        self.pool_lifecycle = pool_lifecycle
 
+    def abilities(self):
 
-  def abilities(self):
+        return ability(
+            allows_startup_for_nonpickleable_target=True,
+            allows_transfer_for_nonpickleable_object=True,
+            allows_unlimited_capacity=False,
+            allows_concurrent_python_execution=False,
+        )
 
-    return ability(
-      allows_startup_for_nonpickleable_target = True,
-      allows_transfer_for_nonpickleable_object = True,
-      allows_unlimited_capacity = False,
-      allows_concurrent_python_execution = False,
-      )
+    def jfactory(self):
 
+        if self.capture_exception:
+            from libtbx.scheduling import thread_handler
 
-  def jfactory(self):
+            jfactory = thread_handler.exception_capturing_thread
 
-    if self.capture_exception:
-      from libtbx.scheduling import thread_handler
-      jfactory = thread_handler.exception_capturing_thread
+        else:
+            import threading
 
-    else:
-      import threading
-      jfactory = threading.Thread
+            jfactory = threading.Thread
 
-    return jfactory
+        return jfactory
 
+    def qfactory(self):
 
-  def qfactory(self):
+        from libtbx.scheduling import thread_handler
 
-    from libtbx.scheduling import thread_handler
+        return (thread_handler.qfactory,) * 3
 
-    return ( thread_handler.qfactory, ) * 3
+    def settings(self, params):
 
+        # No user-controlled parameters expected
+        (qfac, inqfac, outqfac) = self.qfactory()
 
-  def settings(self, params):
+        return setting(
+            jfactory=self.jfactory(),
+            qfactory=qfac,
+            inqfactory=inqfac,
+            outqfactory=outqfac,
+            lifecycle=self.pool_lifecycle,
+        )
 
-    # No user-controlled parameters expected
-    ( qfac, inqfac, outqfac ) = self.qfactory()
+    def phil(self):
 
-    return setting(
-      jfactory = self.jfactory(),
-      qfactory = qfac,
-      inqfactory = inqfac,
-      outqfactory = outqfac,
-      lifecycle = self.pool_lifecycle,
-      )
-
-
-  def phil(self):
-
-    return ""
+        return ""
 
 
 class multiprocessing(object):
-  """
-  Phil generator for multiprocessing option
-  """
+    """
+    Phil generator for multiprocessing option
+    """
 
-  def __init__(
-    self,
-    capture_stderr = True,
-    qtype = mp_fifo_queue,
-    pool_lifecycle = pool_unlimited_lifecycle,
+    def __init__(
+        self,
+        capture_stderr=True,
+        qtype=mp_fifo_queue,
+        pool_lifecycle=pool_unlimited_lifecycle,
     ):
 
-    self.capture_stderr = capture_stderr
-    self.qtype = qtype
-    self.pool_lifecycle = pool_lifecycle
+        self.capture_stderr = capture_stderr
+        self.qtype = qtype
+        self.pool_lifecycle = pool_lifecycle
 
+    def abilities(self):
 
-  def abilities(self):
+        import sys
 
-    import sys
-    return ability(
-      allows_startup_for_nonpickleable_target = not sys.platform.startswith( "win32" ),
-      allows_transfer_for_nonpickleable_object = False,
-      allows_unlimited_capacity = False,
-      allows_concurrent_python_execution = True,
-      )
+        return ability(
+            allows_startup_for_nonpickleable_target=not sys.platform.startswith(
+                "win32"
+            ),
+            allows_transfer_for_nonpickleable_object=False,
+            allows_unlimited_capacity=False,
+            allows_concurrent_python_execution=True,
+        )
 
+    def jfactory(self):
 
-  def jfactory(self):
+        if self.capture_stderr:
+            from libtbx.scheduling import mp_handler
 
-    if self.capture_stderr:
-      from libtbx.scheduling import mp_handler
-      jfactory = mp_handler.stderr_capturing_process
+            jfactory = mp_handler.stderr_capturing_process
 
-    else:
-      import multiprocessing
-      jfactory = multiprocessing.Process
+        else:
+            import multiprocessing
 
-    return jfactory
+            jfactory = multiprocessing.Process
 
+        return jfactory
 
-  def qfactory(self):
+    def qfactory(self):
 
-    return ( self.qtype(), ) * 3
+        return (self.qtype(),) * 3
 
+    def settings(self, params):
 
-  def settings(self, params):
+        # No user-controlled parameters expected
+        (qfac, inqfac, outqfac) = self.qfactory()
 
-    # No user-controlled parameters expected
-    ( qfac, inqfac, outqfac ) = self.qfactory()
+        return setting(
+            jfactory=self.jfactory(),
+            qfactory=qfac,
+            inqfactory=inqfac,
+            outqfactory=outqfac,
+            lifecycle=self.pool_lifecycle,
+        )
 
-    return setting(
-      jfactory = self.jfactory(),
-      qfactory = qfac,
-      inqfactory = inqfac,
-      outqfactory = outqfac,
-      lifecycle = self.pool_lifecycle,
-      )
+    def phil(self):
 
-
-  def phil(self):
-
-    return ""
+        return ""
 
 
 class cluster(object):
-  """
-  Phil generator for managed cluster option (processing package)
-  """
+    """
+    Phil generator for managed cluster option (processing package)
+    """
 
-  def __init__(
-    self,
-    platforms = [ "sge", "lsf", "pbs", "pbspro", "condor", "slurm" ],
-    queue_philgen_for = {
-      "file": cluster_file_queue(),
-      "network": cluster_socket_queue(),
-      },
-    default_queue_option = "file",
-    lifecycle_factory_for = {
-      "runtime": pool_runtime_limit_lifecycle,
-      "wallclock": pool_wallclock_limit_lifecycle,
-      },
-    default_lifecycle_factory = pool_unlimited_lifecycle,
-    name = "libtbx_python",
-    asynchronous = True,
-    use_target_file = True,
-    include = None,
-    poller = None,
-    handler = None,
-    capture_stderr = True,
+    def __init__(
+        self,
+        platforms=["sge", "lsf", "pbs", "pbspro", "condor", "slurm"],
+        queue_philgen_for={
+            "file": cluster_file_queue(),
+            "network": cluster_socket_queue(),
+        },
+        default_queue_option="file",
+        lifecycle_factory_for={
+            "runtime": pool_runtime_limit_lifecycle,
+            "wallclock": pool_wallclock_limit_lifecycle,
+        },
+        default_lifecycle_factory=pool_unlimited_lifecycle,
+        name="libtbx_python",
+        asynchronous=True,
+        use_target_file=True,
+        include=None,
+        poller=None,
+        handler=None,
+        capture_stderr=True,
     ):
 
-    assert platforms
-    assert queue_philgen_for
-    assert default_queue_option in queue_philgen_for
+        assert platforms
+        assert queue_philgen_for
+        assert default_queue_option in queue_philgen_for
 
-    self.platforms = platforms
-    self.queue_philgen_for = queue_philgen_for
-    self.default_queue_option = default_queue_option
-    self.lifecycle_factory_for = lifecycle_factory_for
-    self.default_lifecycle_factory = default_lifecycle_factory
+        self.platforms = platforms
+        self.queue_philgen_for = queue_philgen_for
+        self.default_queue_option = default_queue_option
+        self.lifecycle_factory_for = lifecycle_factory_for
+        self.default_lifecycle_factory = default_lifecycle_factory
 
-    # These settings are not user controlled
-    self.name = name
-    self.asynchronous = asynchronous
-    self.use_target_file = use_target_file
-    self.include = include
-    self.poller = poller
-    self.handler = handler
-    self.capture_stderr = capture_stderr
+        # These settings are not user controlled
+        self.name = name
+        self.asynchronous = asynchronous
+        self.use_target_file = use_target_file
+        self.include = include
+        self.poller = poller
+        self.handler = handler
+        self.capture_stderr = capture_stderr
 
+    def abilities(self):
 
-  def abilities(self):
+        return ability(
+            allows_startup_for_nonpickleable_target=False,
+            allows_transfer_for_nonpickleable_object=False,
+            allows_unlimited_capacity=True,
+            allows_concurrent_python_execution=True,
+        )
 
-    return ability(
-      allows_startup_for_nonpickleable_target = False,
-      allows_transfer_for_nonpickleable_object = False,
-      allows_unlimited_capacity = True,
-      allows_concurrent_python_execution = True,
-      )
+    def jfactory(self, platform, command):
 
+        from libtbx.scheduling import cluster_handler
 
-  def jfactory(self, platform, command):
+        return cluster_handler.JobFactory(
+            platform=platform,
+            name=self.name,
+            command=command,
+            asynchronous=self.asynchronous,
+            use_target_file=self.use_target_file,
+            include=self.include,
+            poller=self.poller,
+            handler=self.handler,
+            save_error=self.capture_stderr,
+        )
 
-    from libtbx.scheduling import cluster_handler
+    def settings(self, params):
 
-    return cluster_handler.JobFactory(
-      platform = platform,
-      name = self.name,
-      command = command,
-      asynchronous = self.asynchronous,
-      use_target_file = self.use_target_file,
-      include = self.include,
-      poller = self.poller,
-      handler = self.handler,
-      save_error = self.capture_stderr,
-      )
+        (qfac, inqfac, outqfac) = self.queue_philgen_for[params.channel.use](
+            params=getattr(params.channel, params.channel.use, None),
+        )
 
+        if params.limit.type is None:
+            lifecycle = self.default_lifecycle_factory
 
-  def settings(self, params):
+        else:
+            lifecycle = self.lifecycle_factory_for[params.limit.type](
+                value=params.limit.value
+            )
 
-    ( qfac, inqfac, outqfac ) = self.queue_philgen_for[ params.channel.use ](
-      params = getattr( params.channel, params.channel.use, None ),
-      )
+        return setting(
+            jfactory=self.jfactory(platform=params.platform, command=params.command),
+            qfactory=qfac,
+            inqfactory=inqfac,
+            outqfactory=outqfac,
+            lifecycle=lifecycle,
+        )
 
-    if params.limit.type is None:
-      lifecycle = self.default_lifecycle_factory
+    def phil(self):
 
-    else:
-      lifecycle = self.lifecycle_factory_for[ params.limit.type ]( value = params.limit.value )
-
-    return setting(
-      jfactory = self.jfactory( platform = params.platform, command = params.command ),
-      qfactory = qfac,
-      inqfactory = inqfac,
-      outqfactory = outqfac,
-      lifecycle = lifecycle,
-      )
-
-
-  def phil(self):
-
-    platform = """
+        platform = """
 platform = %(platform)s
   .help = "Management software platform"
   .type = choice
   .optional = False
 """ % {
-  "platform": phil_choice( choices = self.platforms, default = self.platforms[0] ),
-  }
+            "platform": phil_choice(choices=self.platforms, default=self.platforms[0]),
+        }
 
-    command = """
+        command = """
 command = None
   .help = "Custom submission command"
   .type = strings
   .optional = False
 """
 
-    limit = """
+        limit = """
 limit
   .help = "Job limits"
 {
@@ -495,10 +490,10 @@ limit
     .optional = False
 }
 """ % {
-  "choices": phil_choice( choices = self.lifecycle_factory_for, default = None ),
-  }
+            "choices": phil_choice(choices=self.lifecycle_factory_for, default=None),
+        }
 
-    queues = """
+        queues = """
 channel
   .help = "Data channel setup"
 {
@@ -510,15 +505,16 @@ channel
   %(options)s
 }
 """ % {
-  "choices": phil_choice(
-    choices = self.queue_philgen_for,
-    default = self.default_queue_option,
-    ),
-  "options": "\n".join( "%s%s" % ( k ,v ) for ( k, v ) in self.queue_philgen_for.items() if str( v ) )
-  }
+            "choices": phil_choice(
+                choices=self.queue_philgen_for,
+                default=self.default_queue_option,
+            ),
+            "options": "\n".join(
+                "%s%s" % (k, v) for (k, v) in self.queue_philgen_for.items() if str(v)
+            ),
+        }
 
-
-    return """
+        return """
 .help = "Managed cluster parameters"
 {
 %(platform)s
@@ -527,388 +523,403 @@ channel
 %(queues)s
 }
 """ % {
-  "platform": platform,
-  "command": command,
-  "limit": limit,
-  "queues": queues,
-  }
+            "platform": platform,
+            "command": command,
+            "limit": limit,
+            "queues": queues,
+        }
 
 
 # Scheduler backends
 class main_thread_backend(object):
-  """
-  Creates a mainthread.manager
+    """
+    Creates a mainthread.manager
 
-  Note: this is a singleton object
-  """
+    Note: this is a singleton object
+    """
 
-  @staticmethod
-  def is_valid_option(constraint):
+    @staticmethod
+    def is_valid_option(constraint):
 
-    if constraint.offload_main_thread:
-      return False
+        if constraint.offload_main_thread:
+            return False
 
-    return True
+        return True
 
+    @staticmethod
+    def creator():
 
-  @staticmethod
-  def creator():
+        from libtbx.scheduling import mainthread
 
-    from libtbx.scheduling import mainthread
-
-    return mainthread.creator
+        return mainthread.creator
 
 
 class job_scheduler_backend(object):
-  """
-  Creates a job_scheduler.manager
-  """
+    """
+    Creates a job_scheduler.manager
+    """
 
-  def __init__(self, waittime = 0.01):
+    def __init__(self, waittime=0.01):
 
-    self.waittime = waittime
+        self.waittime = waittime
 
+    def is_valid_option(self, ability, constraint):
 
-  def is_valid_option(self, ability, constraint):
+        if (
+            not constraint.pickleable_target
+            and not ability.allows_startup_for_nonpickleable_target
+        ):
+            return False
 
-    if not constraint.pickleable_target and not ability.allows_startup_for_nonpickleable_target:
-      return False
+        if (
+            not constraint.pickleable_return_value
+            and not ability.allows_transfer_for_nonpickleable_object
+        ):
+            return False
 
-    if not constraint.pickleable_return_value and not ability.allows_transfer_for_nonpickleable_object:
-      return False
+        return True
 
-    return True
+    def creator(self, technology, ncpus, params):
 
+        from libtbx.scheduling import job_scheduler
 
-  def creator(self, technology, ncpus, params):
+        if ncpus is None:  # special for unlimited option
+            ability = technology.abilities()
 
-    from libtbx.scheduling import job_scheduler
+            if not ability.allows_unlimited_capacity:
+                raise ConfigurationError(
+                    "option does not allow unlimited capacity (ncpus=None)"
+                )
 
-    if ncpus is None: # special for unlimited option
-      ability = technology.abilities()
+            else:
+                capacity = job_scheduler.unlimited
 
-      if not ability.allows_unlimited_capacity:
-        raise ConfigurationError("option does not allow unlimited capacity (ncpus=None)")
+        else:
+            capacity = job_scheduler.limited(njobs=ncpus)
 
-      else:
-        capacity = job_scheduler.unlimited
+        setting = technology.settings(params=params)
 
-    else:
-      capacity = job_scheduler.limited( njobs = ncpus )
-
-    setting = technology.settings( params = params )
-
-    return job_scheduler.creator(
-      job_factory = setting.jfactory,
-      queue_factory = setting.qfactory,
-      capacity = capacity,
-      waittime = self.waittime,
-      )
+        return job_scheduler.creator(
+            job_factory=setting.jfactory,
+            queue_factory=setting.qfactory,
+            capacity=capacity,
+            waittime=self.waittime,
+        )
 
 
 class process_pool_backend(object):
-  """
-  Creates a process_pool.manager
-  """
+    """
+    Creates a process_pool.manager
+    """
 
-  def __init__(
-    self,
-    autoscaling = pool_breathing_capacity(),
-    waittime = 0.01,
-    stalltime = 2,
-    idle_timeout = 120,
+    def __init__(
+        self,
+        autoscaling=pool_breathing_capacity(),
+        waittime=0.01,
+        stalltime=2,
+        idle_timeout=120,
     ):
 
-    self.autoscaling = autoscaling
-    self.waittime = waittime
-    self.stalltime = stalltime
-    self.idle_timeout = idle_timeout
+        self.autoscaling = autoscaling
+        self.waittime = waittime
+        self.stalltime = stalltime
+        self.idle_timeout = idle_timeout
 
+    def is_valid_option(self, ability, constraint):
 
-  def is_valid_option(self, ability, constraint):
+        if (
+            not constraint.pickleable_target
+            and not ability.allows_transfer_for_nonpickleable_object
+        ):
+            return False
 
-    if not constraint.pickleable_target and not ability.allows_transfer_for_nonpickleable_object:
-      return False
+        if (
+            not constraint.pickleable_return_value
+            and not ability.allows_transfer_for_nonpickleable_object
+        ):
+            return False
 
-    if not constraint.pickleable_return_value and not ability.allows_transfer_for_nonpickleable_object:
-      return False
+        return True
 
-    return True
+    def creator(self, technology, ncpus, params):
 
+        from libtbx.scheduling import process_pool
 
-  def creator(self, technology, ncpus, params):
+        if ncpus is None:  # special for unlimited option
+            raise ConfigurationError(
+                "option does not allow unlimited capacity (ncpus=None)"
+            )
 
-    from libtbx.scheduling import process_pool
+        setting = technology.settings(params=params)
 
-    if ncpus is None: # special for unlimited option
-      raise ConfigurationError("option does not allow unlimited capacity (ncpus=None)")
-
-    setting = technology.settings( params = params )
-
-    return process_pool.creator(
-      job_factory = setting.jfactory,
-      inq_factory = setting.inqfactory,
-      outq_factory = setting.outqfactory,
-      autoscaling = self.autoscaling( ncpus = ncpus ),
-      lifecycle = setting.lifecycle(),
-      waittime = self.waittime,
-      stalltime = self.stalltime,
-      idle_timeout = self.idle_timeout,
-      )
+        return process_pool.creator(
+            job_factory=setting.jfactory,
+            inq_factory=setting.inqfactory,
+            outq_factory=setting.outqfactory,
+            autoscaling=self.autoscaling(ncpus=ncpus),
+            lifecycle=setting.lifecycle(),
+            waittime=self.waittime,
+            stalltime=self.stalltime,
+            idle_timeout=self.idle_timeout,
+        )
 
 
 # Parallelisation options
 class parallel_option(object):
-  """
-  Valid technology/backend combination
-  """
+    """
+    Valid technology/backend combination
+    """
 
-  def __init__(self, caption, technology, backend):
+    def __init__(self, caption, technology, backend):
 
-    self.caption = caption
-    self.technology = technology
-    self.backend = backend
+        self.caption = caption
+        self.technology = technology
+        self.backend = backend
 
+    def __call__(self, ncpus, params):
 
-  def __call__(self, ncpus, params):
-
-    return self.backend.creator(
-      technology = self.technology,
-      ncpus = ncpus,
-      params = params,
-      )
+        return self.backend.creator(
+            technology=self.technology,
+            ncpus=ncpus,
+            params=params,
+        )
 
 
 class single_cpu_option(object):
-  """
-  Valid technology/backend combination forcing single CPU
-  """
+    """
+    Valid technology/backend combination forcing single CPU
+    """
 
-  def __init__(self, caption, technology, backend):
+    def __init__(self, caption, technology, backend):
 
-    self.caption = caption
-    self.technology = technology
-    self.backend = backend
+        self.caption = caption
+        self.technology = technology
+        self.backend = backend
 
+    def __call__(self, ncpus, params):
 
-  def __call__(self, ncpus, params):
-
-    return self.backend.creator(
-      technology = self.technology,
-      ncpus = 1,
-      params = params,
-      )
+        return self.backend.creator(
+            technology=self.technology,
+            ncpus=1,
+            params=params,
+        )
 
 
 class main_thread_option(object):
-  """
-  Special option for mainthread execution
-  """
+    """
+    Special option for mainthread execution
+    """
 
-  def __init__(self, caption):
+    def __init__(self, caption):
 
-    self.caption = caption
+        self.caption = caption
 
+    def __call__(self, ncpus, params):
 
-  def __call__(self, ncpus, params):
-
-    return main_thread_backend.creator()
+        return main_thread_backend.creator()
 
 
 class single(object):
-  """
-  No parallel execution
-  """
+    """
+    No parallel execution
+    """
 
-  def __init__(
-    self,
-    caption = "single",
-    backend = job_scheduler_backend(),
+    def __init__(
+        self,
+        caption="single",
+        backend=job_scheduler_backend(),
     ):
 
-    self.caption = caption
-    self.backend = backend
+        self.caption = caption
+        self.backend = backend
 
+    def __call__(self, constraint, technologies):
 
-  def __call__(self, constraint, technologies):
+        if main_thread_backend.is_valid_option(constraint=constraint):
+            return main_thread_option(caption=self.caption)
 
-    if main_thread_backend.is_valid_option( constraint = constraint ):
-      return main_thread_option( caption = self.caption )
+        else:
+            for technology in technologies:
+                if self.backend.is_valid_option(
+                    ability=technology.abilities(),
+                    contraint=constraint,
+                ):
+                    return single_cpu_option(
+                        caption=self.caption,
+                        technology=technology,
+                        backend=self.backend,
+                    )
 
-    else:
-      for technology in technologies:
-        if self.backend.is_valid_option(
-          ability = technology.abilities(),
-          contraint = constraint,
-          ):
-          return single_cpu_option(
-            caption = self.caption,
-            technology = technology,
-            backend = self.backend,
+            raise ConfigurationError(
+                "No valid '%s' option with these constraints" % self.caption
             )
-
-      raise ConfigurationError("No valid '%s' option with these constraints" % self.caption)
 
 
 class multicore(object):
-  """
-  Parallel execution within a physical machine
-  """
+    """
+    Parallel execution within a physical machine
+    """
 
-  def __init__(
-    self,
-    caption = "multicore",
-    backends = [
-      process_pool_backend(),
-      job_scheduler_backend(),
-      ],
+    def __init__(
+        self,
+        caption="multicore",
+        backends=[
+            process_pool_backend(),
+            job_scheduler_backend(),
+        ],
     ):
 
-    self.caption = caption
-    self.backends = backends
+        self.caption = caption
+        self.backends = backends
 
+    def __call__(self, constraint, technologies):
 
-  def __call__(self, constraint, technologies):
+        if constraint.concurrent_python_execution:
+            usefuls = [
+                t
+                for t in technologies
+                if t.abilities().allows_concurrent_python_execution
+            ]
 
-    if constraint.concurrent_python_execution:
-      usefuls = [ t for t in technologies if t.abilities().allows_concurrent_python_execution ]
+        else:
+            usefuls = technologies
 
-    else:
-      usefuls = technologies
+        import itertools
 
-    import itertools
+        for (backend, tech) in itertools.product(self.backends, usefuls):
+            if backend.is_valid_option(ability=tech.abilities(), constraint=constraint):
+                return parallel_option(
+                    caption=self.caption,
+                    technology=tech,
+                    backend=backend,
+                )
 
-    for ( backend, tech ) in itertools.product( self.backends, usefuls ):
-      if backend.is_valid_option( ability = tech.abilities(), constraint = constraint ):
-        return parallel_option(
-          caption = self.caption,
-          technology = tech,
-          backend = backend,
-          )
-
-    raise ConfigurationError("No valid '%s' option with these constraints" % self.caption)
+        raise ConfigurationError(
+            "No valid '%s' option with these constraints" % self.caption
+        )
 
 
 class batch(object):
-  """
-  Parallel execution via a batch queue
-  """
+    """
+    Parallel execution via a batch queue
+    """
 
-  def __init__(
-    self,
-    caption = "cluster",
-    backend = process_pool_backend(),
-    conf_cluster = cluster(),
+    def __init__(
+        self,
+        caption="cluster",
+        backend=process_pool_backend(),
+        conf_cluster=cluster(),
     ):
 
-    self.caption = caption
-    self.backend = backend
-    self.conf_cluster = conf_cluster
+        self.caption = caption
+        self.backend = backend
+        self.conf_cluster = conf_cluster
 
+    def __call__(self, constraint):
 
-  def __call__(self, constraint):
+        if self.backend.is_valid_option(
+            ability=self.conf_cluster.abilities(),
+            constraint=constraint,
+        ):
+            return parallel_option(
+                caption=self.caption,
+                technology=self.conf_cluster,
+                backend=self.backend,
+            )
 
-    if self.backend.is_valid_option(
-      ability = self.conf_cluster.abilities(),
-      constraint = constraint,
-      ):
-      return parallel_option(
-        caption = self.caption,
-        technology = self.conf_cluster,
-        backend = self.backend,
+        raise ConfigurationError(
+            "No valid '%s' option with these constraints" % self.caption
         )
 
-    raise ConfigurationError("No valid '%s' option with these constraints" % self.caption)
+    def __str__(self):
 
-
-  def __str__(self):
-
-    return "%s%s" % ( self.caption, self.conf_cluster.phil() )
+        return "%s%s" % (self.caption, self.conf_cluster.phil())
 
 
 class manager(object):
-  """
-  Creates PHIL scope for setting up a manager
-  """
+    """
+    Creates PHIL scope for setting up a manager
+    """
 
-  def __init__(
-    self,
-    constraint,
-    caption = "concurrency",
-    single = single(),
-    multicore = multicore(),
-    extras = [ batch() ],
-    conf_threading = threading(),
-    conf_multiprocessing = multiprocessing(),
-    prefer_mp = False,
+    def __init__(
+        self,
+        constraint,
+        caption="concurrency",
+        single=single(),
+        multicore=multicore(),
+        extras=[batch()],
+        conf_threading=threading(),
+        conf_multiprocessing=multiprocessing(),
+        prefer_mp=False,
     ):
 
-    self.caption = caption
-    self.single = single
-    self.multicore = multicore
+        self.caption = caption
+        self.single = single
+        self.multicore = multicore
 
-    if prefer_mp:
-      technologies = [ conf_multiprocessing, conf_threading ]
+        if prefer_mp:
+            technologies = [conf_multiprocessing, conf_threading]
 
-    else:
-      technologies = [ conf_threading, conf_multiprocessing ]
+        else:
+            technologies = [conf_threading, conf_multiprocessing]
 
-    self.option_for = {}
+        self.option_for = {}
 
-    try:
-      self.option_for[ single.caption ] = single(
-        constraint = constraint,
-        technologies = technologies,
-        )
+        try:
+            self.option_for[single.caption] = single(
+                constraint=constraint,
+                technologies=technologies,
+            )
 
-    except ConfigurationError:
-      raise ConfigurationError("'%s' option not valid with this setup" % single.caption)
+        except ConfigurationError:
+            raise ConfigurationError(
+                "'%s' option not valid with this setup" % single.caption
+            )
 
-    try:
-      self.option_for[ multicore.caption ] = multicore(
-        constraint = constraint,
-        technologies = technologies,
-        )
+        try:
+            self.option_for[multicore.caption] = multicore(
+                constraint=constraint,
+                technologies=technologies,
+            )
 
-    except ConfigurationError:
-      pass
+        except ConfigurationError:
+            pass
 
-    self.extras = []
+        self.extras = []
 
-    for platform in extras:
-      try:
-        self.option_for[ platform.caption ] = platform( constraint = constraint )
+        for platform in extras:
+            try:
+                self.option_for[platform.caption] = platform(constraint=constraint)
 
-      except ConfigurationError:
-        continue
+            except ConfigurationError:
+                continue
 
-      self.extras.append( platform )
+            self.extras.append(platform)
 
+    def __call__(self, params):
 
-  def __call__(self, params):
+        scope = getattr(params, self.caption)
 
-    scope = getattr( params, self.caption )
+        if scope.ncpus == 1 and scope.technology == self.multicore.caption:
+            technology = self.single.caption
 
-    if scope.ncpus == 1 and scope.technology == self.multicore.caption:
-      technology = self.single.caption
+        else:
+            technology = scope.technology
 
-    else:
-      technology = scope.technology
+        try:
+            return self.option_for[technology](
+                ncpus=scope.ncpus,
+                params=getattr(scope, technology, None),
+            )
 
-    try:
-      return self.option_for[ technology ](
-        ncpus = scope.ncpus,
-        params = getattr( scope, technology, None ),
-        )
+        except ConfigurationError as e:
+            from libtbx.utils import Sorry
 
-    except ConfigurationError as e:
-      from libtbx.utils import Sorry
-      raise Sorry("Error setting up '%s': %s" % ( technology, e ))
+            raise Sorry("Error setting up '%s': %s" % (technology, e))
 
+    def __str__(self):
 
-  def __str__(self):
-
-    return """
+        return """
 %(caption)s
   .help = "Concurrency parameters"
 {
@@ -925,21 +936,21 @@ class manager(object):
   %(others)s
 }
 """ % {
-  "caption": self.caption,
-  "technology": phil_choice(
-    choices = self.option_for,
-    default = self.single.caption,
-    ),
-  "others": "\n".join( str( p ) for p in self.extras ),
-  }
+            "caption": self.caption,
+            "technology": phil_choice(
+                choices=self.option_for,
+                default=self.single.caption,
+            ),
+            "others": "\n".join(str(p) for p in self.extras),
+        }
 
 
 def phil_choice(choices, default):
 
-  if not choices:
-    return None
+    if not choices:
+        return None
 
-  if default is not None and default not in choices:
-    raise ValueError("Default not among choices")
+    if default is not None and default not in choices:
+        raise ValueError("Default not among choices")
 
-  return " ".join( "*%s" % c if c == default else c for c in choices )
+    return " ".join("*%s" % c if c == default else c for c in choices)

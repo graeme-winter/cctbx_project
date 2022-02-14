@@ -81,61 +81,79 @@ TER
 END
 """
 
+
 def get_pdb_inputs(pdb_str):
-  ppf = mmtbx.utils.process_pdb_file_srv().process_pdb_files(
-    raw_records=pdb_str.splitlines())[0]
-  xrs = ppf.xray_structure(show_summary = False)
-  restraints_manager = mmtbx.restraints.manager(
-    geometry      = ppf.geometry_restraints_manager(show_energies = False),
-    normalization = True)
-  return group_args(
-    ph  = ppf.all_chain_proxies.pdb_hierarchy,
-    grm = restraints_manager,
-    xrs = xrs)
+    ppf = mmtbx.utils.process_pdb_file_srv().process_pdb_files(
+        raw_records=pdb_str.splitlines()
+    )[0]
+    xrs = ppf.xray_structure(show_summary=False)
+    restraints_manager = mmtbx.restraints.manager(
+        geometry=ppf.geometry_restraints_manager(show_energies=False),
+        normalization=True,
+    )
+    return group_args(
+        ph=ppf.all_chain_proxies.pdb_hierarchy, grm=restraints_manager, xrs=xrs
+    )
+
 
 def exercise():
-  # Exercise "simple" target
-  pi = get_pdb_inputs(pdb_str=pdb_str_1)
-  selection = flex.bool(pi.xrs.scatterers().size(), True)
-  for d_min in [1, 2, 3]:
-    print("d_min:", d_min)
-    f_calc = pi.xrs.structure_factors(d_min = d_min).f_calc()
-    fft_map = f_calc.fft_map(resolution_factor=0.25)
-    fft_map.apply_sigma_scaling()
-    target_map = fft_map.real_map_unpadded()
-    rsr_simple_refiner = individual_sites.simple(
-      target_map                  = target_map,
-      selection                   = selection,
-      real_space_gradients_delta  = d_min/4,
-      max_iterations              = 150,
-      geometry_restraints_manager = pi.grm.geometry)
-    for shake_size in [1,]:
-      print("  shake_size:", shake_size)
-      for p in [(0.01, 1.0), (0.03, 3.0), (0.1, 10.0)]:
-        print("    target:", p)
-        w_opt = flex.double()
-        for start_value in [0.001, 0.01, 0.1, 0, 1, 10, 100, 1000]:
-          xrs_poor = pi.xrs.deep_copy_scatterers()
-          random.seed(0)
-          flex.set_random_seed(0)
-          xrs_poor.shake_sites_in_place(mean_distance = shake_size)
-          #
-          refined = individual_sites.refinery(
-            refiner                  = rsr_simple_refiner,
-            xray_structure           = xrs_poor,
-            start_trial_weight_value = start_value,
-            rms_bonds_limit          = p[0],
-            rms_angles_limit         = p[1])
-          w_opt.append(refined.weight_final)
-          dist = flex.mean(flex.sqrt((pi.xrs.sites_cart() -
-            refined.sites_cart_result).dot()))
-          print("      w_start,w_final,b,a,dist: %9.4f %9.4f %6.3f %6.3f %6.3f"%(
-            start_value, refined.weight_final, refined.rms_bonds_final,
-            refined.rms_angles_final, dist))
-          assert refined.rms_bonds_final  <= p[0]
-          assert refined.rms_angles_final <= p[1]
+    # Exercise "simple" target
+    pi = get_pdb_inputs(pdb_str=pdb_str_1)
+    selection = flex.bool(pi.xrs.scatterers().size(), True)
+    for d_min in [1, 2, 3]:
+        print("d_min:", d_min)
+        f_calc = pi.xrs.structure_factors(d_min=d_min).f_calc()
+        fft_map = f_calc.fft_map(resolution_factor=0.25)
+        fft_map.apply_sigma_scaling()
+        target_map = fft_map.real_map_unpadded()
+        rsr_simple_refiner = individual_sites.simple(
+            target_map=target_map,
+            selection=selection,
+            real_space_gradients_delta=d_min / 4,
+            max_iterations=150,
+            geometry_restraints_manager=pi.grm.geometry,
+        )
+        for shake_size in [
+            1,
+        ]:
+            print("  shake_size:", shake_size)
+            for p in [(0.01, 1.0), (0.03, 3.0), (0.1, 10.0)]:
+                print("    target:", p)
+                w_opt = flex.double()
+                for start_value in [0.001, 0.01, 0.1, 0, 1, 10, 100, 1000]:
+                    xrs_poor = pi.xrs.deep_copy_scatterers()
+                    random.seed(0)
+                    flex.set_random_seed(0)
+                    xrs_poor.shake_sites_in_place(mean_distance=shake_size)
+                    #
+                    refined = individual_sites.refinery(
+                        refiner=rsr_simple_refiner,
+                        xray_structure=xrs_poor,
+                        start_trial_weight_value=start_value,
+                        rms_bonds_limit=p[0],
+                        rms_angles_limit=p[1],
+                    )
+                    w_opt.append(refined.weight_final)
+                    dist = flex.mean(
+                        flex.sqrt(
+                            (pi.xrs.sites_cart() - refined.sites_cart_result).dot()
+                        )
+                    )
+                    print(
+                        "      w_start,w_final,b,a,dist: %9.4f %9.4f %6.3f %6.3f %6.3f"
+                        % (
+                            start_value,
+                            refined.weight_final,
+                            refined.rms_bonds_final,
+                            refined.rms_angles_final,
+                            dist,
+                        )
+                    )
+                    assert refined.rms_bonds_final <= p[0]
+                    assert refined.rms_angles_final <= p[1]
 
-if(__name__ == "__main__"):
-  timer = user_plus_sys_time()
-  exercise()
-  print("Time: %6.2f" % timer.elapsed())
+
+if __name__ == "__main__":
+    timer = user_plus_sys_time()
+    exercise()
+    print("Time: %6.2f" % timer.elapsed())

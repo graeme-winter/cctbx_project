@@ -112,44 +112,48 @@ TER
 END
 """
 
+
 def run():
-  if (not libtbx.env.has_module("reduce")):
-    print("Reduce not installed, needed for model.idealize_h_minimization(). skipping")
-    return
-  for pdb_str in [pdb_str_1, pdb_str_2]:
-    for use_neutron_distances in [True, False]:
-      print("use_neutron_distances:", use_neutron_distances, "*"*30)
-      params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-      params.pdb_interpretation.use_neutron_distances = use_neutron_distances
-      inp = iotbx.pdb.input(lines=pdb_str, source_info=None)
-      m = mmtbx.model.manager(
-        model_input = inp,
-        log         = null_out())
-      m.process(pdb_interpretation_params=params, make_restraints=True)
-      r1 = m.geometry_statistics()
-      #m.setup_riding_h_manager()
-      m.idealize_h_minimization(show=False)
-      r2 = m.geometry_statistics()
-      print("%6.3f %6.3f %6.3f %6.3f"%(
-        r1.angle().mean,r1.bond().mean, r2.angle().mean,r2.bond().mean))
-      assert r2.angle().mean < 1.0, "assertion %f < 1.0" % r2.angle().mean
-      assert r2.bond().mean < 0.01, "assertion %f < 0.01" % r2.bond().mean
+    if not libtbx.env.has_module("reduce"):
+        print(
+            "Reduce not installed, needed for model.idealize_h_minimization(). skipping"
+        )
+        return
+    for pdb_str in [pdb_str_1, pdb_str_2]:
+        for use_neutron_distances in [True, False]:
+            print("use_neutron_distances:", use_neutron_distances, "*" * 30)
+            params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+            params.pdb_interpretation.use_neutron_distances = use_neutron_distances
+            inp = iotbx.pdb.input(lines=pdb_str, source_info=None)
+            m = mmtbx.model.manager(model_input=inp, log=null_out())
+            m.process(pdb_interpretation_params=params, make_restraints=True)
+            r1 = m.geometry_statistics()
+            # m.setup_riding_h_manager()
+            m.idealize_h_minimization(show=False)
+            r2 = m.geometry_statistics()
+            print(
+                "%6.3f %6.3f %6.3f %6.3f"
+                % (r1.angle().mean, r1.bond().mean, r2.angle().mean, r2.bond().mean)
+            )
+            assert r2.angle().mean < 1.0, "assertion %f < 1.0" % r2.angle().mean
+            assert r2.bond().mean < 0.01, "assertion %f < 0.01" % r2.bond().mean
+
 
 def exercise_2():
-  inp = iotbx.pdb.input(lines=pdb_str_1, source_info=None)
-  model = mmtbx.model.manager(
-      model_input = inp)
-  model.setup_scattering_dictionaries(scattering_table="wk1995")
-  g_stat = model.geometry_statistics()
+    inp = iotbx.pdb.input(lines=pdb_str_1, source_info=None)
+    model = mmtbx.model.manager(model_input=inp)
+    model.setup_scattering_dictionaries(scattering_table="wk1995")
+    g_stat = model.geometry_statistics()
+
 
 def exercise_3():
-  """
-  Make sure model can do deep_copy() straight away.
-  """
-  inp = iotbx.pdb.input(lines=pdb_str_1, source_info=None)
-  model = mmtbx.model.manager(
-      model_input = inp)
-  new_model = model.deep_copy()
+    """
+    Make sure model can do deep_copy() straight away.
+    """
+    inp = iotbx.pdb.input(lines=pdb_str_1, source_info=None)
+    model = mmtbx.model.manager(model_input=inp)
+    new_model = model.deep_copy()
+
 
 pdb_str_3 = """CRYST1   20.000   20.000   20.000  90.00  90.00  90.00 P 1
 SCALE1      0.050000  0.000000  0.000000        0.00000
@@ -169,111 +173,112 @@ TER
 END
 """
 
+
 def exercise_convert_to_isotropic():
-  pdb_str = """
+    pdb_str = """
 ATOM    104  N   SER A   8      14.526  19.060  18.223  1.00  5.10           N
 ANISOU  104  N   SER A   8      500    632    808   -107     58    104       N
 ATOM    105  CA  SER A   8      14.099  17.792  18.758  1.00  5.95           C
 """
-  cs = crystal.symmetry((5.01, 5.01, 5.47, 90, 90, 120), "P 62 2 2")
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  model = mmtbx.model.manager(
-    model_input      = pdb_inp,
-    crystal_symmetry = cs)
-  #
-  m = model.deep_copy()
-  m.convert_to_isotropic()
-  assert approx_equal(
-    m.get_hierarchy().atoms().extract_b(), [5.105875, 5.95])
-  assert approx_equal(
-    m.get_hierarchy().atoms().extract_uij(),
-    [(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0), (-1.0, -1.0, -1.0, -1.0, -1.0, -1.0)])
-  #
-  m = model.deep_copy()
-  m.convert_to_isotropic(selection=flex.bool([False, True]))
-  assert approx_equal(
-    m.get_hierarchy().atoms().extract_b(),
-    model.get_hierarchy().atoms().extract_b())
-  assert approx_equal(
-    m.get_hierarchy().atoms().extract_uij(),
-    model.get_hierarchy().atoms().extract_uij())
-  #
-  m1 = model.deep_copy()
-  m2 = model.deep_copy()
-  m1.convert_to_isotropic(selection=flex.bool([True, False]))
-  m2.convert_to_isotropic()
-  assert approx_equal(
-    m1.get_hierarchy().atoms().extract_b(),
-    m2.get_hierarchy().atoms().extract_b())
-  assert approx_equal(
-    m1.get_hierarchy().atoms().extract_uij(),
-    m2.get_hierarchy().atoms().extract_uij())
+    cs = crystal.symmetry((5.01, 5.01, 5.47, 90, 90, 120), "P 62 2 2")
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    model = mmtbx.model.manager(model_input=pdb_inp, crystal_symmetry=cs)
+    #
+    m = model.deep_copy()
+    m.convert_to_isotropic()
+    assert approx_equal(m.get_hierarchy().atoms().extract_b(), [5.105875, 5.95])
+    assert approx_equal(
+        m.get_hierarchy().atoms().extract_uij(),
+        [(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0), (-1.0, -1.0, -1.0, -1.0, -1.0, -1.0)],
+    )
+    #
+    m = model.deep_copy()
+    m.convert_to_isotropic(selection=flex.bool([False, True]))
+    assert approx_equal(
+        m.get_hierarchy().atoms().extract_b(), model.get_hierarchy().atoms().extract_b()
+    )
+    assert approx_equal(
+        m.get_hierarchy().atoms().extract_uij(),
+        model.get_hierarchy().atoms().extract_uij(),
+    )
+    #
+    m1 = model.deep_copy()
+    m2 = model.deep_copy()
+    m1.convert_to_isotropic(selection=flex.bool([True, False]))
+    m2.convert_to_isotropic()
+    assert approx_equal(
+        m1.get_hierarchy().atoms().extract_b(), m2.get_hierarchy().atoms().extract_b()
+    )
+    assert approx_equal(
+        m1.get_hierarchy().atoms().extract_uij(),
+        m2.get_hierarchy().atoms().extract_uij(),
+    )
+
 
 def exercise_set_b_iso():
-  pdb_str = """
+    pdb_str = """
 ATOM    104  N   SER A   8      14.526  19.060  18.223  1.00  5.10           N
 ANISOU  104  N   SER A   8      500    632    808   -107     58    104       N
 ATOM    105  CA  SER A   8      14.099  17.792  18.758  1.00  5.95           C
 """
-  cs = crystal.symmetry((5.01, 5.01, 5.47, 90, 90, 120), "P 62 2 2")
-  uc = cs.unit_cell()
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  model = mmtbx.model.manager(
-    model_input      = pdb_inp,
-    crystal_symmetry = cs)
-  #
-  m = model.deep_copy()
-  bs = flex.double([10,20])
-  m.set_b_iso(values = bs)
-  assert approx_equal(m.get_hierarchy().atoms().extract_b(), [-1.0, 20.0])
-  us = m.get_hierarchy().atoms().extract_uij()
-  assert approx_equal(us[0], model.get_hierarchy().atoms().extract_uij()[0])
-  assert approx_equal(us[1], (-1.0, -1.0, -1.0, -1.0, -1.0, -1.0))
-  u_iso_1 = m.get_xray_structure().scatterers().extract_u_iso()
-  b_iso_2 = m.get_hierarchy().atoms().extract_b()
-  assert approx_equal(u_iso_1[0], -1)
-  assert approx_equal(b_iso_2[0], -1)
-  assert approx_equal(adptbx.u_as_b(u_iso_1[1]), 20)
-  assert approx_equal(b_iso_2[1], 20)
-  #
-  m = model.deep_copy()
-  m.convert_to_isotropic()
-  bs = flex.double([10,20])
-  sel = flex.bool([True, False])
-  m.set_b_iso(values=bs, selection=sel)
-  assert approx_equal(m.get_b_iso(), [10, 5.95])
+    cs = crystal.symmetry((5.01, 5.01, 5.47, 90, 90, 120), "P 62 2 2")
+    uc = cs.unit_cell()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    model = mmtbx.model.manager(model_input=pdb_inp, crystal_symmetry=cs)
+    #
+    m = model.deep_copy()
+    bs = flex.double([10, 20])
+    m.set_b_iso(values=bs)
+    assert approx_equal(m.get_hierarchy().atoms().extract_b(), [-1.0, 20.0])
+    us = m.get_hierarchy().atoms().extract_uij()
+    assert approx_equal(us[0], model.get_hierarchy().atoms().extract_uij()[0])
+    assert approx_equal(us[1], (-1.0, -1.0, -1.0, -1.0, -1.0, -1.0))
+    u_iso_1 = m.get_xray_structure().scatterers().extract_u_iso()
+    b_iso_2 = m.get_hierarchy().atoms().extract_b()
+    assert approx_equal(u_iso_1[0], -1)
+    assert approx_equal(b_iso_2[0], -1)
+    assert approx_equal(adptbx.u_as_b(u_iso_1[1]), 20)
+    assert approx_equal(b_iso_2[1], 20)
+    #
+    m = model.deep_copy()
+    m.convert_to_isotropic()
+    bs = flex.double([10, 20])
+    sel = flex.bool([True, False])
+    m.set_b_iso(values=bs, selection=sel)
+    assert approx_equal(m.get_b_iso(), [10, 5.95])
+
 
 def exercise_from_sites_cart():
-  from cctbx import crystal
-  from scitbx.matrix import col
-  from scitbx.array_family import flex
-  sites_cart=flex.vec3_double()
-  crystal_symmetry=crystal.symmetry(
-      unit_cell=(20,20,20,90,90,90),
-      space_group_symbol="P 1")
-  for i in range(10):
-    sites_cart.append(col((i,i,i)))
-  model=mmtbx.model.manager.from_sites_cart(sites_cart=sites_cart,
-      crystal_symmetry=crystal_symmetry)
-  # print model.model_as_pdb()
-  for i, a in enumerate(model.get_hierarchy().atoms()):
-    assert a.i_seq == i, "iseqs were not set properly"
-  assert model.model_as_pdb()==pdb_str_3
+    from cctbx import crystal
+    from scitbx.matrix import col
+    from scitbx.array_family import flex
+
+    sites_cart = flex.vec3_double()
+    crystal_symmetry = crystal.symmetry(
+        unit_cell=(20, 20, 20, 90, 90, 90), space_group_symbol="P 1"
+    )
+    for i in range(10):
+        sites_cart.append(col((i, i, i)))
+    model = mmtbx.model.manager.from_sites_cart(
+        sites_cart=sites_cart, crystal_symmetry=crystal_symmetry
+    )
+    # print model.model_as_pdb()
+    for i, a in enumerate(model.get_hierarchy().atoms()):
+        assert a.i_seq == i, "iseqs were not set properly"
+    assert model.model_as_pdb() == pdb_str_3
+
 
 def exercise_has_hd():
-  inp = iotbx.pdb.input(lines=pdb_str_1, source_info=None)
-  m = mmtbx.model.manager(
-      model_input               = inp,
-      log                       = null_out())
-  assert m.has_hd()
-  inp = iotbx.pdb.input(lines=pdb_str_3, source_info=None)
-  m = mmtbx.model.manager(
-      model_input               = inp,
-      log                       = null_out())
-  assert not m.has_hd()
+    inp = iotbx.pdb.input(lines=pdb_str_1, source_info=None)
+    m = mmtbx.model.manager(model_input=inp, log=null_out())
+    assert m.has_hd()
+    inp = iotbx.pdb.input(lines=pdb_str_3, source_info=None)
+    m = mmtbx.model.manager(model_input=inp, log=null_out())
+    assert not m.has_hd()
+
 
 def exercise_ss_creation_crash():
-  pdb_str = """
+    pdb_str = """
 CRYST1  145.350  135.090  157.320  90.00  90.00  90.00 P 1
 SCALE1      0.006880  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.007402  0.000000        0.00000
@@ -308,25 +313,26 @@ END
 
 
 """
-  with open("exercise_ss_creation_crash_model.pdb","w") as fo:
-    fo.write(pdb_str)
-  from iotbx.data_manager import DataManager
-  dm=DataManager()
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.secondary_structure.enabled=True
-  model = dm.get_model('exercise_ss_creation_crash_model.pdb')
-  model.process(make_restraints=True,
-    pdb_interpretation_params=params)
+    with open("exercise_ss_creation_crash_model.pdb", "w") as fo:
+        fo.write(pdb_str)
+    from iotbx.data_manager import DataManager
+
+    dm = DataManager()
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.secondary_structure.enabled = True
+    model = dm.get_model("exercise_ss_creation_crash_model.pdb")
+    model.process(make_restraints=True, pdb_interpretation_params=params)
+
 
 def exercise_flip_nqh():
-  """
-  Expected flips:
-     C 190  ASN
-     D 212  ASN
-     A 190  ASN
-     B 212  ASN
-  """
-  pdb_str = """
+    """
+    Expected flips:
+       C 190  ASN
+       D 212  ASN
+       A 190  ASN
+       B 212  ASN
+    """
+    pdb_str = """
 CRYST1   19.391   14.196   16.627  90.00  90.00  90.00 P 1
 SCALE1      0.051570  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.070442  0.000000        0.00000
@@ -368,7 +374,7 @@ ATOM     15  OD1 ASN D 212      19.289  15.017  16.974  1.00 70.76           O
 ATOM     16  ND2 ASN D 212      18.551  15.000  19.096  1.00 73.07           N
 END
 """
-  pdb_str_answer = """
+    pdb_str_answer = """
 CRYST1   19.391   14.196   16.627  90.00  90.00  90.00 P 1
 SCALE1      0.051570  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.070442  0.000000        0.00000
@@ -411,17 +417,20 @@ ATOM     32  ND2 ASN D 212      19.288  15.039  16.833  1.00 73.07           N
 TER
 END
 """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  m = mmtbx.model.manager(model_input = pdb_inp)
-  m.flip_nqh()
-  sc_flipped = m.get_sites_cart()
-  sc_orig    = iotbx.pdb.input(source_info=None, lines=pdb_str).atoms().extract_xyz()
-  sc_answer  = iotbx.pdb.input(source_info=None, lines=pdb_str_answer).atoms().extract_xyz()
-  assert flex.max(flex.sqrt((sc_flipped - sc_answer).dot())) < 0.001
-  assert flex.max(flex.sqrt((sc_flipped - sc_orig).dot())) > 2.3
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    m = mmtbx.model.manager(model_input=pdb_inp)
+    m.flip_nqh()
+    sc_flipped = m.get_sites_cart()
+    sc_orig = iotbx.pdb.input(source_info=None, lines=pdb_str).atoms().extract_xyz()
+    sc_answer = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_answer).atoms().extract_xyz()
+    )
+    assert flex.max(flex.sqrt((sc_flipped - sc_answer).dot())) < 0.001
+    assert flex.max(flex.sqrt((sc_flipped - sc_orig).dot())) > 2.3
+
 
 def exercise_macromolecule_plus_hetatms_by_chain_selections():
-  pdb_str = """
+    pdb_str = """
 CRYST1   29.071   35.014   35.025  90.00  90.00  90.00 P 1
 ATOM      0  N   GLN A 595      15.775   6.909   5.000  1.00 77.72           N
 ATOM      1  CA  GLN A 595      15.250   6.223   6.187  1.00 77.72           C
@@ -459,33 +468,77 @@ HETATM   30  O5  64T T  21       5.000   9.880  11.839  1.00 78.87           O
 TER
 END
 """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  m = mmtbx.model.manager(model_input = pdb_inp)
-  sels = m.macromolecule_plus_hetatms_by_chain_selections()
-  sels = [list(s.iselection()) for s in sels]
-  assert len(sels)==3
-  assert sels[0] == [0, 1, 2, 3, 4, 5, 6, 7, 8]
-  assert sels[1] == [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,
-                     29, 30]
-  assert sels[2] == [9]
-  #
-  sels = m.macromolecule_plus_hetatms_by_chain_selections(max_radius=20)
-  sels = [list(s.iselection()) for s in sels]
-  assert len(sels)==2
-  assert sels[0] == [0, 1, 2, 3, 4, 5, 6, 7, 8]
-  assert sels[1] == [9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,
-                     29, 30]
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    m = mmtbx.model.manager(model_input=pdb_inp)
+    sels = m.macromolecule_plus_hetatms_by_chain_selections()
+    sels = [list(s.iselection()) for s in sels]
+    assert len(sels) == 3
+    assert sels[0] == [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    assert sels[1] == [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+    ]
+    assert sels[2] == [9]
+    #
+    sels = m.macromolecule_plus_hetatms_by_chain_selections(max_radius=20)
+    sels = [list(s.iselection()) for s in sels]
+    assert len(sels) == 2
+    assert sels[0] == [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    assert sels[1] == [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+    ]
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise_macromolecule_plus_hetatms_by_chain_selections()
-  exercise_ss_creation_crash()
-  exercise_set_b_iso()
-  exercise_convert_to_isotropic()
-  run()
-  exercise_2()
-  exercise_3()
-  exercise_from_sites_cart()
-  exercise_has_hd()
-  exercise_flip_nqh()
-  print("Time: %6.3f"%(time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise_macromolecule_plus_hetatms_by_chain_selections()
+    exercise_ss_creation_crash()
+    exercise_set_b_iso()
+    exercise_convert_to_isotropic()
+    run()
+    exercise_2()
+    exercise_3()
+    exercise_from_sites_cart()
+    exercise_has_hd()
+    exercise_flip_nqh()
+    print("Time: %6.3f" % (time.time() - t0))

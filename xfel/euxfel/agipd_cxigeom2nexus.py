@@ -87,14 +87,14 @@ class agipd_cxigeom2nexus(object):
     def create_nexus_master_file(self):
 
         """
-    Hierarchical structure of master nexus file. Format information available here
-    http://download.nexusformat.org/sphinx/classes/base_classes/NXdetector_module.html#nxdetector-module
-    --> entry
-      --> data
-      --> definition (leaf)
-      --> instrument
-      --> sample
-    """
+        Hierarchical structure of master nexus file. Format information available here
+        http://download.nexusformat.org/sphinx/classes/base_classes/NXdetector_module.html#nxdetector-module
+        --> entry
+          --> data
+          --> definition (leaf)
+          --> instrument
+          --> sample
+        """
         output_file_name = os.path.splitext(self.params.cxi_file)[0] + "_master.h5"
         f = h5py.File(output_file_name, "w")
         entry = f.create_group("entry")

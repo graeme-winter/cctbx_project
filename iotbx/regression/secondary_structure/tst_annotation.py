@@ -9,136 +9,150 @@ import libtbx.load_env
 import os
 from six.moves import range
 
+
 def test_helix_interface():
-  # helix_class_to_int.
-  h_class_array = ['unknown','alpha', 'unknown', 'pi', 'unknown',
-        '3_10', 'unknown', 'unknown', 'unknown', 'unknown', 'unknown']
-  for n, hc in enumerate(h_class_array):
-    # print pdb_helix.helix_class_to_int(hc), n
-    if hc == 'unknown':
-      assert pdb_helix.helix_class_to_int(hc) == 0
-    else:
-      assert pdb_helix.helix_class_to_int(hc) == n
-    assert pdb_helix.helix_class_to_str(n) == hc
+    # helix_class_to_int.
+    h_class_array = [
+        "unknown",
+        "alpha",
+        "unknown",
+        "pi",
+        "unknown",
+        "3_10",
+        "unknown",
+        "unknown",
+        "unknown",
+        "unknown",
+        "unknown",
+    ]
+    for n, hc in enumerate(h_class_array):
+        # print pdb_helix.helix_class_to_int(hc), n
+        if hc == "unknown":
+            assert pdb_helix.helix_class_to_int(hc) == 0
+        else:
+            assert pdb_helix.helix_class_to_int(hc) == n
+        assert pdb_helix.helix_class_to_str(n) == hc
 
-  h_string = \
-"HELIX    1   1 ALA A   16  THR A   18  1                                   3"
-  h_string_trunc = "HELIX    1   1 ALA A   16  THR A   18  1"
-  got_exception = False
-  try:
-    h = pdb_helix.from_pdb_record(h_string_trunc)
-  except ValueError:
-    got_exception = True
-  assert got_exception
-  h = pdb_helix.from_pdb_record(h_string)
-  assert h.serial == '  1'
-  assert h.helix_id == '1'
-  assert h.start_resname == 'ALA'
-  assert h.start_chain_id == 'A'
-  assert h.start_resseq == '  16'
-  assert h.start_icode == ' '
-  assert h.end_resname == 'THR'
-  assert h.end_chain_id == 'A'
-  assert h.end_resseq == '  18'
-  assert h.end_icode == ' '
-  assert h.helix_class == 'alpha'
-  assert h.comment == '                              '
-  assert h.length == 3
-  assert h.hbond_list == []
-  assert h.helix_selection == None
-  assert h.enabled == True
-  assert h.sigma ==0.05
-  assert h.slack ==0
-  assert h.top_out == False
+    h_string = (
+        "HELIX    1   1 ALA A   16  THR A   18  1                                   3"
+    )
+    h_string_trunc = "HELIX    1   1 ALA A   16  THR A   18  1"
+    got_exception = False
+    try:
+        h = pdb_helix.from_pdb_record(h_string_trunc)
+    except ValueError:
+        got_exception = True
+    assert got_exception
+    h = pdb_helix.from_pdb_record(h_string)
+    assert h.serial == "  1"
+    assert h.helix_id == "1"
+    assert h.start_resname == "ALA"
+    assert h.start_chain_id == "A"
+    assert h.start_resseq == "  16"
+    assert h.start_icode == " "
+    assert h.end_resname == "THR"
+    assert h.end_chain_id == "A"
+    assert h.end_resseq == "  18"
+    assert h.end_icode == " "
+    assert h.helix_class == "alpha"
+    assert h.comment == "                              "
+    assert h.length == 3
+    assert h.hbond_list == []
+    assert h.helix_selection == None
+    assert h.enabled == True
+    assert h.sigma == 0.05
+    assert h.slack == 0
+    assert h.top_out == False
 
-  assert h.get_start_resseq_as_int() == 16
-  assert h.get_end_resseq_as_int() == 18
+    assert h.get_start_resseq_as_int() == 16
+    assert h.get_end_resseq_as_int() == 18
 
-  for resseq in ['15', ' 15', '  15', 15]:
-    h.set_start_resseq(resseq)
-    assert h.start_resseq == '  15'
-    assert h.get_start_resseq_as_int() == 15
-  for resseq in ['15', ' 15', '  15', 15]:
-    h.set_end_resseq(resseq)
-    assert h.end_resseq == '  15'
-    assert h.get_end_resseq_as_int() == 15
-  for resseq in ['AA15', 23001]:
-    h.set_start_resseq(resseq)
-    assert h.start_resseq == 'AA15'
-    assert h.get_start_resseq_as_int() == 23001
-  for resseq in ['AA19', 23005]:
-    h.set_end_resseq(resseq)
-    assert h.end_resseq == 'AA19'
-    assert h.get_end_resseq_as_int() == 23005
+    for resseq in ["15", " 15", "  15", 15]:
+        h.set_start_resseq(resseq)
+        assert h.start_resseq == "  15"
+        assert h.get_start_resseq_as_int() == 15
+    for resseq in ["15", " 15", "  15", 15]:
+        h.set_end_resseq(resseq)
+        assert h.end_resseq == "  15"
+        assert h.get_end_resseq_as_int() == 15
+    for resseq in ["AA15", 23001]:
+        h.set_start_resseq(resseq)
+        assert h.start_resseq == "AA15"
+        assert h.get_start_resseq_as_int() == 23001
+    for resseq in ["AA19", 23005]:
+        h.set_end_resseq(resseq)
+        assert h.end_resseq == "AA19"
+        assert h.get_end_resseq_as_int() == 23005
 
 
 def test_sheet_interface():
-  sheet_str = """\
+    sheet_str = """\
 SHEET    1   A 2 ARG A  13  ASP A  14  0
 SHEET    2   A 2 LEU A  27  SER A  30 -1  O  ARG A  29   N  ARG A  13
   """
-  ann = annotation.from_records(sheet_str.split("\n"))
-  sh = ann.sheets[0]
-  st = sh.strands[1]
-  reg = sh.registrations[1]
-  assert reg.cur_atom == ' O  '
-  assert reg.cur_resname == 'ARG'
-  assert reg.cur_chain_id == 'A'
-  assert reg.cur_resseq == '  29'
-  assert reg.cur_icode == ' '
-  assert reg.prev_atom == ' N  '
-  assert reg.prev_resname == 'ARG'
-  assert reg.prev_chain_id == 'A'
-  assert reg.prev_resseq == '  13'
-  assert reg.prev_icode  == ' '
+    ann = annotation.from_records(sheet_str.split("\n"))
+    sh = ann.sheets[0]
+    st = sh.strands[1]
+    reg = sh.registrations[1]
+    assert reg.cur_atom == " O  "
+    assert reg.cur_resname == "ARG"
+    assert reg.cur_chain_id == "A"
+    assert reg.cur_resseq == "  29"
+    assert reg.cur_icode == " "
+    assert reg.prev_atom == " N  "
+    assert reg.prev_resname == "ARG"
+    assert reg.prev_chain_id == "A"
+    assert reg.prev_resseq == "  13"
+    assert reg.prev_icode == " "
 
-  assert st.sheet_id == '  A', st.sheet_id
-  assert st.strand_id == '  2', st.strand_id
-  assert st.start_resname == 'LEU'
-  assert st.start_chain_id == 'A'
-  assert st.start_resseq == '  27', st.start_resseq
-  assert st.start_icode == ' '
-  assert st.end_resname == 'SER'
-  assert st.end_chain_id == 'A'
-  assert st.end_resseq == '  30'
-  assert st.end_icode == ' '
-  assert st.sense == -1
+    assert st.sheet_id == "  A", st.sheet_id
+    assert st.strand_id == "  2", st.strand_id
+    assert st.start_resname == "LEU"
+    assert st.start_chain_id == "A"
+    assert st.start_resseq == "  27", st.start_resseq
+    assert st.start_icode == " "
+    assert st.end_resname == "SER"
+    assert st.end_chain_id == "A"
+    assert st.end_resseq == "  30"
+    assert st.end_icode == " "
+    assert st.sense == -1
 
-  for resseq in ['15', ' 15', '  15', 15]:
-    reg.set_cur_resseq(resseq)
-    assert reg.cur_resseq == '  15'
-    assert reg.get_cur_resseq_as_int() == 15
-  for resseq in ['AA15', 23001]:
-    reg.set_cur_resseq(resseq)
-    assert reg.cur_resseq == 'AA15'
-    assert reg.get_cur_resseq_as_int() == 23001
+    for resseq in ["15", " 15", "  15", 15]:
+        reg.set_cur_resseq(resseq)
+        assert reg.cur_resseq == "  15"
+        assert reg.get_cur_resseq_as_int() == 15
+    for resseq in ["AA15", 23001]:
+        reg.set_cur_resseq(resseq)
+        assert reg.cur_resseq == "AA15"
+        assert reg.get_cur_resseq_as_int() == 23001
 
-  for resseq in ['15', ' 15', '  15', 15]:
-    reg.set_prev_resseq(resseq)
-    assert reg.prev_resseq == '  15'
-    assert reg.get_prev_resseq_as_int() == 15
-  for resseq in ['AA15', 23001]:
-    reg.set_prev_resseq(resseq)
-    assert reg.prev_resseq == 'AA15'
-    assert reg.get_prev_resseq_as_int() == 23001
+    for resseq in ["15", " 15", "  15", 15]:
+        reg.set_prev_resseq(resseq)
+        assert reg.prev_resseq == "  15"
+        assert reg.get_prev_resseq_as_int() == 15
+    for resseq in ["AA15", 23001]:
+        reg.set_prev_resseq(resseq)
+        assert reg.prev_resseq == "AA15"
+        assert reg.get_prev_resseq_as_int() == 23001
 
-  for resseq in ['15', ' 15', '  15', 15]:
-    st.set_start_resseq(resseq)
-    assert st.start_resseq == '  15'
-    assert st.get_start_resseq_as_int() == 15
-  for resseq in ['AA15', 23001]:
-    st.set_start_resseq(resseq)
-    assert st.start_resseq == 'AA15'
-    assert st.get_start_resseq_as_int() == 23001
+    for resseq in ["15", " 15", "  15", 15]:
+        st.set_start_resseq(resseq)
+        assert st.start_resseq == "  15"
+        assert st.get_start_resseq_as_int() == 15
+    for resseq in ["AA15", 23001]:
+        st.set_start_resseq(resseq)
+        assert st.start_resseq == "AA15"
+        assert st.get_start_resseq_as_int() == 23001
 
-  for resseq in ['15', ' 15', '  15', 15]:
-    st.set_end_resseq(resseq)
-    assert st.end_resseq == '  15'
-    assert st.get_end_resseq_as_int() == 15
-  for resseq in ['AA15', 23001]:
-    st.set_end_resseq(resseq)
-    assert st.end_resseq == 'AA15'
-    assert st.get_end_resseq_as_int() == 23001
+    for resseq in ["15", " 15", "  15", 15]:
+        st.set_end_resseq(resseq)
+        assert st.end_resseq == "  15"
+        assert st.get_end_resseq_as_int() == 15
+    for resseq in ["AA15", 23001]:
+        st.set_end_resseq(resseq)
+        assert st.end_resseq == "AA15"
+        assert st.get_end_resseq_as_int() == 23001
+
 
 cif_one_helix = """\
 #
@@ -398,9 +412,10 @@ _pdbx_struct_sheet_hbond.range_2_auth_seq_id     25
 #
 """
 
+
 def tst_from_cif_block():
-  test_str_1 = "data_4ZTE\n" + cif_4_helices + cif_many_sheets
-  pdb_str = """\
+    test_str_1 = "data_4ZTE\n" + cif_4_helices + cif_many_sheets
+    pdb_str = """\
 HELIX    1 AA1 SER A   26  LYS A   30  5                                   5
 HELIX    2 AA2 LEU A  196  GLU A  199  5                                   4
 HELIX    3 AA3 SER B   26  LYS B   30  5                                   5
@@ -438,64 +453,68 @@ SHEET    1 AB1 3 SER B 126  GLU B 129  0
 SHEET    2 AB1 3 VAL B 171  VAL B 174 -1  O  ILE B 172   N  MET B 128
 SHEET    3 AB1 3 PHE B 163  ILE B 165 -1  N  THR B 164   O  SER B 173"""
 
-  cif_model = iotbx.cif.reader(input_string=test_str_1).model()
-  cif_block = list(cif_model.values())[0]
-  ann = annotation.from_cif_block(cif_block)
-  assert ann.get_n_helices() == 4
-  resnames = [x.start_resname for x in ann.helices]
-  assert resnames == ["SER","LEU","SER","LEU"]
-  resnames = [x.end_resname for x in ann.helices]
-  assert resnames == ["LYS","GLU","LYS","GLU"]
-  assert ann.get_n_sheets() == 10, ann.get_n_sheets()
-  assert [len(x.strands) for x in ann.sheets] == [4, 3, 2, 4, 3, 4, 3, 2, 4, 3]
-  # print ann.as_pdb_str()
-  assert not show_diff(pdb_str, ann.as_pdb_str())
+    cif_model = iotbx.cif.reader(input_string=test_str_1).model()
+    cif_block = list(cif_model.values())[0]
+    ann = annotation.from_cif_block(cif_block)
+    assert ann.get_n_helices() == 4
+    resnames = [x.start_resname for x in ann.helices]
+    assert resnames == ["SER", "LEU", "SER", "LEU"]
+    resnames = [x.end_resname for x in ann.helices]
+    assert resnames == ["LYS", "GLU", "LYS", "GLU"]
+    assert ann.get_n_sheets() == 10, ann.get_n_sheets()
+    assert [len(x.strands) for x in ann.sheets] == [4, 3, 2, 4, 3, 4, 3, 2, 4, 3]
+    # print ann.as_pdb_str()
+    assert not show_diff(pdb_str, ann.as_pdb_str())
+
 
 def tst_from_cif_block_2():
-  cif_str = "data_1UCS\n" + cif_4_helices + cif_one_sheet
-  cif_model = iotbx.cif.reader(input_string=cif_str).model()
-  cif_block = list(cif_model.values())[0]
-  ann = annotation.from_cif_block(cif_block)
-  assert ann.get_n_helices() == 4
-  resnames = [x.start_resname for x in ann.helices]
-  assert resnames == ["SER","LEU","SER","LEU"]
-  resnames = [x.end_resname for x in ann.helices]
-  assert resnames == ["LYS","GLU","LYS","GLU"]
-  assert ann.get_n_sheets() == 1
-  assert [len(x.strands) for x in ann.sheets] == [2]
-  # print ann.as_pdb_str()
+    cif_str = "data_1UCS\n" + cif_4_helices + cif_one_sheet
+    cif_model = iotbx.cif.reader(input_string=cif_str).model()
+    cif_block = list(cif_model.values())[0]
+    ann = annotation.from_cif_block(cif_block)
+    assert ann.get_n_helices() == 4
+    resnames = [x.start_resname for x in ann.helices]
+    assert resnames == ["SER", "LEU", "SER", "LEU"]
+    resnames = [x.end_resname for x in ann.helices]
+    assert resnames == ["LYS", "GLU", "LYS", "GLU"]
+    assert ann.get_n_sheets() == 1
+    assert [len(x.strands) for x in ann.sheets] == [2]
+    # print ann.as_pdb_str()
+
 
 def tst_from_cif_block_3():
-  "Only one helix"
-  cif_str = "data_1UCS" + cif_one_helix
+    "Only one helix"
+    cif_str = "data_1UCS" + cif_one_helix
 
-  cif_model = iotbx.cif.reader(input_string=cif_str).model()
-  cif_block = list(cif_model.values())[0]
-  ann = annotation.from_cif_block(cif_block)
-  assert ann.get_n_helices() == 1
-  resnames = [x.start_resname for x in ann.helices]
-  assert resnames == ["GLN"], resnames
-  resnames = [x.end_resname for x in ann.helices]
-  assert resnames == ["GLY"]
-  assert ann.get_n_sheets() == 0
-  # print ann.as_pdb_str()
+    cif_model = iotbx.cif.reader(input_string=cif_str).model()
+    cif_block = list(cif_model.values())[0]
+    ann = annotation.from_cif_block(cif_block)
+    assert ann.get_n_helices() == 1
+    resnames = [x.start_resname for x in ann.helices]
+    assert resnames == ["GLN"], resnames
+    resnames = [x.end_resname for x in ann.helices]
+    assert resnames == ["GLY"]
+    assert ann.get_n_sheets() == 0
+    # print ann.as_pdb_str()
+
 
 def tst_from_cif_block_4():
-  "Only one sheet"
-  cif_str = "data_1UCS" + cif_one_sheet
-  cif_model = iotbx.cif.reader(input_string=cif_str).model()
-  cif_block = list(cif_model.values())[0]
-  ann = annotation.from_cif_block(cif_block)
-  assert ann.get_n_helices() == 0, ann.get_n_helices()
-  assert ann.get_n_sheets() == 1
-  assert [len(x.strands) for x in ann.sheets] == [2]
-  # print ann.as_pdb_str()
+    "Only one sheet"
+    cif_str = "data_1UCS" + cif_one_sheet
+    cif_model = iotbx.cif.reader(input_string=cif_str).model()
+    cif_block = list(cif_model.values())[0]
+    ann = annotation.from_cif_block(cif_block)
+    assert ann.get_n_helices() == 0, ann.get_n_helices()
+    assert ann.get_n_sheets() == 1
+    assert [len(x.strands) for x in ann.sheets] == [2]
+    # print ann.as_pdb_str()
+
 
 def tst_from_minimal_cif_helix():
-  """reading annotation that contains only required mmCIF records -
-  http://mmcif.wwpdb.org/dictionaries/mmcif_pdbx_v40.dic/Categories/struct_conf.html
-  """
-  cif_answer_minimal_helix = """\
+    """reading annotation that contains only required mmCIF records -
+    http://mmcif.wwpdb.org/dictionaries/mmcif_pdbx_v40.dic/Categories/struct_conf.html
+    """
+    cif_answer_minimal_helix = """\
 loop_
   _struct_conf.conf_type_id
   _struct_conf.id
@@ -515,18 +534,18 @@ loop_
   HELX_P  2  2  ARG  B  287  ?  GLN  B  292  ?  0  ?  5
   HELX_P  3  3  PRO  A    1  ?  LEU  A    5  ?  0  ?  4
 """
-  cif_answer_conf_type_loop = """\
+    cif_answer_conf_type_loop = """\
 loop_
   _struct_conf_type.id
   _struct_conf_type.criteria
   _struct_conf_type.reference
   HELX_P  ?  ?
 """
-  pdb_answer_minimal_helix = """\
+    pdb_answer_minimal_helix = """\
 HELIX    1   1 ARG A   87  GLN A   92  1                                   5
 HELIX    2   2 ARG B  287  GLN B  292  1                                   5
 HELIX    3   3 PRO A    1  LEU A    5  1                                   4"""
-  minimal_helix = """\
+    minimal_helix = """\
     data_4ZTE
     loop_
     _struct_conf.id
@@ -541,22 +560,23 @@ HELIX    3   3 PRO A    1  LEU A    5  1                                   4"""
       HELX2  HELX_RH_AL_P  ARG  B  287  GLN  B  292
       STRN1  STRN_P        PRO  A    1  LEU  A    5
   """
-  cif_model = iotbx.cif.reader(input_string=minimal_helix).model()
-  cif_block = list(cif_model.values())[0]
-  ann = annotation.from_cif_block(cif_block)
-  assert not show_diff(ann.as_pdb_str(), pdb_answer_minimal_helix)
+    cif_model = iotbx.cif.reader(input_string=minimal_helix).model()
+    cif_block = list(cif_model.values())[0]
+    ann = annotation.from_cif_block(cif_block)
+    assert not show_diff(ann.as_pdb_str(), pdb_answer_minimal_helix)
 
-  cif_loops = ann.as_cif_loops()
-  assert len(cif_loops) == 2
-  for i, answer in enumerate([cif_answer_minimal_helix, cif_answer_conf_type_loop]):
-    out = StringIO()
-    cif_loops[i].show(out)
-    v = out.getvalue()
-    # print "\"%s\"" % v
-    assert not show_diff(out.getvalue(), answer)
+    cif_loops = ann.as_cif_loops()
+    assert len(cif_loops) == 2
+    for i, answer in enumerate([cif_answer_minimal_helix, cif_answer_conf_type_loop]):
+        out = StringIO()
+        cif_loops[i].show(out)
+        v = out.getvalue()
+        # print "\"%s\"" % v
+        assert not show_diff(out.getvalue(), answer)
+
 
 def tst_from_minimal_cif_sheet():
-  cif_minimal_sheet = """\
+    cif_minimal_sheet = """\
       data_4ZTE
       #
       _struct_sheet.id               A
@@ -586,17 +606,19 @@ def tst_from_minimal_cif_sheet():
       _pdbx_struct_sheet_hbond.range_2_label_seq_id    25
       #
       """
-  pdb_answer_minimal_sheet = """\
+    pdb_answer_minimal_sheet = """\
 SHEET    1   A 2 SER A   4  ALA A   7  0
 SHEET    2   A 2 MET A  22  GLU A  25  0  O    . .  25   N    . .   4"""
-  answer_struct_sheet_loops = ["""\
+    answer_struct_sheet_loops = [
+        """\
 loop_
   _struct_sheet.id
   _struct_sheet.type
   _struct_sheet.number_strands
   _struct_sheet.details
   A  ?  2  ?
-""","""\
+""",
+        """\
 loop_
   _struct_sheet_order.sheet_id
   _struct_sheet_order.range_id_1
@@ -604,7 +626,8 @@ loop_
   _struct_sheet_order.offset
   _struct_sheet_order.sense
   A  1  2  ?  ?
-""","""\
+""",
+        """\
 loop_
   _struct_sheet_range.sheet_id
   _struct_sheet_range.id
@@ -618,7 +641,8 @@ loop_
   _struct_sheet_range.pdbx_end_PDB_ins_code
   A  1  SER  A   4  ?  ALA  A   7  ?
   A  2  MET  A  22  ?  GLU  A  25  ?
-""","""\
+""",
+        """\
 loop_
   _pdbx_struct_sheet_hbond.sheet_id
   _pdbx_struct_sheet_hbond.range_id_1
@@ -634,31 +658,33 @@ loop_
   _pdbx_struct_sheet_hbond.range_2_label_seq_id
   _pdbx_struct_sheet_hbond.range_2_PDB_ins_code
   A  1  2  N  .  .  4  ?  O  .  .  25  ?
-"""]
+""",
+    ]
 
-  cif_model = iotbx.cif.reader(input_string=cif_minimal_sheet).model()
-  cif_block = list(cif_model.values())[0]
-  ann = annotation.from_cif_block(cif_block)
-  # print ann.as_pdb_str()
-  assert not show_diff(ann.as_pdb_str(), pdb_answer_minimal_sheet)
+    cif_model = iotbx.cif.reader(input_string=cif_minimal_sheet).model()
+    cif_block = list(cif_model.values())[0]
+    ann = annotation.from_cif_block(cif_block)
+    # print ann.as_pdb_str()
+    assert not show_diff(ann.as_pdb_str(), pdb_answer_minimal_sheet)
 
-  cif_loops = ann.as_cif_loops()
-  assert len(cif_loops) == 4, len(cif_loops)
-  for i, sheet_loop in enumerate(cif_loops):
-    out = StringIO()
-    sheet_loop.show(out)
-    v = out.getvalue()
-    # print "\"%s\"" % v
-    assert not show_diff(out.getvalue(), answer_struct_sheet_loops[i])
+    cif_loops = ann.as_cif_loops()
+    assert len(cif_loops) == 4, len(cif_loops)
+    for i, sheet_loop in enumerate(cif_loops):
+        out = StringIO()
+        sheet_loop.show(out)
+        v = out.getvalue()
+        # print "\"%s\"" % v
+        assert not show_diff(out.getvalue(), answer_struct_sheet_loops[i])
+
 
 def tst_to_cif_helix():
-  pdb_str = """\
+    pdb_str = """\
 HELIX    1 AA1 SER A   26  LYS A   30  5                                   5
 HELIX    2 AA2 LEU A  196  GLU A  199  5                                   4
 HELIX    3 AA3 SER B   26  LYS B   30  5                                   5
 HELIX    4 AA4 LEU B  196  GLU B  199  5                                   4
 """
-  answer = """\
+    answer = """\
 loop_
   _struct_conf.conf_type_id
   _struct_conf.id
@@ -680,10 +706,10 @@ loop_
   HELX_P  4  AA4  LEU  B  196  ?  GLU  B  199  ?  5  ?  4
 """
 
-  pdb_str2 = """\
+    pdb_str2 = """\
 HELIX    1 AA1 SER A   26  LYS A   30  5                                   5
 """
-  answer2 = """\
+    answer2 = """\
 loop_
   _struct_conf.conf_type_id
   _struct_conf.id
@@ -701,32 +727,32 @@ loop_
   _struct_conf.pdbx_PDB_helix_length
   HELX_P  1  AA1  SER  A  26  ?  LYS  A  30  ?  5  ?  5\n"""
 
-  ann = annotation.from_records(pdb_str.split("\n"))
-  cif_loops = ann.as_cif_loops()
-  assert len(cif_loops) == 2
-  helix_loop = cif_loops[0]
-  out = StringIO()
-  helix_loop.show(out)
-  v = out.getvalue()
-  print("\"%s\"" % v)
-  assert not show_diff(out.getvalue(), answer)
+    ann = annotation.from_records(pdb_str.split("\n"))
+    cif_loops = ann.as_cif_loops()
+    assert len(cif_loops) == 2
+    helix_loop = cif_loops[0]
+    out = StringIO()
+    helix_loop.show(out)
+    v = out.getvalue()
+    print('"%s"' % v)
+    assert not show_diff(out.getvalue(), answer)
 
-  # hmmm... when there's only one chain, there is one less 'space'
-  # between resname and resnum. Guess: in previous case extra space is
-  # needed to make nice columns.
-  ann = annotation.from_records(pdb_str2.split("\n"))
-  cif_loops = ann.as_cif_loops()
-  assert len(cif_loops) == 2
-  helix_loop = cif_loops[0]
-  out = StringIO()
-  helix_loop.show(out)
-  v = out.getvalue()
-  # print "\"%s\"" % v
-  assert not show_diff(out.getvalue(), answer2)
+    # hmmm... when there's only one chain, there is one less 'space'
+    # between resname and resnum. Guess: in previous case extra space is
+    # needed to make nice columns.
+    ann = annotation.from_records(pdb_str2.split("\n"))
+    cif_loops = ann.as_cif_loops()
+    assert len(cif_loops) == 2
+    helix_loop = cif_loops[0]
+    out = StringIO()
+    helix_loop.show(out)
+    v = out.getvalue()
+    # print "\"%s\"" % v
+    assert not show_diff(out.getvalue(), answer2)
 
 
 def tst_to_cif_sheet():
-  pdb_str1 = """\
+    pdb_str1 = """\
 SHEET    1 AA1 4 ILE A   7  PRO A  10  0
 SHEET    2 AA1 4 MET A  92  THR A  99  1  O  LEU A  95   N  ILE A   7
 SHEET    3 AA1 4 THR A  73  SER A  82 -1  N  LEU A  76   O  ILE A  94
@@ -735,47 +761,47 @@ SHEET    1 AA2 3 LYS A  19  GLN A  23  0
 SHEET    2 AA2 3 TRP A  59  VAL A  62 -1  O  LEU A  60   N  VAL A  22
 SHEET    3 AA2 3 PHE A  51  ILE A  53 -1  N  ILE A  52   O  LYS A  61"""
 
-  ann = annotation.from_records(pdb_str1.split("\n"))
-  cif_loops = ann.as_cif_loops()
-  assert len(cif_loops) == 4, len(cif_loops)
+    ann = annotation.from_records(pdb_str1.split("\n"))
+    cif_loops = ann.as_cif_loops()
+    assert len(cif_loops) == 4, len(cif_loops)
 
-  out = StringIO()
-  cif_block = iotbx.cif.model.block()
-  for loop in cif_loops:
-    loop.show(out)
-    cif_block.add_loop(loop)
-  v = out.getvalue()
-  # print "\"%s\"" % v
-  ann_back = annotation.from_cif_block(cif_block)
-  assert ann_back.get_n_helices() == 0
-  assert ann_back.get_n_sheets() == 2
-  assert [len(x.strands) for x in ann_back.sheets] == [4, 3]
-  # print ann_back.as_pdb_str()
-  assert not show_diff(ann_back.as_pdb_str(), pdb_str1)
+    out = StringIO()
+    cif_block = iotbx.cif.model.block()
+    for loop in cif_loops:
+        loop.show(out)
+        cif_block.add_loop(loop)
+    v = out.getvalue()
+    # print "\"%s\"" % v
+    ann_back = annotation.from_cif_block(cif_block)
+    assert ann_back.get_n_helices() == 0
+    assert ann_back.get_n_sheets() == 2
+    assert [len(x.strands) for x in ann_back.sheets] == [4, 3]
+    # print ann_back.as_pdb_str()
+    assert not show_diff(ann_back.as_pdb_str(), pdb_str1)
 
-  pdb_str2 = """\
+    pdb_str2 = """\
 SHEET    1 AA1 4 ILE A   7  PRO A  10  0
 SHEET    2 AA1 4 MET A  92  THR A  99  1  O  LEU A  95   N  ILE A   7
 SHEET    3 AA1 4 THR A  73  SER A  82 -1  N  LEU A  76   O  ILE A  94
 SHEET    4 AA1 4 VAL A  34  THR A  39 -1  N  PHE A  35   O  VAL A  81"""
 
-  ann = annotation.from_records(pdb_str2.split("\n"))
-  cif_loops = ann.as_cif_loops()
-  assert len(cif_loops) == 4, len(cif_loops)
+    ann = annotation.from_records(pdb_str2.split("\n"))
+    cif_loops = ann.as_cif_loops()
+    assert len(cif_loops) == 4, len(cif_loops)
 
-  out = StringIO()
-  cif_block = iotbx.cif.model.block()
-  for loop in cif_loops:
-    loop.show(out)
-    cif_block.add_loop(loop)
-  v = out.getvalue()
-  # print "\"%s\"" % v
-  ann_back = annotation.from_cif_block(cif_block)
-  assert ann_back.get_n_helices() == 0
-  assert ann_back.get_n_sheets() == 1
-  assert [len(x.strands) for x in ann_back.sheets] == [4]
-  # print ann_back.as_pdb_str()
-  assert not show_diff(ann_back.as_pdb_str(), pdb_str2)
+    out = StringIO()
+    cif_block = iotbx.cif.model.block()
+    for loop in cif_loops:
+        loop.show(out)
+        cif_block.add_loop(loop)
+    v = out.getvalue()
+    # print "\"%s\"" % v
+    ann_back = annotation.from_cif_block(cif_block)
+    assert ann_back.get_n_helices() == 0
+    assert ann_back.get_n_sheets() == 1
+    assert [len(x.strands) for x in ann_back.sheets] == [4]
+    # print ann_back.as_pdb_str()
+    assert not show_diff(ann_back.as_pdb_str(), pdb_str2)
 
 
 pdb_records_2 = """\
@@ -1269,36 +1295,44 @@ ATOM   5166  CG2 ILE B 280     225.779 258.833 267.568  1.00 10.00           C
 ATOM   5167  CD1 ILE B 280     228.263 257.823 268.900  1.00 10.00           C
 """
 
+
 def tst_to_cif_annotation():
-  pass
+    pass
+
 
 def tst_remove_empty_annotations():
-  ann = annotation.from_records(pdb_records_2.split("\n"))
-  pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_string_2.split('\n')).\
-      construct_hierarchy()
-  ann.remove_empty_annotations(hierarchy=pdb_h)
-  # print ann
-  assert ann.get_n_helices() == 2
-  assert ann.get_n_sheets() == 0
+    ann = annotation.from_records(pdb_records_2.split("\n"))
+    pdb_h = iotbx.pdb.input(
+        source_info=None, lines=pdb_string_2.split("\n")
+    ).construct_hierarchy()
+    ann.remove_empty_annotations(hierarchy=pdb_h)
+    # print ann
+    assert ann.get_n_helices() == 2
+    assert ann.get_n_sheets() == 0
+
 
 def tst_split_helices_with_prolines():
-  ann = annotation.from_records(pdb_records_2.split("\n"))
-  pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_string_2.split('\n')).\
-      construct_hierarchy()
-  # pdb_h.write_pdb_file(file_name='1.pdb')
-  ann.remove_empty_annotations(hierarchy=pdb_h)
-  # print ann
-  ann.split_helices_with_prolines(hierarchy=pdb_h)
-  # print "="*50
-  # print ann
-  assert ann.get_n_helices() == 4
-  h_sizes = [x.length for x in ann.helices]
-  assert h_sizes == [7, 15, 24, 5], h_sizes
+    ann = annotation.from_records(pdb_records_2.split("\n"))
+    pdb_h = iotbx.pdb.input(
+        source_info=None, lines=pdb_string_2.split("\n")
+    ).construct_hierarchy()
+    # pdb_h.write_pdb_file(file_name='1.pdb')
+    ann.remove_empty_annotations(hierarchy=pdb_h)
+    # print ann
+    ann.split_helices_with_prolines(hierarchy=pdb_h)
+    # print "="*50
+    # print ann
+    assert ann.get_n_helices() == 4
+    h_sizes = [x.length for x in ann.helices]
+    assert h_sizes == [7, 15, 24, 5], h_sizes
+
 
 def tst_split_helices_with_prolines_2():
-  """ Corner case when the helix begins with PRO, 2nd residue is also PRO"""
-  pro_ann = "HELIX   16  16 PRO B  463  ALA B  467  5                                   5"
-  pdb_str = """\
+    """Corner case when the helix begins with PRO, 2nd residue is also PRO"""
+    pro_ann = (
+        "HELIX   16  16 PRO B  463  ALA B  467  5                                   5"
+    )
+    pdb_str = """\
 ATOM   5910  N   PRO B 463     239.715 263.725 264.122  1.00 10.00           N
 ATOM   5911  CA  PRO B 463     238.974 264.849 264.695  1.00 10.00           C
 ATOM   5912  C   PRO B 463     238.267 264.611 266.069  1.00 10.00           C
@@ -1335,19 +1369,23 @@ ATOM   5942  C   ALA B 467     238.085 263.704 275.100  1.00 10.00           C
 ATOM   5943  O   ALA B 467     237.157 263.430 275.874  1.00 10.00           O
 ATOM   5944  CB  ALA B 467     236.468 264.889 273.432  1.00 10.00           C
   """
-  ann = annotation.from_records(pro_ann.split("\n"))
-  pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_str.split('\n')).\
-      construct_hierarchy()
-  assert ann.get_n_helices() == 1
-  ann.split_helices_with_prolines(hierarchy=pdb_h)
-  # print ann
-  assert ann.get_n_helices() == 1
-  assert ann.helices[0].length == 4
+    ann = annotation.from_records(pro_ann.split("\n"))
+    pdb_h = iotbx.pdb.input(
+        source_info=None, lines=pdb_str.split("\n")
+    ).construct_hierarchy()
+    assert ann.get_n_helices() == 1
+    ann.split_helices_with_prolines(hierarchy=pdb_h)
+    # print ann
+    assert ann.get_n_helices() == 1
+    assert ann.helices[0].length == 4
+
 
 def tst_split_helices_with_prolines_3():
-  """ Corner case when the helix ends with PRO"""
-  pro_ann = "HELIX   16  16 THR B  223  PRO B  227  5                                   5"
-  pdb_str = """\
+    """Corner case when the helix ends with PRO"""
+    pro_ann = (
+        "HELIX   16  16 THR B  223  PRO B  227  5                                   5"
+    )
+    pdb_str = """\
 ATOM   4732  N   TYR B 223     237.498 243.916 256.959  1.00 10.00           N
 ATOM   4733  CA  TYR B 223     236.998 243.193 255.797  1.00 10.00           C
 ATOM   4734  C   TYR B 223     235.642 243.731 255.357  1.00 10.00           C
@@ -1390,37 +1428,41 @@ ATOM   4770  CB  PRO B 227     232.142 244.666 251.550  1.00 10.00           C
 ATOM   4771  CG  PRO B 227     232.785 243.987 252.657  1.00 10.00           C
 ATOM   4772  CD  PRO B 227     234.206 244.487 252.661  1.00 10.00           C
 """
-  ann = annotation.from_records(pro_ann.split("\n"))
-  pdb_h = iotbx.pdb.input(source_info=None, lines=pdb_str.split('\n')).\
-      construct_hierarchy()
-  assert ann.get_n_helices() == 1
-  ann.split_helices_with_prolines(hierarchy=pdb_h)
-  # print ann
-  assert ann.get_n_helices() == 1
-  assert ann.helices[0].length == 4
+    ann = annotation.from_records(pro_ann.split("\n"))
+    pdb_h = iotbx.pdb.input(
+        source_info=None, lines=pdb_str.split("\n")
+    ).construct_hierarchy()
+    assert ann.get_n_helices() == 1
+    ann.split_helices_with_prolines(hierarchy=pdb_h)
+    # print ann
+    assert ann.get_n_helices() == 1
+    assert ann.helices[0].length == 4
+
 
 def tst_remove_short_annotations():
-  ann = annotation.from_records(pdb_records_2.split("\n"))
-  assert ann.get_n_helices() == 7
-  assert ann.get_n_sheets() == 4
-  ann.remove_short_annotations()
-  assert ann.get_n_helices() == 6, ann.get_n_helices()
-  assert ann.get_n_sheets() == 3, ann.get_n_sheets()
-  nstr = [x.n_strands for x in ann.sheets]
-  # print ann
-  assert nstr == [5,3,2], nstr
+    ann = annotation.from_records(pdb_records_2.split("\n"))
+    assert ann.get_n_helices() == 7
+    assert ann.get_n_sheets() == 4
+    ann.remove_short_annotations()
+    assert ann.get_n_helices() == 6, ann.get_n_helices()
+    assert ann.get_n_sheets() == 3, ann.get_n_sheets()
+    nstr = [x.n_strands for x in ann.sheets]
+    # print ann
+    assert nstr == [5, 3, 2], nstr
+
 
 def tst_remove_3_10_helices():
-  ann = annotation.from_records(pdb_records_2.split("\n"))
-  assert ann.get_n_helices() == 7
-  assert ann.get_n_sheets() == 4
-  ann.remove_3_10_helices()
-  assert ann.get_n_helices() == 6, ann.get_n_helices()
-  assert ann.get_n_sheets() == 4, ann.get_n_sheets()
-  # print ann
+    ann = annotation.from_records(pdb_records_2.split("\n"))
+    assert ann.get_n_helices() == 7
+    assert ann.get_n_sheets() == 4
+    ann.remove_3_10_helices()
+    assert ann.get_n_helices() == 6, ann.get_n_helices()
+    assert ann.get_n_sheets() == 4, ann.get_n_sheets()
+    # print ann
+
 
 def tst_concatenate_consecutive_helices():
-  ann_str = """\
+    ann_str = """\
 HELIX  233 233 PHE Z   12  CYS Z   43  1                                  32
 HELIX  234 234 LEU Z   49  ILE Z   54  1                                   6
 HELIX  235 235 ILE Z   54  ILE Z   62  1                                   9
@@ -1428,81 +1470,92 @@ HELIX  236 236 ILE Z   62  SER Z   77  1                                  16
 HELIX  237 237 ALA Z   83  GLN Z  122  1                                  40
 HELIX  238 238 LEU Z  125  ALA Z  136  1                                  12
   """
-  ann = annotation.from_records(ann_str.split("\n"))
-  assert ann.get_n_helices() == 6
-  assert ann.get_n_sheets() == 0
-  ann.concatenate_consecutive_helices()
-  assert ann.get_n_helices() == 4
-  # print ann
-  h_sizes = [x.length for x in ann.helices]
-  assert h_sizes == [32, 29, 40, 12], h_sizes
+    ann = annotation.from_records(ann_str.split("\n"))
+    assert ann.get_n_helices() == 6
+    assert ann.get_n_sheets() == 0
+    ann.concatenate_consecutive_helices()
+    assert ann.get_n_helices() == 4
+    # print ann
+    h_sizes = [x.length for x in ann.helices]
+    assert h_sizes == [32, 29, 40, 12], h_sizes
+
 
 def tst_concatenate_consecutive_helices2():
-  """ Very tight turn between two consecutive helices results in their
-  concatenation. """
-  if (not libtbx.env.has_module(name="ksdssp")):
-    print("Skipped: required module ksdssp not present")
-    return
-  file_path = libtbx.env.find_in_repositories(
-    relative_path="cctbx_project/iotbx/regression/secondary_structure/5a63_chainCp.pdb",
-    test=os.path.isfile)
-  if (file_path is None):
-    print('WARNING: Skipping tst_concatenate_consecutive_helices2("%s"): input file not available' % file_path)
-    return
-  inp = iotbx.pdb.input(file_name=file_path)
-  original_ann = inp.extract_secondary_structure()
-  assert original_ann.get_n_helices() == 2
-  assert original_ann.get_n_sheets() == 0
-  assert original_ann.helices[0].get_start_resseq_as_int() == 155
-  assert original_ann.helices[0].get_end_resseq_as_int() == 185
-  assert original_ann.helices[1].get_start_resseq_as_int() == 186
-  assert original_ann.helices[1].get_end_resseq_as_int() == 206
-  h = inp.construct_hierarchy()
-  ann = original_ann.deep_copy()
-  ann.concatenate_consecutive_helices(hierarchy=h)
-  assert ann.get_n_helices() == 2
-  assert ann.get_n_sheets() == 0
-  # and make sure they got 'spreaded'
-  assert ann.helices[0].get_start_resseq_as_int() == 155
-  assert ann.helices[0].get_end_resseq_as_int() == 184
-  assert ann.helices[1].get_start_resseq_as_int() == 187
-  assert ann.helices[1].get_end_resseq_as_int() == 206
-  # print ann
+    """Very tight turn between two consecutive helices results in their
+    concatenation."""
+    if not libtbx.env.has_module(name="ksdssp"):
+        print("Skipped: required module ksdssp not present")
+        return
+    file_path = libtbx.env.find_in_repositories(
+        relative_path="cctbx_project/iotbx/regression/secondary_structure/5a63_chainCp.pdb",
+        test=os.path.isfile,
+    )
+    if file_path is None:
+        print(
+            'WARNING: Skipping tst_concatenate_consecutive_helices2("%s"): input file not available'
+            % file_path
+        )
+        return
+    inp = iotbx.pdb.input(file_name=file_path)
+    original_ann = inp.extract_secondary_structure()
+    assert original_ann.get_n_helices() == 2
+    assert original_ann.get_n_sheets() == 0
+    assert original_ann.helices[0].get_start_resseq_as_int() == 155
+    assert original_ann.helices[0].get_end_resseq_as_int() == 185
+    assert original_ann.helices[1].get_start_resseq_as_int() == 186
+    assert original_ann.helices[1].get_end_resseq_as_int() == 206
+    h = inp.construct_hierarchy()
+    ann = original_ann.deep_copy()
+    ann.concatenate_consecutive_helices(hierarchy=h)
+    assert ann.get_n_helices() == 2
+    assert ann.get_n_sheets() == 0
+    # and make sure they got 'spreaded'
+    assert ann.helices[0].get_start_resseq_as_int() == 155
+    assert ann.helices[0].get_end_resseq_as_int() == 184
+    assert ann.helices[1].get_start_resseq_as_int() == 187
+    assert ann.helices[1].get_end_resseq_as_int() == 206
+    # print ann
+
 
 def tst_concatenate_consecutive_helices3():
-  """ Very tight turn between two consecutive helices. They are separated
-  by PRO residue, but this is not enough, they should be spreaded like in
-  previous test. """
-  if (not libtbx.env.has_module(name="ksdssp")):
-    print("Skipped: required module ksdssp not present")
-    return
-  file_path = libtbx.env.find_in_repositories(
-    relative_path="cctbx_project/iotbx/regression/secondary_structure/5a63_chainBp.pdb",
-    test=os.path.isfile)
-  if (file_path is None):
-    print('WARNING: Skipping tst_concatenate_consecutive_helices2("%s"): input file not available' % file_path)
-    return
-  inp = iotbx.pdb.input(file_name=file_path)
-  original_ann = inp.extract_secondary_structure()
-  assert original_ann.get_n_helices() == 2
-  assert original_ann.get_n_sheets() == 0
-  assert original_ann.helices[0].get_start_resseq_as_int() == 218
-  assert original_ann.helices[0].get_end_resseq_as_int() == 241
-  assert original_ann.helices[1].get_start_resseq_as_int() == 242
-  assert original_ann.helices[1].get_end_resseq_as_int() == 260
-  h = inp.construct_hierarchy()
-  ann = original_ann.deep_copy()
-  ann.concatenate_consecutive_helices(hierarchy=h)
-  assert ann.get_n_helices() == 2
-  assert ann.get_n_sheets() == 0
-  # and make sure they got 'spreaded'
-  assert ann.helices[0].get_start_resseq_as_int() == 218
-  assert ann.helices[0].get_end_resseq_as_int() == 240
-  assert ann.helices[1].get_start_resseq_as_int() == 243
-  assert ann.helices[1].get_end_resseq_as_int() == 260
+    """Very tight turn between two consecutive helices. They are separated
+    by PRO residue, but this is not enough, they should be spreaded like in
+    previous test."""
+    if not libtbx.env.has_module(name="ksdssp"):
+        print("Skipped: required module ksdssp not present")
+        return
+    file_path = libtbx.env.find_in_repositories(
+        relative_path="cctbx_project/iotbx/regression/secondary_structure/5a63_chainBp.pdb",
+        test=os.path.isfile,
+    )
+    if file_path is None:
+        print(
+            'WARNING: Skipping tst_concatenate_consecutive_helices2("%s"): input file not available'
+            % file_path
+        )
+        return
+    inp = iotbx.pdb.input(file_name=file_path)
+    original_ann = inp.extract_secondary_structure()
+    assert original_ann.get_n_helices() == 2
+    assert original_ann.get_n_sheets() == 0
+    assert original_ann.helices[0].get_start_resseq_as_int() == 218
+    assert original_ann.helices[0].get_end_resseq_as_int() == 241
+    assert original_ann.helices[1].get_start_resseq_as_int() == 242
+    assert original_ann.helices[1].get_end_resseq_as_int() == 260
+    h = inp.construct_hierarchy()
+    ann = original_ann.deep_copy()
+    ann.concatenate_consecutive_helices(hierarchy=h)
+    assert ann.get_n_helices() == 2
+    assert ann.get_n_sheets() == 0
+    # and make sure they got 'spreaded'
+    assert ann.helices[0].get_start_resseq_as_int() == 218
+    assert ann.helices[0].get_end_resseq_as_int() == 240
+    assert ann.helices[1].get_start_resseq_as_int() == 243
+    assert ann.helices[1].get_end_resseq_as_int() == 260
+
 
 def tst_concatenate_consecutive_helices4():
-  pdb_str = """\
+    pdb_str = """\
 HELIX  130 AO4 ASP i  421  GLY i  433  1                                  25
 HELIX  131 AO5 GLY i  434  UNK i  441  1                                   8
 ATOM  29887  N   ASP i 421     299.903 227.017 234.954  1.00 60.00           N
@@ -1616,18 +1669,19 @@ ATOM  29994  O   GLY i 434     294.922 214.909 218.843  1.00 60.00           O
 TER
 END
   """
-  pdb_inp = iotbx.pdb.input(lines=pdb_str, source_info=None)
-  h = pdb_inp.construct_hierarchy()
-  ss_ann = pdb_inp.extract_secondary_structure()
-  assert ss_ann.get_n_helices() == 2
-  ss_ann.concatenate_consecutive_helices(hierarchy=h)
-  assert ss_ann.get_n_helices() == 1
-  # print ss_ann
-  assert ss_ann.helices[0].get_start_resseq_as_int() == 421
-  assert ss_ann.helices[0].get_end_resseq_as_int() == 433
+    pdb_inp = iotbx.pdb.input(lines=pdb_str, source_info=None)
+    h = pdb_inp.construct_hierarchy()
+    ss_ann = pdb_inp.extract_secondary_structure()
+    assert ss_ann.get_n_helices() == 2
+    ss_ann.concatenate_consecutive_helices(hierarchy=h)
+    assert ss_ann.get_n_helices() == 1
+    # print ss_ann
+    assert ss_ann.helices[0].get_start_resseq_as_int() == 421
+    assert ss_ann.helices[0].get_end_resseq_as_int() == 433
+
 
 def tst_simple_elements():
-  ann_str = """\
+    ann_str = """\
 HELIX    3 AA3 SER B   26  LYS B   30  5                                   5
 HELIX    4 AA4 LEU B  196  GLU B  199  5                                   4
 SHEET    1 AA1 4 ILE A   7  PRO A  10  0
@@ -1635,176 +1689,253 @@ SHEET    2 AA1 4 MET A  92  THR A  99  1  O  LEU A  95   N  ILE A   7
 SHEET    3 AA1 4 THR A  73  SER A  82 -1  N  LEU A  76   O  ILE A  94
 SHEET    4 AA1 4 VAL A  34  THR A  39 -1  N  PHE A  35   O  VAL A  81
   """
-  ann = annotation.from_records(ann_str.split("\n"))
-  assert ann.get_n_helices() == 2
-  assert ann.get_n_sheets() == 1
-  n_h = 0
-  n_st = 0
-  se = ann.simple_elements()
-  assert len(se) == 6
-  for e in se:
-    if isinstance(e, pdb_helix):
-      n_h += 1
-    if isinstance(e, pdb_strand):
-      n_st += 1
-  assert n_h == 2
-  assert n_st == 4
-  s = ann.as_pdb_str()
+    ann = annotation.from_records(ann_str.split("\n"))
+    assert ann.get_n_helices() == 2
+    assert ann.get_n_sheets() == 1
+    n_h = 0
+    n_st = 0
+    se = ann.simple_elements()
+    assert len(se) == 6
+    for e in se:
+        if isinstance(e, pdb_helix):
+            n_h += 1
+        if isinstance(e, pdb_strand):
+            n_st += 1
+    assert n_h == 2
+    assert n_st == 4
+    s = ann.as_pdb_str()
+
 
 def tst_filter_sheets_with_long_hbonds():
-  """ Attention. In this case there are 2 almost identical SHEET annotations."""
-  if (not libtbx.env.has_module(name="ksdssp")):
-    print("Skipped: required module ksdssp not present")
-    return
-  file_path = libtbx.env.find_in_repositories(
-    relative_path="cctbx_project/iotbx/regression/secondary_structure/3jd6_noh.pdb",
-    test=os.path.isfile)
-  if (file_path is None):
-    print('WARNING: Skipping tst_filter_sheets_with_long_hbonds("%s"): input file not available' % file_path)
-    return
-  inp = iotbx.pdb.input(file_name=file_path)
-  original_ann = inp.extract_secondary_structure()
-  assert original_ann.get_n_helices() == 1
-  assert original_ann.get_n_sheets() == 2
-  h = inp.construct_hierarchy()
-  ann = original_ann.deep_copy()
-  ann.filter_sheets_with_long_hbonds(hierarchy=h)
-  assert ann.get_n_helices() == 1, ann.get_n_helices()
-  assert ann.get_n_sheets() == 3, ann.get_n_sheets() # with filtering out short ones
+    """Attention. In this case there are 2 almost identical SHEET annotations."""
+    if not libtbx.env.has_module(name="ksdssp"):
+        print("Skipped: required module ksdssp not present")
+        return
+    file_path = libtbx.env.find_in_repositories(
+        relative_path="cctbx_project/iotbx/regression/secondary_structure/3jd6_noh.pdb",
+        test=os.path.isfile,
+    )
+    if file_path is None:
+        print(
+            'WARNING: Skipping tst_filter_sheets_with_long_hbonds("%s"): input file not available'
+            % file_path
+        )
+        return
+    inp = iotbx.pdb.input(file_name=file_path)
+    original_ann = inp.extract_secondary_structure()
+    assert original_ann.get_n_helices() == 1
+    assert original_ann.get_n_sheets() == 2
+    h = inp.construct_hierarchy()
+    ann = original_ann.deep_copy()
+    ann.filter_sheets_with_long_hbonds(hierarchy=h)
+    assert ann.get_n_helices() == 1, ann.get_n_helices()
+    assert ann.get_n_sheets() == 3, ann.get_n_sheets()  # with filtering out short ones
+
 
 def tst_filter_sheets_with_long_hbonds2():
-  """ bug found in 4a7h where ksdssp defines sheet 200 residues long sheet for
-  rather small selection.
-  A 2 ILE C 384  ARG C 586  1  N  LEU C 385   O  VAL C  97
-  correct definition can be provided by any other method in ss_manager. """
-  if (not libtbx.env.has_module(name="ksdssp")):
-    print("Skipped: required module ksdssp not present")
-    return
-  file_path = libtbx.env.find_in_repositories(
-    relative_path="cctbx_project/iotbx/regression/secondary_structure/4a7h_chainC.pdb",
-    test=os.path.isfile)
-  if (file_path is None):
-    print('WARNING: Skipping tst_filter_sheets_with_long_hbonds2("%s"): input file not available' % file_path)
-    return
-  inp = iotbx.pdb.input(file_name=file_path)
-  original_ann = inp.extract_secondary_structure()
-  assert original_ann.get_n_helices() == 0
-  assert original_ann.get_n_sheets() == 3
-  h = inp.construct_hierarchy()
-  ann = original_ann.deep_copy()
-  try:
-    ann.filter_sheets_with_long_hbonds(hierarchy=h)
-  except Exception as e:
-    if e.args[0].startswith("It is 4a7h"):
-      pass
+    """bug found in 4a7h where ksdssp defines sheet 200 residues long sheet for
+    rather small selection.
+    A 2 ILE C 384  ARG C 586  1  N  LEU C 385   O  VAL C  97
+    correct definition can be provided by any other method in ss_manager."""
+    if not libtbx.env.has_module(name="ksdssp"):
+        print("Skipped: required module ksdssp not present")
+        return
+    file_path = libtbx.env.find_in_repositories(
+        relative_path="cctbx_project/iotbx/regression/secondary_structure/4a7h_chainC.pdb",
+        test=os.path.isfile,
+    )
+    if file_path is None:
+        print(
+            'WARNING: Skipping tst_filter_sheets_with_long_hbonds2("%s"): input file not available'
+            % file_path
+        )
+        return
+    inp = iotbx.pdb.input(file_name=file_path)
+    original_ann = inp.extract_secondary_structure()
+    assert original_ann.get_n_helices() == 0
+    assert original_ann.get_n_sheets() == 3
+    h = inp.construct_hierarchy()
+    ann = original_ann.deep_copy()
+    try:
+        ann.filter_sheets_with_long_hbonds(hierarchy=h)
+    except Exception as e:
+        if e.args[0].startswith("It is 4a7h"):
+            pass
+        else:
+            raise e
     else:
-      raise e
-  else:
-    # disable for now
-    pass
-    # assert 0
+        # disable for now
+        pass
+        # assert 0
+
 
 def tst_filter_sheets_with_long_hbonds3():
-  """ bug found in 1qmo: want to remove all sheets, but they appear not sorted."""
-  if (not libtbx.env.has_module(name="ksdssp")):
-    print("Skipped: required module ksdssp not present")
-    return
-  file_path = libtbx.env.find_in_repositories(
-    relative_path="cctbx_project/iotbx/regression/secondary_structure/1ubf_cutted.pdb",
-    test=os.path.isfile)
-  if (file_path is None):
-    print('WARNING: Skipping tst_filter_sheets_with_long_hbonds3("%s"): input file not available' % file_path)
-    return
-  inp = iotbx.pdb.input(file_name=file_path)
-  original_ann = inp.extract_secondary_structure()
-  assert original_ann.get_n_helices() == 11
-  assert original_ann.get_n_sheets() == 2
-  h = inp.construct_hierarchy()
-  ann = original_ann.deep_copy()
-  ann.filter_sheets_with_long_hbonds(hierarchy=h)
-  print(ann)
-  assert ann.get_n_helices() == 11, ann.get_n_helices()
-  assert ann.get_n_sheets() == 2, ann.get_n_sheets()
+    """bug found in 1qmo: want to remove all sheets, but they appear not sorted."""
+    if not libtbx.env.has_module(name="ksdssp"):
+        print("Skipped: required module ksdssp not present")
+        return
+    file_path = libtbx.env.find_in_repositories(
+        relative_path="cctbx_project/iotbx/regression/secondary_structure/1ubf_cutted.pdb",
+        test=os.path.isfile,
+    )
+    if file_path is None:
+        print(
+            'WARNING: Skipping tst_filter_sheets_with_long_hbonds3("%s"): input file not available'
+            % file_path
+        )
+        return
+    inp = iotbx.pdb.input(file_name=file_path)
+    original_ann = inp.extract_secondary_structure()
+    assert original_ann.get_n_helices() == 11
+    assert original_ann.get_n_sheets() == 2
+    h = inp.construct_hierarchy()
+    ann = original_ann.deep_copy()
+    ann.filter_sheets_with_long_hbonds(hierarchy=h)
+    print(ann)
+    assert ann.get_n_helices() == 11, ann.get_n_helices()
+    assert ann.get_n_sheets() == 2, ann.get_n_sheets()
+
 
 def tst_reset_sheet_ids():
-  ann_str = """\
+    ann_str = """\
 SHEET    1 AA1 4 ILE A   7  PRO A  10  0
 SHEET    2 AA1 4 MET A  92  THR A  99  1  O  LEU A  95   N  ILE A   7
   """
-  ann_str2 = """\
+    ann_str2 = """\
 SHEET    1 AA1 4 ILE A   7  PRO A  10  0
 SHEET    2 AA2 4 MET A  92  THR A  99  0
   """
-  # One sheet
-  ann = annotation.from_records(ann_str.split("\n"))
-  assert ann.get_n_helices() == 0
-  assert ann.get_n_sheets() == 1
-  assert ann.sheets[0].sheet_id == 'AA1'
-  ann.reset_sheet_ids()
-  assert ann.get_n_helices() == 0
-  assert ann.get_n_sheets() == 1
-  assert ann.sheets[0].sheet_id == '0', ann.sheets[0].sheet_id
+    # One sheet
+    ann = annotation.from_records(ann_str.split("\n"))
+    assert ann.get_n_helices() == 0
+    assert ann.get_n_sheets() == 1
+    assert ann.sheets[0].sheet_id == "AA1"
+    ann.reset_sheet_ids()
+    assert ann.get_n_helices() == 0
+    assert ann.get_n_sheets() == 1
+    assert ann.sheets[0].sheet_id == "0", ann.sheets[0].sheet_id
 
-  # Two sheets
-  ann = annotation.from_records(ann_str2.split("\n"))
-  assert ann.get_n_helices() == 0
-  assert ann.get_n_sheets() == 2
-  assert ann.sheets[0].sheet_id == 'AA1'
-  assert ann.sheets[1].sheet_id == 'AA2'
-  ann.reset_sheet_ids()
-  assert ann.get_n_helices() == 0
-  assert ann.get_n_sheets() == 2
-  assert ann.sheets[0].sheet_id == '0', ann.sheets[0].sheet_id
-  assert ann.sheets[1].sheet_id == '1', ann.sheets[0].sheet_id
+    # Two sheets
+    ann = annotation.from_records(ann_str2.split("\n"))
+    assert ann.get_n_helices() == 0
+    assert ann.get_n_sheets() == 2
+    assert ann.sheets[0].sheet_id == "AA1"
+    assert ann.sheets[1].sheet_id == "AA2"
+    ann.reset_sheet_ids()
+    assert ann.get_n_helices() == 0
+    assert ann.get_n_sheets() == 2
+    assert ann.sheets[0].sheet_id == "0", ann.sheets[0].sheet_id
+    assert ann.sheets[1].sheet_id == "1", ann.sheets[0].sheet_id
 
-  # 11 sheets
-  ann = annotation.from_records(ann_str.split("\n"))
-  for x in range(10):
-    ann.sheets.append(ann.sheets[0].deep_copy())
-  assert ann.get_n_sheets() == 11
-  ann.reset_sheet_ids()
-  sheet_ids = [x.sheet_id for x in ann.sheets]
-  assert sheet_ids ==['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A'], sheet_ids
+    # 11 sheets
+    ann = annotation.from_records(ann_str.split("\n"))
+    for x in range(10):
+        ann.sheets.append(ann.sheets[0].deep_copy())
+    assert ann.get_n_sheets() == 11
+    ann.reset_sheet_ids()
+    sheet_ids = [x.sheet_id for x in ann.sheets]
+    assert sheet_ids == [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+    ], sheet_ids
 
-  # 51 sheets
-  ann = annotation.from_records(ann_str.split("\n"))
-  for x in range(50):
-    ann.sheets.append(ann.sheets[0].deep_copy())
-  assert ann.get_n_sheets() == 51
-  ann.reset_sheet_ids()
-  sheet_ids = [x.sheet_id for x in ann.sheets]
-  assert sheet_ids ==['00', '01', '02', '03', '04', '05', '06', '07', '08', '09',
-      '0A', '0B', '0C', '0D', '0E', '0F', '0G', '0H', '0I', '0J', '0K', '0L',
-      '0M', '0N', '0O', '0P', '0Q', '0R', '0S', '0T', '0U', '0V', '0W', '0X',
-      '0Y', '0Z', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
-      '1A', '1B', '1C', '1D', '1E'], sheet_ids
+    # 51 sheets
+    ann = annotation.from_records(ann_str.split("\n"))
+    for x in range(50):
+        ann.sheets.append(ann.sheets[0].deep_copy())
+    assert ann.get_n_sheets() == 51
+    ann.reset_sheet_ids()
+    sheet_ids = [x.sheet_id for x in ann.sheets]
+    assert sheet_ids == [
+        "00",
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "0A",
+        "0B",
+        "0C",
+        "0D",
+        "0E",
+        "0F",
+        "0G",
+        "0H",
+        "0I",
+        "0J",
+        "0K",
+        "0L",
+        "0M",
+        "0N",
+        "0O",
+        "0P",
+        "0Q",
+        "0R",
+        "0S",
+        "0T",
+        "0U",
+        "0V",
+        "0W",
+        "0X",
+        "0Y",
+        "0Z",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "1A",
+        "1B",
+        "1C",
+        "1D",
+        "1E",
+    ], sheet_ids
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  test_helix_interface()
-  test_sheet_interface()
-  tst_from_cif_block()
-  tst_from_cif_block_2()
-  tst_from_cif_block_3()
-  tst_from_cif_block_4()
-  tst_from_minimal_cif_helix()
-  tst_from_minimal_cif_sheet()
-  tst_to_cif_helix()
-  tst_to_cif_sheet()
-  tst_to_cif_annotation()
-  tst_remove_empty_annotations()
-  tst_split_helices_with_prolines()
-  tst_split_helices_with_prolines_2()
-  tst_split_helices_with_prolines_3()
-  tst_remove_short_annotations()
-  tst_remove_3_10_helices()
-  tst_concatenate_consecutive_helices()
-  tst_concatenate_consecutive_helices2()
-  tst_concatenate_consecutive_helices3()
-  tst_concatenate_consecutive_helices4()
-  tst_filter_sheets_with_long_hbonds()
-  tst_filter_sheets_with_long_hbonds2()
-  tst_filter_sheets_with_long_hbonds3()
-  tst_reset_sheet_ids()
-  tst_simple_elements()
-  print("OK time =%8.3f"%(time.time() - t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    test_helix_interface()
+    test_sheet_interface()
+    tst_from_cif_block()
+    tst_from_cif_block_2()
+    tst_from_cif_block_3()
+    tst_from_cif_block_4()
+    tst_from_minimal_cif_helix()
+    tst_from_minimal_cif_sheet()
+    tst_to_cif_helix()
+    tst_to_cif_sheet()
+    tst_to_cif_annotation()
+    tst_remove_empty_annotations()
+    tst_split_helices_with_prolines()
+    tst_split_helices_with_prolines_2()
+    tst_split_helices_with_prolines_3()
+    tst_remove_short_annotations()
+    tst_remove_3_10_helices()
+    tst_concatenate_consecutive_helices()
+    tst_concatenate_consecutive_helices2()
+    tst_concatenate_consecutive_helices3()
+    tst_concatenate_consecutive_helices4()
+    tst_filter_sheets_with_long_hbonds()
+    tst_filter_sheets_with_long_hbonds2()
+    tst_filter_sheets_with_long_hbonds3()
+    tst_reset_sheet_ids()
+    tst_simple_elements()
+    print("OK time =%8.3f" % (time.time() - t0))

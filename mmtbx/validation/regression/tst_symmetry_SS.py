@@ -3,9 +3,9 @@ from libtbx import easy_run
 import unittest
 import os
 
-__author__ = 'bhintze'
+__author__ = "bhintze"
 
-test_pdb_str = '''\
+test_pdb_str = """\
 CRYST1   89.760   89.760  150.890  90.00  90.00  90.00 P 43 21 2
 SCALE1      0.011141  0.000000  0.000000        0.00000
 SCALE2     -0.000000  0.011141  0.000000        0.00000
@@ -46,30 +46,32 @@ ATOM    408  CA  GLN A 536       5.038  72.353 189.884  1.00113.55           C
 ATOM    409  CB  GLN A 536       3.702  72.682 189.204  1.00 93.32           C
 ATOM    410  C   GLN A 536       5.808  71.230 189.153  1.00116.48           C
 ATOM    411  O   GLN A 536       5.180  70.277 188.684  1.00123.87           O
-'''
+"""
+
 
 class TestMPGeo(unittest.TestCase):
+    def setUp(self):
+        self.file_to_delete = ["try.geo"]
+        # import files used in tests
+        self.file_name = "symmetry_SS.pdb"
+        with open(self.file_name, "w") as f:
+            f.write(test_pdb_str)
+        self.file_to_delete.append(self.file_name)
 
-  def setUp(self):
-    self.file_to_delete = ['try.geo']
-    # import files used in tests
-    self.file_name = 'symmetry_SS.pdb'
-    with open(self.file_name,'w')as f:
-      f.write(test_pdb_str)
-    self.file_to_delete.append(self.file_name)
+    def test_mpgeo(self):
+        cmd = "mmtbx.mp_geo pdb=symmetry_SS.pdb "
+        cmd += "out_file=try.geo kinemage=True"
+        er = easy_run.call(command=cmd)
+        # er.show_stderr()
+        assert er == 0
 
-  def test_mpgeo(self):
-    cmd = "mmtbx.mp_geo pdb=symmetry_SS.pdb "
-    cmd+= "out_file=try.geo kinemage=True"
-    er = easy_run.call(command=cmd)
-    #er.show_stderr()
-    assert er == 0
+    def tearDown(self):
+        """delete files created in during testing"""
+        if self.file_to_delete:
+            for fn in self.file_to_delete:
+                if os.path.isfile(fn):
+                    os.remove(fn)
 
-  def tearDown(self):
-    """ delete files created in during testing"""
-    if self.file_to_delete:
-      for fn in self.file_to_delete:
-        if os.path.isfile(fn): os.remove(fn)
 
-if __name__ == '__main__' :
+if __name__ == "__main__":
     unittest.main()

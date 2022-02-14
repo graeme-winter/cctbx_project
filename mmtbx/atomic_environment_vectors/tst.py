@@ -49,45 +49,45 @@ ATOM      3  C   GLY A  10      -9.473  -6.375 -27.160  1.00  0.00           C
 ATOM      4  O   GLY A  10      -9.704  -6.850 -28.272  1.00  0.00           O
 """
 
-def run():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  a = aev.AEV(model = model)
-  print('forward AEVs')
-  print(a.BAEVs)
-  print('backward AEVs')
-  print(a.EAEVs)
-  gv = a.get_values()
-  for key in gv:
-    outl = key
-    for cc in gv[key]:
-      outl += ' %0.3f' % cc
-    print(outl)
-  # print('backward AEVs')
-  # print(a.EAEVs)
-  # print('middle AEVs')
-  # print(a.MAEVs)
-  b = aev.compare(a)
-  print(b)
-  # assert b['GLY  A   1']['E'] is None
-  print(b['GLY  A   5'])
-  assert b['GLY  A   5']['E'] > 0.99
-  assert b['GLY  A   5']['M'] > 0.99
-  assert b['GLY  A   5']['B'] > 0.99
-  # assert b['GLY  A  10']['B'] is None
-  if 0:
-    recs = aev.format_HELIX_records_from_AEV(b, 0.9)
-    assert len(recs) == 1
-    r="HELIX    1   1 GLY  A   2  GLY  A   9                                      8"
-    assert r == recs[0]
-  #
-  if 0:
-    with open("development.aev.pdb", "w") as fo:
-      fo.write(pdb_str)
-    easy_run.call("mmtbx.development.aev development.aev.pdb 0.9")
 
-if __name__ == '__main__':
-  run()
+def run():
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    a = aev.AEV(model=model)
+    print("forward AEVs")
+    print(a.BAEVs)
+    print("backward AEVs")
+    print(a.EAEVs)
+    gv = a.get_values()
+    for key in gv:
+        outl = key
+        for cc in gv[key]:
+            outl += " %0.3f" % cc
+        print(outl)
+    # print('backward AEVs')
+    # print(a.EAEVs)
+    # print('middle AEVs')
+    # print(a.MAEVs)
+    b = aev.compare(a)
+    print(b)
+    # assert b['GLY  A   1']['E'] is None
+    print(b["GLY  A   5"])
+    assert b["GLY  A   5"]["E"] > 0.99
+    assert b["GLY  A   5"]["M"] > 0.99
+    assert b["GLY  A   5"]["B"] > 0.99
+    # assert b['GLY  A  10']['B'] is None
+    if 0:
+        recs = aev.format_HELIX_records_from_AEV(b, 0.9)
+        assert len(recs) == 1
+        r = "HELIX    1   1 GLY  A   2  GLY  A   9                                      8"
+        assert r == recs[0]
+    #
+    if 0:
+        with open("development.aev.pdb", "w") as fo:
+            fo.write(pdb_str)
+        easy_run.call("mmtbx.development.aev development.aev.pdb 0.9")
+
+
+if __name__ == "__main__":
+    run()

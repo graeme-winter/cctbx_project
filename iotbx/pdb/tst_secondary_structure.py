@@ -1920,8 +1920,9 @@ ATOM   1858  CD2 LEU A 275      27.010  39.028  14.059  1.00 41.90           C
 TER    1859      LEU A 275
 """
 
+
 def exercise_single():
-  two_char_chain_records = """\
+    two_char_chain_records = """\
 HELIX    1   1 THRA1   11  ASPA1   39  1                                  29
 HELIX    2   2 GLUA1   46  ARGA1   73  1                                  28
 HELIX    3   3 THRA1   93  ALAA1  120  1                                  28
@@ -1931,25 +1932,26 @@ HELIX    6   6 THRa1   11  TYRa1   37  1                                  27
 HELIX    7   7 GLUa1   46  GLNa1   72  1                                  27
 HELIX    8   8 THRa1   93  ALAa1  120  1                                  28
 HELIX    9   9 PROa1  124  HISa1  133  1                                  10"""
-  lines = flex.std_string()
-  lines.extend(flex.split_lines(two_char_chain_records))
-  secstr = ss.annotation.from_records(records=lines)
-  ss_out = secstr.as_pdb_str()
-  assert not test_utils.show_diff(ss_out, two_char_chain_records)
-  print("OK")
+    lines = flex.std_string()
+    lines.extend(flex.split_lines(two_char_chain_records))
+    secstr = ss.annotation.from_records(records=lines)
+    ss_out = secstr.as_pdb_str()
+    assert not test_utils.show_diff(ss_out, two_char_chain_records)
+    print("OK")
+
 
 def tst_pdb_file():
-  pdb_inp = iotbx.pdb.input(source_info=None,
-    lines=pdb_1ywf_sample_strings)
-  old_ss = pdb_inp.secondary_structure_section()
-  structure = pdb_inp.extract_secondary_structure()
-  new_ss = structure.as_pdb_str()
-  old_ss = "\n".join(old_ss)
-  assert not test_utils.show_diff(new_ss, old_ss)
-  print("OK")
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_1ywf_sample_strings)
+    old_ss = pdb_inp.secondary_structure_section()
+    structure = pdb_inp.extract_secondary_structure()
+    new_ss = structure.as_pdb_str()
+    old_ss = "\n".join(old_ss)
+    assert not test_utils.show_diff(new_ss, old_ss)
+    print("OK")
+
 
 def tst_parsing_phil():
-  phil_str = """\
+    phil_str = """\
 secondary_structure.protein {
   helix {
     selection = chain A and resseq 1:18
@@ -2046,78 +2048,91 @@ secondary_structure.protein {
   }
 }"""
 
-  annot, ss_from_file = get_annotation(
-      phil_lines=phil_str,
-      pdb_lines=pdb_1ywf_sample_strings)
-  ss_from_phil = annot.as_pdb_str()
-  assert ss_from_file == ss_from_phil
-  print("OK")
+    annot, ss_from_file = get_annotation(
+        phil_lines=phil_str, pdb_lines=pdb_1ywf_sample_strings
+    )
+    ss_from_phil = annot.as_pdb_str()
+    assert ss_from_file == ss_from_phil
+    print("OK")
+
 
 def get_annotation(phil_lines, pdb_lines):
-  pdb_inp = iotbx.pdb.input(source_info=None,
-    lines=pdb_lines)
-  pdb_h = pdb_inp.construct_hierarchy()
-  ss_from_file = pdb_inp.secondary_structure_section()
-  ss_phil = iotbx.phil.parse(phil_lines)
-  working_params = sec_str_master_phil.fetch(source=ss_phil).extract()
-  annot = ss.annotation.from_phil(
-      phil_helices=working_params.secondary_structure.protein.helix,
-      phil_sheets=working_params.secondary_structure.protein.sheet,
-      pdb_hierarchy=pdb_h)
-  return annot, ss_from_file
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_lines)
+    pdb_h = pdb_inp.construct_hierarchy()
+    ss_from_file = pdb_inp.secondary_structure_section()
+    ss_phil = iotbx.phil.parse(phil_lines)
+    working_params = sec_str_master_phil.fetch(source=ss_phil).extract()
+    annot = ss.annotation.from_phil(
+        phil_helices=working_params.secondary_structure.protein.helix,
+        phil_sheets=working_params.secondary_structure.protein.sheet,
+        pdb_hierarchy=pdb_h,
+    )
+    return annot, ss_from_file
+
 
 def exercise_only_b_altloc():
-  pdb_inp = iotbx.pdb.input(source_info=None,
-    lines=pdb_1ywf_cutted)
-  old_ss = pdb_inp.secondary_structure_section()
-  structure = pdb_inp.extract_secondary_structure()
-  new_ss = structure.as_pdb_str()
-  old_ss = "\n".join(old_ss)
-  assert not test_utils.show_diff(new_ss, old_ss)
-  print("OK")
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_1ywf_cutted)
+    old_ss = pdb_inp.secondary_structure_section()
+    structure = pdb_inp.extract_secondary_structure()
+    new_ss = structure.as_pdb_str()
+    old_ss = "\n".join(old_ss)
+    assert not test_utils.show_diff(new_ss, old_ss)
+    print("OK")
+
 
 def exercise_multiplication():
-  from iotbx.pdb.utils import all_chain_ids
-#   two_char_chain_records = """\
-# HELIX    1   1 THRA1   11  ASPA1   39  1                                  29
-# SHEET    1   A 5 ARG A  13  ASP A  14  0
-# SHEET    2   A 5 LEU A  27  SER A  30 -1  O  ARG A  29   N  ARG A  13
-# """
-  one_char_chain_records = """\
+    from iotbx.pdb.utils import all_chain_ids
+
+    #   two_char_chain_records = """\
+    # HELIX    1   1 THRA1   11  ASPA1   39  1                                  29
+    # SHEET    1   A 5 ARG A  13  ASP A  14  0
+    # SHEET    2   A 5 LEU A  27  SER A  30 -1  O  ARG A  29   N  ARG A  13
+    # """
+    one_char_chain_records = """\
 HELIX    1   1 THR A   11  ASP A   39  1                                  29
 SHEET    1   A 5 ARG A  13  ASP A  14  0
 SHEET    2   A 5 LEU A  27  SER A  30 -1  O  ARG A  29   N  ARG A  13
 """
-  all_ids = all_chain_ids()
-  secstr = ss.annotation.from_records(records=one_char_chain_records.split('\n'))
-  secstr.multiply_to_asu_2(chain_ids_dict={'A':all_ids})
-  for sh in secstr.sheets:
-    for s in sh.strands:
-      assert sh.sheet_id == s.sheet_id, "%s, %s" % (sh.sheet_id, s.sheet_id)
-  ss_lines = secstr.as_pdb_str().split('\n')
-  # print (ss_lines[1200])
-  # print (ss_lines[6999])
-  # print (ss_lines[7000])
-  assert ss_lines[1200] == \
-      "HELIX  A5L A5L THR5V   11  ASP5V   39  1                                  29"
-  assert ss_lines[6999] == "SHEET    1 AF7 2 ARGHf  13  ASPHf  14  0"
-  assert ss_lines[7000] == \
-      "SHEET    2 AF7 2 LEUHf  27  SERHf  30 -1  O  ARGHf  29   N  ARGHf  13"
-  ss_back = ss.annotation.from_records(records=[
-      ss_lines[1200], ss_lines[6999], ss_lines[7000]])
-  for s in ss_back.sheets:
-    for strand in s.strands:
-      assert s.sheet_id == strand.sheet_id, "%s, %s" % (s.sheet_id, strand.sheet_id)
-  assert ss_back.helices[0].serial == 'A5L'
-  assert ss_back.sheets[0].sheet_id == 'AF7'
-  print("OK")
+    all_ids = all_chain_ids()
+    secstr = ss.annotation.from_records(records=one_char_chain_records.split("\n"))
+    secstr.multiply_to_asu_2(chain_ids_dict={"A": all_ids})
+    for sh in secstr.sheets:
+        for s in sh.strands:
+            assert sh.sheet_id == s.sheet_id, "%s, %s" % (sh.sheet_id, s.sheet_id)
+    ss_lines = secstr.as_pdb_str().split("\n")
+    # print (ss_lines[1200])
+    # print (ss_lines[6999])
+    # print (ss_lines[7000])
+    assert (
+        ss_lines[1200]
+        == "HELIX  A5L A5L THR5V   11  ASP5V   39  1                                  29"
+    )
+    assert ss_lines[6999] == "SHEET    1 AF7 2 ARGHf  13  ASPHf  14  0"
+    assert (
+        ss_lines[7000]
+        == "SHEET    2 AF7 2 LEUHf  27  SERHf  30 -1  O  ARGHf  29   N  ARGHf  13"
+    )
+    ss_back = ss.annotation.from_records(
+        records=[ss_lines[1200], ss_lines[6999], ss_lines[7000]]
+    )
+    for s in ss_back.sheets:
+        for strand in s.strands:
+            assert s.sheet_id == strand.sheet_id, "%s, %s" % (
+                s.sheet_id,
+                strand.sheet_id,
+            )
+    assert ss_back.helices[0].serial == "A5L"
+    assert ss_back.sheets[0].sheet_id == "AF7"
+    print("OK")
+
 
 def exercise(args):
-  exercise_single()
-  tst_pdb_file()
-  tst_parsing_phil()
-  exercise_only_b_altloc()
-  exercise_multiplication()
+    exercise_single()
+    tst_pdb_file()
+    tst_parsing_phil()
+    exercise_only_b_altloc()
+    exercise_multiplication()
 
-if (__name__ == "__main__"):
-  exercise(sys.argv[1:])
+
+if __name__ == "__main__":
+    exercise(sys.argv[1:])

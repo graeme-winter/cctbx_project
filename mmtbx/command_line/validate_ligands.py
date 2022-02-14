@@ -3,40 +3,40 @@ from __future__ import absolute_import, division, print_function
 from iotbx.cli_parser import run_program
 from mmtbx.programs import validate_ligands
 
-if __name__ == '__main__':
-  run_program(program_class=validate_ligands.Program)
+if __name__ == "__main__":
+    run_program(program_class=validate_ligands.Program)
 
-#old stuff
+# old stuff
 
-#from __future__ import absolute_import, division, print_function
-#from libtbx.str_utils import make_sub_header
-#from libtbx.utils import Sorry
-#import os
-#import sys
+# from __future__ import absolute_import, division, print_function
+# from libtbx.str_utils import make_sub_header
+# from libtbx.utils import Sorry
+# import os
+# import sys
 #
-#def master_phil():
+# def master_phil():
 #  from mmtbx.command_line import generate_master_phil_with_inputs
 #  return generate_master_phil_with_inputs(
 #    enable_automatic_twin_detection=True,
 #    phil_string="""
-#ligand_code = None
+# ligand_code = None
 #  .type = str
 #  .multiple = True
-#reference_structure = None
+# reference_structure = None
 #  .type = path
-#only_segid = None
+# only_segid = None
 #  .type = str
-#verbose = False
+# verbose = False
 #  .type = bool
-#""")
+# """)
 #
-#def run(args, out=sys.stdout):
+# def run(args, out=sys.stdout):
 #  usage_string = """\
-#mmtbx.validate_ligands model.pdb data.mtz LIGAND_CODE [...]
+# mmtbx.validate_ligands model.pdb data.mtz LIGAND_CODE [...]
 #
-#Print out basic statistics for residue(s) with the given code(s), including
-#electron density values/CC.
-#"""
+# Print out basic statistics for residue(s) with the given code(s), including
+# electron density values/CC.
+# """
 #  import mmtbx.validation.ligands
 #  import mmtbx.command_line
 #  args_ = []
@@ -67,5 +67,5 @@ if __name__ == '__main__':
 #      out=out,
 #      verbose=params.verbose)
 #
-#if (__name__ == "__main__"):
+# if (__name__ == "__main__"):
 #  run(sys.argv[1:])

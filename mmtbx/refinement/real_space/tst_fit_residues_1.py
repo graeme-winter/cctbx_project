@@ -3,7 +3,7 @@ import time
 import mmtbx.refinement.real_space.fit_residues
 import mmtbx.refinement.real_space
 
-pdb_answer="""\n
+pdb_answer = """\n
 CRYST1   41.392   28.519   38.664  90.00  90.00  90.00 P 1
 ATOM      1  N   TRP A   2      28.561  21.020  25.897  1.00 20.00           N
 ATOM      2  CA  TRP A   2      27.109  21.152  25.866  1.00 20.00           C
@@ -383,7 +383,7 @@ TER
 END
 """
 
-pdb_poor="""\n
+pdb_poor = """\n
 CRYST1   41.392   28.519   38.664  90.00  90.00  90.00 P 1
 SCALE1      0.024159  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.035064  0.000000        0.00000
@@ -766,38 +766,44 @@ TER
 END
 """
 
-def exercise(i_pdb = 0, d_min=1.0, resolution_factor = 0.25):
-  #
-  t = mmtbx.refinement.real_space.setup_test(
-    pdb_answer        = pdb_answer,
-    pdb_poor          = pdb_poor,
-    i_pdb             = i_pdb,
-    d_min             = d_min,
-    resolution_factor = resolution_factor)
-  #
-  ph = t.ph_poor
-  for i in [1,2]:
-    result = mmtbx.refinement.real_space.fit_residues.run(
-      pdb_hierarchy     = ph,
-      vdw_radii         = t.vdw,
-      crystal_symmetry  = t.crystal_symmetry,
-      map_data          = t.target_map,
-      backbone_sample   = True,
-      rotatable_hd      = t.rotatable_hd,
-      rotamer_manager   = t.rotamer_manager,
-      sin_cos_table     = t.sin_cos_table,
-      mon_lib_srv       = t.mon_lib_srv)
-    ph = result.pdb_hierarchy
-  result.pdb_hierarchy.write_pdb_file(file_name = "refined_%s.pdb"%str(i_pdb),
-    crystal_symmetry = t.crystal_symmetry)
-  #
-  mmtbx.refinement.real_space.check_sites_match(
-    ph_answer          = t.ph_answer,
-    ph_refined         = result.pdb_hierarchy,
-    exclude_atom_names = ["CE1","CE2","CD1","CD2"],
-    tol                = 0.4)
 
-if(__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("Time: %6.4f"%(time.time()-t0))
+def exercise(i_pdb=0, d_min=1.0, resolution_factor=0.25):
+    #
+    t = mmtbx.refinement.real_space.setup_test(
+        pdb_answer=pdb_answer,
+        pdb_poor=pdb_poor,
+        i_pdb=i_pdb,
+        d_min=d_min,
+        resolution_factor=resolution_factor,
+    )
+    #
+    ph = t.ph_poor
+    for i in [1, 2]:
+        result = mmtbx.refinement.real_space.fit_residues.run(
+            pdb_hierarchy=ph,
+            vdw_radii=t.vdw,
+            crystal_symmetry=t.crystal_symmetry,
+            map_data=t.target_map,
+            backbone_sample=True,
+            rotatable_hd=t.rotatable_hd,
+            rotamer_manager=t.rotamer_manager,
+            sin_cos_table=t.sin_cos_table,
+            mon_lib_srv=t.mon_lib_srv,
+        )
+        ph = result.pdb_hierarchy
+    result.pdb_hierarchy.write_pdb_file(
+        file_name="refined_%s.pdb" % str(i_pdb), crystal_symmetry=t.crystal_symmetry
+    )
+    #
+    mmtbx.refinement.real_space.check_sites_match(
+        ph_answer=t.ph_answer,
+        ph_refined=result.pdb_hierarchy,
+        exclude_atom_names=["CE1", "CE2", "CD1", "CD2"],
+        tol=0.4,
+    )
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Time: %6.4f" % (time.time() - t0))

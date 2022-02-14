@@ -201,217 +201,245 @@ ncs_group {
 }
 """
 
-def set_scattering_dictionary(xray_structure, d_min,
-  scattering_table="n_gaussian"):
-  xray_structure.scattering_type_registry(
-    table = scattering_table,
-    d_min = d_min,
-    types_without_a_scattering_contribution=["?"])
+
+def set_scattering_dictionary(xray_structure, d_min, scattering_table="n_gaussian"):
+    xray_structure.scattering_type_registry(
+        table=scattering_table,
+        d_min=d_min,
+        types_without_a_scattering_contribution=["?"],
+    )
+
 
 def get_inputs(prefix, pdb_answer, pdb_poor, ncs_params_str, real_space, d_min):
-  pdb_file_name_answer = "answer_%s.pdb"%prefix
-  of=open(pdb_file_name_answer, "w")
-  print(pdb_answer, file=of)
-  of.close()
-  #
-  pdb_file_name_poor = "poor_%s.pdb"%prefix
-  of=open(pdb_file_name_poor, "w")
-  print(pdb_poor, file=of)
-  of.close()
-  #
-  pdb_inp_answer = iotbx.pdb.input(file_name=pdb_file_name_answer)
-  ph_answer = pdb_inp_answer.construct_hierarchy()
-  ph_answer.atoms().reset_i_seq()
-  xrs_answer = pdb_inp_answer.xray_structure_simple()
-  sites_cart_answer = xrs_answer.sites_cart()
-  #
-  pdb_inp_poor = iotbx.pdb.input(file_name=pdb_file_name_poor)
-  ph_poor = pdb_inp_poor.construct_hierarchy()
-  ph_poor.atoms().reset_i_seq()
-  xrs_poor = pdb_inp_poor.xray_structure_simple()
-  #
-  ppf = mmtbx.utils.process_pdb_file_srv(log=False).process_pdb_files(
-    raw_records=pdb_poor.splitlines())[0]
-  mmtbx.utils.assert_xray_structures_equal(
-    x1=ppf.xray_structure(show_summary = False),
-    x2=xrs_poor)
-  restraints_manager = mmtbx.restraints.manager(
-    geometry      = ppf.geometry_restraints_manager(show_energies = False),
-    normalization = True)
-  restraints_manager.geometry.remove_c_beta_torsion_restraints_in_place()
-  #
-  phil_groups = ncs_group_master_phil.fetch(
-      iotbx.phil.parse(ncs_params_str)).extract()
+    pdb_file_name_answer = "answer_%s.pdb" % prefix
+    of = open(pdb_file_name_answer, "w")
+    print(pdb_answer, file=of)
+    of.close()
+    #
+    pdb_file_name_poor = "poor_%s.pdb" % prefix
+    of = open(pdb_file_name_poor, "w")
+    print(pdb_poor, file=of)
+    of.close()
+    #
+    pdb_inp_answer = iotbx.pdb.input(file_name=pdb_file_name_answer)
+    ph_answer = pdb_inp_answer.construct_hierarchy()
+    ph_answer.atoms().reset_i_seq()
+    xrs_answer = pdb_inp_answer.xray_structure_simple()
+    sites_cart_answer = xrs_answer.sites_cart()
+    #
+    pdb_inp_poor = iotbx.pdb.input(file_name=pdb_file_name_poor)
+    ph_poor = pdb_inp_poor.construct_hierarchy()
+    ph_poor.atoms().reset_i_seq()
+    xrs_poor = pdb_inp_poor.xray_structure_simple()
+    #
+    ppf = mmtbx.utils.process_pdb_file_srv(log=False).process_pdb_files(
+        raw_records=pdb_poor.splitlines()
+    )[0]
+    mmtbx.utils.assert_xray_structures_equal(
+        x1=ppf.xray_structure(show_summary=False), x2=xrs_poor
+    )
+    restraints_manager = mmtbx.restraints.manager(
+        geometry=ppf.geometry_restraints_manager(show_energies=False),
+        normalization=True,
+    )
+    restraints_manager.geometry.remove_c_beta_torsion_restraints_in_place()
+    #
+    phil_groups = ncs_group_master_phil.fetch(
+        iotbx.phil.parse(ncs_params_str)
+    ).extract()
 
-  pdb_inp = iotbx.pdb.input(lines=pdb_answer,source_info=None)
-  ncs_inp = ncs.input(
-      hierarchy=pdb_inp.construct_hierarchy(),
-      ncs_phil_groups=phil_groups.ncs_group)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  # print "ncs_groups:", len(ncs_groups)
-  # print "master isel:", list(ncs_groups[0].master_iselection)
-  # for c in ncs_groups[0].copies:
-  #   print "copy isel:", list(c.iselection)
-  #
-  set_scattering_dictionary(xray_structure = xrs_answer, d_min = d_min)
-  set_scattering_dictionary(xray_structure = xrs_poor,   d_min = d_min)
-  #
-  #
-  map_data, fmodel = None, None
-  if(real_space):
-    fc = xrs_answer.structure_factors(d_min=d_min, algorithm="direct").f_calc()
-    fft_map = fc.fft_map(resolution_factor = 0.25)
-    fft_map.apply_sigma_scaling()
-    map_data = fft_map.real_map_unpadded()
-  else:
-    f_obs = abs(xrs_answer.structure_factors(d_min=d_min,
-      algorithm="direct").f_calc())
-    params = mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
-    params.algorithm = "direct"
-    fmodel = mmtbx.f_model.manager(
-      f_obs                        = f_obs,
-      xray_structure               = xrs_poor,
-      sf_and_grads_accuracy_params = params,
-      target_name                  = "ls_wunit_k1")
-    if(1): print("d_min:", d_min)
-    if(1): print("r_work(start):", fmodel.r_work())
-  return group_args(
-    fmodel             = fmodel,
-    map_data           = map_data,
-    xrs_poor           = xrs_poor,
-    d_min              = d_min,
-    ncs_groups         = ncs_groups,
-    restraints_manager = restraints_manager,
-    ph                 = ph_poor)
+    pdb_inp = iotbx.pdb.input(lines=pdb_answer, source_info=None)
+    ncs_inp = ncs.input(
+        hierarchy=pdb_inp.construct_hierarchy(), ncs_phil_groups=phil_groups.ncs_group
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    # print "ncs_groups:", len(ncs_groups)
+    # print "master isel:", list(ncs_groups[0].master_iselection)
+    # for c in ncs_groups[0].copies:
+    #   print "copy isel:", list(c.iselection)
+    #
+    set_scattering_dictionary(xray_structure=xrs_answer, d_min=d_min)
+    set_scattering_dictionary(xray_structure=xrs_poor, d_min=d_min)
+    #
+    #
+    map_data, fmodel = None, None
+    if real_space:
+        fc = xrs_answer.structure_factors(d_min=d_min, algorithm="direct").f_calc()
+        fft_map = fc.fft_map(resolution_factor=0.25)
+        fft_map.apply_sigma_scaling()
+        map_data = fft_map.real_map_unpadded()
+    else:
+        f_obs = abs(
+            xrs_answer.structure_factors(d_min=d_min, algorithm="direct").f_calc()
+        )
+        params = mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
+        params.algorithm = "direct"
+        fmodel = mmtbx.f_model.manager(
+            f_obs=f_obs,
+            xray_structure=xrs_poor,
+            sf_and_grads_accuracy_params=params,
+            target_name="ls_wunit_k1",
+        )
+        if 1:
+            print("d_min:", d_min)
+        if 1:
+            print("r_work(start):", fmodel.r_work())
+    return group_args(
+        fmodel=fmodel,
+        map_data=map_data,
+        xrs_poor=xrs_poor,
+        d_min=d_min,
+        ncs_groups=ncs_groups,
+        restraints_manager=restraints_manager,
+        ph=ph_poor,
+    )
+
 
 def macro_cycle(
-      restraints_manager,
-      fmodel,
-      map_data,
-      d_min,
-      xrs_poor,
-      pdb_poor,
-      ncs_groups,
-      refine_selection,
-      actions):
-  assert [fmodel, map_data].count(None) == 1
-  for cycle in range(100):
-    #for action in actions:
-    #  refine_sites, refine_transformations = action
-    data_weight = 1
-    if(fmodel is not None):
-      tg_object = mmtbx.refinement.minimization_ncs_constraints.\
-        target_function_and_grads_reciprocal_space(
-          fmodel                    = fmodel,
-          ncs_restraints_group_list = ncs_groups,
-          refine_selection          = refine_selection,
-          restraints_manager        = restraints_manager,
-          data_weight               = data_weight,
-          refine_sites              = True)
+    restraints_manager,
+    fmodel,
+    map_data,
+    d_min,
+    xrs_poor,
+    pdb_poor,
+    ncs_groups,
+    refine_selection,
+    actions,
+):
+    assert [fmodel, map_data].count(None) == 1
+    for cycle in range(100):
+        # for action in actions:
+        #  refine_sites, refine_transformations = action
+        data_weight = 1
+        if fmodel is not None:
+            tg_object = mmtbx.refinement.minimization_ncs_constraints.target_function_and_grads_reciprocal_space(
+                fmodel=fmodel,
+                ncs_restraints_group_list=ncs_groups,
+                refine_selection=refine_selection,
+                restraints_manager=restraints_manager,
+                data_weight=data_weight,
+                refine_sites=True,
+            )
+        else:
+            tg_object = mmtbx.refinement.minimization_ncs_constraints.target_function_and_grads_real_space(
+                map_data=map_data,
+                xray_structure=xrs_poor,
+                ncs_restraints_group_list=ncs_groups,
+                refine_selection=refine_selection,
+                real_space_gradients_delta=d_min / 4,
+                restraints_manager=restraints_manager,
+                data_weight=data_weight,
+                refine_sites=True,
+            )
+        minimized = mmtbx.refinement.minimization_ncs_constraints.lbfgs(
+            target_and_grads_object=tg_object,
+            xray_structure=xrs_poor,
+            ncs_restraints_group_list=ncs_groups,
+            refine_selection=refine_selection,
+            finite_grad_differences_test=False,
+            max_iterations=100,
+            refine_sites=True,
+        )
+        if fmodel is not None:
+            fmodel.update_xray_structure(xray_structure=xrs_poor, update_f_calc=True)
+            if 0:
+                print(cycle, fmodel.r_work())
+    if fmodel is not None:
+        rf = fmodel.r_work()
+        print("R(final):", rf)
+        return rf
     else:
-      tg_object = mmtbx.refinement.minimization_ncs_constraints.\
-        target_function_and_grads_real_space(
-          map_data                   = map_data,
-          xray_structure             = xrs_poor,
-          ncs_restraints_group_list  = ncs_groups,
-          refine_selection           = refine_selection,
-          real_space_gradients_delta = d_min/4,
-          restraints_manager         = restraints_manager,
-          data_weight                = data_weight,
-          refine_sites               = True)
-    minimized = mmtbx.refinement.minimization_ncs_constraints.lbfgs(
-      target_and_grads_object      = tg_object,
-      xray_structure               = xrs_poor,
-      ncs_restraints_group_list    = ncs_groups,
-      refine_selection             = refine_selection,
-      finite_grad_differences_test = False,
-      max_iterations               = 100,
-      refine_sites                 = True)
-    if(fmodel is not None):
-      fmodel.update_xray_structure(
-        xray_structure = xrs_poor, update_f_calc=True)
-      if(0): print(cycle, fmodel.r_work())
-  if(fmodel is not None):
-    rf = fmodel.r_work()
-    print("R(final):", rf)
-    return rf
-  else:
-    return None
+        return None
 
-def call(prefix, refine_selection, pdb_poor, pdb_answer, ncs_params_str,
-         actions, real_space, d_min):
-  inp = get_inputs(
-    prefix         = prefix,
-    pdb_poor       = pdb_poor,
-    pdb_answer     = pdb_answer,
-    ncs_params_str = ncs_params_str,
-    real_space     = real_space,
-    d_min          = d_min)
-  ph_poor = inp.ph.deep_copy()
-  ph_poor.adopt_xray_structure(inp.xrs_poor)
-  result = macro_cycle(
-    restraints_manager = inp.restraints_manager,
-    fmodel             = inp.fmodel,
-    map_data           = inp.map_data,
-    d_min              = inp.d_min,
-    xrs_poor           = inp.xrs_poor,
-    pdb_poor           = ph_poor,
-    ncs_groups         = inp.ncs_groups,
-    refine_selection   = refine_selection,
-    actions            = actions)
-  inp.ph.adopt_xray_structure(inp.xrs_poor)
-  inp.ph.write_pdb_file(file_name="%s.pdb"%prefix)
-  return result
+
+def call(
+    prefix,
+    refine_selection,
+    pdb_poor,
+    pdb_answer,
+    ncs_params_str,
+    actions,
+    real_space,
+    d_min,
+):
+    inp = get_inputs(
+        prefix=prefix,
+        pdb_poor=pdb_poor,
+        pdb_answer=pdb_answer,
+        ncs_params_str=ncs_params_str,
+        real_space=real_space,
+        d_min=d_min,
+    )
+    ph_poor = inp.ph.deep_copy()
+    ph_poor.adopt_xray_structure(inp.xrs_poor)
+    result = macro_cycle(
+        restraints_manager=inp.restraints_manager,
+        fmodel=inp.fmodel,
+        map_data=inp.map_data,
+        d_min=inp.d_min,
+        xrs_poor=inp.xrs_poor,
+        pdb_poor=ph_poor,
+        ncs_groups=inp.ncs_groups,
+        refine_selection=refine_selection,
+        actions=actions,
+    )
+    inp.ph.adopt_xray_structure(inp.xrs_poor)
+    inp.ph.write_pdb_file(file_name="%s.pdb" % prefix)
+    return result
+
 
 def check_result(result_file_name):
-  s1=iotbx.pdb.input(file_name=result_file_name).atoms().extract_xyz()
-  s2=iotbx.pdb.input(file_name="answer_"+result_file_name).atoms().extract_xyz()
-  r = flex.sqrt((s1 - s2).dot()).min_max_mean().as_tuple()
-  print(r)
-  return r
+    s1 = iotbx.pdb.input(file_name=result_file_name).atoms().extract_xyz()
+    s2 = iotbx.pdb.input(file_name="answer_" + result_file_name).atoms().extract_xyz()
+    r = flex.sqrt((s1 - s2).dot()).min_max_mean().as_tuple()
+    print(r)
+    return r
+
 
 def run():
-  """
-  NCS constrained refinement of coordinates. Chains A, B and C are
-  NCS related, chain D is refined without NCS constraints, chain E is fixed.
-  Real- and reciprocal-space refinement.
-  THIS TEST NOW DOES NOT EXERCISE REFINEMENT OF NCS OPERATORS !!!
-  """
-  refine_selection = flex.size_t(range(3,31))
-  for real_space in [True, False]:
-    print("real_space:", real_space)
-    if(real_space):
-      suffix = "Real"
-      d_min  = 1.0
-    else:
-      suffix = "Reciprocal"
-      d_min  = 1.5
-    if(1):
-      #
-      # Refine NCS constrained sites and NCS operators.
-      #
-      prefix = "tst_%s_CoordinatesOnly"%suffix
-      rf = call(
-        prefix           = prefix,
-        refine_selection = refine_selection,
-        pdb_poor         = pdb_poor_2,
-        pdb_answer       = pdb_answer_0,
-        ncs_params_str   = ncs_params_str_0,
-        actions          = [[False,True],[True,False]],
-        real_space       = real_space,
-        d_min            = d_min)
-      r = check_result(result_file_name=prefix+".pdb")
-      if(real_space):
-        assert r[1]<0.1  , r[1]
-        assert r[2]<0.05 , r[2]
-        assert rf is None
-      else:
-        assert r[1]<0.05    , r[1]
-        assert r[2]<0.0055  , r[2]
-        assert rf  < 0.005 , rf
+    """
+    NCS constrained refinement of coordinates. Chains A, B and C are
+    NCS related, chain D is refined without NCS constraints, chain E is fixed.
+    Real- and reciprocal-space refinement.
+    THIS TEST NOW DOES NOT EXERCISE REFINEMENT OF NCS OPERATORS !!!
+    """
+    refine_selection = flex.size_t(range(3, 31))
+    for real_space in [True, False]:
+        print("real_space:", real_space)
+        if real_space:
+            suffix = "Real"
+            d_min = 1.0
+        else:
+            suffix = "Reciprocal"
+            d_min = 1.5
+        if 1:
+            #
+            # Refine NCS constrained sites and NCS operators.
+            #
+            prefix = "tst_%s_CoordinatesOnly" % suffix
+            rf = call(
+                prefix=prefix,
+                refine_selection=refine_selection,
+                pdb_poor=pdb_poor_2,
+                pdb_answer=pdb_answer_0,
+                ncs_params_str=ncs_params_str_0,
+                actions=[[False, True], [True, False]],
+                real_space=real_space,
+                d_min=d_min,
+            )
+            r = check_result(result_file_name=prefix + ".pdb")
+            if real_space:
+                assert r[1] < 0.1, r[1]
+                assert r[2] < 0.05, r[2]
+                assert rf is None
+            else:
+                assert r[1] < 0.05, r[1]
+                assert r[2] < 0.0055, r[2]
+                assert rf < 0.005, rf
 
-if (__name__ == "__main__"):
-  t0=time.time()
-  run()
-  print("Time: %6.4f"%(time.time()-t0))
-  print("OK")
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("Time: %6.4f" % (time.time() - t0))
+    print("OK")

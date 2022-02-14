@@ -1148,7 +1148,7 @@ TER
 END
 """
 
-pdb_AB = '''\
+pdb_AB = """\
 ATOM      1  CB  MET B   1      52.886   1.976   9.011  1.00 41.44           C
 ATOM      2  CG  MET B   1      53.271   0.996  10.102  1.00 47.36           C
 ATOM      3  SD  MET B   1      55.066   1.105  10.320  1.00 54.87           S
@@ -1166,9 +1166,9 @@ ATOM      5  C   MET A   1      -1.177  18.359   3.971  1.00 32.90           C
 ATOM      6  O   MET A   1      -2.072  18.689   4.760  1.00 33.11           O
 ATOM      7  N   MET A   1      -1.968  19.642   1.989  1.00 38.36           N
 ATOM      8  CA  MET A   1      -0.810  19.133   2.704  1.00 36.79           C
-'''
+"""
 
-pdb_space = '''\
+pdb_space = """\
 ATOM      1  CB  MET     1      52.886   1.976   9.011  1.00 41.44           C
 ATOM      2  CG  MET     1      53.271   0.996  10.102  1.00 47.36           C
 ATOM      3  SD  MET     1      55.066   1.105  10.320  1.00 54.87           S
@@ -1186,9 +1186,9 @@ ATOM      5  C   MET A   1      -1.177  18.359   3.971  1.00 32.90           C
 ATOM      6  O   MET A   1      -2.072  18.689   4.760  1.00 33.11           O
 ATOM      7  N   MET A   1      -1.968  19.642   1.989  1.00 38.36           N
 ATOM      8  CA  MET A   1      -0.810  19.133   2.704  1.00 36.79           C
-'''
+"""
 
-pdb_stars = '''\
+pdb_stars = """\
 ATOM      1  CB  MET**   1      52.886   1.976   9.011  1.00 41.44           C
 ATOM      2  CG  MET**   1      53.271   0.996  10.102  1.00 47.36           C
 ATOM      3  SD  MET**   1      55.066   1.105  10.320  1.00 54.87           S
@@ -1206,9 +1206,9 @@ ATOM      5  C   MET A   1      -1.177  18.359   3.971  1.00 32.90           C
 ATOM      6  O   MET A   1      -2.072  18.689   4.760  1.00 33.11           O
 ATOM      7  N   MET A   1      -1.968  19.642   1.989  1.00 38.36           N
 ATOM      8  CA  MET A   1      -0.810  19.133   2.704  1.00 36.79           C
-'''
+"""
 
-pdb_stars_and_spaces = '''\
+pdb_stars_and_spaces = """\
 ATOM      1  CB  MET**   1      52.886   1.976   9.011  1.00 41.44           C
 ATOM      2  CG  MET**   1      53.271   0.996  10.102  1.00 47.36           C
 ATOM      3  SD  MET**   1      55.066   1.105  10.320  1.00 54.87           S
@@ -1226,7 +1226,7 @@ ATOM      5  C   MET     1      -1.177  18.359   3.971  1.00 32.90           C
 ATOM      6  O   MET     1      -2.072  18.689   4.760  1.00 33.11           O
 ATOM      7  N   MET     1      -1.968  19.642   1.989  1.00 38.36           N
 ATOM      8  CA  MET     1      -0.810  19.133   2.704  1.00 36.79           C
-'''
+"""
 
 pdb_str_23 = """\
 CRYST1  178.041  178.041  241.485  90.00  90.00  90.00 P 4 21 2
@@ -1256,117 +1256,125 @@ END
 """
 
 
-
-def exercise_00(prefix="iotbx_ncs_exercise_00",debug=False):
-  pdb_file_name = "%s.pdb"%prefix
-  ncs_params_str = """
+def exercise_00(prefix="iotbx_ncs_exercise_00", debug=False):
+    pdb_file_name = "%s.pdb" % prefix
+    ncs_params_str = """
 ncs_group {
   reference = chain A
   selection = chain B
   selection = chain C
 }
   """
-  def check_result(ncs_inp, test_i):
-    if test_i == 0:
-      l1, l2, l3 = [0,1,2,3], [4,5,6,7], [8,9,10,11]
-    elif test_i == 1:
-      l1, l2, l3 = [1,2,3,4], [5,6,7,8], [9,10,11,12]
-    else: assert 0
-    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-    # ncs_groups._show()
-    # STOP()
-    assert len(ncs_groups) == 1, len(ncs_groups)
-    ncs_group = ncs_groups[0]
-    assert approx_equal(ncs_group.master_iselection, l1)
-    assert len(ncs_group.copies) == 2
-    assert approx_equal(ncs_group.copies[0].iselection, l2)
-    assert approx_equal(ncs_group.copies[1].iselection, l3)
-  files_to_delete = []
-  for test_i, pdb_str in enumerate([
-      pdb_str_1,
-      pdb_str_2]):
-    of = open(pdb_file_name, "w")
-    files_to_delete.append(pdb_file_name)
-    print(pdb_str, file=of)
-    of.close()
-    pdb_inp = iotbx.pdb.input(file_name = pdb_file_name)
-    pdb_hierarchy = iotbx.pdb.input(file_name = pdb_file_name).\
-        construct_hierarchy()
-    # using pdb_hierarchy
-    ncs_inp = ncs.input(hierarchy = pdb_hierarchy)
-    check_result(ncs_inp,test_i)
-  # cleanup
-  if not debug:
-    clean_temp_files(files_to_delete)
+
+    def check_result(ncs_inp, test_i):
+        if test_i == 0:
+            l1, l2, l3 = [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]
+        elif test_i == 1:
+            l1, l2, l3 = [1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]
+        else:
+            assert 0
+        ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+        # ncs_groups._show()
+        # STOP()
+        assert len(ncs_groups) == 1, len(ncs_groups)
+        ncs_group = ncs_groups[0]
+        assert approx_equal(ncs_group.master_iselection, l1)
+        assert len(ncs_group.copies) == 2
+        assert approx_equal(ncs_group.copies[0].iselection, l2)
+        assert approx_equal(ncs_group.copies[1].iselection, l3)
+
+    files_to_delete = []
+    for test_i, pdb_str in enumerate([pdb_str_1, pdb_str_2]):
+        of = open(pdb_file_name, "w")
+        files_to_delete.append(pdb_file_name)
+        print(pdb_str, file=of)
+        of.close()
+        pdb_inp = iotbx.pdb.input(file_name=pdb_file_name)
+        pdb_hierarchy = iotbx.pdb.input(file_name=pdb_file_name).construct_hierarchy()
+        # using pdb_hierarchy
+        ncs_inp = ncs.input(hierarchy=pdb_hierarchy)
+        check_result(ncs_inp, test_i)
+    # cleanup
+    if not debug:
+        clean_temp_files(files_to_delete)
+
 
 def exercise_01(prefix="iotbx_ncs_exercise_01", debug=False):
-  """
-  Make sure provided selections take precedence and are correctly respected.
-  """
-  pdb_file_name = "%s.pdb"%prefix
-  ncs_params_str = """
+    """
+    Make sure provided selections take precedence and are correctly respected.
+    """
+    pdb_file_name = "%s.pdb" % prefix
+    ncs_params_str = """
 ncs_group {
   reference = chain C
   selection = chain A
 }
   """
-  def check_result(ncs_inp, test_i):
-    if test_i == 0:
-      l1, l2 = [8,9,10,11], [0,1,2,3]
-    elif test_i == 1:
-      l1, l2 = [9,10,11,12], [1,2,3,4]
-    else: assert 0
-    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-    assert len(ncs_groups) == 1
-    ncs_group = ncs_groups[0]
-    # print  "master sel:", list(ncs_group.master_iselection), l1
-    # print "copy sel:", list(ncs_group.copies[0].iselection), l2
-    assert approx_equal(ncs_group.master_iselection, l1)
-    assert len(ncs_group.copies) == 1
-    assert approx_equal(ncs_group.copies[0].iselection, l2)
-  files_to_delete = []
-  for test_i, pdb_str in enumerate([pdb_str_1, pdb_str_2]):
-    files_to_delete.append(pdb_file_name)
-    of = open(pdb_file_name, "w")
-    print(pdb_str, file=of)
-    of.close()
-    pdb_inp = iotbx.pdb.input(file_name = pdb_file_name)
 
-    # using combination of pdb_inp and Phil parameter string
-    phil_groups = ncs_group_master_phil.fetch(
-        iotbx.phil.parse(ncs_params_str)).extract()
-    ncs_inp = ncs.input(hierarchy = pdb_inp.construct_hierarchy(),
-      ncs_phil_groups=phil_groups.ncs_group)
-    check_result(ncs_inp,test_i)
-  if not debug:
-    clean_temp_files(files_to_delete)
+    def check_result(ncs_inp, test_i):
+        if test_i == 0:
+            l1, l2 = [8, 9, 10, 11], [0, 1, 2, 3]
+        elif test_i == 1:
+            l1, l2 = [9, 10, 11, 12], [1, 2, 3, 4]
+        else:
+            assert 0
+        ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+        assert len(ncs_groups) == 1
+        ncs_group = ncs_groups[0]
+        # print  "master sel:", list(ncs_group.master_iselection), l1
+        # print "copy sel:", list(ncs_group.copies[0].iselection), l2
+        assert approx_equal(ncs_group.master_iselection, l1)
+        assert len(ncs_group.copies) == 1
+        assert approx_equal(ncs_group.copies[0].iselection, l2)
+
+    files_to_delete = []
+    for test_i, pdb_str in enumerate([pdb_str_1, pdb_str_2]):
+        files_to_delete.append(pdb_file_name)
+        of = open(pdb_file_name, "w")
+        print(pdb_str, file=of)
+        of.close()
+        pdb_inp = iotbx.pdb.input(file_name=pdb_file_name)
+
+        # using combination of pdb_inp and Phil parameter string
+        phil_groups = ncs_group_master_phil.fetch(
+            iotbx.phil.parse(ncs_params_str)
+        ).extract()
+        ncs_inp = ncs.input(
+            hierarchy=pdb_inp.construct_hierarchy(),
+            ncs_phil_groups=phil_groups.ncs_group,
+        )
+        check_result(ncs_inp, test_i)
+    if not debug:
+        clean_temp_files(files_to_delete)
+
 
 def exercise_03():
-  """
-  Expect one master and 3 copies.
-  """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_5)
-  ncs_inp = ncs.input(hierarchy = pdb_inp.construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  # truncated_hierarchy also works here
-  asc = ncs_inp.original_hierarchy.atom_selection_cache()
-  sel_master = asc.selection(string = "chain 1")
-  sel_copy_1 = asc.selection(string = "chain A")
-  sel_copy_2 = asc.selection(string = "chain B")
-  sel_copy_3 = asc.selection(string = "chain C")
-  assert len(ncs_groups)==1
-  ng = ncs_groups[0]
-  # chains are sorted by name (numbers first)
-  assert approx_equal(sel_master.iselection(), ng.master_iselection)
-  assert approx_equal(sel_copy_1.iselection(), ng.copies[0].iselection)
-  assert approx_equal(sel_copy_2.iselection(), ng.copies[1].iselection)
-  assert approx_equal(sel_copy_3.iselection(), ng.copies[2].iselection)
+    """
+    Expect one master and 3 copies.
+    """
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_5)
+    ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    # truncated_hierarchy also works here
+    asc = ncs_inp.original_hierarchy.atom_selection_cache()
+    sel_master = asc.selection(string="chain 1")
+    sel_copy_1 = asc.selection(string="chain A")
+    sel_copy_2 = asc.selection(string="chain B")
+    sel_copy_3 = asc.selection(string="chain C")
+    assert len(ncs_groups) == 1
+    ng = ncs_groups[0]
+    # chains are sorted by name (numbers first)
+    assert approx_equal(sel_master.iselection(), ng.master_iselection)
+    assert approx_equal(sel_copy_1.iselection(), ng.copies[0].iselection)
+    assert approx_equal(sel_copy_2.iselection(), ng.copies[1].iselection)
+    assert approx_equal(sel_copy_3.iselection(), ng.copies[2].iselection)
+
 
 def exercise_05():
-  """
-  Make sure that phil selection overrides ncs grouping
-  """
-  phil_str = """\
+    """
+    Make sure that phil selection overrides ncs grouping
+    """
+    phil_str = """\
 ncs_group {
   reference = chain A
   selection = chain C
@@ -1376,87 +1384,115 @@ ncs_group {
   selection = chain D
 }
 """
-  phil_groups = ncs_group_master_phil.fetch(
-      iotbx.phil.parse(phil_str)).extract()
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_6)
-  ncs_inp = ncs.input(
-    hierarchy=pdb_inp.construct_hierarchy(),
-    ncs_phil_groups=phil_groups.ncs_group)
-  nrgl = ncs_inp.get_ncs_restraints_group_list()
-  # print nrgl.get_array_of_str_selections()
-  assert nrgl.get_array_of_str_selections() == \
-      [["chain 'A'", "chain 'C'"], ["chain 'B'", "chain 'D'"]]
+    phil_groups = ncs_group_master_phil.fetch(iotbx.phil.parse(phil_str)).extract()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_6)
+    ncs_inp = ncs.input(
+        hierarchy=pdb_inp.construct_hierarchy(), ncs_phil_groups=phil_groups.ncs_group
+    )
+    nrgl = ncs_inp.get_ncs_restraints_group_list()
+    # print nrgl.get_array_of_str_selections()
+    assert nrgl.get_array_of_str_selections() == [
+        ["chain 'A'", "chain 'C'"],
+        ["chain 'B'", "chain 'D'"],
+    ]
+
 
 def exercise_06():
-  """
-  Two groups, different number of chain in each group.
-  Two chains that are NOT ncs related
-  """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_7)
-  ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
-  nrgl = ncs_inp.get_ncs_restraints_group_list()
-  # print nrgl.get_array_of_str_selections()
-  assert nrgl.get_array_of_str_selections() == \
-      [["chain 'A'", "chain 'B'", "chain 'C'"], ["chain 'D'", "chain 'E'"]]
+    """
+    Two groups, different number of chain in each group.
+    Two chains that are NOT ncs related
+    """
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_7)
+    ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
+    nrgl = ncs_inp.get_ncs_restraints_group_list()
+    # print nrgl.get_array_of_str_selections()
+    assert nrgl.get_array_of_str_selections() == [
+        ["chain 'A'", "chain 'B'", "chain 'C'"],
+        ["chain 'D'", "chain 'E'"],
+    ]
+
 
 def exercise_07():
-  """
-  Test that minimal number of chains in master ncs are selected (not the
-  minimal number of transformations)
-  """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_8)
-  ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
-  nrgl = ncs_inp.get_ncs_restraints_group_list()
-  # print nrgl.get_array_of_str_selections()
-  assert nrgl.get_array_of_str_selections() == \
-      [["chain 'A'", "chain 'B'", "chain 'C'", "chain 'D'", "chain 'E'",
-        "chain 'F'", "chain 'G'", "chain 'H'", "chain 'I'"]]
+    """
+    Test that minimal number of chains in master ncs are selected (not the
+    minimal number of transformations)
+    """
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_8)
+    ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
+    nrgl = ncs_inp.get_ncs_restraints_group_list()
+    # print nrgl.get_array_of_str_selections()
+    assert nrgl.get_array_of_str_selections() == [
+        [
+            "chain 'A'",
+            "chain 'B'",
+            "chain 'C'",
+            "chain 'D'",
+            "chain 'E'",
+            "chain 'F'",
+            "chain 'G'",
+            "chain 'H'",
+            "chain 'I'",
+        ]
+    ]
+
 
 def exercise_09():
-  """
-  Test minimal master NCS grouping
-  make sure it does not group together similar chains that can be grouped and
-  that NCS group and transforms created properly
-  """
-  from mmtbx.ncs import ncs_search
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_8)
-  ph = pdb_inp.construct_hierarchy()
-  #
-  match_dict = ncs_search.search_ncs_relations(
-    ph=ph,chain_similarity_threshold=0)
-  # make sure that all possible chains compared
-  model  = ph.models()[0]
-  chain_ids = list({x.id for x in model.chains()})
-  chain_ids = sorted(chain_ids)
-  n_chains = len(chain_ids)
-  assert n_chains==9
-  assert len(match_dict)==8, len(match_dict)
+    """
+    Test minimal master NCS grouping
+    make sure it does not group together similar chains that can be grouped and
+    that NCS group and transforms created properly
+    """
+    from mmtbx.ncs import ncs_search
+
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_8)
+    ph = pdb_inp.construct_hierarchy()
+    #
+    match_dict = ncs_search.search_ncs_relations(ph=ph, chain_similarity_threshold=0)
+    # make sure that all possible chains compared
+    model = ph.models()[0]
+    chain_ids = list({x.id for x in model.chains()})
+    chain_ids = sorted(chain_ids)
+    n_chains = len(chain_ids)
+    assert n_chains == 9
+    assert len(match_dict) == 8, len(match_dict)
+
 
 def exercise_10():
-  """ Test minimal NCS operators """
-  from mmtbx.ncs import ncs_search
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_8)
-  ph = pdb_inp.construct_hierarchy()
-  #
-  match_dict = ncs_search.search_ncs_relations(
-    ph=ph,
-    chain_similarity_threshold=0)
-  #
-  chains_info = ncs_search.get_chains_info(ph)
-  #
-  nrgl = ncs_search.ncs_grouping_and_group_dict(match_dict, ph)
-  nrgl.update_str_selections_if_needed(ph)
-  str_sel = nrgl.get_array_of_str_selections()
-  print(str_sel)
-  assert str_sel == [["chain 'A'", "chain 'B'", "chain 'C'", "chain 'D'",
-      "chain 'E'", "chain 'F'", "chain 'G'", "chain 'H'", "chain 'I'"]]
+    """Test minimal NCS operators"""
+    from mmtbx.ncs import ncs_search
+
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_8)
+    ph = pdb_inp.construct_hierarchy()
+    #
+    match_dict = ncs_search.search_ncs_relations(ph=ph, chain_similarity_threshold=0)
+    #
+    chains_info = ncs_search.get_chains_info(ph)
+    #
+    nrgl = ncs_search.ncs_grouping_and_group_dict(match_dict, ph)
+    nrgl.update_str_selections_if_needed(ph)
+    str_sel = nrgl.get_array_of_str_selections()
+    print(str_sel)
+    assert str_sel == [
+        [
+            "chain 'A'",
+            "chain 'B'",
+            "chain 'C'",
+            "chain 'D'",
+            "chain 'E'",
+            "chain 'F'",
+            "chain 'G'",
+            "chain 'H'",
+            "chain 'I'",
+        ]
+    ]
+
 
 def exercise_11():
-  """
-  Make sure user-provided NCS groups are preserved. Also make sure two-letter
-  chain ID are handled correctly
-  """
-  phil_str="""
+    """
+    Make sure user-provided NCS groups are preserved. Also make sure two-letter
+    chain ID are handled correctly
+    """
+    phil_str = """
 ncs_group {
   reference = chain 'Aa' and (resseq 6:9 )
   selection = chain 'Ac' and (resseq 6:9 )
@@ -1466,271 +1502,372 @@ ncs_group {
   selection = chain 'Ad' and (resseq 1:4 )
 }
 """
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_9).construct_hierarchy().atom_selection_cache()
-  ### default
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_9)
-  ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_9)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    ### default
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_9)
+    ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy())
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
 
-  # no more grouping, therefore groups are like in phil_str above
-  # ncs_inp.show(format='phil')
-  assert len(ncs_groups)==2, len(ncs_groups)
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain Aa").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain Ac").iselection())
-  assert ncs_groups[1].master_iselection.all_eq(
-    asc.selection(string = "chain Ab").iselection())
-  g2_c = ncs_groups[1].copies
-  assert len(g1_c)==1
-  assert g2_c[0].iselection.all_eq(
-    asc.selection(string = "chain Ad").iselection())
+    # no more grouping, therefore groups are like in phil_str above
+    # ncs_inp.show(format='phil')
+    assert len(ncs_groups) == 2, len(ncs_groups)
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain Aa").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain Ac").iselection())
+    assert ncs_groups[1].master_iselection.all_eq(
+        asc.selection(string="chain Ab").iselection()
+    )
+    g2_c = ncs_groups[1].copies
+    assert len(g1_c) == 1
+    assert g2_c[0].iselection.all_eq(asc.selection(string="chain Ad").iselection())
 
-  # NO MORE GROUPING, therefore these are not valid
-  # assert len(ncs_groups)==1, len(ncs_groups)
-  # assert ncs_groups[0].master_iselection.all_eq(
-  #   asc.selection(string = "chain Aa or chain Ab").iselection())
-  # g1_c = ncs_groups[0].copies
-  # assert len(g1_c)==1
-  # assert g1_c[0].iselection.all_eq(
-  #   asc.selection(string = "chain Ac or chain Ad").iselection())
+    # NO MORE GROUPING, therefore these are not valid
+    # assert len(ncs_groups)==1, len(ncs_groups)
+    # assert ncs_groups[0].master_iselection.all_eq(
+    #   asc.selection(string = "chain Aa or chain Ab").iselection())
+    # g1_c = ncs_groups[0].copies
+    # assert len(g1_c)==1
+    # assert g1_c[0].iselection.all_eq(
+    #   asc.selection(string = "chain Ac or chain Ad").iselection())
 
-  ### user-supplied
-  phil_groups = ncs_group_master_phil.fetch(
-      iotbx.phil.parse(phil_str)).extract()
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_9)
-  ncs_inp = ncs.input(hierarchy=pdb_inp.construct_hierarchy(),
-      ncs_phil_groups=phil_groups.ncs_group)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==2
-  # group 1
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain Aa and resseq 6:9").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain Ac and resseq 6:9").iselection())
-  # group 2
-  assert ncs_groups[1].master_iselection.all_eq(
-    asc.selection(string = "chain Ab and resseq 1:4").iselection())
-  g1_c = ncs_groups[1].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain Ad and resseq 1:4").iselection())
+    ### user-supplied
+    phil_groups = ncs_group_master_phil.fetch(iotbx.phil.parse(phil_str)).extract()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_9)
+    ncs_inp = ncs.input(
+        hierarchy=pdb_inp.construct_hierarchy(), ncs_phil_groups=phil_groups.ncs_group
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 2
+    # group 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain Aa and resseq 6:9").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(
+        asc.selection(string="chain Ac and resseq 6:9").iselection()
+    )
+    # group 2
+    assert ncs_groups[1].master_iselection.all_eq(
+        asc.selection(string="chain Ab and resseq 1:4").iselection()
+    )
+    g1_c = ncs_groups[1].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(
+        asc.selection(string="chain Ad and resseq 1:4").iselection()
+    )
+
 
 def exercise_12():
-  """ Test dealing with chains names that are space or **"""
-  ncs_obj_AB = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_AB).construct_hierarchy())
-  ncs_obj_space = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_space).construct_hierarchy())
-  ncs_obj_stars = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_stars).construct_hierarchy())
-  ncs_obj_str_and_spc = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_stars_and_spaces).construct_hierarchy())
-  #
-  for ncs_obj in [
-      ncs_obj_AB,
-      ncs_obj_space,
-      ncs_obj_stars,
-      ncs_obj_str_and_spc]:
-    ncs_groups = ncs_obj.get_ncs_restraints_group_list()
-    assert len(ncs_groups) == 1
-    assert ncs_groups[0].master_iselection.size() == 8
-    assert ncs_groups[0].copies[0].iselection.size() == 8
+    """Test dealing with chains names that are space or **"""
+    ncs_obj_AB = ncs.input(
+        hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_AB).construct_hierarchy()
+    )
+    ncs_obj_space = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_space
+        ).construct_hierarchy()
+    )
+    ncs_obj_stars = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_stars
+        ).construct_hierarchy()
+    )
+    ncs_obj_str_and_spc = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_stars_and_spaces
+        ).construct_hierarchy()
+    )
+    #
+    for ncs_obj in [ncs_obj_AB, ncs_obj_space, ncs_obj_stars, ncs_obj_str_and_spc]:
+        ncs_groups = ncs_obj.get_ncs_restraints_group_list()
+        assert len(ncs_groups) == 1
+        assert ncs_groups[0].master_iselection.size() == 8
+        assert ncs_groups[0].copies[0].iselection.size() == 8
+
 
 def exercise_13():
-  """
-  PDB file with insertion codes.
-  """
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_10).construct_hierarchy().atom_selection_cache()
-  ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_10).construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==1
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain H").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain L").iselection())
+    """
+    PDB file with insertion codes.
+    """
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_10)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_10
+        ).construct_hierarchy()
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain H").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain L").iselection())
+
 
 def exercise_14():
-  """
-  PDB file with alternative conformations.
-  """
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_11).construct_hierarchy().atom_selection_cache()
-  ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_11).construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==1
-  assert ncs_groups[0].master_iselection.all_eq(asc.selection(
-    string = "chain H and not (altloc A or altloc B)").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(asc.selection(
-    string = "chain L and not (altloc A or altloc B)").iselection())
+    """
+    PDB file with alternative conformations.
+    """
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_11)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_11
+        ).construct_hierarchy()
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain H and not (altloc A or altloc B)").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(
+        asc.selection(string="chain L and not (altloc A or altloc B)").iselection()
+    )
+
 
 def exercise_15():
-  """
-  PDB file with MODEL-ENDMDL.
-  """
-  exc = None
-  try:
-    ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_12).construct_hierarchy())
-    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  except Exception as e:
-    exc = e
-  assert str(exc)=="Multi-model PDB (with MODEL-ENDMDL) is not supported."
+    """
+    PDB file with MODEL-ENDMDL.
+    """
+    exc = None
+    try:
+        ncs_inp = ncs.input(
+            hierarchy=iotbx.pdb.input(
+                source_info=None, lines=pdb_str_12
+            ).construct_hierarchy()
+        )
+        ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    except Exception as e:
+        exc = e
+    assert str(exc) == "Multi-model PDB (with MODEL-ENDMDL) is not supported."
+
 
 def exercise_16():
-  """
-  PDB file with nucleic acids.
-  """
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_13).construct_hierarchy().atom_selection_cache()
-  ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_13).construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==1
-  assert ncs_groups[0].master_iselection.all_eq(asc.selection(
-    string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(asc.selection(
-    string = "chain aA").iselection())
+    """
+    PDB file with nucleic acids.
+    """
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_13)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_13
+        ).construct_hierarchy()
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain aA").iselection())
+
 
 def exercise_17():
-  """
-  PDB file with ligands.
-  """
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_14).construct_hierarchy().atom_selection_cache()
-  p = ncs.input.get_default_params()
-  p.ncs_search.exclude_selection=None
-  ncs_inp = ncs.input(
-      hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_14).construct_hierarchy(),
-      params=p.ncs_search)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==1
-  assert ncs_groups[0].master_iselection.all_eq(asc.selection(
-    string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==2
-  assert g1_c[0].iselection.all_eq(asc.selection(
-    string = "chain B").iselection())
-  assert g1_c[1].iselection.all_eq(asc.selection(
-    string = "chain C").iselection())
+    """
+    PDB file with ligands.
+    """
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_14)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    p = ncs.input.get_default_params()
+    p.ncs_search.exclude_selection = None
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_14
+        ).construct_hierarchy(),
+        params=p.ncs_search,
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 2
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain B").iselection())
+    assert g1_c[1].iselection.all_eq(asc.selection(string="chain C").iselection())
+
 
 def exercise_19():
-  """
-  PDB file with insertion codes, resseqs are different.
-  """
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_16).construct_hierarchy().atom_selection_cache()
-  ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_16).construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==1
-  assert ncs_groups[0].master_iselection.all_eq(asc.selection(
-    string = "chain H and not (altloc A or altloc B)").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(asc.selection(
-    string = "chain L and not (altloc A or altloc B)").iselection())
+    """
+    PDB file with insertion codes, resseqs are different.
+    """
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_16)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_16
+        ).construct_hierarchy()
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain H and not (altloc A or altloc B)").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(
+        asc.selection(string="chain L and not (altloc A or altloc B)").iselection()
+    )
+
 
 def exercise_20():
-  """
-  Identical chains, too large rms difference. No NCS by default, use user
-  siupplied NCS.
-  """
-  phil_str="""
+    """
+    Identical chains, too large rms difference. No NCS by default, use user
+    siupplied NCS.
+    """
+    phil_str = """
 ncs_group {
   reference = chain A
   selection = chain B
 }
 """
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_17).construct_hierarchy().atom_selection_cache()
-  ### user-supplied
-  phil_groups = ncs_group_master_phil.fetch(
-      iotbx.phil.parse(phil_str)).extract()
-  ncs_inp = ncs.input(
-      hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_17).construct_hierarchy(),
-      ncs_phil_groups=phil_groups.ncs_group)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==1
-  # group 1
-  assert ncs_groups[0].master_iselection.all_eq(
-    asc.selection(string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(
-    asc.selection(string = "chain B").iselection())
-  ### default
-  ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_17).construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==0
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_17)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    ### user-supplied
+    phil_groups = ncs_group_master_phil.fetch(iotbx.phil.parse(phil_str)).extract()
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_17
+        ).construct_hierarchy(),
+        ncs_phil_groups=phil_groups.ncs_group,
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    # group 1
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(asc.selection(string="chain B").iselection())
+    ### default
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_17
+        ).construct_hierarchy()
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 0
+
 
 def exercise_21():
-  """
-  PDB file with blank chain ID and segID.
-  XXX No support for segID in search procedure anymore.
-  """
-  # both chain ID blank. segID non-blank
-  ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_18).construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  # STOP()
-  assert len(ncs_groups)==0 # it does not care about segID
-  # blank and non-blank chain ID, non-blank segID
-  ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_19).construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==1
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_19).construct_hierarchy().atom_selection_cache()
-  assert ncs_groups[0].master_iselection.all_eq(asc.selection(
-    string = "chain ' '").iselection())
-  g1_c = ncs_groups[0].copies
-  assert len(g1_c)==1
-  assert g1_c[0].iselection.all_eq(asc.selection(
-    string = "chain 'A'").iselection()), list(g1_c[0].iselection)
+    """
+    PDB file with blank chain ID and segID.
+    XXX No support for segID in search procedure anymore.
+    """
+    # both chain ID blank. segID non-blank
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_18
+        ).construct_hierarchy()
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    # STOP()
+    assert len(ncs_groups) == 0  # it does not care about segID
+    # blank and non-blank chain ID, non-blank segID
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_19
+        ).construct_hierarchy()
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_19)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain ' '").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    assert len(g1_c) == 1
+    assert g1_c[0].iselection.all_eq(
+        asc.selection(string="chain 'A'").iselection()
+    ), list(g1_c[0].iselection)
+
 
 def exercise_22():
-  """
-  PDB file with perfectly overlapping chains.
-  """
-  ncs_inp = ncs.input(hierarchy=iotbx.pdb.input(source_info=None, lines=pdb_str_20).construct_hierarchy())
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups)==1
-  assert len(ncs_groups[0].copies)==3
-  asc = iotbx.pdb.input(source_info=None,
-    lines=pdb_str_20).construct_hierarchy().atom_selection_cache()
-  assert ncs_groups[0].master_iselection.all_eq(asc.selection(
-    string = "chain A").iselection())
-  g1_c = ncs_groups[0].copies
-  sel_1 = g1_c[0].iselection
-  sel_1.extend(g1_c[1].iselection)
-  sel_1.extend(g1_c[2].iselection)
-  sel = asc.selection(
-    string = "chain B or chain C or chain D").iselection()
-  assert sel_1.all_eq(sel)
+    """
+    PDB file with perfectly overlapping chains.
+    """
+    ncs_inp = ncs.input(
+        hierarchy=iotbx.pdb.input(
+            source_info=None, lines=pdb_str_20
+        ).construct_hierarchy()
+    )
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert len(ncs_groups[0].copies) == 3
+    asc = (
+        iotbx.pdb.input(source_info=None, lines=pdb_str_20)
+        .construct_hierarchy()
+        .atom_selection_cache()
+    )
+    assert ncs_groups[0].master_iselection.all_eq(
+        asc.selection(string="chain A").iselection()
+    )
+    g1_c = ncs_groups[0].copies
+    sel_1 = g1_c[0].iselection
+    sel_1.extend(g1_c[1].iselection)
+    sel_1.extend(g1_c[2].iselection)
+    sel = asc.selection(string="chain B or chain C or chain D").iselection()
+    assert sel_1.all_eq(sel)
+
 
 def exercise_23():
-  """
-  Case when reordering of chains (function update_chain_ids_search_order
-  ncs_search.py) results in selections that doesn't match 'atom-by-atom'
-  with each others.
-  """
-  pdb_inp = iotbx.pdb.input(source_info=None,lines=pdb_str_23.split('\n'))
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  pdb_hierarchy = pdb_hierarchy.expand_to_p1(
-    crystal_symmetry=pdb_inp.crystal_symmetry())
-  pdb_hierarchy.write_pdb_file(file_name="m.pdb")
-  pdb_hierarchy.atoms().reset_i_seq()
-  ncs_inp = iotbx.ncs.input(hierarchy=pdb_hierarchy)
-  # print dir(ncs_inp)
-  # print ncs_inp.print_ncs_phil_param()
-  # STOP()
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  phil_out = ncs_inp.show_phil_format()
-  assert not show_diff(phil_out, """\
+    """
+    Case when reordering of chains (function update_chain_ids_search_order
+    ncs_search.py) results in selections that doesn't match 'atom-by-atom'
+    with each others.
+    """
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_23.split("\n"))
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    pdb_hierarchy = pdb_hierarchy.expand_to_p1(
+        crystal_symmetry=pdb_inp.crystal_symmetry()
+    )
+    pdb_hierarchy.write_pdb_file(file_name="m.pdb")
+    pdb_hierarchy.atoms().reset_i_seq()
+    ncs_inp = iotbx.ncs.input(hierarchy=pdb_hierarchy)
+    # print dir(ncs_inp)
+    # print ncs_inp.print_ncs_phil_param()
+    # STOP()
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    phil_out = ncs_inp.show_phil_format()
+    assert not show_diff(
+        phil_out,
+        """\
 
 NCS phil parameters:
 -----------------------
@@ -1743,34 +1880,38 @@ ncs_group {
   selection        = chain Ap or chain Aq or chain Ar
   selection        = chain As or chain At or chain Au
   selection        = chain Av or chain Aw or chain Ax
-}""")
+}""",
+    )
+
 
 def clean_temp_files(file_list):
-  """ delete files in the file_list """
-  for fn in file_list:
-    if os.path.isfile(fn): os.remove(fn)
+    """delete files in the file_list"""
+    for fn in file_list:
+        if os.path.isfile(fn):
+            os.remove(fn)
 
-if (__name__ == "__main__"):
-  debug = ('debug' in sys.argv[1:])
-  exercise_00(debug=debug)
-  exercise_01(debug=debug)
-  exercise_03()
-  exercise_05()
-  exercise_06()
-  exercise_07()
-  exercise_09()
-  exercise_10()
-  exercise_11()
-  exercise_12()
-  exercise_13()
-  exercise_14()
-  exercise_15()
-  exercise_16()
-  exercise_17()
-  exercise_19()
-  exercise_20()
-  exercise_21() # No support for segID in search procedure anymore.
-  exercise_22()
-  # exercise_23() # Not grouping chains anymore. Test is left to illustrate
-  # failure of update_chain_ids_search_order in this example
-  print("OK")
+
+if __name__ == "__main__":
+    debug = "debug" in sys.argv[1:]
+    exercise_00(debug=debug)
+    exercise_01(debug=debug)
+    exercise_03()
+    exercise_05()
+    exercise_06()
+    exercise_07()
+    exercise_09()
+    exercise_10()
+    exercise_11()
+    exercise_12()
+    exercise_13()
+    exercise_14()
+    exercise_15()
+    exercise_16()
+    exercise_17()
+    exercise_19()
+    exercise_20()
+    exercise_21()  # No support for segID in search procedure anymore.
+    exercise_22()
+    # exercise_23() # Not grouping chains anymore. Test is left to illustrate
+    # failure of update_chain_ids_search_order in this example
+    print("OK")

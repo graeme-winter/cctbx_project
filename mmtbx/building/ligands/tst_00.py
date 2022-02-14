@@ -6,9 +6,9 @@ from mmtbx.building import ligands
 import libtbx.load_env
 import os
 
-if (1):
-  random.seed(5198425)
-  flex.set_random_seed(5198425)
+if 1:
+    random.seed(5198425)
+    flex.set_random_seed(5198425)
 
 pdb_str = """
 REMARK Idealized model of ATP from a library
@@ -46,24 +46,28 @@ HETATM   31  PG  ATP     1      20.385  13.201  24.324  1.00 30.00           P
 TER
 """
 
-def run(prefix="tst_00_mmtbx_building_ligands"):
-  # Ligand file
-  with open("%s.pdb"%prefix,"w") as fo:
-    fo.write(pdb_str)
-  # Read map and model
-  from iotbx.data_manager import DataManager
-  dm = DataManager()
-  map_file = libtbx.env.find_in_repositories(
-    relative_path="mmtbx/building/ligands/tst_00_mmtbx_building_ligands.map",
-    test=os.path.isfile)
-  mm = dm.get_real_map(map_file)
-  model = dm.get_model("%s.pdb"%prefix)
-  model.set_crystal_symmetry(mm.crystal_symmetry())
-  model.process(make_restraints=True)
-  # Create map_model_manager
-  mmm = iotbx.map_model_manager.map_model_manager(map_manager=mm, model=model)
-  # Build ligand
-  o = ligands.lifi.run(map_model_manager = mmm, d_min = 2.5)
 
-if(__name__ == "__main__"):
-  run()
+def run(prefix="tst_00_mmtbx_building_ligands"):
+    # Ligand file
+    with open("%s.pdb" % prefix, "w") as fo:
+        fo.write(pdb_str)
+    # Read map and model
+    from iotbx.data_manager import DataManager
+
+    dm = DataManager()
+    map_file = libtbx.env.find_in_repositories(
+        relative_path="mmtbx/building/ligands/tst_00_mmtbx_building_ligands.map",
+        test=os.path.isfile,
+    )
+    mm = dm.get_real_map(map_file)
+    model = dm.get_model("%s.pdb" % prefix)
+    model.set_crystal_symmetry(mm.crystal_symmetry())
+    model.process(make_restraints=True)
+    # Create map_model_manager
+    mmm = iotbx.map_model_manager.map_model_manager(map_manager=mm, model=model)
+    # Build ligand
+    o = ligands.lifi.run(map_model_manager=mmm, d_min=2.5)
+
+
+if __name__ == "__main__":
+    run()

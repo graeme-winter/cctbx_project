@@ -5,59 +5,62 @@ import iotbx.pdb
 from libtbx.utils import null_out
 from six.moves import zip
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # This test checks the parameterization of hydrogen atoms for amino acids
 # Steps:
 # 1) determine parameterization
 # 2) Compare calculated position of H from parameterization to input position
 # test fails if distance is > 0.001 A (= precision of coordinates)
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def exercise():
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  atoms = pdb_hierarchy.atoms()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    atoms = pdb_hierarchy.atoms()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  h_parameterization = riding_h_manager.h_parameterization
+    h_parameterization = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart         = sites_cart,
-    threshold          = 0.05)
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
 
-  h_distances        = diagnostics.h_distances
-  type_list          = diagnostics.type_list
+    h_distances = diagnostics.h_distances
+    type_list = diagnostics.type_list
 
-# number of H atoms in model
-  number_h = model.get_hd_selection().count(True)
-# number of H in parameterization
-  number_h_para = len(h_parameterization) - h_parameterization.count(None)
+    # number of H atoms in model
+    number_h = model.get_hd_selection().count(True)
+    # number of H in parameterization
+    number_h_para = len(h_parameterization) - h_parameterization.count(None)
 
-# There are 152 H atoms in pdb_string, check if all of them are parameterized
-  assert (number_h_para == number_h), 'Not all H atoms are parameterized'
+    # There are 152 H atoms in pdb_string, check if all of them are parameterized
+    assert number_h_para == number_h, "Not all H atoms are parameterized"
 
-# For each H atom, check if distance compared to input model is not > 0.05
-# 0.0014 = uncertainty for distance if uncertainty of coordinate = 0.001
-  for ih in h_distances:
-    labels = atoms[ih].fetch_labels()
-    assert (h_distances[ih] < 0.05), \
-      'distance too large: %s  atom: %s (%s) residue: %s ' \
-      % (h_parameterization[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
+    # For each H atom, check if distance compared to input model is not > 0.05
+    # 0.0014 = uncertainty for distance if uncertainty of coordinate = 0.001
+    for ih in h_distances:
+        labels = atoms[ih].fetch_labels()
+        assert (
+            h_distances[ih] < 0.05
+        ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+            h_parameterization[ih].htype,
+            atoms[ih].name,
+            ih,
+            labels.resseq.strip(),
+        )
 
-# KEEP: useful for debugging
-  #for ih in h_parameterization.keys():
-  #  hp = h_parameterization[ih]
-  #  print "'"+hp.htype+"'"+',',
+    # KEEP: useful for debugging
+    # for ih in h_parameterization.keys():
+    #  hp = h_parameterization[ih]
+    #  print "'"+hp.htype+"'"+',',
 
-  for type1, type2 in zip(type_list, type_list_known):
-    assert (type1 == type2)
+    for type1, type2 in zip(type_list, type_list_known):
+        assert type1 == type2
+
 
 # Ideal amino acids
 pdb_str = """\
@@ -391,31 +394,163 @@ TER
 END
 """
 
-type_list_known = ['3neigbs', '2tetra', '2tetra', '2tetra', '2tetra', '2tetra',
-  '2tetra', 'flat_2neigbs', 'alg1a', 'alg1a', 'alg1a', 'alg1a', 'flat_2neigbs',
-  '3neigbs', '2tetra', '2tetra', 'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs',
-  '3neigbs', '2tetra', '2tetra', '2tetra', '2tetra', '2tetra', '2tetra', '2tetra',
-  '2tetra', 'prop', 'prop', 'prop', 'flat_2neigbs', '3neigbs', '2tetra', '2tetra',
-  'flat_2neigbs', '3neigbs', '2tetra', '2tetra', '2tetra', '2tetra', '3neigbs',
-  '2tetra', '2tetra', 'alg1b', 'flat_2neigbs', '3neigbs', '3neigbs', 'alg1b',
-  'prop', 'prop', 'prop', 'flat_2neigbs', '3neigbs', '2tetra', '2tetra', 'alg1a',
-  'alg1a', 'flat_2neigbs', '3neigbs', '2tetra', '2tetra', '2tetra', '2tetra',
-  'alg1a', 'alg1a', '3neigbs', '2tetra', '2tetra', 'alg1b', 'flat_2neigbs',
-  '2tetra', '2tetra', '3neigbs', '2tetra', '2tetra', '2tetra', '2tetra', '2tetra',
-  '2tetra', '3neigbs', 'prop', 'prop', 'prop', 'flat_2neigbs', '3neigbs', '2tetra',
-  '2tetra', '3neigbs', 'prop', 'prop', 'prop', 'prop', 'prop', 'prop', 'flat_2neigbs',
-  '3neigbs', '3neigbs', '2tetra', '2tetra', 'prop', 'prop', 'prop', 'prop', 'prop',
-  'prop', 'flat_2neigbs', '3neigbs', '2tetra', '2tetra', '2tetra', '2tetra', 'prop',
-  'prop', 'prop', 'flat_2neigbs', '3neigbs', '2tetra', '2tetra', 'flat_2neigbs',
-  'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs',
-  '3neigbs', '2tetra', '2tetra', 'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs',
-  'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs', '3neigbs',
-  '2tetra', '2tetra', 'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs',
-  'alg1b', 'flat_2neigbs', '3neigbs', '3neigbs', 'prop', 'prop', 'prop', 'prop',
-  'prop', 'prop']
+type_list_known = [
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "alg1a",
+    "alg1a",
+    "alg1a",
+    "alg1a",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "prop",
+    "prop",
+    "prop",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "flat_2neigbs",
+    "3neigbs",
+    "3neigbs",
+    "alg1b",
+    "prop",
+    "prop",
+    "prop",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "alg1a",
+    "alg1a",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "alg1a",
+    "alg1a",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "flat_2neigbs",
+    "2tetra",
+    "2tetra",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "3neigbs",
+    "prop",
+    "prop",
+    "prop",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "3neigbs",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "flat_2neigbs",
+    "3neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "prop",
+    "prop",
+    "prop",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "alg1b",
+    "flat_2neigbs",
+    "3neigbs",
+    "3neigbs",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+]
 
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("OK. Time: %8.3f" % (time.time() - t0))

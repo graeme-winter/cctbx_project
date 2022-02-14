@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 from six.moves import range
+
 # LIBTBX_SET_DISPATCHER_NAME cctbx.xfel.plot_uc_cloud_from_experiments
 # LIBTBX_PRE_DISPATCHER_INCLUDE_SH export PHENIX_GUI_ENVIRONMENT=1
 # LIBTBX_PRE_DISPATCHER_INCLUDE_SH export BOOST_ADAPTBX_FPE_DEFAULT=1
@@ -40,88 +41,114 @@ phil_str = """
 """
 phil_scope = parse(phil_str)
 
+
 class Script(object):
-  '''A class for running the script.'''
+    """A class for running the script."""
 
-  def __init__(self):
-    '''Initialise the script.'''
-    from dials.util.options import OptionParser
-    import libtbx.load_env
+    def __init__(self):
+        """Initialise the script."""
+        from dials.util.options import OptionParser
+        import libtbx.load_env
 
-    # The script usage
-    usage = "usage: %s [options] [param.phil] filenames" % libtbx.env.dispatcher_name
+        # The script usage
+        usage = (
+            "usage: %s [options] [param.phil] filenames" % libtbx.env.dispatcher_name
+        )
 
-    self.tag = None
-    self.reference_detector = None
+        self.tag = None
+        self.reference_detector = None
 
-    # Create the parser
-    self.parser = OptionParser(
-      usage=usage,
-      phil=phil_scope,
-      read_experiments=True,
-      check_format=False,
-      epilog=help_message
-      )
+        # Create the parser
+        self.parser = OptionParser(
+            usage=usage,
+            phil=phil_scope,
+            read_experiments=True,
+            check_format=False,
+            epilog=help_message,
+        )
 
-  def run(self):
-    '''Execute the script.'''
-    # Parse the command line
-    params, options = self.parser.parse_args(show_diff_phil=True)
+    def run(self):
+        """Execute the script."""
+        # Parse the command line
+        params, options = self.parser.parse_args(show_diff_phil=True)
 
-    if params.write_gnuplot_cloud:
-      gnuplot = open("uccloud.dat", 'w')
+        if params.write_gnuplot_cloud:
+            gnuplot = open("uccloud.dat", "w")
 
-    def get_info(experiment):
-      a, b, c, alpha, beta, gamma = experiment.crystal.get_unit_cell().parameters()
-      return {'a':a,
-              'b':b,
-              'c':c,
-              'alpha':alpha,
-              'beta':beta,
-              'gamma':gamma,
-              'n_img':0}
-    experiments_list = [e.data for e in params.input.experiments]
-    if params.extract_tags:
-      import os
-      experiments_tags = [os.path.splitext(os.path.basename(f.filename))[0] for f in params.input.experiments]
-      info_list = []
-      for experiments in experiments_list:
-        infos = []
-        for experiment in experiments:
-          info = get_info(experiment)
-          infos.append(info)
-          if params.write_gnuplot_cloud:
-            gnuplot.write("% 3.10f % 3.10f % 3.10f\n"%(info['a'], info['b'], info['c']))
-        info_list.append(infos)
-    else:
-      experiments_tags = [str(i) for i in range(len(experiments_list))]
-      info_list = []
-      for experiments in experiments_list:
-        infos = []
-        for experiment in experiments:
-          info = get_info(experiment)
-          infos.append(info)
-          if params.write_gnuplot_cloud:
-            gnuplot.write("% 3.10f % 3.10f % 3.10f\n"%(info['a'], info['b'], info['c']))
-        info_list.append(infos)
-    if params.combine_all_input:
-      info_list = [[info for infos in info_list for info in infos]]
-      experiments_tags = ["combined"]
+        def get_info(experiment):
+            (
+                a,
+                b,
+                c,
+                alpha,
+                beta,
+                gamma,
+            ) = experiment.crystal.get_unit_cell().parameters()
+            return {
+                "a": a,
+                "b": b,
+                "c": c,
+                "alpha": alpha,
+                "beta": beta,
+                "gamma": gamma,
+                "n_img": 0,
+            }
 
-    if params.write_gnuplot_cloud:
-      gnuplot.close()
+        experiments_list = [e.data for e in params.input.experiments]
+        if params.extract_tags:
+            import os
 
-    import xfel.ui.components.xfel_gui_plotter as pltr
-    plotter = pltr.PopUpCharts()
-    plotter.plot_uc_histogram(
-      info_list=info_list,
-      legend_list=experiments_tags,
-      iqr_ratio = params.iqr_ratio,
-      ranges = params.ranges,
-      title = params.title)
-    plotter.plt.show()
+            experiments_tags = [
+                os.path.splitext(os.path.basename(f.filename))[0]
+                for f in params.input.experiments
+            ]
+            info_list = []
+            for experiments in experiments_list:
+                infos = []
+                for experiment in experiments:
+                    info = get_info(experiment)
+                    infos.append(info)
+                    if params.write_gnuplot_cloud:
+                        gnuplot.write(
+                            "% 3.10f % 3.10f % 3.10f\n"
+                            % (info["a"], info["b"], info["c"])
+                        )
+                info_list.append(infos)
+        else:
+            experiments_tags = [str(i) for i in range(len(experiments_list))]
+            info_list = []
+            for experiments in experiments_list:
+                infos = []
+                for experiment in experiments:
+                    info = get_info(experiment)
+                    infos.append(info)
+                    if params.write_gnuplot_cloud:
+                        gnuplot.write(
+                            "% 3.10f % 3.10f % 3.10f\n"
+                            % (info["a"], info["b"], info["c"])
+                        )
+                info_list.append(infos)
+        if params.combine_all_input:
+            info_list = [[info for infos in info_list for info in infos]]
+            experiments_tags = ["combined"]
 
-if __name__ == '__main__':
-  with show_mail_on_error():
-    script = Script()
-    script.run()
+        if params.write_gnuplot_cloud:
+            gnuplot.close()
+
+        import xfel.ui.components.xfel_gui_plotter as pltr
+
+        plotter = pltr.PopUpCharts()
+        plotter.plot_uc_histogram(
+            info_list=info_list,
+            legend_list=experiments_tags,
+            iqr_ratio=params.iqr_ratio,
+            ranges=params.ranges,
+            title=params.title,
+        )
+        plotter.plt.show()
+
+
+if __name__ == "__main__":
+    with show_mail_on_error():
+        script = Script()
+        script.run()

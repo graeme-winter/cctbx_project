@@ -84,68 +84,84 @@ ATOM     33  H2  HOH S   2       8.914  12.031  15.494  1.00  6.00           H
 END
 """
 
+
 def exercise_01():
-  import libtbx.load_env
-  if (not libtbx.env.has_module("reduce")):
-    print("Reduce not installed, needed for model.add_hydrogens(). skipping")
-    return
+    import libtbx.load_env
 
-  pdb_file_name = "add_h_to_hoh.pdb"
-  tmp_f = open(pdb_file_name, "w")
-  tmp_f.write(input_model)
-  tmp_f.close()
-  pdb_inp = iotbx.pdb.input(source_info=None, file_name=pdb_file_name)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log = None)
-  model.process(make_restraints=True)
-  ####
-  model.add_hydrogens(correct_special_position_tolerance=1.0)
-  result = StringIO()
-  pdb_str = model.model_as_pdb()
-  result.write(pdb_str)
-  result = result.getvalue().splitlines()
-  ####
-  result1 = []
+    if not libtbx.env.has_module("reduce"):
+        print("Reduce not installed, needed for model.add_hydrogens(). skipping")
+        return
 
-  # for r1 in result:
-  for r1 in iotbx.pdb.input(
-      source_info = None, lines=result).construct_hierarchy().\
-      as_pdb_string().split("\n"):
-    if(r1.startswith("ATOM") or r1.startswith("HETATM")): result1.append(r1)
-  result2 = []
-  # for r2 in expected_result.splitlines():
-  for r2 in iotbx.pdb.input(
-      source_info = None, lines=expected_result).construct_hierarchy().\
-      as_pdb_string().split("\n"):
-    if(r2.startswith("ATOM") or r2.startswith("HETATM")): result2.append(r2)
-  assert len(result1) == len(result2)
-  print("\n".join(result1))
-  print("==="*30)
-  print("\n".join(result2))
-  print("==="*30)
-  for r1, r2 in zip(result1, result2):
-    r1 = r1[:30] + r1[60:]
-    r2 = r2[:30] + r2[60:]
-    print("r1", r1)
-    print("r2", r2)
-    print()
-    # assert not show_diff(r1, r2)
-    show_diff(r1, r2)
-    # XXX It is not clear why H1 should have Bfactor=2 and not H2.
-  ####
-  cntr = 0
-  xrs1 = iotbx.pdb.pdb_input(source_info = None, lines = flex.std_string(
-      expected_result.splitlines())).\
-      construct_hierarchy().extract_xray_structure()
-  xrs2 = iotbx.pdb.pdb_input(source_info = None, lines = flex.std_string(result)
-    ).construct_hierarchy().extract_xray_structure()
-  for s1, s2 in zip(xrs1.scatterers(), xrs2.scatterers()):
-    if(s1.element_symbol().strip() not in ['H','D']):
-      assert s1.element_symbol().strip() == s2.element_symbol().strip()
-      assert approx_equal(s1.site, s2.site, 0.03)
-      cntr += 1
-  assert cntr == 19
+    pdb_file_name = "add_h_to_hoh.pdb"
+    tmp_f = open(pdb_file_name, "w")
+    tmp_f.write(input_model)
+    tmp_f.close()
+    pdb_inp = iotbx.pdb.input(source_info=None, file_name=pdb_file_name)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=None)
+    model.process(make_restraints=True)
+    ####
+    model.add_hydrogens(correct_special_position_tolerance=1.0)
+    result = StringIO()
+    pdb_str = model.model_as_pdb()
+    result.write(pdb_str)
+    result = result.getvalue().splitlines()
+    ####
+    result1 = []
+
+    # for r1 in result:
+    for r1 in (
+        iotbx.pdb.input(source_info=None, lines=result)
+        .construct_hierarchy()
+        .as_pdb_string()
+        .split("\n")
+    ):
+        if r1.startswith("ATOM") or r1.startswith("HETATM"):
+            result1.append(r1)
+    result2 = []
+    # for r2 in expected_result.splitlines():
+    for r2 in (
+        iotbx.pdb.input(source_info=None, lines=expected_result)
+        .construct_hierarchy()
+        .as_pdb_string()
+        .split("\n")
+    ):
+        if r2.startswith("ATOM") or r2.startswith("HETATM"):
+            result2.append(r2)
+    assert len(result1) == len(result2)
+    print("\n".join(result1))
+    print("===" * 30)
+    print("\n".join(result2))
+    print("===" * 30)
+    for r1, r2 in zip(result1, result2):
+        r1 = r1[:30] + r1[60:]
+        r2 = r2[:30] + r2[60:]
+        print("r1", r1)
+        print("r2", r2)
+        print()
+        # assert not show_diff(r1, r2)
+        show_diff(r1, r2)
+        # XXX It is not clear why H1 should have Bfactor=2 and not H2.
+    ####
+    cntr = 0
+    xrs1 = (
+        iotbx.pdb.pdb_input(
+            source_info=None, lines=flex.std_string(expected_result.splitlines())
+        )
+        .construct_hierarchy()
+        .extract_xray_structure()
+    )
+    xrs2 = (
+        iotbx.pdb.pdb_input(source_info=None, lines=flex.std_string(result))
+        .construct_hierarchy()
+        .extract_xray_structure()
+    )
+    for s1, s2 in zip(xrs1.scatterers(), xrs2.scatterers()):
+        if s1.element_symbol().strip() not in ["H", "D"]:
+            assert s1.element_symbol().strip() == s2.element_symbol().strip()
+            assert approx_equal(s1.site, s2.site, 0.03)
+            cntr += 1
+    assert cntr == 19
+
 
 model_good = """\
 CRYST1   15.000   15.000   15.000  80.00  70.00 100.00 P 1
@@ -249,39 +265,43 @@ Fit quality:
  0.025
 """
 
-def exercise_02():
-  for file_name, input_model in [("m_good.pdb",model_good), ("m_bad.pdb",model_bad)]:
-    tmp_f = open(file_name, "w")
-    tmp_f.write(input_model)
-    tmp_f.close()
-  xrs_exact = iotbx.pdb.pdb_input(
-    file_name = "m_good.pdb").xray_structure_simple()
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(file_name="m_bad.pdb"))
-  xrs_part = model.get_xray_structure()
-  miller_set = miller.build_set(
-    crystal_symmetry = xrs_exact.crystal_symmetry(),
-    anomalous_flag   = False,
-    d_min            = 0.6)
-  f_obs = abs(miller_set.structure_factors_from_scatterers(
-    xray_structure = xrs_exact,
-    algorithm      = "direct",
-    cos_sin_table  = False).f_calc())
-  sf_par = mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
-  sf_par.algorithm = "direct"
-  sf_par.cos_sin_table = False
-  fmodel = mmtbx.f_model.manager(
-    xray_structure               = xrs_part,
-    sf_and_grads_accuracy_params = sf_par,
-    target_name                  = "ls_wunit_k1",
-    f_obs                        = f_obs)
-  #
-  out = StringIO()
-  params = find_hydrogens.all_master_params().extract()
-  params.map_cutoff=6.5
-  find_hydrogens.run(fmodel=fmodel, model=model, log=out, params=params)
 
-if (__name__ == "__main__"):
-  exercise_01()
-  exercise_02()
-  print(format_cpu_times())
+def exercise_02():
+    for file_name, input_model in [
+        ("m_good.pdb", model_good),
+        ("m_bad.pdb", model_bad),
+    ]:
+        tmp_f = open(file_name, "w")
+        tmp_f.write(input_model)
+        tmp_f.close()
+    xrs_exact = iotbx.pdb.pdb_input(file_name="m_good.pdb").xray_structure_simple()
+    model = mmtbx.model.manager(model_input=iotbx.pdb.input(file_name="m_bad.pdb"))
+    xrs_part = model.get_xray_structure()
+    miller_set = miller.build_set(
+        crystal_symmetry=xrs_exact.crystal_symmetry(), anomalous_flag=False, d_min=0.6
+    )
+    f_obs = abs(
+        miller_set.structure_factors_from_scatterers(
+            xray_structure=xrs_exact, algorithm="direct", cos_sin_table=False
+        ).f_calc()
+    )
+    sf_par = mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
+    sf_par.algorithm = "direct"
+    sf_par.cos_sin_table = False
+    fmodel = mmtbx.f_model.manager(
+        xray_structure=xrs_part,
+        sf_and_grads_accuracy_params=sf_par,
+        target_name="ls_wunit_k1",
+        f_obs=f_obs,
+    )
+    #
+    out = StringIO()
+    params = find_hydrogens.all_master_params().extract()
+    params.map_cutoff = 6.5
+    find_hydrogens.run(fmodel=fmodel, model=model, log=out, params=params)
+
+
+if __name__ == "__main__":
+    exercise_01()
+    exercise_02()
+    print(format_cpu_times())

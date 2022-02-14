@@ -1165,17 +1165,20 @@ ATOM   1151  OE1 GLU A 157     -27.847 -22.562   1.678  1.00 80.04           O
 ATOM   1152  OE2 GLU A 157     -26.948 -24.562   1.620  1.00 89.52           O
 """
 
+
 def test_1():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  model = mmtbx.model.manager(model_input = pdb_inp, log = null_out())
-  model.process(make_restraints=True)
-  model.get_restraints_manager()
-  stats = mmtbx.model.statistics.geometry(model=model)
-  out = StringIO()
-  stats.show(log=out)
-  val = out.getvalue()
-  # print (val)
-  assert not show_diff(val, """
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    model.get_restraints_manager()
+    stats = mmtbx.model.statistics.geometry(model=model)
+    out = StringIO()
+    stats.show(log=out)
+    val = out.getvalue()
+    # print (val)
+    assert not show_diff(
+        val,
+        """
 GEOMETRY RESTRAINTS LIBRARY: GEOSTD + MONOMER LIBRARY + CDL V1.2
 DEVIATIONS FROM IDEAL VALUES - RMSD. RMSZ FOR BONDS AND ANGLES.
   BOND      :  0.004   0.020   1174  Z= 0.292
@@ -1207,8 +1210,10 @@ THEREFORE, THE VALUES ARE NOT RELATED IN A SIMPLE MANNER.
   HELIX:  0.29 (0.58), RESIDUES: 67
   SHEET: -1.83 (0.89), RESIDUES: 20
   LOOP : -0.50 (0.74), RESIDUES: 62
-""")
+""",
+    )
 
-if __name__ == '__main__':
-  test_1()
-  print ('OK')
+
+if __name__ == "__main__":
+    test_1()
+    print("OK")

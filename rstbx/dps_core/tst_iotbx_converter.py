@@ -1,73 +1,86 @@
 from __future__ import absolute_import, division, print_function
 from six.moves import cPickle as pickle
 from six.moves import cStringIO as StringIO
-from cctbx import crystal,sgtbx,uctbx
+from cctbx import crystal, sgtbx, uctbx
 from cctbx.sgtbx import lattice_symmetry
 from rstbx.dps_core.lepage import iotbx_converter
 
+
 class subgroup_comparator:
+    def __init__(self, symmetry):
+        self.symmetry = symmetry
 
-  def __init__(self,symmetry):
-    self.symmetry = symmetry
+    def get_input_symmetry_subgroups(self):
+        cb_op_input_to_primitive = (
+            self.symmetry.change_of_basis_op_to_primitive_setting()
+        )
+        primitive_symmetry = self.symmetry.primitive_setting()
+        cb_op_input_to_minimum = (
+            primitive_symmetry.change_of_basis_op_to_minimum_cell()
+            * cb_op_input_to_primitive
+        )
 
-  def get_input_symmetry_subgroups(self):
-    cb_op_input_to_primitive = self.symmetry.change_of_basis_op_to_primitive_setting()
-    primitive_symmetry = self.symmetry.primitive_setting()
-    cb_op_input_to_minimum = primitive_symmetry.change_of_basis_op_to_minimum_cell() * cb_op_input_to_primitive
+        subgroup_list = iotbx_converter(
+            self.symmetry.change_basis(cb_op_input_to_minimum).unit_cell(),
+            max_delta=3.0,
+            bravais_types_only=False,
+            space_group_symbol=str(
+                self.symmetry.change_basis(cb_op_input_to_minimum).space_group_info()
+            ),
+            force_minimum=False,
+            interest_focus="input_symmetry",
+        )
 
-    subgroup_list = iotbx_converter(
-      self.symmetry.change_basis(cb_op_input_to_minimum).unit_cell(),max_delta=3.0,
-      bravais_types_only=False,
-      space_group_symbol= str(self.symmetry.change_basis(cb_op_input_to_minimum).space_group_info()),
-      force_minimum=False,interest_focus="input_symmetry")
+        return subgroup_list
 
-    return subgroup_list
+    def get_metric_symmetry_subgroups(self):
+        subgroup_list = lattice_symmetry.metric_subgroups(
+            self.symmetry, 3.0, bravais_types_only=False, best_monoclinic_beta=False
+        ).result_groups
 
-  def get_metric_symmetry_subgroups(self):
-    subgroup_list = lattice_symmetry.metric_subgroups(
-      self.symmetry,3.0,bravais_types_only=False,
-      best_monoclinic_beta=False).result_groups
+        return subgroup_list
 
-    return subgroup_list
+    def show_list(self, any_subgroup_list):
+        for subgroup in any_subgroup_list:
+            subgroup["best_subsym"].show_summary()
+            print()
 
-  def show_list(self,any_subgroup_list):
-    for subgroup in any_subgroup_list:
-      subgroup['best_subsym'].show_summary()
-      print()
+    def get_best_subsym_list(self, any_subgroup_list):
+        return [subgroup["best_subsym"] for subgroup in any_subgroup_list]
 
-  def get_best_subsym_list(self, any_subgroup_list):
-    return [subgroup['best_subsym'] for subgroup in any_subgroup_list]
+    def get_list_as_string(self, any_subgroup_list):
+        S = StringIO()
+        pickle.dump([subgroup["best_subsym"] for subgroup in any_subgroup_list], S)
+        return S.getvalue()
 
-  def get_list_as_string(self,any_subgroup_list):
-    S = StringIO()
-    pickle.dump( [subgroup['best_subsym'] for subgroup in any_subgroup_list], S)
-    return S.getvalue()
+    def get_string_as_list(self, any_subgroup_string):
+        from io import BytesIO
 
-  def get_string_as_list(self,any_subgroup_string):
-    from io import BytesIO
-    S = BytesIO(any_subgroup_string.encode("ascii"))
-    subgroups = pickle.load( S )
-    return subgroups
+        S = BytesIO(any_subgroup_string.encode("ascii"))
+        subgroups = pickle.load(S)
+        return subgroups
 
-  def compare_lists(self,a,b):
-    assert len(a) == len(b)
-    all_comparisons=[]
-    for item in a:
-      all_comparisons.append(False)
-      for ritem in b:
-        if item.is_similar_symmetry(ritem):
-          all_comparisons[-1]=True
-    assert False not in all_comparisons
-
+    def compare_lists(self, a, b):
+        assert len(a) == len(b)
+        all_comparisons = []
+        for item in a:
+            all_comparisons.append(False)
+            for ritem in b:
+                if item.is_similar_symmetry(ritem):
+                    all_comparisons[-1] = True
+        assert False not in all_comparisons
 
 
 def get_one_example():
-  return subgroup_comparator(symmetry =
-  # symmetry from 3ged
-   crystal.symmetry(
-    unit_cell=uctbx.unit_cell((124.287,124.287,162.608,90.0,90.0,90.0)),
-    space_group=sgtbx.space_group_info('I 41 2 2').group())
-  )
+    return subgroup_comparator(
+        symmetry=
+        # symmetry from 3ged
+        crystal.symmetry(
+            unit_cell=uctbx.unit_cell((124.287, 124.287, 162.608, 90.0, 90.0, 90.0)),
+            space_group=sgtbx.space_group_info("I 41 2 2").group(),
+        )
+    )
+
 
 expected_output = """Unit cell: (124.287, 124.287, 162.608, 90, 90, 90)
 Space group: I 41 2 2 (No. 98)
@@ -131,8 +144,8 @@ Space group: P -1 (No. 2)
 
 """
 
-expected_subgroup_lists=[
-"""(lp0
+expected_subgroup_lists = [
+    """(lp0
 ccopy_reg
 _reconstructor
 p1
@@ -438,7 +451,7 @@ tp126
 Rp127
 tp128
 bsba.""",
-"""(lp0
+    """(lp0
 ccopy_reg
 _reconstructor
 p1
@@ -743,27 +756,28 @@ p125
 tp126
 Rp127
 tp128
-bsba."""]
+bsba.""",
+]
 
-if __name__=="__main__":
-  EX = get_one_example()
-  input_sym_subgroups = EX.get_input_symmetry_subgroups()
-  metric_sym_subgroups = EX.get_metric_symmetry_subgroups()
+if __name__ == "__main__":
+    EX = get_one_example()
+    input_sym_subgroups = EX.get_input_symmetry_subgroups()
+    metric_sym_subgroups = EX.get_metric_symmetry_subgroups()
 
-  #EX.show_list(input_sym_subgroups)
-  #EX.show_list(metric_sym_subgroups)
+    # EX.show_list(input_sym_subgroups)
+    # EX.show_list(metric_sym_subgroups)
 
-  #print  EX.get_list_as_string(input_sym_subgroups)
-  #print  EX.get_list_as_string(metric_sym_subgroups)
+    # print  EX.get_list_as_string(input_sym_subgroups)
+    # print  EX.get_list_as_string(metric_sym_subgroups)
 
-  # list the subgroups of a particular space group & compare to expected reference
-  input_sym = expected_subgroup_lists[0]
-  input_sym_list = EX.get_string_as_list(input_sym)
-  EX.compare_lists(input_sym_list, EX.get_best_subsym_list(input_sym_subgroups))
+    # list the subgroups of a particular space group & compare to expected reference
+    input_sym = expected_subgroup_lists[0]
+    input_sym_list = EX.get_string_as_list(input_sym)
+    EX.compare_lists(input_sym_list, EX.get_best_subsym_list(input_sym_subgroups))
 
-  # list the subgroups of a metric symmetry & compare to expected reference
-  metric_sym = expected_subgroup_lists[1]
-  metric_sym_list = EX.get_string_as_list(metric_sym)
-  EX.compare_lists(metric_sym_list, EX.get_best_subsym_list(metric_sym_subgroups))
+    # list the subgroups of a metric symmetry & compare to expected reference
+    metric_sym = expected_subgroup_lists[1]
+    metric_sym_list = EX.get_string_as_list(metric_sym)
+    EX.compare_lists(metric_sym_list, EX.get_best_subsym_list(metric_sym_subgroups))
 
-  print("OK")
+    print("OK")

@@ -8,7 +8,7 @@ from libtbx.test_utils import approx_equal
 from six.moves import zip
 from six.moves import range
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Finite difference test for modified gradients of riding H
 # Every type of H geometry is tested:
 # planar H
@@ -17,62 +17,65 @@ from six.moves import range
 # X-H2 group (ARG etc)
 # propeller group
 # H with rotational degree of freedom (SER, etc)
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def exercise(pdb_str, eps, use_ideal_bonds_angles):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-            model_input = pdb_inp,
-            log         = null_out())
-  model.process(make_restraints=True)
-  geometry_restraints = model.restraints_manager.geometry
-  xray_structure = model.get_xray_structure()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    geometry_restraints = model.restraints_manager.geometry
+    xray_structure = model.get_xray_structure()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  riding_h_manager.idealize_riding_h_positions(xray_structure = xray_structure)
+    riding_h_manager.idealize_riding_h_positions(xray_structure=xray_structure)
 
-  sites_cart = xray_structure.sites_cart()
+    sites_cart = xray_structure.sites_cart()
 
-  g_analytical = geometry_restraints.energies_sites(
-    sites_cart = sites_cart,
-    compute_gradients = True).gradients
+    g_analytical = geometry_restraints.energies_sites(
+        sites_cart=sites_cart, compute_gradients=True
+    ).gradients
 
-  hd_selection = xray_structure.hd_selection()
-  g_analytical_reduced = riding_h_manager.gradients_reduced_cpp(
-    gradients    = g_analytical,
-    sites_cart   = sites_cart,
-    hd_selection = hd_selection)
+    hd_selection = xray_structure.hd_selection()
+    g_analytical_reduced = riding_h_manager.gradients_reduced_cpp(
+        gradients=g_analytical, sites_cart=sites_cart, hd_selection=hd_selection
+    )
 
-  ex = [eps,0,0]
-  ey = [0,eps,0]
-  ez = [0,0,eps]
-  g_fd = flex.vec3_double()
-  for i_site in range(sites_cart.size()):
-    g_fd_i = []
-    for e in [ex,ey,ez]:
-      ts = []
-      for sign in [-1,1]:
-        sites_cart_ = sites_cart.deep_copy()
-        xray_structure_ = xray_structure.deep_copy_scatterers()
-        sites_cart_[i_site] = [
-          sites_cart_[i_site][j]+e[j]*sign for j in range(3)]
-        xray_structure_.set_sites_cart(sites_cart_)
-        # after shift, recalculate H position
-        riding_h_manager.idealize_riding_h_positions(
-          xray_structure=xray_structure_)
-        sites_cart_ = xray_structure_.sites_cart()
-        ts.append(geometry_restraints.energies_sites(
-          sites_cart = sites_cart_,
-          compute_gradients = False).target)
-      g_fd_i.append((ts[1]-ts[0])/(2*eps))
-    g_fd.append(g_fd_i)
+    ex = [eps, 0, 0]
+    ey = [0, eps, 0]
+    ez = [0, 0, eps]
+    g_fd = flex.vec3_double()
+    for i_site in range(sites_cart.size()):
+        g_fd_i = []
+        for e in [ex, ey, ez]:
+            ts = []
+            for sign in [-1, 1]:
+                sites_cart_ = sites_cart.deep_copy()
+                xray_structure_ = xray_structure.deep_copy_scatterers()
+                sites_cart_[i_site] = [
+                    sites_cart_[i_site][j] + e[j] * sign for j in range(3)
+                ]
+                xray_structure_.set_sites_cart(sites_cart_)
+                # after shift, recalculate H position
+                riding_h_manager.idealize_riding_h_positions(
+                    xray_structure=xray_structure_
+                )
+                sites_cart_ = xray_structure_.sites_cart()
+                ts.append(
+                    geometry_restraints.energies_sites(
+                        sites_cart=sites_cart_, compute_gradients=False
+                    ).target
+                )
+            g_fd_i.append((ts[1] - ts[0]) / (2 * eps))
+        g_fd.append(g_fd_i)
 
-  g_fd_reduced = g_fd.select(~hd_selection)
+    g_fd_reduced = g_fd.select(~hd_selection)
 
-  for g1, g2 in zip(g_analytical_reduced, g_fd_reduced):
-    assert approx_equal(g1,g2, 1.e-4)
+    for g1, g2 in zip(g_analytical_reduced, g_fd_reduced):
+        assert approx_equal(g1, g2, 1.0e-4)
+
 
 # alg2a shaked
 pdb_str_00 = """
@@ -174,7 +177,7 @@ ATOM      4  NH2 ARG A  50       6.920   5.044   5.510  1.00 10.00           N
 ATOM      6 HH12 ARG A  50       7.870   6.449   7.277  1.00 10.00           H
 """
 
-#alg1b_flat shaked
+# alg1b_flat shaked
 pdb_str_08 = """
 CRYST1   16.660   13.261   16.215  90.00  90.00  90.00 P 1
 SCALE1      0.060024  0.000000  0.000000        0.00000
@@ -187,7 +190,7 @@ ATOM     12  OH  TYR A   7       4.857   6.463  10.553  1.00 15.00           O
 ATOM     20  HH  TYR A   7       5.208   7.016  11.256  1.00 15.00           H
 """
 
-#alg1b_flat idealized
+# alg1b_flat idealized
 pdb_str_09 = """
 CRYST1   16.660   13.261   16.215  90.00  90.00  90.00 P 1
 SCALE1      0.060024  0.000000  0.000000        0.00000
@@ -200,7 +203,7 @@ ATOM      4  OH  TYR A   7       4.978   6.424  10.555  1.00 15.00           O
 ATOM      5  HH  TYR A   7       5.045   6.985  11.177  1.00 15.00           H
 """
 
-#alg1b shaked (HH out of plane)
+# alg1b shaked (HH out of plane)
 pdb_str_10 = """
 CRYST1   16.660   13.261   16.215  90.00  90.00  90.00 P 1
 SCALE1      0.060024  0.000000  0.000000        0.00000
@@ -226,7 +229,7 @@ ATOM     12  OH  TYR A   7       4.893   6.206  10.448  1.00 15.00           O
 ATOM     20  HH  TYR A   7       4.878   6.603  11.188  1.00 15.00           H
 """
 
-#alg1a shaked with both H atoms
+# alg1a shaked with both H atoms
 pdb_str_06_bla = """
 CRYST1   14.446   16.451   11.913  90.00  90.00  90.00 P 1
 SCALE1      0.069223  0.000000  0.000000        0.00000
@@ -240,22 +243,49 @@ ATOM     20 HH11 ARG A  50       6.939   7.628   7.092  1.00 10.00           H
 ATOM     21 HH12 ARG A  50       7.949   6.540   7.393  1.00 10.00           H
 """
 
-pdb_list = [pdb_str_00, pdb_str_01, pdb_str_02, pdb_str_03,
-  pdb_str_04, pdb_str_05, pdb_str_06, pdb_str_07, pdb_str_08, pdb_str_09,
-  pdb_str_10, pdb_str_11]
+pdb_list = [
+    pdb_str_00,
+    pdb_str_01,
+    pdb_str_02,
+    pdb_str_03,
+    pdb_str_04,
+    pdb_str_05,
+    pdb_str_06,
+    pdb_str_07,
+    pdb_str_08,
+    pdb_str_09,
+    pdb_str_10,
+    pdb_str_11,
+]
 
-pdb_list_name = ['pdb_str_00', 'pdb_str_01', 'pdb_str_02', 'pdb_str_03',
-  'pdb_str_04', 'pdb_str_05', 'pdb_str_06', 'pdb_str_07', 'pdb_str_08',
-  'pdb_str_09', 'pdb_str_10', 'pdb_str_11']
+pdb_list_name = [
+    "pdb_str_00",
+    "pdb_str_01",
+    "pdb_str_02",
+    "pdb_str_03",
+    "pdb_str_04",
+    "pdb_str_05",
+    "pdb_str_06",
+    "pdb_str_07",
+    "pdb_str_08",
+    "pdb_str_09",
+    "pdb_str_10",
+    "pdb_str_11",
+]
+
 
 def run():
-  for use_ideal_bonds_angles in [True, False]:
-    for pdb_str, str_name in zip(pdb_list,pdb_list_name):
-      #print 'pdb_string:', str_name, 'idealize =', idealize
-      exercise(pdb_str=pdb_str, eps=1.e-4,
-        use_ideal_bonds_angles=use_ideal_bonds_angles)
+    for use_ideal_bonds_angles in [True, False]:
+        for pdb_str, str_name in zip(pdb_list, pdb_list_name):
+            # print 'pdb_string:', str_name, 'idealize =', idealize
+            exercise(
+                pdb_str=pdb_str,
+                eps=1.0e-4,
+                use_ideal_bonds_angles=use_ideal_bonds_angles,
+            )
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time:", round(time.time()-t0, 2), "seconds")
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time:", round(time.time() - t0, 2), "seconds")

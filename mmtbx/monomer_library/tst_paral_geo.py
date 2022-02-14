@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 from libtbx import easy_run
 
-small_pdb = '''
+small_pdb = """
 CRYST1   67.764   73.374   89.188  90.00  90.00  90.00 P 21 21 21
 SCALE1      0.014757  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.013629  0.000000        0.00000
@@ -155,9 +155,9 @@ HETATM   72  O   HOH B 355      10.526 -35.905  -9.116  1.00 45.59           O
 HETATM   73  O   HOH D 105       4.788 -32.025  -5.002  1.00 63.52           O
 HETATM   74  O   HOH D 108       9.056 -30.329  -2.445  1.00 63.77           O
 END
-'''
+"""
 
-large_pdb = '''
+large_pdb = """
 CRYST1   67.764   73.374   89.188  90.00  90.00  90.00 P 21 21 21
 SCALE1      0.014757  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.013629  0.000000        0.00000
@@ -671,40 +671,48 @@ HETATM  256  O   HOH D 104      14.192 -29.033  -5.516  1.00 45.92           O
 HETATM  257  O   HOH D 105       4.788 -32.025  -5.002  1.00 63.52           O
 HETATM  258  O   HOH D 108       9.056 -30.329  -2.445  1.00 63.77           O
 END
-'''
+"""
+
 
 def write_and_run(pdb_name):
-  input_model_filename = 'paral_geo_output.pdb'
-  with open(input_model_filename, 'w') as f:
-    f.write(pdb_name)
-  cmd = 'phenix.fmodel %s high_resolution=3' % input_model_filename
-  print('\n~> %s\n' % cmd)
-  rc = easy_run.go(cmd)
-  cmd = 'phenix.real_space_refine %s %s.mtz' % (input_model_filename,
-                                                input_model_filename)
-  cmd += ' refinement.macro_cycles=0'
-  cmd += ' base_pair.restrain_planarity=True'
-  cmd += ' overwrite=True'
-  print('\n~> %s\n' % cmd)
-  rc = easy_run.go(cmd)
+    input_model_filename = "paral_geo_output.pdb"
+    with open(input_model_filename, "w") as f:
+        f.write(pdb_name)
+    cmd = "phenix.fmodel %s high_resolution=3" % input_model_filename
+    print("\n~> %s\n" % cmd)
+    rc = easy_run.go(cmd)
+    cmd = "phenix.real_space_refine %s %s.mtz" % (
+        input_model_filename,
+        input_model_filename,
+    )
+    cmd += " refinement.macro_cycles=0"
+    cmd += " base_pair.restrain_planarity=True"
+    cmd += " overwrite=True"
+    print("\n~> %s\n" % cmd)
+    rc = easy_run.go(cmd)
+
 
 def test_geo(result, opposite=False):
-  input_model_filename = 'paral_geo_output.pdb'
-  with open('%s_real_space_refined_000_initial.geo' % input_model_filename.replace('.pdb', '')) as f:
-    lines = f.read()
-  if 0:
-    print(lines)
-    for i in range(len(result)):
-      print(i, lines.find(result[:i]), result[i-10:i])
-  if opposite:
-    assert lines.find(result)==-1, 'found: %s' % result
-  else:
-    assert lines.find(result)>-1, 'not found: %s' % result
-  print('OK')
+    input_model_filename = "paral_geo_output.pdb"
+    with open(
+        "%s_real_space_refined_000_initial.geo"
+        % input_model_filename.replace(".pdb", "")
+    ) as f:
+        lines = f.read()
+    if 0:
+        print(lines)
+        for i in range(len(result)):
+            print(i, lines.find(result[:i]), result[i - 10 : i])
+    if opposite:
+        assert lines.find(result) == -1, "found: %s" % result
+    else:
+        assert lines.find(result) > -1, "not found: %s" % result
+    print("OK")
+
 
 def main():
-  write_and_run(large_pdb)
-  result = '''Basepair planarity restraints: 5
+    write_and_run(large_pdb)
+    result = """Basepair planarity restraints: 5
 Sorted by residual:
                                delta    sigma   weight rms_deltas residual
 plane pdb=" C1'  DC C   7 "   -0.366 1.76e-01 3.23e+01   1.84e-01 2.28e+01
@@ -727,9 +735,9 @@ plane pdb=" C1'  DC C   7 "   -0.366 1.76e-01 3.23e+01   1.84e-01 2.28e+01
       pdb=" C2   DG D  10 "    0.167 1.76e-01 3.23e+01
       pdb=" N2   DG D  10 "    0.300 1.76e-01 3.23e+01
       pdb=" N3   DG D  10 "    0.167 1.76e-01 3.23e+01
-      pdb=" C4   DG D  10 "    0.015 1.76e-01 3.23e+01'''
-  test_geo(result)
-  result = '''Stacking parallelity restraints: 8
+      pdb=" C4   DG D  10 "    0.015 1.76e-01 3.23e+01"""
+    test_geo(result)
+    result = '''Stacking parallelity restraints: 8
 Sorted by residual:
     plane 1                plane 2                residual  delta(deg) sigma
     pdb=" C1'  DC C   7 "  pdb=" C1'  DG C   8 "  3.21e+01  12.4210    0.0270
@@ -744,8 +752,8 @@ Sorted by residual:
                            pdb=" N2   DG C   8 "
                            pdb=" N3   DG C   8 "
                            pdb=" C4   DG C   8 "'''
-  test_geo(result)
-  result = '''Basepair parallelity restraints: 5
+    test_geo(result)
+    result = '''Basepair parallelity restraints: 5
 Sorted by residual:
     plane 1                plane 2                residual  delta(deg) sigma
     pdb=" C1'  DG C   8 "  pdb=" C1'  DC D   9 "  2.80e+01  14.3936    0.0335
@@ -758,10 +766,10 @@ Sorted by residual:
     pdb=" N1   DG C   8 "  pdb=" C5   DC D   9 "
     pdb=" C2   DG C   8 "  pdb=" C6   DC D   9 "
     pdb=" N2   DG C   8 "'''
-  test_geo(result)
+    test_geo(result)
 
-  write_and_run(small_pdb)
-  result = '''Stacking parallelity restraints: 2
+    write_and_run(small_pdb)
+    result = '''Stacking parallelity restraints: 2
 Sorted by residual:
     plane 1                plane 2                residual  delta(deg) sigma
     pdb=" C1'  DC D  11 "  pdb=" C1'  DC D  12 "  1.50e+01   8.4829    0.0270
@@ -785,9 +793,10 @@ Sorted by residual:
     pdb=" N1   DG D  10 "  pdb=" C5   DC D  11 "
     pdb=" C2   DG D  10 "  pdb=" C6   DC D  11 "
     pdb=" N2   DG D  10 "'''
-  test_geo(result)
-  test_geo('Basepair planarity restraints:', opposite=True)
-  test_geo('Basepair parallelity restraints:', opposite=True)
+    test_geo(result)
+    test_geo("Basepair planarity restraints:", opposite=True)
+    test_geo("Basepair parallelity restraints:", opposite=True)
 
-if __name__ == '__main__':
-  main()
+
+if __name__ == "__main__":
+    main()

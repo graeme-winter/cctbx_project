@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import iotbx.pdb
 import mmtbx.f_model
 
-pdb_str="""\
+pdb_str = """\
 CRYST1   16.960   19.455   19.841  90.00  90.00  90.00 P 1
 ATOM      1  N   ASP A  18      14.727  11.381  11.191  1.00 21.41           N
 ATOM      2  CA  ASP A  18      14.022  12.655  11.131  1.00 34.70           C
@@ -45,44 +45,47 @@ ATOM     38  NH1 ARG A  21       9.094   2.347   2.569  1.00 20.00           N
 ATOM     39  NH2 ARG A  21       7.906   2.617   0.625  1.00 20.00           N
 """
 
-def run():
-  # get xray_structure object from input PDB file
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  xray_structure = pdb_inp.xray_structure_simple()
-  # make up "F-obs" and R-free-flags
-  f_obs = abs(xray_structure.structure_factors(d_min=1.5).f_calc())
-  r_free_flags = f_obs.generate_r_free_flags()
-  # instantiate fmodel object
-  fmodel = mmtbx.f_model.manager(
-    f_obs          = f_obs,
-    r_free_flags   = r_free_flags,
-    xray_structure = xray_structure)
-  # now we can caclualte R-factors and show some statistics
-  print("r_work:", fmodel.r_work())
-  print("r_free:", fmodel.r_free())
-  fmodel.show()
-  # we can get get 3d array of map values
-  fft_map = fmodel.electron_density_map().fft_map(map_type = "mFobs-DFmodel")
-  fft_map.apply_sigma_scaling()
-  map_data = fft_map.real_map_unpadded(in_place=False)
-  # output map in X-plor formatted file
-  fft_map.as_xplor_map(
-    file_name="mfo-dfm.xplor",
-    title_lines=["mFobs-DFmodel"],
-    gridding_first=(0,0,0),
-    gridding_last=fft_map.n_real())
-  # we can compute another map
-  map_coeffs = fmodel.electron_density_map(
-    ).map_coefficients(map_type = "2mFobs-DFmodel")
-  # output it as MTZ file
-  mtz_dataset = map_coeffs.as_mtz_dataset(column_root_label="2mFoDFc")
-  mtz_object = mtz_dataset.mtz_object()
-  mtz_object.write(file_name = "amap.mtz")
-  # and get actual map values
-  fft_map = map_coeffs.fft_map(resolution_factor=0.25)
-  fft_map.apply_volume_scaling()
-  map_data = fft_map.real_map_unpadded()
 
-if (__name__ == "__main__"):
-  run()
-  print("OK")
+def run():
+    # get xray_structure object from input PDB file
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    xray_structure = pdb_inp.xray_structure_simple()
+    # make up "F-obs" and R-free-flags
+    f_obs = abs(xray_structure.structure_factors(d_min=1.5).f_calc())
+    r_free_flags = f_obs.generate_r_free_flags()
+    # instantiate fmodel object
+    fmodel = mmtbx.f_model.manager(
+        f_obs=f_obs, r_free_flags=r_free_flags, xray_structure=xray_structure
+    )
+    # now we can caclualte R-factors and show some statistics
+    print("r_work:", fmodel.r_work())
+    print("r_free:", fmodel.r_free())
+    fmodel.show()
+    # we can get get 3d array of map values
+    fft_map = fmodel.electron_density_map().fft_map(map_type="mFobs-DFmodel")
+    fft_map.apply_sigma_scaling()
+    map_data = fft_map.real_map_unpadded(in_place=False)
+    # output map in X-plor formatted file
+    fft_map.as_xplor_map(
+        file_name="mfo-dfm.xplor",
+        title_lines=["mFobs-DFmodel"],
+        gridding_first=(0, 0, 0),
+        gridding_last=fft_map.n_real(),
+    )
+    # we can compute another map
+    map_coeffs = fmodel.electron_density_map().map_coefficients(
+        map_type="2mFobs-DFmodel"
+    )
+    # output it as MTZ file
+    mtz_dataset = map_coeffs.as_mtz_dataset(column_root_label="2mFoDFc")
+    mtz_object = mtz_dataset.mtz_object()
+    mtz_object.write(file_name="amap.mtz")
+    # and get actual map values
+    fft_map = map_coeffs.fft_map(resolution_factor=0.25)
+    fft_map.apply_volume_scaling()
+    map_data = fft_map.real_map_unpadded()
+
+
+if __name__ == "__main__":
+    run()
+    print("OK")

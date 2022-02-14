@@ -34,6 +34,7 @@ Object boxes are less crammed with useless information (such as IDs).
 Spawns xdot if it is available.
 """
 from __future__ import absolute_import, division, print_function
+
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -105,12 +106,12 @@ def show_most_common_types(limit=10, f=None):
     Note that classes with the same name but defined in different modules
     will be lumped together.
     """
-    stats = sorted(list(typestats().items()), key=operator.itemgetter(1),
-                   reverse=True)
+    stats = sorted(list(typestats().items()), key=operator.itemgetter(1), reverse=True)
     if limit:
         stats = stats[:limit]
     width = max(len(name) for name, count in stats)
-    if (f is None): f = sys.stdout
+    if f is None:
+        f = sys.stdout
     for name, count in stats[:limit]:
         print(name.ljust(width), count, file=f)
 
@@ -191,11 +192,12 @@ def find_backref_chain(obj, predicate, max_depth=20, extra_ignore=()):
                     depth[id(source)] = tdepth + 1
                     parent[id(source)] = target
                     queue.append(source)
-    return None # not found
+    return None  # not found
 
 
-def show_backrefs(objs, max_depth=3, extra_ignore=(), filter=None, too_many=10,
-                  highlight=None):
+def show_backrefs(
+    objs, max_depth=3, extra_ignore=(), filter=None, too_many=10, highlight=None
+):
     """Generate an object reference graph ending at ``objs``
 
     The graph will show you what objects refer to ``objs``, directly and
@@ -224,13 +226,21 @@ def show_backrefs(objs, max_depth=3, extra_ignore=(), filter=None, too_many=10,
         >>> show_backrefs(obj, extra_ignore=[id(locals())])
 
     """
-    show_graph(objs, max_depth=max_depth, extra_ignore=extra_ignore,
-               filter=filter, too_many=too_many, highlight=highlight,
-               edge_func=gc.get_referrers, swap_source_target=False)
+    show_graph(
+        objs,
+        max_depth=max_depth,
+        extra_ignore=extra_ignore,
+        filter=filter,
+        too_many=too_many,
+        highlight=highlight,
+        edge_func=gc.get_referrers,
+        swap_source_target=False,
+    )
 
 
-def show_refs(objs, max_depth=3, extra_ignore=(), filter=None, too_many=10,
-              highlight=None):
+def show_refs(
+    objs, max_depth=3, extra_ignore=(), filter=None, too_many=10, highlight=None
+):
     """Generate an object reference graph starting at ``objs``
 
     The graph will show you what objects are reachable from ``objs``, directly
@@ -259,22 +269,38 @@ def show_refs(objs, max_depth=3, extra_ignore=(), filter=None, too_many=10,
         >>> show_refs(obj, extra_ignore=[id(locals())])
 
     """
-    show_graph(objs, max_depth=max_depth, extra_ignore=extra_ignore,
-               filter=filter, too_many=too_many, highlight=highlight,
-               edge_func=gc.get_referents, swap_source_target=True)
+    show_graph(
+        objs,
+        max_depth=max_depth,
+        extra_ignore=extra_ignore,
+        filter=filter,
+        too_many=too_many,
+        highlight=highlight,
+        edge_func=gc.get_referents,
+        swap_source_target=True,
+    )
+
 
 #
 # Internal helpers
 #
 
-def show_graph(objs, edge_func, swap_source_target,
-               max_depth=3, extra_ignore=(), filter=None, too_many=10,
-               highlight=None):
+
+def show_graph(
+    objs,
+    edge_func,
+    swap_source_target,
+    max_depth=3,
+    extra_ignore=(),
+    filter=None,
+    too_many=10,
+    highlight=None,
+):
     if not isinstance(objs, (list, tuple)):
         objs = [objs]
-    f = file('objects.dot', 'w')
-    print('digraph ObjectGraph {', file=f)
-    print('  node[shape=box, style=filled, fillcolor=white];', file=f)
+    f = file("objects.dot", "w")
+    print("digraph ObjectGraph {", file=f)
+    print("  node[shape=box, style=filled, fillcolor=white];", file=f)
     queue = []
     depth = {}
     ignore = set(extra_ignore)
@@ -284,7 +310,7 @@ def show_graph(objs, edge_func, swap_source_target,
     ignore.add(id(depth))
     ignore.add(id(ignore))
     for obj in objs:
-        print('  %s[fontcolor=red];' % (obj_node_id(obj)), file=f)
+        print("  %s[fontcolor=red];" % (obj_node_id(obj)), file=f)
         depth[id(obj)] = 0
         queue.append(obj)
     gc.collect()
@@ -293,18 +319,21 @@ def show_graph(objs, edge_func, swap_source_target,
         nodes += 1
         target = queue.pop(0)
         tdepth = depth[id(target)]
-        print('  %s[label="%s"];' % (obj_node_id(target), obj_label(target, tdepth)), file=f)
-        h, s, v = gradient((0, 0, 1), (0, 0, .3), tdepth, max_depth)
+        print(
+            '  %s[label="%s"];' % (obj_node_id(target), obj_label(target, tdepth)),
+            file=f,
+        )
+        h, s, v = gradient((0, 0, 1), (0, 0, 0.3), tdepth, max_depth)
         if inspect.ismodule(target):
-            h = .3
+            h = 0.3
             s = 1
         if highlight and highlight(target):
-            h = .6
-            s = .6
+            h = 0.6
+            s = 0.6
             v = 0.5 + v * 0.5
         print('  %s[fillcolor="%g,%g,%g"];' % (obj_node_id(target), h, s, v), file=f)
         if v < 0.5:
-            print('  %s[fontcolor=white];' % (obj_node_id(target)), file=f)
+            print("  %s[fontcolor=white];" % (obj_node_id(target)), file=f)
         if inspect.ismodule(target) or tdepth >= max_depth:
             continue
         neighbours = edge_func(target)
@@ -320,18 +349,21 @@ def show_graph(objs, edge_func, swap_source_target,
             else:
                 srcnode, tgtnode = source, target
             elabel = edge_label(srcnode, tgtnode)
-            print('  %s -> %s%s;' % (obj_node_id(srcnode), obj_node_id(tgtnode), elabel), file=f)
+            print(
+                "  %s -> %s%s;" % (obj_node_id(srcnode), obj_node_id(tgtnode), elabel),
+                file=f,
+            )
             if id(source) not in depth:
                 depth[id(source)] = tdepth + 1
                 queue.append(source)
             n += 1
             if n >= too_many:
-                print('  %s[color=red];' % obj_node_id(target), file=f)
+                print("  %s[color=red];" % obj_node_id(target), file=f)
                 break
     print("}", file=f)
     f.close()
     print("Graph written to objects.dot (%d nodes)" % nodes)
-    if os.system('which xdot >/dev/null') == 0:
+    if os.system("which xdot >/dev/null") == 0:
         print("Spawning graph viewer (xdot)")
         os.system("xdot objects.dot &")
     else:
@@ -341,39 +373,40 @@ def show_graph(objs, edge_func, swap_source_target,
 
 def obj_node_id(obj):
     if isinstance(obj, weakref.ref):
-        return 'all_weakrefs_are_one'
-    return ('o%d' % id(obj)).replace('-', '_')
+        return "all_weakrefs_are_one"
+    return ("o%d" % id(obj)).replace("-", "_")
 
 
 def obj_label(obj, depth):
-    return quote(type(obj).__name__ + ':\n' +
-                 safe_repr(obj))
+    return quote(type(obj).__name__ + ":\n" + safe_repr(obj))
 
 
 def quote(s):
-    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+    return s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
 
 
 def safe_repr(obj):
     try:
         return short_repr(obj)
     except Exception:
-        return '(unrepresentable)'
+        return "(unrepresentable)"
 
 
 def short_repr(obj):
-    if isinstance(obj, (type, types.ModuleType, types.BuiltinMethodType,
-                        types.BuiltinFunctionType)):
+    if isinstance(
+        obj,
+        (type, types.ModuleType, types.BuiltinMethodType, types.BuiltinFunctionType),
+    ):
         return obj.__name__
     if isinstance(obj, types.MethodType):
         if obj.__self__ is not None:
-            return obj.__func__.__name__ + ' (bound)'
+            return obj.__func__.__name__ + " (bound)"
         else:
             return obj.__func__.__name__
     if isinstance(obj, (tuple, list, dict, set)):
-        return '%d items' % len(obj)
+        return "%d items" % len(obj)
     if isinstance(obj, weakref.ref):
-        return 'all_weakrefs_are_one'
+        return "all_weakrefs_are_one"
     return repr(obj)[:40]
 
 
@@ -384,21 +417,22 @@ def gradient(start_color, end_color, depth, max_depth):
     h1, s1, v1 = start_color
     h2, s2, v2 = end_color
     f = float(depth) / max_depth
-    h = h1 * (1-f) + h2 * f
-    s = s1 * (1-f) + s2 * f
-    v = v1 * (1-f) + v2 * f
+    h = h1 * (1 - f) + h2 * f
+    s = s1 * (1 - f) + s2 * f
+    v = v1 * (1 - f) + v2 * f
     return h, s, v
 
 
 def edge_label(source, target):
-    if isinstance(target, dict) and target is getattr(source, '__dict__', None):
+    if isinstance(target, dict) and target is getattr(source, "__dict__", None):
         return ' [label="__dict__",weight=10]'
     elif isinstance(source, dict):
         for k, v in source.items():
             if v is target:
                 from six import string_types
+
                 if isinstance(k, string_types) and k:
                     return ' [label="%s",weight=2]' % quote(k)
                 else:
                     return ' [label="%s"]' % quote(safe_repr(k))
-    return ''
+    return ""

@@ -195,77 +195,84 @@ ATOM     59  OXT TYR A   7      11.358   2.999   7.612  5.00 15.00           O
 END
 """
 
-def run(refine, target, residues_per_window = 1):
-  if(refine == "refine_adp"):
-    refine_adp=True
-    refine_occ=False
-    pdb_poor_str = pdb_poor_adp_str
-  else:
-    refine_adp=False
-    refine_occ=True
-    pdb_poor_str = pdb_poor_occ_str
-  pdb_inp_poor = iotbx.pdb.input(source_info=None, lines=pdb_poor_str)
-  ph = pdb_inp_poor.construct_hierarchy()
-  ph.atoms().reset_i_seq()
-  xrs_poor = pdb_inp_poor.xray_structure_simple()
-  xrs_answer = iotbx.pdb.input(source_info=None,
-    lines=pdb_answer_str).xray_structure_simple()
-  f_obs = abs(xrs_answer.structure_factors(d_min=7,algorithm="direct").f_calc())
-  sfp=mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
-  sfp.algorithm="direct"
-  fmodel = mmtbx.f_model.manager(
-    sf_and_grads_accuracy_params = sfp,
-    xray_structure               = xrs_poor,
-    f_obs                        = f_obs)
-  fmodel.show()
-  fmodel.update(target_name=target)
-  print("Initial r_work=%6.4f r_free=%6.4f"%(fmodel.r_work(), fmodel.r_free()))
-  tg = mmtbx.utils.experimental_data_target_and_gradients(fmodel = fmodel)
-  # get group gradients using internal splitting into groups
-  result = tg.group_occupancy_grads(
-    pdb_hierarchy       = ph,
-    residues_per_window = residues_per_window)
-  for r in result:
-    print("chainID_resseqs: %s occupancy_grad: %-15.6f"%tuple(r))
-  print()
-  # group occupancy selections
-  selections = ph.chunk_selections(residues_per_chunk=residues_per_window)
-  # refine occupancies
-  if refine_occ:
-    print("refine occupancies:")
-    rr = mmtbx.refinement.group.manager(
-      fmodel                      = fmodel,
-      selections                  = selections,
-      max_number_of_iterations    = 50,
-      number_of_macro_cycles      = 25,
-      refine_occ                  = True,
-      convergence_test            = False,
-      use_restraints              = True,
-      run_finite_differences_test = True,
-      occupancy_max               = 999,
-      occupancy_min               = -999)
-  # refine group B-factors
-  if refine_adp:
-    print("refine b-factors")
-    rr = mmtbx.refinement.group.manager(
-      fmodel                      = fmodel,
-      selections                  = selections,
-      max_number_of_iterations    = 50,
-      number_of_macro_cycles      = 25,
-      convergence_test            = False,
-      run_finite_differences_test = True,
-      refine_adp                  = True,
-      use_restraints              = True)
-  print("After refinement r_work=%6.4f r_free=%6.4f"%(
-    fmodel.r_work(), fmodel.r_free()))
-  ph.adopt_xray_structure(fmodel.xray_structure)
-  ph.write_pdb_file(file_name="refined_occupancies.pdb",
-    crystal_symmetry = f_obs.crystal_symmetry())
-  assert rr.tested > 0, [target, refine]
-  r_work = fmodel.r_work()*100
-  assert r_work < 0.1, [r_work, target]
 
-if (__name__ == "__main__"):
-  for target in ["ml", "ls_wunit_kunit"]:
-    for refine in ["refine_adp", "refine_occ"]:
-      run(refine=refine, target=target)
+def run(refine, target, residues_per_window=1):
+    if refine == "refine_adp":
+        refine_adp = True
+        refine_occ = False
+        pdb_poor_str = pdb_poor_adp_str
+    else:
+        refine_adp = False
+        refine_occ = True
+        pdb_poor_str = pdb_poor_occ_str
+    pdb_inp_poor = iotbx.pdb.input(source_info=None, lines=pdb_poor_str)
+    ph = pdb_inp_poor.construct_hierarchy()
+    ph.atoms().reset_i_seq()
+    xrs_poor = pdb_inp_poor.xray_structure_simple()
+    xrs_answer = iotbx.pdb.input(
+        source_info=None, lines=pdb_answer_str
+    ).xray_structure_simple()
+    f_obs = abs(xrs_answer.structure_factors(d_min=7, algorithm="direct").f_calc())
+    sfp = mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
+    sfp.algorithm = "direct"
+    fmodel = mmtbx.f_model.manager(
+        sf_and_grads_accuracy_params=sfp, xray_structure=xrs_poor, f_obs=f_obs
+    )
+    fmodel.show()
+    fmodel.update(target_name=target)
+    print("Initial r_work=%6.4f r_free=%6.4f" % (fmodel.r_work(), fmodel.r_free()))
+    tg = mmtbx.utils.experimental_data_target_and_gradients(fmodel=fmodel)
+    # get group gradients using internal splitting into groups
+    result = tg.group_occupancy_grads(
+        pdb_hierarchy=ph, residues_per_window=residues_per_window
+    )
+    for r in result:
+        print("chainID_resseqs: %s occupancy_grad: %-15.6f" % tuple(r))
+    print()
+    # group occupancy selections
+    selections = ph.chunk_selections(residues_per_chunk=residues_per_window)
+    # refine occupancies
+    if refine_occ:
+        print("refine occupancies:")
+        rr = mmtbx.refinement.group.manager(
+            fmodel=fmodel,
+            selections=selections,
+            max_number_of_iterations=50,
+            number_of_macro_cycles=25,
+            refine_occ=True,
+            convergence_test=False,
+            use_restraints=True,
+            run_finite_differences_test=True,
+            occupancy_max=999,
+            occupancy_min=-999,
+        )
+    # refine group B-factors
+    if refine_adp:
+        print("refine b-factors")
+        rr = mmtbx.refinement.group.manager(
+            fmodel=fmodel,
+            selections=selections,
+            max_number_of_iterations=50,
+            number_of_macro_cycles=25,
+            convergence_test=False,
+            run_finite_differences_test=True,
+            refine_adp=True,
+            use_restraints=True,
+        )
+    print(
+        "After refinement r_work=%6.4f r_free=%6.4f"
+        % (fmodel.r_work(), fmodel.r_free())
+    )
+    ph.adopt_xray_structure(fmodel.xray_structure)
+    ph.write_pdb_file(
+        file_name="refined_occupancies.pdb", crystal_symmetry=f_obs.crystal_symmetry()
+    )
+    assert rr.tested > 0, [target, refine]
+    r_work = fmodel.r_work() * 100
+    assert r_work < 0.1, [r_work, target]
+
+
+if __name__ == "__main__":
+    for target in ["ml", "ls_wunit_kunit"]:
+        for refine in ["refine_adp", "refine_occ"]:
+            run(refine=refine, target=target)

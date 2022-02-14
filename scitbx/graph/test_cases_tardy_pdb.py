@@ -3,9 +3,10 @@ import scitbx.graph.utils as graph_utils
 from scitbx import matrix
 from libtbx.utils import Sorry
 
-class pdb_extract(object):
 
-  def __init__(O,
+class pdb_extract(object):
+    def __init__(
+        O,
         tag,
         pdb,
         bonds,
@@ -14,124 +15,132 @@ class pdb_extract(object):
         loop_edges=None,
         loop_edge_bendings=None,
         find_cluster_loop_repeats=0,
-        merge_clusters_with_multiple_connections_passes=1):
-    O.index = None
-    O.tag = tag
-    O.labels, O.sites = [], []
-    for line in pdb.splitlines():
-      O.labels.append(line[22:26].strip()+"."+line[12:16].strip())
-      O.sites.append(matrix.col([float(line[30+i*8:38+i*8]) for i in [0,1,2]]))
-    O.bonds = bonds
-    O.clusters = clusters
-    O.hinge_edges = hinge_edges
-    O.loop_edges = loop_edges
-    O.loop_edge_bendings = loop_edge_bendings
-    O.find_cluster_loop_repeats = find_cluster_loop_repeats
-    O.merge_clusters_with_multiple_connections_passes = \
-      merge_clusters_with_multiple_connections_passes
+        merge_clusters_with_multiple_connections_passes=1,
+    ):
+        O.index = None
+        O.tag = tag
+        O.labels, O.sites = [], []
+        for line in pdb.splitlines():
+            O.labels.append(line[22:26].strip() + "." + line[12:16].strip())
+            O.sites.append(
+                matrix.col([float(line[30 + i * 8 : 38 + i * 8]) for i in [0, 1, 2]])
+            )
+        O.bonds = bonds
+        O.clusters = clusters
+        O.hinge_edges = hinge_edges
+        O.loop_edges = loop_edges
+        O.loop_edge_bendings = loop_edge_bendings
+        O.find_cluster_loop_repeats = find_cluster_loop_repeats
+        O.merge_clusters_with_multiple_connections_passes = (
+            merge_clusters_with_multiple_connections_passes
+        )
 
-  def angles(O):
-    return graph_utils.extract_edge_list(
-      graph_utils.bond_bending_edge_sets(
-        edge_sets=graph_utils.construct_edge_sets(
-          n_vertices=len(O.sites),
-          edge_list=O.bonds),
-        omit_bonds=True))
+    def angles(O):
+        return graph_utils.extract_edge_list(
+            graph_utils.bond_bending_edge_sets(
+                edge_sets=graph_utils.construct_edge_sets(
+                    n_vertices=len(O.sites), edge_list=O.bonds
+                ),
+                omit_bonds=True,
+            )
+        )
 
-  def tardy_tree_construct(O, fixed_vertex_lists=[]):
-    from scitbx.graph import tardy_tree
-    tt = tardy_tree.construct(
-      sites=O.sites,
-      edge_list=O.bonds,
-      fixed_vertex_lists=fixed_vertex_lists)
-    if (len(fixed_vertex_lists) != 0):
-      return tt
-    cm = tt.cluster_manager
-    if (O.clusters is None):
-      print("tag:", O.tag)
-    if (O.clusters is None):
-      print("clusters:", cm.clusters)
-    else:
-      assert cm.clusters == O.clusters
-    if (O.hinge_edges is None):
-      print("hinge_edges:", cm.hinge_edges)
-    else:
-      assert cm.hinge_edges == O.hinge_edges
-    if (O.loop_edges is None):
-      print("loop_edges:", cm.loop_edges)
-    else:
-      assert cm.loop_edges == O.loop_edges
-    if (O.loop_edge_bendings is None):
-      print("loop_edge_bendings:", cm.loop_edge_bendings)
-    else:
-      assert cm.loop_edge_bendings == O.loop_edge_bendings
-    assert tt.find_cluster_loop_repeats == O.find_cluster_loop_repeats
-    assert cm.merge_clusters_with_multiple_connections_passes \
-        ==  O.merge_clusters_with_multiple_connections_passes
-    if (O.clusters is None):
-      print()
-    return tt
+    def tardy_tree_construct(O, fixed_vertex_lists=[]):
+        from scitbx.graph import tardy_tree
+
+        tt = tardy_tree.construct(
+            sites=O.sites, edge_list=O.bonds, fixed_vertex_lists=fixed_vertex_lists
+        )
+        if len(fixed_vertex_lists) != 0:
+            return tt
+        cm = tt.cluster_manager
+        if O.clusters is None:
+            print("tag:", O.tag)
+        if O.clusters is None:
+            print("clusters:", cm.clusters)
+        else:
+            assert cm.clusters == O.clusters
+        if O.hinge_edges is None:
+            print("hinge_edges:", cm.hinge_edges)
+        else:
+            assert cm.hinge_edges == O.hinge_edges
+        if O.loop_edges is None:
+            print("loop_edges:", cm.loop_edges)
+        else:
+            assert cm.loop_edges == O.loop_edges
+        if O.loop_edge_bendings is None:
+            print("loop_edge_bendings:", cm.loop_edge_bendings)
+        else:
+            assert cm.loop_edge_bendings == O.loop_edge_bendings
+        assert tt.find_cluster_loop_repeats == O.find_cluster_loop_repeats
+        assert (
+            cm.merge_clusters_with_multiple_connections_passes
+            == O.merge_clusters_with_multiple_connections_passes
+        )
+        if O.clusters is None:
+            print()
+        return tt
+
 
 test_cases = [
-
-pdb_extract(
-  tag="point",
-  pdb="""\
+    pdb_extract(
+        tag="point",
+        pdb="""\
 ATOM      0  FE  FE  A   1      10.949  12.815  15.189  0.00  0.00          FE
 """,
-  bonds=[],
-  clusters=[[0]],
-  hinge_edges=[(-1, 0)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="gly_no_h",
-  pdb="""\
+        bonds=[],
+        clusters=[[0]],
+        hinge_edges=[(-1, 0)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="gly_no_h",
+        pdb="""\
 ATOM      0  N   GLY A   1      10.949  12.815  15.189  0.00  0.00           N
 ATOM      1  CA  GLY A   1      10.405  13.954  15.917  0.00  0.00           C
 ATOM      2  C   GLY A   1      10.779  15.262  15.227  0.00  0.00           C
 ATOM      3  O   GLY A   1       9.916  16.090  14.936  0.00  0.00           O
 """,
-  bonds=[(0,1),(1,2),(2,3)],
-  clusters=[[0, 1, 2], [3]],
-  hinge_edges=[(-1, 1), (1, 2)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="gly_with_nh",
-  pdb="""\
+        bonds=[(0, 1), (1, 2), (2, 3)],
+        clusters=[[0, 1, 2], [3]],
+        hinge_edges=[(-1, 1), (1, 2)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="gly_with_nh",
+        pdb="""\
 ATOM      0  N   GLY A   1      10.949  12.815  15.189  0.00  0.00           N
 ATOM      1  CA  GLY A   1      10.405  13.954  15.917  0.00  0.00           C
 ATOM      2  C   GLY A   1      10.779  15.262  15.227  0.00  0.00           C
 ATOM      3  O   GLY A   1       9.916  16.090  14.936  0.00  0.00           O
 ATOM      4  H   GLY A   1      11.792  12.691  15.311  0.00  0.00           H
 """,
-  bonds=[(0,1),(0,4),(1,2),(2,3)],
-  clusters=[[0, 1, 4], [2], [3]],
-  hinge_edges=[(-1, 0), (0, 1), (1, 2)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="ala_no_h",
-  pdb="""\
+        bonds=[(0, 1), (0, 4), (1, 2), (2, 3)],
+        clusters=[[0, 1, 4], [2], [3]],
+        hinge_edges=[(-1, 0), (0, 1), (1, 2)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="ala_no_h",
+        pdb="""\
 ATOM      0  N   ALA A   1      10.949  12.815  15.189  0.00  0.00           N
 ATOM      1  CA  ALA A   1      10.405  13.954  15.917  0.00  0.00           C
 ATOM      2  C   ALA A   1      10.779  15.262  15.227  0.00  0.00           C
 ATOM      3  CB  ALA A   1      10.908  13.950  17.351  0.00  0.00           C
 ATOM      4  O   ALA A   1       9.916  16.090  14.936  0.00  0.00           O
 """,
-  bonds=[(0,1),(1,2),(1,3),(2,4)],
-  clusters=[[0, 1, 2, 3], [4]],
-  hinge_edges=[(-1, 1), (1, 2)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="ala_with_h",
-  pdb="""\
+        bonds=[(0, 1), (1, 2), (1, 3), (2, 4)],
+        clusters=[[0, 1, 2, 3], [4]],
+        hinge_edges=[(-1, 1), (1, 2)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="ala_with_h",
+        pdb="""\
 ATOM      0  N   ALA A   1      10.949  12.815  15.189  0.00  0.00           N
 ATOM      1  CA  ALA A   1      10.405  13.954  15.917  0.00  0.00           C
 ATOM      2  C   ALA A   1      10.779  15.262  15.227  0.00  0.00           C
@@ -143,15 +152,15 @@ ATOM      7  HB1 ALA A   1      10.627  13.138  17.778  0.00  0.00           H
 ATOM      8  HB2 ALA A   1      10.540  14.707  17.813  0.00  0.00           H
 ATOM      9  HB3 ALA A   1      11.867  14.004  17.346  0.00  0.00           H
 """,
-  bonds=[(0,1),(0,5),(1,2),(1,3),(1,6),(2,4),(6,7),(6,8),(6,9)],
-  clusters=[[0, 1, 2, 3, 6], [7, 8, 9], [5], [4]],
-  hinge_edges=[(-1, 1), (1, 6), (1, 0), (1, 2)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="tyr_with_h",
-  pdb="""\
+        bonds=[(0, 1), (0, 5), (1, 2), (1, 3), (1, 6), (2, 4), (6, 7), (6, 8), (6, 9)],
+        clusters=[[0, 1, 2, 3, 6], [7, 8, 9], [5], [4]],
+        hinge_edges=[(-1, 1), (1, 6), (1, 0), (1, 2)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="tyr_with_h",
+        pdb="""\
 ATOM      0  CG  TYR A   1      11.007   9.417   9.446  1.00  0.79           C
 ATOM      1  CD1 TYR A   1       9.923  10.155   8.940  1.00  1.42           C
 ATOM      2  CD2 TYR A   1      10.765   8.288  10.238  1.00  1.41           C
@@ -174,21 +183,44 @@ ATOM     18  HA  TYR A   1      13.536  11.638   8.870  1.00  0.85           H
 ATOM     19  O   TYR A   1      12.298  12.462   6.643  1.00  0.83           O
 ATOM     20  H   TYR A   1      10.948  12.701   9.122  1.00  0.88           H
 """,
-  bonds=[
-    (0, 1), (0, 2), (0, 12), (1, 3), (1, 6), (2, 4), (2, 7), (3, 5),
-    (3, 8), (4, 5), (4, 9), (5, 10), (10, 11), (12, 13), (12, 14),
-    (12, 16), (15, 16), (15, 20), (16, 17), (16, 18), (17, 19)],
-  clusters=[
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12],
-    [13, 14, 16], [15, 17, 18], [11], [20], [19]],
-  hinge_edges=[
-    (-1, 0), (0, 12), (12, 16), (5, 10), (16, 15), (16, 17)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="van_fragment", # PDB code 1qd8
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (0, 2),
+            (0, 12),
+            (1, 3),
+            (1, 6),
+            (2, 4),
+            (2, 7),
+            (3, 5),
+            (3, 8),
+            (4, 5),
+            (4, 9),
+            (5, 10),
+            (10, 11),
+            (12, 13),
+            (12, 14),
+            (12, 16),
+            (15, 16),
+            (15, 20),
+            (16, 17),
+            (16, 18),
+            (17, 19),
+        ],
+        clusters=[
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12],
+            [13, 14, 16],
+            [15, 17, 18],
+            [11],
+            [20],
+            [19],
+        ],
+        hinge_edges=[(-1, 0), (0, 12), (12, 16), (5, 10), (16, 15), (16, 17)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="van_fragment",  # PDB code 1qd8
+        pdb="""\
 HETATM   47  C44 VAN     1       0.718   5.411   2.269  1.00  3.66           C
 HETATM   48  C47 VAN     1       0.913   3.899   2.010  1.00  3.90           C
 HETATM   49  C48 VAN     1       1.937   3.222   2.700  1.00  3.87           C
@@ -217,24 +249,65 @@ HETATM   81  C70 VAN     1       1.069   0.287   6.838  1.00  5.82           C
 HETATM   82  O71 VAN     1       1.149   0.912   7.924  1.00  7.21           O
 HETATM   83  O80 VAN     1       0.816  -0.957   6.693  1.00  8.10           O
 """,
-  bonds=[
-    (0, 1), (0, 8), (1, 2), (1, 7), (2, 3), (3, 4), (3, 17), (4, 5), (4, 6),
-    (6, 7), (8, 9), (8, 10), (10, 11), (11, 12), (12, 13), (12, 14), (14, 15),
-    (15, 16), (15, 24), (16, 17), (16, 23), (17, 18), (18, 19), (18, 20),
-    (20, 21), (21, 22), (21, 23), (24, 25), (24, 26)],
-  clusters=[
-    [3, 15, 16, 17, 18, 19, 20, 21, 22, 23],
-    [0, 1, 2, 4, 5, 6, 7],
-    [14, 24], [25, 26], [8], [9, 10], [11], [12], [13]],
-  hinge_edges=[
-    (-1, 16), (17, 3), (16, 15), (15, 24), (1, 0), (0, 8), (8, 10),
-    (10, 11), (11, 12)],
-  loop_edges=[(12, 14)],
-  loop_edge_bendings=[(11, 14), (12, 15), (13, 14)]),
-
-pdb_extract(
-  tag="ZINC00000015", # C[C@@H](C(=O)[O-])[NH+](CCCl)CCCl
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (0, 8),
+            (1, 2),
+            (1, 7),
+            (2, 3),
+            (3, 4),
+            (3, 17),
+            (4, 5),
+            (4, 6),
+            (6, 7),
+            (8, 9),
+            (8, 10),
+            (10, 11),
+            (11, 12),
+            (12, 13),
+            (12, 14),
+            (14, 15),
+            (15, 16),
+            (15, 24),
+            (16, 17),
+            (16, 23),
+            (17, 18),
+            (18, 19),
+            (18, 20),
+            (20, 21),
+            (21, 22),
+            (21, 23),
+            (24, 25),
+            (24, 26),
+        ],
+        clusters=[
+            [3, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+            [0, 1, 2, 4, 5, 6, 7],
+            [14, 24],
+            [25, 26],
+            [8],
+            [9, 10],
+            [11],
+            [12],
+            [13],
+        ],
+        hinge_edges=[
+            (-1, 16),
+            (17, 3),
+            (16, 15),
+            (15, 24),
+            (1, 0),
+            (0, 8),
+            (8, 10),
+            (10, 11),
+            (11, 12),
+        ],
+        loop_edges=[(12, 14)],
+        loop_edge_bendings=[(11, 14), (12, 15), (13, 14)],
+    ),
+    pdb_extract(
+        tag="ZINC00000015",  # C[C@@H](C(=O)[O-])[NH+](CCCl)CCCl
+        pdb="""\
 ATOM      1  C00 LIG A   1       2.209   1.054   0.461  1.00 20.00      A    C
 ATOM      2  C01 LIG A   1       0.708   1.054   0.461  1.00 20.00      A    C
 ATOM      3  C02 LIG A   1       0.094   1.054   1.832  1.00 20.00      A    C
@@ -250,17 +323,29 @@ ATOM     12 CL11 LIG A   1      -3.974  -0.726  -0.854  1.00 20.00      A   CL
 ATOM     13  H12 LIG A   1       0.449   2.022   0.057  1.00 20.00      A    H
 ATOM     14  H13 LIG A   1       0.214   0.498  -1.470  1.00 20.00      A    H
 """,
-  bonds=[
-    (0, 1), (1, 2), (1, 5), (1, 12), (2, 3), (2, 4), (5, 6), (5, 9), (5, 13),
-    (6, 7), (7, 8), (9, 10), (10, 11)],
-  clusters=[[0, 1, 2, 5, 12], [6, 9, 13], [3, 4], [7], [8], [10], [11]],
-  hinge_edges=[(-1, 1), (1, 5), (1, 2), (5, 6), (6, 7), (5, 9), (9, 10)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="C1CCCCCCC1",
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (1, 2),
+            (1, 5),
+            (1, 12),
+            (2, 3),
+            (2, 4),
+            (5, 6),
+            (5, 9),
+            (5, 13),
+            (6, 7),
+            (7, 8),
+            (9, 10),
+            (10, 11),
+        ],
+        clusters=[[0, 1, 2, 5, 12], [6, 9, 13], [3, 4], [7], [8], [10], [11]],
+        hinge_edges=[(-1, 1), (1, 5), (1, 2), (5, 6), (6, 7), (5, 9), (9, 10)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="C1CCCCCCC1",
+        pdb="""\
 ATOM      1  C01 LIG A   1      -0.602   0.044  -1.758  1.00 20.00      A    C
 ATOM      2  C02 LIG A   1       0.946   0.044  -1.758  1.00 20.00      A    C
 ATOM      3  C03 LIG A   1       1.549   0.044  -0.333  1.00 20.00      A    C
@@ -286,23 +371,49 @@ ATOM     22 H072 LIG A   1      -1.722   0.718   0.413  1.00 20.00      A    H
 ATOM     23 H081 LIG A   1      -0.452  -1.743  -0.620  1.00 20.00      A    H
 ATOM     24 H082 LIG A   1      -2.056  -1.415  -1.253  1.00 20.00      A    H
 """,
-  bonds=[
-    (0, 1), (0, 7), (0, 8), (0, 9), (1, 2), (1, 10), (1, 11),
-    (2, 3), (2, 12), (2, 13), (3, 4), (3, 14), (3, 15),
-    (4, 5), (4, 16), (4, 17), (5, 6), (5, 18), (5, 19),
-    (6, 7), (6, 20), (6, 21), (7, 22), (7, 23)],
-  clusters=[
-    [0, 1, 7, 8, 9],
-    [2, 10, 11], [3, 12, 13], [4, 14, 15], [5, 16, 17], [6, 18, 19],
-    [20, 21], [22, 23]],
-  hinge_edges=[
-    (-1, 0), (0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (0, 7)],
-  loop_edges=[(6, 7)],
-  loop_edge_bendings=[(0, 6), (5, 7), (6, 22), (6, 23), (7, 20), (7, 21)]),
-
-pdb_extract(
-  tag="c1cc2ccc1CCc3ccc(cc3)CC2",
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (0, 7),
+            (0, 8),
+            (0, 9),
+            (1, 2),
+            (1, 10),
+            (1, 11),
+            (2, 3),
+            (2, 12),
+            (2, 13),
+            (3, 4),
+            (3, 14),
+            (3, 15),
+            (4, 5),
+            (4, 16),
+            (4, 17),
+            (5, 6),
+            (5, 18),
+            (5, 19),
+            (6, 7),
+            (6, 20),
+            (6, 21),
+            (7, 22),
+            (7, 23),
+        ],
+        clusters=[
+            [0, 1, 7, 8, 9],
+            [2, 10, 11],
+            [3, 12, 13],
+            [4, 14, 15],
+            [5, 16, 17],
+            [6, 18, 19],
+            [20, 21],
+            [22, 23],
+        ],
+        hinge_edges=[(-1, 0), (0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (0, 7)],
+        loop_edges=[(6, 7)],
+        loop_edge_bendings=[(0, 6), (5, 7), (6, 22), (6, 23), (7, 20), (7, 21)],
+    ),
+    pdb_extract(
+        tag="c1cc2ccc1CCc3ccc(cc3)CC2",
+        pdb="""\
 ATOM      1  C00 LIG A   1      -0.703  -1.478  -1.316  1.00 20.00      A    C
 ATOM      2  C01 LIG A   1       0.705  -1.478  -1.316  1.00 20.00      A    C
 ATOM      3  C02 LIG A   1       1.403  -1.478  -0.101  1.00 20.00      A    C
@@ -320,20 +431,36 @@ ATOM     14  C13 LIG A   1      -0.682   1.286   1.290  1.00 20.00      A    C
 ATOM     15  C14 LIG A   1       2.727   0.768   0.057  1.00 20.00      A    C
 ATOM     16  C15 LIG A   1       2.734  -0.755  -0.050  1.00 20.00      A    C
 """,
-  bonds=[
-    (0, 1), (0, 5), (1, 2), (2, 3), (2, 15), (3, 4), (4, 5), (5, 6),
-    (6, 7), (7, 8), (8, 9), (8, 13), (9, 10), (10, 11),
-    (11, 12), (11, 14), (12, 13), (14, 15)],
-  clusters=[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]],
-  hinge_edges=[(-1, 0)],
-  loop_edges=[],
-  loop_edge_bendings=[],
-  find_cluster_loop_repeats=1,
-  merge_clusters_with_multiple_connections_passes=2),
-
-pdb_extract(
-  tag="ZINC04656480", # C[NH+]1CC2C[NH+](CC(C1)NC2=O)C
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (0, 5),
+            (1, 2),
+            (2, 3),
+            (2, 15),
+            (3, 4),
+            (4, 5),
+            (5, 6),
+            (6, 7),
+            (7, 8),
+            (8, 9),
+            (8, 13),
+            (9, 10),
+            (10, 11),
+            (11, 12),
+            (11, 14),
+            (12, 13),
+            (14, 15),
+        ],
+        clusters=[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]],
+        hinge_edges=[(-1, 0)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+        find_cluster_loop_repeats=1,
+        merge_clusters_with_multiple_connections_passes=2,
+    ),
+    pdb_extract(
+        tag="ZINC04656480",  # C[NH+]1CC2C[NH+](CC(C1)NC2=O)C
+        pdb="""\
 ATOM      1  C01 LIG A   1       3.508  -0.708  -0.412  1.00 20.00      A    C
 ATOM      2  N02 LIG A   1       2.081  -0.708  -0.412  1.00 20.00      A    N+1
 ATOM      3  C03 LIG A   1       1.365  -0.708   0.929  1.00 20.00      A    C
@@ -350,17 +477,32 @@ ATOM     13  C13 LIG A   1      -3.570  -0.330  -0.116  1.00 20.00      A    C
 ATOM     14 H021 LIG A   1       1.870  -1.698  -0.789  1.00 20.00      A    H
 ATOM     15 H061 LIG A   1      -2.133  -1.527  -0.603  1.00 20.00      A    H
 """,
-  bonds=[
-    (0, 1), (1, 2), (1, 8), (1, 13), (2, 3), (3, 4), (3, 10), (4, 5),
-    (5, 6), (5, 12), (5, 14), (6, 7), (7, 8), (7, 9), (9, 10), (10, 11)],
-  clusters=[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]],
-  hinge_edges=[(-1, 1)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="ZINC00196949", # C1C[NH+]2C[NH+]3CC[NH+](C2)C[NH+]1C3
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (1, 2),
+            (1, 8),
+            (1, 13),
+            (2, 3),
+            (3, 4),
+            (3, 10),
+            (4, 5),
+            (5, 6),
+            (5, 12),
+            (5, 14),
+            (6, 7),
+            (7, 8),
+            (7, 9),
+            (9, 10),
+            (10, 11),
+        ],
+        clusters=[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]],
+        hinge_edges=[(-1, 1)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="ZINC00196949",  # C1C[NH+]2C[NH+]3CC[NH+](C2)C[NH+]1C3
+        pdb="""\
 ATOM      1  C01 LIG A   1      -0.794  -0.210  -2.068  1.00 20.00      A    C
 ATOM      2  C02 LIG A   1       0.777  -0.210  -2.068  1.00 20.00      A    C
 ATOM      3  N03 LIG A   1       1.469  -0.210  -0.777  1.00 20.00      A    N+1
@@ -378,18 +520,34 @@ ATOM     14 H051 LIG A   1      -0.075   2.324   1.264  1.00 20.00      A    H
 ATOM     15 H081 LIG A   1       0.030  -0.086   0.488  1.00 20.00      A    H
 ATOM     16 H111 LIG A   1      -2.490  -0.325  -1.006  1.00 20.00      A    H
 """,
-  bonds=[
-    (0, 1), (0, 10), (1, 2), (2, 3), (2, 8), (2, 12), (3, 4),
-    (4, 5), (4, 11), (4, 13), (5, 6), (6, 7), (7, 8), (7, 9), (7, 14),
-    (9, 10), (10, 11), (10, 15)],
-  clusters=[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]],
-  hinge_edges=[(-1, 0)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="ZINC03847120", # c1ccc2ccccc(c1)C2(C#N)Br
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (0, 10),
+            (1, 2),
+            (2, 3),
+            (2, 8),
+            (2, 12),
+            (3, 4),
+            (4, 5),
+            (4, 11),
+            (4, 13),
+            (5, 6),
+            (6, 7),
+            (7, 8),
+            (7, 9),
+            (7, 14),
+            (9, 10),
+            (10, 11),
+            (10, 15),
+        ],
+        clusters=[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]],
+        hinge_edges=[(-1, 0)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="ZINC03847120",  # c1ccc2ccccc(c1)C2(C#N)Br
+        pdb="""\
 ATOM      1  C01 LIG A   1      -0.432   0.012  -2.178  1.00 20.00      A    C
 ATOM      2  C02 LIG A   1       0.935   0.041  -2.063  1.00 20.00      A    C
 ATOM      3  C03 LIG A   1       1.687   0.100  -0.911  1.00 20.00      A    C
@@ -405,18 +563,32 @@ ATOM     12  C12 LIG A   1      -0.253   2.219   0.533  1.00 20.00      A    C
 ATOM     13  N13 LIG A   1      -0.445   3.287   0.205  1.00 20.00      A    N
 ATOM     14 BR14 LIG A   1      -0.504   0.332   2.810  1.00 20.00      A   BR
 """,
-  bonds=[
-    (0, 1), (0, 9), (1, 2), (2, 3), (3, 4), (3, 10), (4, 5), (5, 6),
-    (6, 7), (7, 8), (8, 9), (8, 10), (10, 11), (10, 13), (11, 12)],
-  clusters=[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]],
-  hinge_edges=[(-1, 0)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="-ZINC12362269", # C/C(=N\NC(=O)[C@H]1CC1(C2CC2)C3CC3)/c4cccc(c4)Br
-                       # atoms 16-23 removed
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (0, 9),
+            (1, 2),
+            (2, 3),
+            (3, 4),
+            (3, 10),
+            (4, 5),
+            (5, 6),
+            (6, 7),
+            (7, 8),
+            (8, 9),
+            (8, 10),
+            (10, 11),
+            (10, 13),
+            (11, 12),
+        ],
+        clusters=[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]],
+        hinge_edges=[(-1, 0)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="-ZINC12362269",  # C/C(=N\NC(=O)[C@H]1CC1(C2CC2)C3CC3)/c4cccc(c4)Br
+        # atoms 16-23 removed
+        pdb="""\
 ATOM      1  C01 LIG A   1      -1.077  -0.498  -3.089  1.00 20.00      A    C
 ATOM      2  C02 LIG A   1      -1.796  -0.766  -1.768  1.00 20.00      A    C
 ATOM      3  N03 LIG A   1      -1.180  -0.649  -0.687  1.00 20.00      A    N
@@ -433,18 +605,33 @@ ATOM     13  C13 LIG A   1       4.738   0.961   1.496  1.00 20.00      A    C
 ATOM     14  C14 LIG A   1       6.113   0.494   1.979  1.00 20.00      A    C
 ATOM     15  C15 LIG A   1       6.006   1.517   0.846  1.00 20.00      A    C
 """,
-  bonds=[
-    (0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (4, 6), (6, 7), (6, 8),
-    (7, 8), (8, 9), (8, 12), (9, 10), (9, 11), (10, 11),
-    (12, 13), (12, 14), (13, 14)],
-  clusters=[[4, 6, 7, 8, 9, 12], [10, 11], [13, 14], [3, 5], [2], [1], [0]],
-  hinge_edges=[(-1, 6), (8, 9), (8, 12), (6, 4), (4, 3), (3, 2), (2, 1)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="ZINC01638508", # C1CC1C(C2CC2)(C3CC3)O
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 4),
+            (4, 5),
+            (4, 6),
+            (6, 7),
+            (6, 8),
+            (7, 8),
+            (8, 9),
+            (8, 12),
+            (9, 10),
+            (9, 11),
+            (10, 11),
+            (12, 13),
+            (12, 14),
+            (13, 14),
+        ],
+        clusters=[[4, 6, 7, 8, 9, 12], [10, 11], [13, 14], [3, 5], [2], [1], [0]],
+        hinge_edges=[(-1, 6), (8, 9), (8, 12), (6, 4), (4, 3), (3, 2), (2, 1)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="ZINC01638508",  # C1CC1C(C2CC2)(C3CC3)O
+        pdb="""\
 ATOM      1  C01 LIG A   1      -0.942   1.244  -2.155  1.00 20.00      A    C
 ATOM      2  C02 LIG A   1       0.586   1.277  -2.221  1.00 20.00      A    C
 ATOM      3  C03 LIG A   1      -0.120   1.216  -0.865  1.00 20.00      A    C
@@ -457,17 +644,29 @@ ATOM      9  C09 LIG A   1       1.940  -1.483   0.953  1.00 20.00      A    C
 ATOM     10  C10 LIG A   1       1.427  -2.242  -0.273  1.00 20.00      A    C
 ATOM     11  O11 LIG A   1      -1.048  -0.953  -0.480  1.00 20.00      A    O
 """,
-  bonds=[
-    (0, 1), (0, 2), (1, 2), (2, 3), (3, 4), (3, 7), (3, 10),
-    (4, 5), (4, 6), (5, 6), (7, 8), (7, 9), (8, 9)],
-  clusters=[[2, 3, 4, 7, 10], [0, 1], [5, 6], [8, 9]],
-  hinge_edges=[(-1, 3), (3, 2), (3, 4), (3, 7)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="ZINC01638509", # C1CC(OC1)(C2CC2)C3CC3
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (0, 2),
+            (1, 2),
+            (2, 3),
+            (3, 4),
+            (3, 7),
+            (3, 10),
+            (4, 5),
+            (4, 6),
+            (5, 6),
+            (7, 8),
+            (7, 9),
+            (8, 9),
+        ],
+        clusters=[[2, 3, 4, 7, 10], [0, 1], [5, 6], [8, 9]],
+        hinge_edges=[(-1, 3), (3, 2), (3, 4), (3, 7)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="ZINC01638509",  # C1CC(OC1)(C2CC2)C3CC3
+        pdb="""\
 ATOM      1  C01 LIG A   1      -1.976   0.015  -1.638  1.00 20.00      A    C
 ATOM      2  C02 LIG A   1      -0.474   0.091  -1.532  1.00 20.00      A    C
 ATOM      3  C03 LIG A   1      -0.172   0.077  -0.038  1.00 20.00      A    C
@@ -480,17 +679,29 @@ ATOM      9  C09 LIG A   1       0.546  -1.212   0.356  1.00 20.00      A    C
 ATOM     10  C10 LIG A   1       1.137  -2.583   0.018  1.00 20.00      A    C
 ATOM     11  C11 LIG A   1       0.535  -2.329   1.402  1.00 20.00      A    C
 """,
-  bonds=[
-    (0, 1), (0, 4), (1, 2), (2, 3), (2, 5), (2, 8), (3, 4),
-    (5, 6), (5, 7), (6, 7), (8, 9), (8, 10), (9, 10)],
-  clusters=[[0, 1, 2, 3, 4, 5, 8], [6, 7], [9, 10]],
-  hinge_edges=[(-1, 0), (2, 5), (2, 8)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
-pdb_extract(
-  tag="ZINC00057527", # COc1cc2c(c(c1OC)OC)-c3ccc(c(=O)cc3[C@H](CC2)[NH3+])O
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (0, 4),
+            (1, 2),
+            (2, 3),
+            (2, 5),
+            (2, 8),
+            (3, 4),
+            (5, 6),
+            (5, 7),
+            (6, 7),
+            (8, 9),
+            (8, 10),
+            (9, 10),
+        ],
+        clusters=[[0, 1, 2, 3, 4, 5, 8], [6, 7], [9, 10]],
+        hinge_edges=[(-1, 0), (2, 5), (2, 8)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
+    pdb_extract(
+        tag="ZINC00057527",  # COc1cc2c(c(c1OC)OC)-c3ccc(c(=O)cc3[C@H](CC2)[NH3+])O
+        pdb="""\
 ATOM      1  C01 LIG A   1      -3.707  -1.073  -3.995  1.00 20.00      A    C
 ATOM      2  O02 LIG A   1      -2.733  -0.091  -3.791  1.00 20.00      A    O
 ATOM      3  C03 LIG A   1      -1.979  -0.103  -2.612  1.00 20.00      A    C
@@ -518,24 +729,76 @@ ATOM     24  N24 LIG A   1      -1.457   1.705   3.192  1.00 20.00      A    N+1
 ATOM     25  O25 LIG A   1       4.488  -0.926   2.503  1.00 20.00      A    O
 ATOM     26 H211 LIG A   1      -1.563   1.168   1.254  1.00 20.00      A    H
 """,
-  bonds=[
-    (0, 1), (1, 2), (2, 3), (2, 7), (3, 4), (4, 5), (4, 22), (5, 6), (5, 12),
-    (6, 7), (6, 10), (7, 8), (8, 9), (10, 11), (12, 13), (12, 19), (13, 14),
-    (14, 15), (15, 16), (15, 24), (16, 17), (16, 18), (18, 19), (19, 20),
-    (20, 21), (20, 23), (20, 25), (21, 22)],
-  clusters=[
-    [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19,
-     20, 21, 22, 23, 24, 25], [0], [9], [11]],
-  hinge_edges=[(-1, 2), (2, 1), (7, 8), (6, 10)],
-  loop_edges=[],
-  loop_edge_bendings=[],
-  find_cluster_loop_repeats=1,
-  merge_clusters_with_multiple_connections_passes=2),
-
-pdb_extract(
-  # scitbx/rigid_body/essence/tst_tardy.py, exercise_near_singular_hinges()
-  tag="collinear",
-  pdb="""\
+        bonds=[
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (2, 7),
+            (3, 4),
+            (4, 5),
+            (4, 22),
+            (5, 6),
+            (5, 12),
+            (6, 7),
+            (6, 10),
+            (7, 8),
+            (8, 9),
+            (10, 11),
+            (12, 13),
+            (12, 19),
+            (13, 14),
+            (14, 15),
+            (15, 16),
+            (15, 24),
+            (16, 17),
+            (16, 18),
+            (18, 19),
+            (19, 20),
+            (20, 21),
+            (20, 23),
+            (20, 25),
+            (21, 22),
+        ],
+        clusters=[
+            [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                10,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+            ],
+            [0],
+            [9],
+            [11],
+        ],
+        hinge_edges=[(-1, 2), (2, 1), (7, 8), (6, 10)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+        find_cluster_loop_repeats=1,
+        merge_clusters_with_multiple_connections_passes=2,
+    ),
+    pdb_extract(
+        # scitbx/rigid_body/essence/tst_tardy.py, exercise_near_singular_hinges()
+        tag="collinear",
+        pdb="""\
 ATOM      1  C1  COL     1      -1.334  -0.770   0.000  1.00  0.00
 ATOM      2  C2  COL     1      -1.334   0.770   0.000  1.00  0.00
 ATOM      3  C3  COL     1       0.000   0.000   0.000  1.00  0.00
@@ -544,36 +807,43 @@ ATOM      5  C5  COL     1       3.080   0.000   0.000  1.00  0.00
 ATOM      6  C6  COL     1       4.620   0.000   0.000  1.00  0.00
 ATOM      7  C7  COL     1       5.954  -0.770   0.000  1.00  0.00
 """,
-  bonds=[(0, 1), (0, 2), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6)],
-  clusters=[[0, 1, 2, 3, 4, 5], [6]],
-  hinge_edges=[(-1, 0), (4, 5)],
-  loop_edges=[],
-  loop_edge_bendings=[]),
-
+        bonds=[(0, 1), (0, 2), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6)],
+        clusters=[[0, 1, 2, 3, 4, 5], [6]],
+        hinge_edges=[(-1, 0), (4, 5)],
+        loop_edges=[],
+        loop_edge_bendings=[],
+    ),
 ]
 
+
 def _set_test_case_indices():
-  for i,test_case in enumerate(test_cases):
-    test_case.index = i
+    for i, test_case in enumerate(test_cases):
+        test_case.index = i
+
+
 _set_test_case_indices()
 
+
 def select_test_cases(tags_or_indices):
-  result = []
-  test_case_dict = dict([(test_case.tag,i)
-    for i,test_case in enumerate(test_cases)])
-  for tag_or_index in tags_or_indices:
-    i = test_case_dict.get(tag_or_index)
-    if (i is None):
-      try: i = int(tag_or_index)
-      except ValueError: i = -1
-      if (i < 0 or i >= len(test_cases)):
-        msg = "No such test case: %s" % tag_or_index
-        print(msg)
-        print("List of available test cases:")
-        for i,test_case in enumerate(test_cases):
-          print("  %2d: %s" % (i, test_case.tag))
-        raise Sorry(msg)
-    result.append(test_cases[i])
-  if (len(result) == 0):
-    result = test_cases
-  return result
+    result = []
+    test_case_dict = dict(
+        [(test_case.tag, i) for i, test_case in enumerate(test_cases)]
+    )
+    for tag_or_index in tags_or_indices:
+        i = test_case_dict.get(tag_or_index)
+        if i is None:
+            try:
+                i = int(tag_or_index)
+            except ValueError:
+                i = -1
+            if i < 0 or i >= len(test_cases):
+                msg = "No such test case: %s" % tag_or_index
+                print(msg)
+                print("List of available test cases:")
+                for i, test_case in enumerate(test_cases):
+                    print("  %2d: %s" % (i, test_case.tag))
+                raise Sorry(msg)
+        result.append(test_cases[i])
+    if len(result) == 0:
+        result = test_cases
+    return result

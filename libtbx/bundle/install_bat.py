@@ -1,9 +1,10 @@
 from __future__ import absolute_import, division, print_function
 import sys
 
+
 def create_script(bundle, top_modules, single_dir=False):
-  py_major, py_minor = sys.version_info[:2]
-  script = r"""@echo off
+    py_major, py_minor = sys.version_info[:2]
+    script = r"""@echo off
 
 set PYTHONHOME=
 set PYTHONSTARTUP=
@@ -14,11 +15,11 @@ set PYTHONUNBUFFERED=
 set PYTHONVERBOSE=
 set PYTHONCASEOK=1
 """
-  if (single_dir):
-    script += r"""
+    if single_dir:
+        script += r"""
 cd %(bundle)s
 """
-  script += r"""
+    script += r"""
 if not exist %(bundle)s_sources\TAG goto find_python
 echo.
 echo Build tag:
@@ -88,8 +89,9 @@ if not %%LIBTBX_BATCH_INSTALL%% == 0 goto final_exit
 pause
 :final_exit
 """
-  return script % vars()
+    return script % vars()
 
-if (__name__ == "__main__"):
-  assert len(sys.argv) == 3
-  sys.stdout.write(create_script(sys.argv[1], sys.argv[2]))
+
+if __name__ == "__main__":
+    assert len(sys.argv) == 3
+    sys.stdout.write(create_script(sys.argv[1], sys.argv[2]))

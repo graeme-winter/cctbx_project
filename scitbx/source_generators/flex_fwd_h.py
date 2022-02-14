@@ -124,17 +124,20 @@ namespace scitbx { namespace af { namespace boost_python {
 
 """
 
+
 def write(this, target_dir, common_code, full_code):
-  f = join_open(target_dir, "flex_fwd.h", "w")
-  write_this_is_auto_generated(f, this)
-  if (libtbx.env.build_options.write_full_flex_fwd_h):
-    code = full_code % motivation
-  else:
-    code = ""
-  f.write(common_code % code)
+    f = join_open(target_dir, "flex_fwd.h", "w")
+    write_this_is_auto_generated(f, this)
+    if libtbx.env.build_options.write_full_flex_fwd_h:
+        code = full_code % motivation
+    else:
+        code = ""
+    f.write(common_code % code)
+
 
 def run(target_dir):
-  write(this, target_dir, common_code, full_code)
+    write(this, target_dir, common_code, full_code)
 
-if (__name__ == "__main__"):
-  run(".")
+
+if __name__ == "__main__":
+    run(".")

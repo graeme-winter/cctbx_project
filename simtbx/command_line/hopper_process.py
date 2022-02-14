@@ -13,6 +13,7 @@ from dxtbx.model import ExperimentList
 import numpy as np
 import socket
 from libtbx.mpi4py import MPI
+
 COMM = MPI.COMM_WORLD
 
 import logging
@@ -22,7 +23,7 @@ from simtbx.modeling import predictions
 logger = logging.getLogger("dials.command_line.stills_process")
 
 
-#include scope dials.command_line.stills_process.phil_scope
+# include scope dials.command_line.stills_process.phil_scope
 phil_str = """
 include scope xfel.small_cell.command_line.small_cell_process.phil_scope
 diffBragg {
@@ -67,19 +68,23 @@ use_small_cell_indexing = False
 """
 import os
 from libtbx.phil import parse
+
 phil_scope = parse(phil_str, process_includes=True)
 
 
 class Hopper_Processor(Processor):
-
     def __init__(self, *args, **kwargs):
         super(Hopper_Processor, self).__init__(*args, **kwargs)
-        command_file = os.path.join(self.params.output.output_dir, "hopper_process_cmdline.txt")
-        if COMM.rank==0:
+        command_file = os.path.join(
+            self.params.output.output_dir, "hopper_process_cmdline.txt"
+        )
+        if COMM.rank == 0:
             with open(command_file, "w") as o:
                 o.write(" ".join(sys.argv))
                 o.close()
-            hop_proc_params_file = os.path.join(self.params.output.output_dir, "hopperProcessParams.npy")
+            hop_proc_params_file = os.path.join(
+                self.params.output.output_dir, "hopperProcessParams.npy"
+            )
             np.save(hop_proc_params_file, self.params)
         if self.params.output.composite_output:
             print("WARNING!! COMPOSITE OUTPUT NOT YET SUPPORTED, disabling for now")
@@ -88,22 +93,34 @@ class Hopper_Processor(Processor):
         self.stage1_df = None  # the pandas dataframe containing model parameters after running stage 1 (see method refine)
         self.stage1_modeler = None  # the data modeler used during stage 1 refinement
         self.modeler_dir = None  # path for writing the data modelers
-        self.known_crystal_models = None  # default flag, should be defined in stills_process init
+        self.known_crystal_models = (
+            None  # default flag, should be defined in stills_process init
+        )
 
         if self.params.silence_dials_loggers:
-            #dials.algorithms.indexing.indexer: model
-            logging.getLogger("dials.algorithms.indexing.nave_parameters").setLevel(logging.ERROR)
-            logging.getLogger("dials.algorithms.indexing.stills_indexer").setLevel(logging.ERROR)
-            logging.getLogger("dials.algorithms.refinement.refiner").setLevel(logging.ERROR)
-            logging.getLogger("dials.algorithms.refinement.reflection_manager").setLevel(logging.ERROR)
-            logging.getLogger("dials.algorithms.refinement.reflection_manager").setLevel(logging.ERROR)
+            # dials.algorithms.indexing.indexer: model
+            logging.getLogger("dials.algorithms.indexing.nave_parameters").setLevel(
+                logging.ERROR
+            )
+            logging.getLogger("dials.algorithms.indexing.stills_indexer").setLevel(
+                logging.ERROR
+            )
+            logging.getLogger("dials.algorithms.refinement.refiner").setLevel(
+                logging.ERROR
+            )
+            logging.getLogger(
+                "dials.algorithms.refinement.reflection_manager"
+            ).setLevel(logging.ERROR)
+            logging.getLogger(
+                "dials.algorithms.refinement.reflection_manager"
+            ).setLevel(logging.ERROR)
         # configure the diffBragg logger
         dblog = logging.getLogger("diffBragg.main")
         H = logging.StreamHandler()
-        if self.params.db_loglevel=='2':
+        if self.params.db_loglevel == "2":
             dblog.setLevel(logging.DEBUG)
             H.setLevel(logging.DEBUG)
-        elif self.params.db_loglevel=='1':
+        elif self.params.db_loglevel == "1":
             dblog.setLevel(logging.INFO)
             H.setLevel(logging.INFO)
         else:
@@ -116,9 +133,13 @@ class Hopper_Processor(Processor):
     def index(self, experiments, reflections):
         """optionally do small cell indexing , else default to stills process"""
         if self.params.use_small_cell_indexing:
-            max_clique_len, experiments, indexed = small_cell_index_detail(experiments, reflections, self.params, write_output=False)
+            max_clique_len, experiments, indexed = small_cell_index_detail(
+                experiments, reflections, self.params, write_output=False
+            )
         else:
-            experiments, indexed = super(Hopper_Processor, self).index(experiments, reflections)
+            experiments, indexed = super(Hopper_Processor, self).index(
+                experiments, reflections
+            )
 
         return experiments, indexed
 
@@ -134,10 +155,18 @@ class Hopper_Processor(Processor):
     def device_id(self):
         if self.params.diffBragg.refiner.randomize_devices:
             dev = np.random.choice(self.params.diffBragg.refiner.num_devices)
-            print("Rank %d will use random device %d on host %s" % (COMM.rank, dev, socket.gethostname()), flush=True)
+            print(
+                "Rank %d will use random device %d on host %s"
+                % (COMM.rank, dev, socket.gethostname()),
+                flush=True,
+            )
         else:
             dev = COMM.rank % self.params.diffBragg.refiner.num_devices
-            print("Rank %d will use fixed device %d on host %s" % (COMM.rank, dev, socket.gethostname()), flush=True)
+            print(
+                "Rank %d will use fixed device %d on host %s"
+                % (COMM.rank, dev, socket.gethostname()),
+                flush=True,
+            )
         return dev
 
     def find_spots(self, experiments):
@@ -185,22 +214,39 @@ class Hopper_Processor(Processor):
         if not self.params.skip_hopper:
             if self.params.dispatch.refine:
                 exps, ref = super(Hopper_Processor, self).refine(exps, ref)
-                print("WARNING: hopper_process will always run its own refinement, ignoring dials.refine phil scope")
+                print(
+                    "WARNING: hopper_process will always run its own refinement, ignoring dials.refine phil scope"
+                )
             self.params.dispatch.refine = False
             assert len(exps) == 1
             if self.params.reidx_obs:
                 exps, ref = self._reindex_obs(exps, self.observed)
 
-            exp, ref, self.stage1_modeler, x = hopper_utils.refine(exps[0], ref,
-                                               self.params.diffBragg,
-                                               spec=self.params.refspec,
-                                               gpu_device=self.device_id, return_modeler=True, best=best)
-            orig_exp_name = os.path.abspath(self.params.output.refined_experiments_filename)
+            exp, ref, self.stage1_modeler, x = hopper_utils.refine(
+                exps[0],
+                ref,
+                self.params.diffBragg,
+                spec=self.params.refspec,
+                gpu_device=self.device_id,
+                return_modeler=True,
+                best=best,
+            )
+            orig_exp_name = os.path.abspath(
+                self.params.output.refined_experiments_filename
+            )
             refls_name = os.path.abspath(self.params.output.indexed_filename)
             self.params.diffBragg.outdir = self.params.output.output_dir
             # TODO: what about composite mode ?
-            self.stage1_df = save_to_pandas(x, self.stage1_modeler.SIM, orig_exp_name, self.params.diffBragg,
-                                            self.stage1_modeler.E, 0, refls_name, None)
+            self.stage1_df = save_to_pandas(
+                x,
+                self.stage1_modeler.SIM,
+                orig_exp_name,
+                self.params.diffBragg,
+                self.stage1_modeler.E,
+                0,
+                refls_name,
+                None,
+            )
             exps_out = ExperimentList()
             exps_out.append(exp)
 
@@ -222,8 +268,12 @@ class Hopper_Processor(Processor):
         # cache these parameters in case they are set for stills_indexer
         tmp_tol = self.params.indexing.index_assignment.simple.hkl_tolerance
         tmp_prot = self.params.indexing.refinement_protocol.mode
-        self.params.indexing.index_assignment.simple.hkl_tolerance = 0.5  # go for broke!
-        self.params.indexing.refinement_protocol.mode = "repredict_only"  # no more refinement from dials
+        self.params.indexing.index_assignment.simple.hkl_tolerance = (
+            0.5  # go for broke!
+        )
+        self.params.indexing.refinement_protocol.mode = (
+            "repredict_only"  # no more refinement from dials
+        )
         exps, ref = self.index(exps, ref)
 
         self.params.indexing.index_assignment.simple.hkl_tolerance = tmp_tol
@@ -235,11 +285,15 @@ class Hopper_Processor(Processor):
         APATH = lambda x: os.path.abspath(os.path.join(self.modeler_dir, x))
         if self.params.save_modelers:
             modeler_fname = APATH("%s_%s" % (basename, "modeler.npy"))
-            np.save(modeler_fname, self.stage1_modeler)  # pickle the modeler, set __setstate__
+            np.save(
+                modeler_fname, self.stage1_modeler
+            )  # pickle the modeler, set __setstate__
 
         spectra_fname = APATH("%s_%s" % (basename, "spectrum.lam"))
         SIM_state_fname = APATH("%s_%s" % (basename, "SimState.txt"))
-        hopper_utils.write_SIM_logs(self.stage1_modeler.SIM, log=SIM_state_fname, lam=spectra_fname)
+        hopper_utils.write_SIM_logs(
+            self.stage1_modeler.SIM, log=SIM_state_fname, lam=spectra_fname
+        )
 
     def integrate(self, experiments, indexed):
         if self.params.skip_hopper:
@@ -307,16 +361,26 @@ class Hopper_Processor(Processor):
         # TODO: multi xtal
         # TODO: add in normal dials predictions as an option
         predicted, model = predictions.get_predicted_from_pandas(
-            self.stage1_df, self.params.diffBragg, self.observed,
-            experiments[0].identifier, self.device_id,
-            spectrum_override=self.stage1_modeler.SIM.beam.spectrum)
+            self.stage1_df,
+            self.params.diffBragg,
+            self.observed,
+            experiments[0].identifier,
+            self.device_id,
+            spectrum_override=self.stage1_modeler.SIM.beam.spectrum,
+        )
         if self.params.refine_predictions:
-            experiments, rnd2_refls = self.refine(experiments, predicted, refining_predictions=True, best=self.stage1_df)
+            experiments, rnd2_refls = self.refine(
+                experiments, predicted, refining_predictions=True, best=self.stage1_df
+            )
             # TODO: match rnd2_refls with indexed.refl and re-save indexed.refl
             predicted, model = predictions.get_predicted_from_pandas(
-                self.stage1_df, self.params.diffBragg, self.observed,
-                experiments[0].identifier, self.device_id,
-                spectrum_override=self.stage1_modeler.SIM.beam.spectrum)
+                self.stage1_df,
+                self.params.diffBragg,
+                self.observed,
+                experiments[0].identifier,
+                self.device_id,
+                spectrum_override=self.stage1_modeler.SIM.beam.spectrum,
+            )
 
         predicted.match_with_reference(indexed)
         integrator = create_integrator(self.params, experiments, predicted)
@@ -326,8 +390,11 @@ class Hopper_Processor(Processor):
 
         if self.params.partial_correct:
             integrated = predictions.normalize_by_partiality(
-                integrated, model, default_F=self.params.diffBragg.predictions.default_Famplitude,
-                gain=self.params.diffBragg.refiner.adu_per_photon)
+                integrated,
+                model,
+                default_F=self.params.diffBragg.predictions.default_Famplitude,
+                gain=self.params.diffBragg.refiner.adu_per_photon,
+            )
 
         # correct integrated intensities for absorption correction, if necessary
         for abs_params in self.params.integration.absorption_correction:
@@ -358,7 +425,7 @@ class Hopper_Processor(Processor):
                 "Removed %d reflections out of %d when applying significance filter",
                 len(integrated) - len(filtered_refls),
                 len(integrated),
-                )
+            )
             for expt_id, expt in enumerate(experiments):
                 refls = filtered_refls.select(filtered_refls["id"] == expt_id)
                 if len(refls) > 0:
@@ -451,6 +518,7 @@ class Hopper_Processor(Processor):
 
 def run(args=None):
     from dials.command_line import stills_process
+
     stills_process.Processor = Hopper_Processor
     stills_process.phil_scope = phil_scope
     script = stills_process.Script()
@@ -460,12 +528,14 @@ def run(args=None):
 
 if __name__ == "__main__":
     script_that_was_run = run()
-    if COMM.rank==0:
+    if COMM.rank == 0:
         try:
             params = script_that_was_run.params
         except AttributeError as err:
             print(err)
-            print("Looks like the program never launched, check input paths, image files, phil files, current working dir etc.. ")
+            print(
+                "Looks like the program never launched, check input paths, image files, phil files, current working dir etc.. "
+            )
             sys.exit()
         if params.combine_pandas:
             if not params.save_pandas:
@@ -473,10 +543,13 @@ if __name__ == "__main__":
                 exit()
             import pandas
             import glob
+
             fnames = glob.glob("%s/pandas/rank*/*pkl" % params.output.output_dir)
             logging.info("There are %d pandas output files to combine" % len(fnames))
             if fnames:
                 df = pandas.concat([pandas.read_pickle(f) for f in fnames])
-                combined_table = os.path.join(params.output.output_dir, "hopper_process_summary.pkl")
+                combined_table = os.path.join(
+                    params.output.output_dir, "hopper_process_summary.pkl"
+                )
                 df.to_pickle(combined_table)
                 logging.info("Saved summary pandas table: %s" % combined_table)

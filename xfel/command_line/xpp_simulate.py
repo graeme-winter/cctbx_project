@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 import iotbx.phil
 import sys
 
-master_phil="""
+master_phil = """
 data = None
   .type = str
   .multiple = True
@@ -33,23 +33,26 @@ enforce81 = False
   .help = report only on stream 81, FEE spectrometer
 """
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 def run(args):
-  phil = iotbx.phil.process_command_line(args=args, master_string=master_phil).show()
-  work_params = phil.work.extract()
-  from xfel.xpp.simulate import phil_validation
-  phil_validation(work_params)
-  if ("--help" in args) :
-    libtbx.phil.parse(master_phil.show())
-    return
+    phil = iotbx.phil.process_command_line(args=args, master_string=master_phil).show()
+    work_params = phil.work.extract()
+    from xfel.xpp.simulate import phil_validation
 
-  from xfel.xpp.simulate import application
-  application(work_params)
+    phil_validation(work_params)
+    if "--help" in args:
+        libtbx.phil.parse(master_phil.show())
+        return
 
-if (__name__ == "__main__"):
-  result = run(args=sys.argv[1:])
-  if result is None:
-    sys.exit(1)
+    from xfel.xpp.simulate import application
+
+    application(work_params)
+
+
+if __name__ == "__main__":
+    result = run(args=sys.argv[1:])
+    if result is None:
+        sys.exit(1)
 
 # typical usage for experiment LI61:
 # xpp.simulate web.user=<LCLSuser> web.password=XXXXXXXX data=xppi6115 runlimits=86,144

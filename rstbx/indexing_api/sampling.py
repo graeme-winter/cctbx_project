@@ -6,216 +6,244 @@ from rstbx.dps_core import Direction
 from annlib_ext import AnnAdaptor
 from rstbx.dps_core import sampling
 from rstbx.dps_core import Direction, directional_show
-#from libtbx.development.timers import Timer
+
+# from libtbx.development.timers import Timer
 
 # various sampling algorithms to cover the directional hemisphere
 
+
 class SimpleSampler(sampling.SimpleSamplerTool):
-  # replaces the setSampling_internal() algorithm from dptbx.cpp, with
-  # no confinement directions
+    # replaces the setSampling_internal() algorithm from dptbx.cpp, with
+    # no confinement directions
 
-  def __init__(self,maxgrid,charactergrid):
-    self.max_grid = maxgrid  # the maximum allowable grid, corresponding
-                             # to the grid sampling used in the Rossman DPS
-                             # paper; approx 7900 directions; 0.4 seconds
+    def __init__(self, maxgrid, charactergrid):
+        self.max_grid = maxgrid  # the maximum allowable grid, corresponding
+        # to the grid sampling used in the Rossman DPS
+        # paper; approx 7900 directions; 0.4 seconds
 
-    self.characteristic_grid = charactergrid # the natural grid sampling
-                             # reflective of the problem at hand =
-                             # obs. resolution limit / most conservative cell
+        self.characteristic_grid = charactergrid  # the natural grid sampling
+        # reflective of the problem at hand =
+        # obs. resolution limit / most conservative cell
 
-    sampling.SimpleSamplerTool.__init__(self,
-      min( self.max_grid, self.characteristic_grid ))
-      # initial directional sampling in radians
+        sampling.SimpleSamplerTool.__init__(
+            self, min(self.max_grid, self.characteristic_grid)
+        )
+        # initial directional sampling in radians
 
-  def get_top_solutions(self,ai,input_directions,size,cutoff_divisor):
-    # size was 30 in the Rossmann DPS paper
-    kval_cutoff = ai.getXyzSize()/cutoff_divisor;
+    def get_top_solutions(self, ai, input_directions, size, cutoff_divisor):
+        # size was 30 in the Rossmann DPS paper
+        kval_cutoff = ai.getXyzSize() / cutoff_divisor
 
-    hemisphere_solutions = flex.Direction();
-    hemisphere_solutions.reserve(size);
+        hemisphere_solutions = flex.Direction()
+        hemisphere_solutions.reserve(size)
 
-    for i in range(len(input_directions)):
-      sampled_direction = ai.fft_result(input_directions[i])
-      if sampled_direction.kval > kval_cutoff:
-        hemisphere_solutions.append(sampled_direction)
+        for i in range(len(input_directions)):
+            sampled_direction = ai.fft_result(input_directions[i])
+            if sampled_direction.kval > kval_cutoff:
+                hemisphere_solutions.append(sampled_direction)
 
-    if (hemisphere_solutions.size()<3):
-      return hemisphere_solutions
-    kvals = flex.double([
-  hemisphere_solutions[x].kval for x in range(len(hemisphere_solutions))])
+        if hemisphere_solutions.size() < 3:
+            return hemisphere_solutions
+        kvals = flex.double(
+            [hemisphere_solutions[x].kval for x in range(len(hemisphere_solutions))]
+        )
 
-    perm = flex.sort_permutation(kvals,True)
+        perm = flex.sort_permutation(kvals, True)
 
-    #  conventional algorithm; just take the top scoring hits.
-    #  use this for quick_grid, when it is known ahead of time
-    #  that many (hundreds) of directions will be retained
+        #  conventional algorithm; just take the top scoring hits.
+        #  use this for quick_grid, when it is known ahead of time
+        #  that many (hundreds) of directions will be retained
 
-    hemisphere_solutions_sort = flex.Direction(
-        [hemisphere_solutions[p] for p in perm[0:min(size,len(perm))]])
+        hemisphere_solutions_sort = flex.Direction(
+            [hemisphere_solutions[p] for p in perm[0 : min(size, len(perm))]]
+        )
 
-    return hemisphere_solutions_sort;
+        return hemisphere_solutions_sort
 
-  def hemisphere(self,ai,size,cutoff_divisor):
-    #this replaces the hemisphere() function in dptbx.cpp
-    return self.get_top_solutions(ai,self.angles,size,cutoff_divisor,
-                                  grid=self.incr)
+    def hemisphere(self, ai, size, cutoff_divisor):
+        # this replaces the hemisphere() function in dptbx.cpp
+        return self.get_top_solutions(
+            ai, self.angles, size, cutoff_divisor, grid=self.incr
+        )
+
 
 class HemisphereSampler(SimpleSampler):
-  def __init__(self,max_grid,characteristic_grid,quick_grid):
-    self.quick_grid = quick_grid
-    SimpleSampler.__init__(self,max_grid,characteristic_grid)
+    def __init__(self, max_grid, characteristic_grid, quick_grid):
+        self.quick_grid = quick_grid
+        SimpleSampler.__init__(self, max_grid, characteristic_grid)
 
-    if self.quick_grid >= self.incr:
-      #some quick benchmarks:
-      estimate_number_of_target_grids = 2.*math.pi / (self.incr*self.incr)
+        if self.quick_grid >= self.incr:
+            # some quick benchmarks:
+            estimate_number_of_target_grids = 2.0 * math.pi / (self.incr * self.incr)
 
-      estimate_number_of_quick_grids = 2.*math.pi / (self.quick_grid*self.quick_grid)
+            estimate_number_of_quick_grids = (
+                2.0 * math.pi / (self.quick_grid * self.quick_grid)
+            )
 
-      self.second_round_sampling = (
-        math.pi*self.quick_grid*self.quick_grid)/(self.incr*self.incr)
+            self.second_round_sampling = (
+                math.pi * self.quick_grid * self.quick_grid
+            ) / (self.incr * self.incr)
 
-      self.target_size_for_quick_grid_answer_vector = int(
-        estimate_number_of_quick_grids /2./self.second_round_sampling)
+            self.target_size_for_quick_grid_answer_vector = int(
+                estimate_number_of_quick_grids / 2.0 / self.second_round_sampling
+            )
 
-  def get_top_solutions(self,ai,input_directions,size,cutoff_divisor,grid):
-    # size was 30 in the Rossmann DPS paper
+    def get_top_solutions(self, ai, input_directions, size, cutoff_divisor, grid):
+        # size was 30 in the Rossmann DPS paper
 
-    kval_cutoff = ai.getXyzSize()/cutoff_divisor;
+        kval_cutoff = ai.getXyzSize() / cutoff_divisor
 
-    hemisphere_solutions = flex.Direction();
-    hemisphere_solutions.reserve(size);
-    for i in range(len(input_directions)):
-      D = sampled_direction = ai.fft_result(input_directions[i])
+        hemisphere_solutions = flex.Direction()
+        hemisphere_solutions.reserve(size)
+        for i in range(len(input_directions)):
+            D = sampled_direction = ai.fft_result(input_directions[i])
 
-      if D.real < self.max_cell_input and sampled_direction.kval > kval_cutoff:
-        #directional_show(D, "ddd %5d"%i)
-        hemisphere_solutions.append(sampled_direction)
+            if D.real < self.max_cell_input and sampled_direction.kval > kval_cutoff:
+                # directional_show(D, "ddd %5d"%i)
+                hemisphere_solutions.append(sampled_direction)
 
-    if (hemisphere_solutions.size()<3):
-      return hemisphere_solutions
-    kvals = flex.double([
-  hemisphere_solutions[x].kval for x in range(len(hemisphere_solutions))])
+        if hemisphere_solutions.size() < 3:
+            return hemisphere_solutions
+        kvals = flex.double(
+            [hemisphere_solutions[x].kval for x in range(len(hemisphere_solutions))]
+        )
 
-    perm = flex.sort_permutation(kvals,True)
+        perm = flex.sort_permutation(kvals, True)
 
-    #  need to be more clever than just taking the top 30.
-    #  one huge cluster around a strong basis direction could dominate the
-    #  whole hemisphere map, preventing the discovery of three basis vectors
+        #  need to be more clever than just taking the top 30.
+        #  one huge cluster around a strong basis direction could dominate the
+        #  whole hemisphere map, preventing the discovery of three basis vectors
 
-    perm_idx = 0
-    unique_clusters = 0
-    hemisphere_solutions_sort = flex.Direction()
-    while perm_idx < len(perm) and \
-          unique_clusters < size:
-      test_item = hemisphere_solutions[perm[perm_idx]]
-      direction_ok = True
-      for list_item in hemisphere_solutions_sort:
-        distance = math.sqrt(math.pow(list_item.dvec[0]-test_item.dvec[0],2) +
-                     math.pow(list_item.dvec[1]-test_item.dvec[1],2) +
-                     math.pow(list_item.dvec[2]-test_item.dvec[2],2)
-                     )
-        if distance < 0.087: #i.e., 5 degrees
-           direction_ok=False
-           break
-      if direction_ok:
-        unique_clusters+=1
-        hemisphere_solutions_sort.append(test_item)
-      perm_idx+=1
+        perm_idx = 0
+        unique_clusters = 0
+        hemisphere_solutions_sort = flex.Direction()
+        while perm_idx < len(perm) and unique_clusters < size:
+            test_item = hemisphere_solutions[perm[perm_idx]]
+            direction_ok = True
+            for list_item in hemisphere_solutions_sort:
+                distance = math.sqrt(
+                    math.pow(list_item.dvec[0] - test_item.dvec[0], 2)
+                    + math.pow(list_item.dvec[1] - test_item.dvec[1], 2)
+                    + math.pow(list_item.dvec[2] - test_item.dvec[2], 2)
+                )
+                if distance < 0.087:  # i.e., 5 degrees
+                    direction_ok = False
+                    break
+            if direction_ok:
+                unique_clusters += 1
+                hemisphere_solutions_sort.append(test_item)
+            perm_idx += 1
 
-    return hemisphere_solutions_sort;
+        return hemisphere_solutions_sort
 
-  def hemisphere(self,ai,max_cell,size = 30,cutoff_divisor = 4.):
-    self.max_cell_input = max_cell
-    if self.quick_grid >= self.incr: #trigger adaptive sampling
-      quick_directions = SimpleSampler.construct_hemisphere_grid(
-        self,self.quick_grid)
-      quick_sampling = SimpleSampler.get_top_solutions(
-        self,ai,quick_directions,
-        self.target_size_for_quick_grid_answer_vector,
-        cutoff_divisor = 10.)
-      self.angles = SimpleSampler.construct_hemisphere_grid(
-        self,self.incr)
-      self.restrict_target_angles_to_quick_winners(quick_sampling)
-      # now the hemisphere search will be restricted to the adaptive
-      # sample rather than the entire hemisphere
-    else:
-      self.angles = SimpleSampler.construct_hemisphere_grid(
-        self,self.incr)
+    def hemisphere(self, ai, max_cell, size=30, cutoff_divisor=4.0):
+        self.max_cell_input = max_cell
+        if self.quick_grid >= self.incr:  # trigger adaptive sampling
+            quick_directions = SimpleSampler.construct_hemisphere_grid(
+                self, self.quick_grid
+            )
+            quick_sampling = SimpleSampler.get_top_solutions(
+                self,
+                ai,
+                quick_directions,
+                self.target_size_for_quick_grid_answer_vector,
+                cutoff_divisor=10.0,
+            )
+            self.angles = SimpleSampler.construct_hemisphere_grid(self, self.incr)
+            self.restrict_target_angles_to_quick_winners(quick_sampling)
+            # now the hemisphere search will be restricted to the adaptive
+            # sample rather than the entire hemisphere
+        else:
+            self.angles = SimpleSampler.construct_hemisphere_grid(self, self.incr)
 
-    unrefined_basis_vectors = self.get_top_solutions(ai,self.angles,size,
-      cutoff_divisor,grid=self.incr)
+        unrefined_basis_vectors = self.get_top_solutions(
+            ai, self.angles, size, cutoff_divisor, grid=self.incr
+        )
 
-    #now refine them by the first method
-    grid_refined_vectors = self.refine_top_solutions_by_grid_search(
-      old_solutions = unrefined_basis_vectors, ai = ai)
+        # now refine them by the first method
+        grid_refined_vectors = self.refine_top_solutions_by_grid_search(
+            old_solutions=unrefined_basis_vectors, ai=ai
+        )
 
-    ai.setSolutions(grid_refined_vectors)
+        ai.setSolutions(grid_refined_vectors)
 
-  def restrict_target_angles_to_quick_winners(self,quick_sampling):
+    def restrict_target_angles_to_quick_winners(self, quick_sampling):
 
-    # find which target_grid directions are near neighbors to
-    # the quick_sampling winners from the first round of testing.
-    # in the second round, restrict the calculation of FFTs to those directions
+        # find which target_grid directions are near neighbors to
+        # the quick_sampling winners from the first round of testing.
+        # in the second round, restrict the calculation of FFTs to those directions
 
-    self.restricted = flex.Direction()
-    target = flex.double()
-    for iz in self.angles:
-      # fairly inefficient in Python; expect big improvement in C++
-      v = iz.dvec
-      target.append(v[0]);target.append(v[1]);target.append(v[2]);
-    kn = int(2 *self.second_round_sampling)
+        self.restricted = flex.Direction()
+        target = flex.double()
+        for iz in self.angles:
+            # fairly inefficient in Python; expect big improvement in C++
+            v = iz.dvec
+            target.append(v[0])
+            target.append(v[1])
+            target.append(v[2])
+        kn = int(2 * self.second_round_sampling)
 
-    #construct k-d tree for the reference set
-    A = AnnAdaptor(data = target, dim = 3, k = kn)
+        # construct k-d tree for the reference set
+        A = AnnAdaptor(data=target, dim=3, k=kn)
 
-    query = flex.double()
-    for j in quick_sampling:
-      v = j.dvec
-      query.append(v[0]);query.append(v[1]); query.append(v[2]);
-      if abs((math.pi/2.) - j.psi) < 0.0001: #take care of equatorial boundary
-        query.append(-v[0]);query.append(-v[1]); query.append(-v[2]);
+        query = flex.double()
+        for j in quick_sampling:
+            v = j.dvec
+            query.append(v[0])
+            query.append(v[1])
+            query.append(v[2])
+            if (
+                abs((math.pi / 2.0) - j.psi) < 0.0001
+            ):  # take care of equatorial boundary
+                query.append(-v[0])
+                query.append(-v[1])
+                query.append(-v[2])
 
-    A.query(query) #find nearest neighbors of query points
-    neighbors = flex.sqrt(A.distances)
-    neighborid = A.nn
+        A.query(query)  # find nearest neighbors of query points
+        neighbors = flex.sqrt(A.distances)
+        neighborid = A.nn
 
-    accept_flag = flex.bool(len(self.angles))
-    for idx in range(len(neighbors)):
-      # use small angle approximation to test if target is within desired radius
-      if neighbors[idx] < self.quick_grid:
-        accept_flag[neighborid[idx]] = True
+        accept_flag = flex.bool(len(self.angles))
+        for idx in range(len(neighbors)):
+            # use small angle approximation to test if target is within desired radius
+            if neighbors[idx] < self.quick_grid:
+                accept_flag[neighborid[idx]] = True
 
-    #go through all of the original target angles
-    for iz in range(len(self.angles)):
-      if accept_flag[iz]:
-        self.restricted.append(self.angles[iz])
+        # go through all of the original target angles
+        for iz in range(len(self.angles)):
+            if accept_flag[iz]:
+                self.restricted.append(self.angles[iz])
 
-    self.angles = self.restricted
+        self.angles = self.restricted
 
-  def refine_top_solutions_by_grid_search(self, old_solutions, ai):
-    new_solutions = flex.Direction()
-    final_target_grid = self.characteristic_grid / 100.
-    for item in old_solutions:
-      new_solutions.append(ai.refine_direction(
-        candidate = item,
-        current_grid = self.incr,
-        target_grid = final_target_grid))
-    return new_solutions
+    def refine_top_solutions_by_grid_search(self, old_solutions, ai):
+        new_solutions = flex.Direction()
+        final_target_grid = self.characteristic_grid / 100.0
+        for item in old_solutions:
+            new_solutions.append(
+                ai.refine_direction(
+                    candidate=item,
+                    current_grid=self.incr,
+                    target_grid=final_target_grid,
+                )
+            )
+        return new_solutions
 
-def hemisphere_shortcut(ai,characteristic_sampling,max_cell):
+
+def hemisphere_shortcut(ai, characteristic_sampling, max_cell):
     H = HemisphereSampler(
-      max_grid = 0.029,
-      characteristic_grid = characteristic_sampling,
-      quick_grid = 0.016) # all grid parameters in radians
-    H.hemisphere(ai,max_cell,size=30,cutoff_divisor=4.)
-def hemisphere_refine_shortcut(ai,characteristic_sampling,unrefined):
+        max_grid=0.029, characteristic_grid=characteristic_sampling, quick_grid=0.016
+    )  # all grid parameters in radians
+    H.hemisphere(ai, max_cell, size=30, cutoff_divisor=4.0)
+
+
+def hemisphere_refine_shortcut(ai, characteristic_sampling, unrefined):
     H = HemisphereSampler(
-      max_grid = 0.029,
-      characteristic_grid = characteristic_sampling,
-      quick_grid = 0.016) # all grid parameters in radians
-    cutoff_divisor=4.
-    H.kval_cutoff = ai.getXyzSize()/cutoff_divisor;
-    return H.refine_top_solutions_by_grid_search(unrefined,ai)
+        max_grid=0.029, characteristic_grid=characteristic_sampling, quick_grid=0.016
+    )  # all grid parameters in radians
+    cutoff_divisor = 4.0
+    H.kval_cutoff = ai.getXyzSize() / cutoff_divisor
+    return H.refine_top_solutions_by_grid_search(unrefined, ai)
 
 
 """New adaptive algorithms to provide directional sampling of FFT's; July 2006.

@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.secondary_structure import sec_str_master_phil_str, manager
 import iotbx.pdb.hierarchy
@@ -7,7 +6,8 @@ from libtbx.utils import null_out
 
 
 def exercise_helix_bonding_pattern_with_insertions():
-  alpha_h1_ends = iotbx.pdb.hierarchy.input(pdb_string="""\
+    alpha_h1_ends = iotbx.pdb.hierarchy.input(
+        pdb_string="""\
 ATOM      1  N   ALA     1       1.643  -2.366  -1.408  1.00  0.00           N
 ATOM      2  CA  ALA     1       1.280  -3.608  -2.069  1.00  0.00           C
 ATOM      3  C   ALA     1      -0.114  -3.466  -2.684  1.00  0.00           C
@@ -59,9 +59,11 @@ ATOM     48  C   ALA     9A     -5.242  -1.695 -15.130  1.00  0.00           C
 ATOM     49  O   ALA     9A     -5.880  -1.605 -16.177  1.00  0.00           O
 ATOM     50  CB  ALA     9A     -5.358   0.040 -13.274  1.00  0.00           C
 TER
-""")
+"""
+    )
 
-  alpha_h1_ac = iotbx.pdb.hierarchy.input(pdb_string="""\
+    alpha_h1_ac = iotbx.pdb.hierarchy.input(
+        pdb_string="""\
 ATOM      1  N  AALA     1       1.643  -2.366  -1.408  0.50  0.00           N
 ATOM      2  CA AALA     1       1.280  -3.608  -2.069  0.50  0.00           C
 ATOM      3  C  AALA     1      -0.114  -3.466  -2.684  0.50  0.00           C
@@ -128,59 +130,63 @@ ATOM     64  C  BALA     9A     -5.142  -1.695 -15.130  0.50  0.00           C
 ATOM     65  O  BALA     9A     -5.780  -1.605 -16.177  0.50  0.00           O
 ATOM     66  CB BALA     9A     -5.258   0.040 -13.274  0.50  0.00           C
 END
-""")
+"""
+    )
 
-  alpha_annot_1_1 = """\
+    alpha_annot_1_1 = """\
 HELIX    1   1 ALA      1  ALA      9A 1                                  10
 """
-  alpha_annot_1_2 = """\
+    alpha_annot_1_2 = """\
 HELIX    1   1 ALA      1A ALA      9  1                                  10
 """
-  alpha_annot_1_3 = """\
+    alpha_annot_1_3 = """\
 HELIX    1   1 ALA      1A ALA      9A 1                                  10
 """
-  alpha_annot_1_4 = """\
+    alpha_annot_1_4 = """\
 HELIX    1   1 ALA      1  ALA      9  1                                  10
 """
 
-  alpha_annot_2 = """\
+    alpha_annot_2 = """\
 HELIX    1   1 ALA      2  ALA      5  1                                  10
 """
 
-  log = null_out()
-  n_hbonds = []
-  n_hangles = []
-  for pdb_inp, recs in [
-                        (alpha_h1_ends, alpha_annot_1_1), #6
-                        (alpha_h1_ends, alpha_annot_1_2), #4
-                        (alpha_h1_ends, alpha_annot_1_3), #5
-                        (alpha_h1_ends, alpha_annot_1_4), #5
-                        (alpha_h1_ac, alpha_annot_1_1), #9
-                        (alpha_h1_ac, alpha_annot_1_2), #5
-                        (alpha_h1_ac, alpha_annot_1_3), #7
-                        (alpha_h1_ac, alpha_annot_1_4), #7
-                        ]:
-    ioss_annotation = ioss.annotation.from_records(records = recs.split('\n'))
-    ann = ioss_annotation.as_restraint_groups(prefix_scope="secondary_structure")
-    defpars = iotbx.phil.parse(sec_str_master_phil_str)
-    custom_pars = defpars.fetch(iotbx.phil.parse(ann))
-    custom_pars_ex = custom_pars.extract()
-    ss_manager = manager(
-                pdb_inp.hierarchy,
-                sec_str_from_pdb_file=None,
-                params=custom_pars_ex.secondary_structure,
-                verbose=-1)
-    proxies_for_grm, hangles = ss_manager.create_protein_hbond_proxies(
-      annotation= None,
-      log          = log)
-    n_hbonds.append(proxies_for_grm.size())
-    n_hangles.append(hangles.size())
-  print(n_hbonds, n_hangles)
-  assert n_hbonds ==  [6,   4,  5,  5,  9,  5,  7,  7]
-  assert n_hangles == [18, 12, 15, 15, 28, 16, 22, 22]
+    log = null_out()
+    n_hbonds = []
+    n_hangles = []
+    for pdb_inp, recs in [
+        (alpha_h1_ends, alpha_annot_1_1),  # 6
+        (alpha_h1_ends, alpha_annot_1_2),  # 4
+        (alpha_h1_ends, alpha_annot_1_3),  # 5
+        (alpha_h1_ends, alpha_annot_1_4),  # 5
+        (alpha_h1_ac, alpha_annot_1_1),  # 9
+        (alpha_h1_ac, alpha_annot_1_2),  # 5
+        (alpha_h1_ac, alpha_annot_1_3),  # 7
+        (alpha_h1_ac, alpha_annot_1_4),  # 7
+    ]:
+        ioss_annotation = ioss.annotation.from_records(records=recs.split("\n"))
+        ann = ioss_annotation.as_restraint_groups(prefix_scope="secondary_structure")
+        defpars = iotbx.phil.parse(sec_str_master_phil_str)
+        custom_pars = defpars.fetch(iotbx.phil.parse(ann))
+        custom_pars_ex = custom_pars.extract()
+        ss_manager = manager(
+            pdb_inp.hierarchy,
+            sec_str_from_pdb_file=None,
+            params=custom_pars_ex.secondary_structure,
+            verbose=-1,
+        )
+        proxies_for_grm, hangles = ss_manager.create_protein_hbond_proxies(
+            annotation=None, log=log
+        )
+        n_hbonds.append(proxies_for_grm.size())
+        n_hangles.append(hangles.size())
+    print(n_hbonds, n_hangles)
+    assert n_hbonds == [6, 4, 5, 5, 9, 5, 7, 7]
+    assert n_hangles == [18, 12, 15, 15, 28, 16, 22, 22]
+
 
 def exercise_sheets_bonding_pattern_with_insertions():
-  pdb_apar_input = iotbx.pdb.hierarchy.input(pdb_string = """\
+    pdb_apar_input = iotbx.pdb.hierarchy.input(
+        pdb_string="""\
 SCRYST1   46.460   46.460  193.210  90.00  90.00 120.00 P 31 2 1
 SCALE1      0.021524  0.012427  0.000000        0.00000
 SCALE2      0.000000  0.024854  0.000000        0.00000
@@ -268,9 +274,11 @@ ATOM    236  C   SER A  35A     24.387 -22.368  -1.553  1.00  5.05           C
 ATOM    237  O   SER A  35A     24.929 -22.095  -0.497  1.00  6.22           O
 ATOM    238  CB  SER A  35A     23.881 -21.071  -3.639  1.00  5.69           C
 ATOM    239  OG  SER A  35A     25.213 -20.561  -3.633  1.00  7.12           O
-""")
+"""
+    )
 
-  pdb_par_input = iotbx.pdb.hierarchy.input(pdb_string = """\
+    pdb_par_input = iotbx.pdb.hierarchy.input(
+        pdb_string="""\
 CRYST1   46.460   46.460  193.210  90.00  90.00 120.00 P 31 2 1
 SCALE1      0.021524  0.012427  0.000000        0.00000
 SCALE2      0.000000  0.024854  0.000000        0.00000
@@ -346,9 +354,11 @@ ATOM    222  O   ALA A  45A      8.479 -27.750  -7.000  1.00  4.79           O
 ATOM    223  CB  ALA A  45A      6.607 -27.026  -9.678  1.00  4.52           C
 TER
 END
-""")
+"""
+    )
 
-  pdb_par_ac_input = iotbx.pdb.hierarchy.input(pdb_string = """\
+    pdb_par_ac_input = iotbx.pdb.hierarchy.input(
+        pdb_string="""\
 CRYST1   46.460   46.460  193.210  90.00  90.00 120.00 P 31 2 1
 SCALE1      0.021524  0.012427  0.000000        0.00000
 SCALE2      0.000000  0.024854  0.000000        0.00000
@@ -434,73 +444,76 @@ ATOM     78  O   ALA A  46       8.479 -27.750  -7.000  1.00  4.79           O
 ATOM     79  CB  ALA A  46       6.607 -27.026  -9.678  1.00  4.52           C
 TER      80      ALA A  46
 END
-""")
+"""
+    )
 
-  s_apar_records1 = """\
+    s_apar_records1 = """\
 SHEET    1   A 2 TYR A   2  VAL A   7  0
 SHEET    2   A 2 MET A  31  SER A  35A-1  O  ALA A  35A  N  ALA A   2
 """
-  s_apar_records2 = """\
+    s_apar_records2 = """\
 SHEET    1   A 2 TYR A   2  VAL A   7  0
 SHEET    2   A 2 MET A  31  SER A  35A-1  O  ALA A  32   N  ALA A   6
 """
-  s_apar_records3 = """\
+    s_apar_records3 = """\
 SHEET    1   A 2 SER A   2A VAL A   7  0
 SHEET    2   A 2 MET A  31  SER A  35A-1  O  ALA A  32   N  ALA A   6
 """
 
-  s_par_records1 = """\
+    s_par_records1 = """\
 SHEET    1   B 2 ALA A  15  THR A  20A 0
 SHEET    2   B 2 GLN A  40  ALA A  45A 1  O  GLN A  40   N  THR A  15A
 """
-  s_par_records2 = """\
+    s_par_records2 = """\
 SHEET    1   B 2 ALA A  15  THR A  20A 0
 SHEET    2   B 2 GLN A  40  ALA A  45A 1  O  GLN A  44   N  THR A  20
 """
-  s_par_records3 = """\
+    s_par_records3 = """\
 SHEET    1   B 2 ALA A  15A THR A  20A 0
 SHEET    2   B 2 GLN A  40  ALA A  45  1  O  GLN A  44   N  THR A  20
 """
 
-  log = null_out()
-  # defpars = sec_str_master_phil
-  n_hbonds = []
-  n_hangles = []
-  for pdb_inp, recs in [
-                        (pdb_apar_input, s_apar_records1), # 6
-                        (pdb_apar_input, s_apar_records2), # 6
-                        (pdb_apar_input, s_apar_records3), # 4
-                        (pdb_par_input,  s_par_records1), # 6
-                        (pdb_par_input,  s_par_records2), # 6
-                        (pdb_par_input,  s_par_records3), # 5
-                        (pdb_par_ac_input,  s_par_records1), # 8 hbonds
-                        ]:
-    ioss_annotation = ioss.annotation.from_records(records = recs.split('\n'))
-    ann = ioss_annotation.as_restraint_groups(prefix_scope="secondary_structure")
-    defpars = iotbx.phil.parse(sec_str_master_phil_str)
-    custom_pars = defpars.fetch(iotbx.phil.parse(ann))
-    custom_pars_ex = custom_pars.extract()
-    ss_manager = manager(
-                pdb_inp.hierarchy,
-                sec_str_from_pdb_file=None,
-                params=custom_pars_ex.secondary_structure,
-                verbose=-1)
-    proxies_for_grm, hangles = ss_manager.create_protein_hbond_proxies(
-      annotation= None,
-      log          = log)
-    # print proxies_for_grm.size()
-    n_hbonds.append(proxies_for_grm.size())
-    n_hangles.append(hangles.size())
-  print(n_hbonds, n_hangles)
-  assert n_hbonds  == [6, 6, 4, 6, 6, 5, 8]
-  assert n_hangles == [15, 15, 12, 18, 18, 12, 24]
+    log = null_out()
+    # defpars = sec_str_master_phil
+    n_hbonds = []
+    n_hangles = []
+    for pdb_inp, recs in [
+        (pdb_apar_input, s_apar_records1),  # 6
+        (pdb_apar_input, s_apar_records2),  # 6
+        (pdb_apar_input, s_apar_records3),  # 4
+        (pdb_par_input, s_par_records1),  # 6
+        (pdb_par_input, s_par_records2),  # 6
+        (pdb_par_input, s_par_records3),  # 5
+        (pdb_par_ac_input, s_par_records1),  # 8 hbonds
+    ]:
+        ioss_annotation = ioss.annotation.from_records(records=recs.split("\n"))
+        ann = ioss_annotation.as_restraint_groups(prefix_scope="secondary_structure")
+        defpars = iotbx.phil.parse(sec_str_master_phil_str)
+        custom_pars = defpars.fetch(iotbx.phil.parse(ann))
+        custom_pars_ex = custom_pars.extract()
+        ss_manager = manager(
+            pdb_inp.hierarchy,
+            sec_str_from_pdb_file=None,
+            params=custom_pars_ex.secondary_structure,
+            verbose=-1,
+        )
+        proxies_for_grm, hangles = ss_manager.create_protein_hbond_proxies(
+            annotation=None, log=log
+        )
+        # print proxies_for_grm.size()
+        n_hbonds.append(proxies_for_grm.size())
+        n_hangles.append(hangles.size())
+    print(n_hbonds, n_hangles)
+    assert n_hbonds == [6, 6, 4, 6, 6, 5, 8]
+    assert n_hangles == [15, 15, 12, 18, 18, 12, 24]
 
 
 def exercise_phil_generation():
-  log = null_out()
-  defpars = sec_str_master_phil.fetch()
+    log = null_out()
+    defpars = sec_str_master_phil.fetch()
 
-if __name__ == "__main__" :
-  exercise_helix_bonding_pattern_with_insertions()
-  exercise_sheets_bonding_pattern_with_insertions()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_helix_bonding_pattern_with_insertions()
+    exercise_sheets_bonding_pattern_with_insertions()
+    print("OK")

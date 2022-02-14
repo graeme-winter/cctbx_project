@@ -1,10 +1,10 @@
-
 from __future__ import absolute_import, division, print_function
 from libtbx.utils import null_out
 from six.moves import cStringIO as StringIO
 
+
 def exercise_dynamics_command():
-  pdb_in = """\
+    pdb_in = """\
 CRYST1   21.348   25.003   18.365  90.00  90.00  90.00 P 1
 ATOM      1  N   SER A   1      10.914   5.773  13.123  1.00  0.00
 ATOM      2  CA  SER A   1      12.373   5.809  13.123  1.00  0.00
@@ -64,34 +64,38 @@ ATOM     55  CB  ASN A  11       5.780  16.740   5.000  1.00  0.00
 TER
 END
 """
-  open("tst_geo_min_ss_phil.pdb", "w").write(pdb_in)
-  from mmtbx.command_line import secondary_structure_restraints
-  out = StringIO()
-  args = [
-    "tst_geo_min_ss_phil.pdb",
-  ]
-  secondary_structure_restraints.run(args, out=out, log=null_out())
-  # phenix.geometry_minimization
-  from mmtbx.command_line import dynamics
-  open("tst_geo_min_ss_phil.phil", "w").write(out.getvalue())
-  args = [
-    "tst_geo_min_ss_phil.pdb",
-    "tst_geo_min_ss_phil.phil",
-    "secondary_structure.enabled=True",
-  ]
-  dynamics.run(args=args, log=null_out())
-  pdb_new = "tst_geo_min_ss_phil_shaken.pdb"
-  from iotbx import file_reader
-  pdb_in = file_reader.any_file("tst_geo_min_ss_phil.pdb")
-  pdb_in.assert_file_type("pdb")
-  xrs_in = pdb_in.file_object.xray_structure_simple()
-  pdb_out = file_reader.any_file(pdb_new)
-  pdb_out.assert_file_type("pdb")
-  xrs_out = pdb_out.file_object.xray_structure_simple()
-  sites_in = xrs_in.sites_cart()
-  sites_out = xrs_out.sites_cart()
-  assert (sites_in.rms_difference(sites_out) > 0.3)
+    open("tst_geo_min_ss_phil.pdb", "w").write(pdb_in)
+    from mmtbx.command_line import secondary_structure_restraints
 
-if (__name__ == "__main__"):
-  exercise_dynamics_command()
-  print("OK")
+    out = StringIO()
+    args = [
+        "tst_geo_min_ss_phil.pdb",
+    ]
+    secondary_structure_restraints.run(args, out=out, log=null_out())
+    # phenix.geometry_minimization
+    from mmtbx.command_line import dynamics
+
+    open("tst_geo_min_ss_phil.phil", "w").write(out.getvalue())
+    args = [
+        "tst_geo_min_ss_phil.pdb",
+        "tst_geo_min_ss_phil.phil",
+        "secondary_structure.enabled=True",
+    ]
+    dynamics.run(args=args, log=null_out())
+    pdb_new = "tst_geo_min_ss_phil_shaken.pdb"
+    from iotbx import file_reader
+
+    pdb_in = file_reader.any_file("tst_geo_min_ss_phil.pdb")
+    pdb_in.assert_file_type("pdb")
+    xrs_in = pdb_in.file_object.xray_structure_simple()
+    pdb_out = file_reader.any_file(pdb_new)
+    pdb_out.assert_file_type("pdb")
+    xrs_out = pdb_out.file_object.xray_structure_simple()
+    sites_in = xrs_in.sites_cart()
+    sites_out = xrs_out.sites_cart()
+    assert sites_in.rms_difference(sites_out) > 0.3
+
+
+if __name__ == "__main__":
+    exercise_dynamics_command()
+    print("OK")

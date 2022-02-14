@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.rotamer.rotamer_eval import find_rotarama_data_dir
 from mmtbx.validation import rotalyze
@@ -12,114 +11,110 @@ from six.moves import cStringIO as StringIO
 import os.path
 from six.moves import zip
 
+
 def exercise_rotalyze():
-  regression_pdb = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/jcm.pdb",
-    test=os.path.isfile)
-  if (regression_pdb is None):
-    print("Skipping exercise_rotalyze(): input pdb (jcm.pdb) not available")
-    return
-  if (find_rotarama_data_dir(optional=True) is None):
-    print("Skipping exercise_rotalyze(): rotarama_data directory not available")
-    return
-  pdb_in = file_reader.any_file(file_name=regression_pdb)
-  hierarchy = pdb_in.file_object.hierarchy
-  pdb_io = pdb.input(file_name=regression_pdb)
-  r = rotalyze.rotalyze(
-    pdb_hierarchy=hierarchy,
-    outliers_only=True)
-  out = StringIO()
-  r.show_old_output(out=out, verbose=False)
-  output = out.getvalue()
-  assert output.count("OUTLIER") == 246, output.count("OUTLIER")
-  assert output.count(":") == 984, output.count(":")
-  output_lines = output.splitlines()
-  assert len(output_lines) == 123
-  for lines in output_lines:
-    assert float(lines[12:15]) <= 1.0
-
-  r = rotalyze.rotalyze(
-    pdb_hierarchy=hierarchy,
-    outliers_only=False)
-  for unpickle in [False, True] :
-    if unpickle :
-      r = loads(dumps(r))
+    regression_pdb = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/jcm.pdb", test=os.path.isfile
+    )
+    if regression_pdb is None:
+        print("Skipping exercise_rotalyze(): input pdb (jcm.pdb) not available")
+        return
+    if find_rotarama_data_dir(optional=True) is None:
+        print("Skipping exercise_rotalyze(): rotarama_data directory not available")
+        return
+    pdb_in = file_reader.any_file(file_name=regression_pdb)
+    hierarchy = pdb_in.file_object.hierarchy
+    pdb_io = pdb.input(file_name=regression_pdb)
+    r = rotalyze.rotalyze(pdb_hierarchy=hierarchy, outliers_only=True)
     out = StringIO()
     r.show_old_output(out=out, verbose=False)
-    for outlier in r.results :
-      assert (len(outlier.xyz) == 3)
     output = out.getvalue()
-    assert output.count("OUTLIER") == 246
-    assert output.count(":") == 5144, output.count(":")
-    assert output.count("p") == 120
-    assert output.count("m") == 324
-    assert output.count("t") == 486
+    assert output.count("OUTLIER") == 246, output.count("OUTLIER")
+    assert output.count(":") == 984, output.count(":")
     output_lines = output.splitlines()
-    #for line in output_lines:
-    #  print line
-    #STOP()
-    assert len(output_lines) == 643
-    line_indices = [0,1,2,42,43,168,169,450,587,394,641,642]
+    assert len(output_lines) == 123
+    for lines in output_lines:
+        assert float(lines[12:15]) <= 1.0
 
-#    top500 version
-    line_values = [
-     " A  14  MET:1.00:3.3:29.2:173.3:287.9::Favored:ptm",
-     " A  15  SER:1.00:0.1:229.0::::OUTLIER:OUTLIER",
-     " A  16  SER:1.00:4.2:277.9::::Favored:m",
-     " A  58  ASN:1.00:2.0:252.4:343.6:::Favored:m-20",
-     " A  59  ILE:1.00:2.0:84.2:186.7:::Allowed:pt",
-     " A 202  GLU:1.00:0.4:272.7:65.9:287.8::OUTLIER:OUTLIER",
-     " A 203  ILE:1.00:5.0:292.9:199.6:::Favored:mt",
-     " B 154  THR:1.00:0.1:356.0::::OUTLIER:OUTLIER",
-     " B 316  TYR:1.00:5.4:153.7:68.6:::Favored:t80",
-     " B  86  ASP:1.00:2.2:321.4:145.1:::Favored:m-20",
-     " B 377  GLU:1.00:45.3:311.7:166.2:160.1::Favored:mt-10",
-     " B 378  THR:1.00:23.5:309.4::::Favored:m"]
-#    top8000 version
-    line_values = [
-     " A  14  MET:1.00:1.3:29.2:173.3:287.9::Allowed:ptm",
-     " A  15  SER:1.00:0.1:229.0::::OUTLIER:OUTLIER",
-     " A  16  SER:1.00:3.0:277.9::::Favored:m",
-     " A  58  ASN:1.00:1.0:252.4:343.6:::Allowed:m-40",
-     " A  59  ILE:1.00:0.5:84.2:186.7:::Allowed:pt",
-     " A 202  GLU:1.00:0.0:272.7:65.9:287.8::OUTLIER:OUTLIER",
-     " A 203  ILE:1.00:1.0:292.9:199.6:::Allowed:mt",
-     " B 154  THR:1.00:0.0:356.0::::OUTLIER:OUTLIER",
-     " B 316  TYR:1.00:4.1:153.7:68.6:::Favored:t80",
-     " B  86  ASP:1.00:0.4:321.4:145.1:::Allowed:m-30",
-     " B 377  GLU:1.00:15.0:311.7:166.2:160.1::Favored:mt-10",
-     " B 378  THR:1.00:17.0:309.4::::Favored:m",
-    ]
-    for idx, val in zip(line_indices, line_values):
-      assert (output_lines[idx] == val), (idx, output_lines[idx])
+    r = rotalyze.rotalyze(pdb_hierarchy=hierarchy, outliers_only=False)
+    for unpickle in [False, True]:
+        if unpickle:
+            r = loads(dumps(r))
+        out = StringIO()
+        r.show_old_output(out=out, verbose=False)
+        for outlier in r.results:
+            assert len(outlier.xyz) == 3
+        output = out.getvalue()
+        assert output.count("OUTLIER") == 246
+        assert output.count(":") == 5144, output.count(":")
+        assert output.count("p") == 120
+        assert output.count("m") == 324
+        assert output.count("t") == 486
+        output_lines = output.splitlines()
+        # for line in output_lines:
+        #  print line
+        # STOP()
+        assert len(output_lines) == 643
+        line_indices = [0, 1, 2, 42, 43, 168, 169, 450, 587, 394, 641, 642]
 
-  regression_pdb = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/pdb1jxt.ent",
-    test=os.path.isfile)
-  if (regression_pdb is None):
-    print("Skipping exercise_ramalyze(): input pdb (pdb1jxt.ent) not available")
-    return
-  pdb_in = file_reader.any_file(file_name=regression_pdb)
-  hierarchy = pdb_in.file_object.hierarchy
-  pdb_io = pdb.input(file_name=regression_pdb)
-  r = rotalyze.rotalyze(
-    pdb_hierarchy=hierarchy,
-    outliers_only=True)
-  out = StringIO()
-  r.show_old_output(out=out, verbose=False)
-  output = out.getvalue().strip()
-  assert output == ""
+        #    top500 version
+        line_values = [
+            " A  14  MET:1.00:3.3:29.2:173.3:287.9::Favored:ptm",
+            " A  15  SER:1.00:0.1:229.0::::OUTLIER:OUTLIER",
+            " A  16  SER:1.00:4.2:277.9::::Favored:m",
+            " A  58  ASN:1.00:2.0:252.4:343.6:::Favored:m-20",
+            " A  59  ILE:1.00:2.0:84.2:186.7:::Allowed:pt",
+            " A 202  GLU:1.00:0.4:272.7:65.9:287.8::OUTLIER:OUTLIER",
+            " A 203  ILE:1.00:5.0:292.9:199.6:::Favored:mt",
+            " B 154  THR:1.00:0.1:356.0::::OUTLIER:OUTLIER",
+            " B 316  TYR:1.00:5.4:153.7:68.6:::Favored:t80",
+            " B  86  ASP:1.00:2.2:321.4:145.1:::Favored:m-20",
+            " B 377  GLU:1.00:45.3:311.7:166.2:160.1::Favored:mt-10",
+            " B 378  THR:1.00:23.5:309.4::::Favored:m",
+        ]
+        #    top8000 version
+        line_values = [
+            " A  14  MET:1.00:1.3:29.2:173.3:287.9::Allowed:ptm",
+            " A  15  SER:1.00:0.1:229.0::::OUTLIER:OUTLIER",
+            " A  16  SER:1.00:3.0:277.9::::Favored:m",
+            " A  58  ASN:1.00:1.0:252.4:343.6:::Allowed:m-40",
+            " A  59  ILE:1.00:0.5:84.2:186.7:::Allowed:pt",
+            " A 202  GLU:1.00:0.0:272.7:65.9:287.8::OUTLIER:OUTLIER",
+            " A 203  ILE:1.00:1.0:292.9:199.6:::Allowed:mt",
+            " B 154  THR:1.00:0.0:356.0::::OUTLIER:OUTLIER",
+            " B 316  TYR:1.00:4.1:153.7:68.6:::Favored:t80",
+            " B  86  ASP:1.00:0.4:321.4:145.1:::Allowed:m-30",
+            " B 377  GLU:1.00:15.0:311.7:166.2:160.1::Favored:mt-10",
+            " B 378  THR:1.00:17.0:309.4::::Favored:m",
+        ]
+        for idx, val in zip(line_indices, line_values):
+            assert output_lines[idx] == val, (idx, output_lines[idx])
 
-  r = rotalyze.rotalyze(
-    pdb_hierarchy=hierarchy,
-    outliers_only=False)
-  for unpickle in [False, True] :
-    if unpickle :
-      r = loads(dumps(r))
+    regression_pdb = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/pdb1jxt.ent", test=os.path.isfile
+    )
+    if regression_pdb is None:
+        print("Skipping exercise_ramalyze(): input pdb (pdb1jxt.ent) not available")
+        return
+    pdb_in = file_reader.any_file(file_name=regression_pdb)
+    hierarchy = pdb_in.file_object.hierarchy
+    pdb_io = pdb.input(file_name=regression_pdb)
+    r = rotalyze.rotalyze(pdb_hierarchy=hierarchy, outliers_only=True)
     out = StringIO()
     r.show_old_output(out=out, verbose=False)
-    output = out.getvalue()
-    assert not show_diff(output,"""\
+    output = out.getvalue().strip()
+    assert output == ""
+
+    r = rotalyze.rotalyze(pdb_hierarchy=hierarchy, outliers_only=False)
+    for unpickle in [False, True]:
+        if unpickle:
+            r = loads(dumps(r))
+        out = StringIO()
+        r.show_old_output(out=out, verbose=False)
+        output = out.getvalue()
+        assert not show_diff(
+            output,
+            """\
  A   1  THR:1.00:95.4:299.5::::Favored:m
  A   2 ATHR:0.67:49.5:56.1::::Favored:p
  A   2 BTHR:0.33:90.4:298.1::::Favored:m
@@ -170,10 +165,12 @@ def exercise_rotalyze():
  A  43 BASP:0.25:43.2:59.6:349.3:::Favored:p0
  A  44  TYR:1.00:85.3:290.9:85.1:::Favored:m-80
  A  46  ASN:1.00:38.7:301.6:117.9:::Favored:m110
-""")
+""",
+        )
+
 
 def exercise_2():
-  pdb_str = """\
+    pdb_str = """\
 ATOM   2527  N   LEU A 261     -31.022 -24.808 107.479  1.00 28.22           N
 ATOM   2528  CA  LEU A 261     -30.054 -23.719 107.237  1.00 21.77           C
 ATOM   2529  C   LEU A 261     -30.582 -22.773 106.168  1.00 27.64           C
@@ -213,7 +210,7 @@ ATOM   2562  HB3 SER A 263     -37.641 -21.960 103.132  1.00 30.87           H
 ATOM   2563  HG  SER A 263     -37.560 -21.925 105.312  1.00 32.20           H
 """
 
-  pdb_str2 = """
+    pdb_str2 = """
 ATOM    453  N   PRO A  47       8.633   6.370   5.022  1.00 13.79           N
 ATOM    454  CA  PRO A  47       7.915   7.571   5.496  1.00 14.61           C
 ATOM    455  C   PRO A  47       7.612   7.481   6.994  1.00 15.06           C
@@ -240,56 +237,62 @@ ATOM    475  CE  LYS A  49       1.571   5.402  13.292  1.00 18.19           C
 ATOM    476  NZ  LYS A  49       0.899   4.110  12.980  1.00 19.97           N
 """
 
-  pdb_io = pdb.input(source_info=None, lines=pdb_str)
-  hierarchy = pdb_io.construct_hierarchy()
-  try :
-    rotalyze.rotalyze(pdb_hierarchy=hierarchy)
-  except Sorry as e :
-    assert ("GLY A 262" in str(e))
-  else :
-    raise Exception_expected
+    pdb_io = pdb.input(source_info=None, lines=pdb_str)
+    hierarchy = pdb_io.construct_hierarchy()
+    try:
+        rotalyze.rotalyze(pdb_hierarchy=hierarchy)
+    except Sorry as e:
+        assert "GLY A 262" in str(e)
+    else:
+        raise Exception_expected
 
-  pdb_io = pdb.input(source_info=None, lines=pdb_str2)
-  hierarchy = pdb_io.construct_hierarchy()
-  r = rotalyze.rotalyze(pdb_hierarchy=hierarchy)
-  out = StringIO()
-  r.show_old_output(out=out, verbose=False)
-  output = out.getvalue()
-  assert output == """\
+    pdb_io = pdb.input(source_info=None, lines=pdb_str2)
+    hierarchy = pdb_io.construct_hierarchy()
+    r = rotalyze.rotalyze(pdb_hierarchy=hierarchy)
+    out = StringIO()
+    r.show_old_output(out=out, verbose=False)
+    output = out.getvalue()
+    assert (
+        output
+        == """\
  A  47  PRO:1.00:86.4:329.3:41.3:324.9::Favored:Cg_exo
  A  48  MSE:0.70:0.3:287.6:214.8:138.3::OUTLIER:OUTLIER
  A  49  LYS:1.00:0.1:288.6:263.2:251.7:233.0:OUTLIER:OUTLIER
-""", output
+"""
+    ), output
 
-  r = rotalyze.rotalyze(pdb_hierarchy=hierarchy,
-    data_version="8000")
-  out = StringIO()
-  r.show_old_output(out=out, verbose=False)
-  assert (out.getvalue() == """\
+    r = rotalyze.rotalyze(pdb_hierarchy=hierarchy, data_version="8000")
+    out = StringIO()
+    r.show_old_output(out=out, verbose=False)
+    assert (
+        out.getvalue()
+        == """\
  A  47  PRO:1.00:86.4:329.3:41.3:324.9::Favored:Cg_exo
  A  48  MSE:0.70:0.3:287.6:214.8:138.3::OUTLIER:OUTLIER
  A  49  LYS:1.00:0.1:288.6:263.2:251.7:233.0:OUTLIER:OUTLIER
-"""), out.getvalue()
+"""
+    ), out.getvalue()
 
-  try :
-    r = rotalyze.rotalyze(pdb_hierarchy=hierarchy,
-      data_version="9000")
-  except ValueError :
-    pass
-  else :
-    raise Exception_expected
+    try:
+        r = rotalyze.rotalyze(pdb_hierarchy=hierarchy, data_version="9000")
+    except ValueError:
+        pass
+    else:
+        raise Exception_expected
 
-  from mmtbx.rotamer.rotamer_eval import RotamerEval
-  rotamer_manager = RotamerEval()
-  results = []
-  for model in hierarchy.models():
-    for chain in model.chains():
-      for residue in chain.residues():
-        cur_rot = rotamer_manager.evaluate_residue(residue)
-        results.append(cur_rot)
-  assert results == ['Cg_exo', 'OUTLIER', 'OUTLIER']
+    from mmtbx.rotamer.rotamer_eval import RotamerEval
 
-if (__name__ == "__main__"):
-  exercise_rotalyze()
-  exercise_2()
-  print("OK")
+    rotamer_manager = RotamerEval()
+    results = []
+    for model in hierarchy.models():
+        for chain in model.chains():
+            for residue in chain.residues():
+                cur_rot = rotamer_manager.evaluate_residue(residue)
+                results.append(cur_rot)
+    assert results == ["Cg_exo", "OUTLIER", "OUTLIER"]
+
+
+if __name__ == "__main__":
+    exercise_rotalyze()
+    exercise_2()
+    print("OK")

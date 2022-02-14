@@ -24,25 +24,28 @@ SHEET    2   3 3 ILE A 114  ALA A 122 -1
 SHEET    3   3 3 THR A 193  LEU A 201  1
 """
 
+
 def exercise_01():
-  try:
-    annot = ss.annotation.from_records(records=ann_1.split('\n'))
-  except Sorry as e:
-    m = str(e)
-    assert m.find("should be 1 or -1 for non-first strand") > 0
+    try:
+        annot = ss.annotation.from_records(records=ann_1.split("\n"))
+    except Sorry as e:
+        m = str(e)
+        assert m.find("should be 1 or -1 for non-first strand") > 0
+
 
 def exercise_02():
-  annot = ss.annotation.from_records(records=ann_2.split('\n'))
-  assert len(annot.helices) == 0
-  assert len(annot.sheets) == 1
-  sheet = annot.sheets[0]
-  assert sheet.n_strands == 4
-  assert len(sheet.strands) == 4
-  assert len(sheet.registrations) == 4
-  assert sheet.registrations[0] is None
+    annot = ss.annotation.from_records(records=ann_2.split("\n"))
+    assert len(annot.helices) == 0
+    assert len(annot.sheets) == 1
+    sheet = annot.sheets[0]
+    assert sheet.n_strands == 4
+    assert len(sheet.strands) == 4
+    assert len(sheet.registrations) == 4
+    assert sheet.registrations[0] is None
+
 
 def exercise_03():
-  answer_phil_str = """\
+    answer_phil_str = """\
 
 protein.sheet {
   sheet_id = "  3"
@@ -60,23 +63,26 @@ protein.sheet {
     bond_start_previous = None
   }
 }"""
-  annot = ss.annotation.from_records(records=ann_3.split('\n'))
-  assert len(annot.helices) == 0
-  assert len(annot.sheets) == 1
-  ann_sheet = annot.sheets[0]
-  assert ann_sheet.n_strands == 3
-  assert ann_sheet.registrations == [None]*3
-  only_sheet = annot.sheets[0]
-  phil_string = annot.as_restraint_groups()
-  assert not test_utils.show_diff(phil_string, answer_phil_str,
-      strip_trailing_whitespace=True)
+    annot = ss.annotation.from_records(records=ann_3.split("\n"))
+    assert len(annot.helices) == 0
+    assert len(annot.sheets) == 1
+    ann_sheet = annot.sheets[0]
+    assert ann_sheet.n_strands == 3
+    assert ann_sheet.registrations == [None] * 3
+    only_sheet = annot.sheets[0]
+    phil_string = annot.as_restraint_groups()
+    assert not test_utils.show_diff(
+        phil_string, answer_phil_str, strip_trailing_whitespace=True
+    )
+
 
 def exercise(args):
-  exercise_01()
-  exercise_02()
-  exercise_03()
-  print("OK")
-  print(format_cpu_times())
+    exercise_01()
+    exercise_02()
+    exercise_03()
+    print("OK")
+    print(format_cpu_times())
 
-if (__name__ == "__main__"):
-  exercise(sys.argv[1:])
+
+if __name__ == "__main__":
+    exercise(sys.argv[1:])

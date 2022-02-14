@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import iotbx.pdb
 from cctbx.array_family import flex
 from mmtbx.monomer_library import pdb_interpretation
-from cctbx import adp_restraints # import dependency
+from cctbx import adp_restraints  # import dependency
 from mmtbx.geometry_restraints.torsion_restraints import torsion_ncs, utils
 from six.moves import cStringIO as StringIO
 import mmtbx
@@ -119,51 +119,47 @@ ATOM    105  OXT ALA B   6      10.304  -5.128   2.503  1.00 60.32           O
 TER     106      ALA B   6
 """
 
+
 def exercise_1(mon_lib_srv, ener_lib):
-  f = open("1.pdb", "w")
-  f.write(pdb_str_1)
-  f.close()
-  log = StringIO()
-  dihedral_proxies = utils.get_complete_dihedral_proxies(
-                       raw_records=pdb_str_1)
-  assert len(dihedral_proxies) == 54, \
-      "Expected 54, got %d" % len(dihedral_proxies)
+    f = open("1.pdb", "w")
+    f.write(pdb_str_1)
+    f.close()
+    log = StringIO()
+    dihedral_proxies = utils.get_complete_dihedral_proxies(raw_records=pdb_str_1)
+    assert len(dihedral_proxies) == 54, "Expected 54, got %d" % len(dihedral_proxies)
 
-  # default run (1 residue is out of NCS)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.ncs_search.enabled=True
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=flex.split_lines(pdb_str_1))
-  model = mmtbx.model.manager(model_input = pdb_inp)
-  model.process(pdb_interpretation_params=params,
-    make_restraints=True)
-  ncs_manager = torsion_ncs.torsion_ncs(
-                  model = model,
-                  log=log)
-  nprox = ncs_manager.get_n_proxies()
-  assert nprox == 28, "got %d instead of 28" % nprox
+    # default run (1 residue is out of NCS)
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.ncs_search.enabled = True
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=flex.split_lines(pdb_str_1))
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    ncs_manager = torsion_ncs.torsion_ncs(model=model, log=log)
+    nprox = ncs_manager.get_n_proxies()
+    assert nprox == 28, "got %d instead of 28" % nprox
 
-
-  # supply full NCS
-  cuspars = iotbx.phil.parse("""
+    # supply full NCS
+    cuspars = iotbx.phil.parse(
+        """
 pdb_interpretation.ncs_search.enabled=True
 pdb_interpretation.ncs_group {
   reference        = (chain A )
   selection        = (chain B )
 }
-""")
-  params = mmtbx.model.manager.get_default_pdb_interpretation_scope()
-  p = params.fetch(cuspars).extract()
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=flex.split_lines(pdb_str_1))
-  model = mmtbx.model.manager(model_input = pdb_inp)
-  model.process(pdb_interpretation_params=p, make_restraints=True)
-  ncs_manager = torsion_ncs.torsion_ncs(
-                  model = model,
-                  log=log)
-  nprox = ncs_manager.get_n_proxies()
-  assert nprox == 40, "got %d instead of 40" % nprox
+"""
+    )
+    params = mmtbx.model.manager.get_default_pdb_interpretation_scope()
+    p = params.fetch(cuspars).extract()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=flex.split_lines(pdb_str_1))
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(pdb_interpretation_params=p, make_restraints=True)
+    ncs_manager = torsion_ncs.torsion_ncs(model=model, log=log)
+    nprox = ncs_manager.get_n_proxies()
+    assert nprox == 40, "got %d instead of 40" % nprox
 
-if (__name__ == "__main__"):
-  mon_lib_srv = mmtbx.monomer_library.server.server()
-  ener_lib = mmtbx.monomer_library.server.ener_lib()
-  exercise_1(mon_lib_srv, ener_lib)
-  print("OK")
+
+if __name__ == "__main__":
+    mon_lib_srv = mmtbx.monomer_library.server.server()
+    ener_lib = mmtbx.monomer_library.server.ener_lib()
+    exercise_1(mon_lib_srv, ener_lib)
+    print("OK")

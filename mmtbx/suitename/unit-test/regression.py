@@ -1,12 +1,11 @@
 from __future__ import nested_scopes, generators, division, absolute_import
-from __future__ import  with_statement, print_function, unicode_literals
+from __future__ import with_statement, print_function, unicode_literals
 from io import StringIO
 
 from mmtbx.suitename.suitename import main
 from mmtbx.suitename import suites
 
-in_1ehz = \
-""" :1: A:   1: : :  G:__?__:-128.053:67.793:82.863:-155.568:-68.623
+in_1ehz = """ :1: A:   1: : :  G:__?__:-128.053:67.793:82.863:-155.568:-68.623
  :1: A:   2: : :  C:-67.449:-178.393:53.832:83.378:-145.149:-76.788
  :1: A:   3: : :  G:-74.460:169.695:59.477:80.733:-148.283:-80.025
  :1: A:   4: : :  G:-64.437:162.194:60.724:82.164:-157.372:-68.659
@@ -84,135 +83,135 @@ in_1ehz = \
  :1: A:  76: : :  A:-70.955:130.178:164.639:160.907:__?__:__?__
 """
 
-out_1ehz = (\
-  " :1: A:   1: : :  G inc  __ 0.000\n"+
-  " :1: A:   2: : :  C 33 p 1a 0.935\n"+
-  " :1: A:   3: : :  G 33 p 1a 0.868\n"+
-  " :1: A:   4: : :  G 33 p 1a 0.842\n"+
-  " :1: A:   5: : :  A 33 p 1a 0.847\n"+
-  " :1: A:   6: : :  U 33 p 1a 0.664\n"+
-  " :1: A:   7: : :  U 32 p 1b 0.803\n"+
-  " :1: A:   8: : :  U 23 p 2a 0.509\n"+
-  " :1: A:   9: : :  A 32 p 1[ 0.046\n"+
-  " :1: A:  10: : :2MG inc  __ 0.000\n"+
-  " :1: A:  11: : :  C inc  __ 0.000\n"+
-  " :1: A:  12: : :  U 33 p 1a 0.898\n"+
-  " :1: A:  13: : :  C 33 t 1c 0.824\n"+
-  " :1: A:  14: : :  A trig !! 0.000 gamma\n"+
-  " :1: A:  15: : :  G 33 p 1a 0.484\n"+
-  " :1: A:  16: : :H2U inc  __ 0.000\n"+
-  " :1: A:  17: : :H2U inc  __ 0.000\n"+
-  " :1: A:  18: : :  G inc  __ 0.000\n"+
-  " :1: A:  19: : :  G 22 p 4b 0.512\n"+
-  " :1: A:  20: : :  G 23 p 2a 0.623\n"+
-  " :1: A:  21: : :  A 33 t !! 0.000\n"+
-  " :1: A:  22: : :  G 33 t 1f 0.714\n"+
-  " :1: A:  23: : :  A 33 p 1a 0.840\n"+
-  " :1: A:  24: : :  G 33 p 1a 0.881\n"+
-  " :1: A:  25: : :  C 33 p 1a 0.967\n"+
-  " :1: A:  26: : :M2G inc  __ 0.000\n"+
-  " :1: A:  27: : :  C inc  __ 0.000\n"+
-  " :1: A:  28: : :  C 33 p 1a 0.923\n"+
-  " :1: A:  29: : :  A 33 p 1a 0.973\n"+
-  " :1: A:  30: : :  G 33 p 1a 0.838\n"+
-  " :1: A:  31: : :  A 33 p 1a 0.914\n"+
-  " :1: A:  32: : :OMC inc  __ 0.000\n"+
-  " :1: A:  33: : :  U inc  __ 0.000\n"+
-  " :1: A:  34: : :OMG inc  __ 0.000\n"+
-  " :1: A:  35: : :  A inc  __ 0.000\n"+
-  " :1: A:  36: : :  A 33 p 1a 0.670\n"+
-  " :1: A:  37: : :YYG inc  __ 0.000\n"+
-  " :1: A:  38: : :  A inc  __ 0.000\n"+
-  " :1: A:  39: : :PSU 33 p 1a 0.680\n"+
-  " :1: A:  40: : :5MC inc  __ 0.000\n"+
-  " :1: A:  41: : :  U inc  __ 0.000\n"+
-  " :1: A:  42: : :  G 33 p 1a 0.630\n"+
-  " :1: A:  43: : :  G 33 p 1a 0.882\n"+
-  " :1: A:  44: : :  A 33 p 1a 0.837\n"+
-  " :1: A:  45: : :  G 33 p 1a 0.749\n"+
-  " :1: A:  46: : :7MG inc  __ 0.000\n"+
-  " :1: A:  47: : :  U inc  __ 0.000\n"+
-  " :1: A:  48: : :  C 22 t 2u 0.283 wannabe\n"+
-  " :1: A:  49: : :5MC inc  __ 0.000\n"+
-  " :1: A:  50: : :  U inc  __ 0.000\n"+
-  " :1: A:  51: : :  G 33 p 1a 0.981\n"+
-  " :1: A:  52: : :  U 33 p 1a 0.945\n"+
-  " :1: A:  53: : :  G 33 p 1a 0.896\n"+
-  " :1: A:  54: : :5MU inc  __ 0.000\n"+
-  " :1: A:  55: : :PSU inc  __ 0.000\n"+
-  " :1: A:  56: : :  C 33 p 1g 0.894\n"+
-  " :1: A:  57: : :  G 33 p 1a 0.837\n"+
-  " :1: A:  58: : :1MA inc  __ 0.000\n"+
-  " :1: A:  59: : :  U inc  __ 0.000\n"+
-  " :1: A:  60: : :  C 32 p 1b 0.662\n"+
-  " :1: A:  61: : :  C 23 p 2a 0.553\n"+
-  " :1: A:  62: : :  A 33 p 1a 0.895\n"+
-  " :1: A:  63: : :  C 33 p 1a 0.964\n"+
-  " :1: A:  64: : :  A 33 p 1a 0.791\n"+
-  " :1: A:  65: : :  G 33 p 1a 0.586\n"+
-  " :1: A:  66: : :  A 33 p 1a 0.940\n"+
-  " :1: A:  67: : :  A 33 p 1a 0.941\n"+
-  " :1: A:  68: : :  U 33 p 1a 0.891\n"+
-  " :1: A:  69: : :  U 33 p 1a 0.951\n"+
-  " :1: A:  70: : :  C 33 p 1a 0.809\n"+
-  " :1: A:  71: : :  G 33 p 1a 0.761\n"+
-  " :1: A:  72: : :  C 33 p 1a 0.832\n"+
-  " :1: A:  73: : :  A 33 p 1a 0.965\n"+
-  " :1: A:  74: : :  C 33 p 1a 0.886\n"+
-  " :1: A:  75: : :  C 33 p 1a 0.639\n"+
-  " :1: A:  76: : :  A 32 t !! 0.000\n"+
-  " all general case widths, power = 3.00\n"+
-  "Found 52 complete suites derived from 76 entries\n"+
-  "1 suites were triaged, leaving 51 assigned to bins\n"+
-  "For all 51 suites: average suiteness== 0.750 (power==3.00)\n"+
-  "     2 suites are  outliers\n"+
-  "     0 suites have suiteness == 0    \n"+
-  "     1 suites have suiteness >  0 <.1\n"+
-  "     0 suites have suiteness >=.1 <.2\n"+
-  "     1 suites have suiteness >=.2 <.3\n"+
-  "     0 suites have suiteness >=.3 <.4\n"+
-  "     1 suites have suiteness >=.4 <.5\n"+
-  "     4 suites have suiteness >=.5 <.6\n"+
-  "     7 suites have suiteness >=.6 <.7\n"+
-  "     4 suites have suiteness >=.7 <.8\n"+
-  "    19 suites have suiteness >=.8 <.9\n"+
-  "    12 suites have suiteness >=.9    \n"+
-  " A form (1a) 38 suites: average suiteness== 0.838 (power==3.00)\n"+
-  "     0 suites have suiteness == 0    \n"+
-  "     0 suites have suiteness >  0 <.1\n"+
-  "     0 suites have suiteness >=.1 <.2\n"+
-  "     0 suites have suiteness >=.2 <.3\n"+
-  "     0 suites have suiteness >=.3 <.4\n"+
-  "     1 suites have suiteness >=.4 <.5\n"+
-  "     1 suites have suiteness >=.5 <.6\n"+
-  "     5 suites have suiteness >=.6 <.7\n"+
-  "     3 suites have suiteness >=.7 <.8\n"+
-  "    16 suites have suiteness >=.8 <.9\n"+
-  "    12 suites have suiteness >=.9    \n"+
-  " non-1a  has 11 suites: average suiteness== 0.584 (power==3.00)\n"+
-  "     0 suites have suiteness == 0    \n"+
-  "     1 suites have suiteness >  0 <.1\n"+
-  "     0 suites have suiteness >=.1 <.2\n"+
-  "     1 suites have suiteness >=.2 <.3\n"+
-  "     0 suites have suiteness >=.3 <.4\n"+
-  "     0 suites have suiteness >=.4 <.5\n"+
-  "     3 suites have suiteness >=.5 <.6\n"+
-  "     2 suites have suiteness >=.6 <.7\n"+
-  "     1 suites have suiteness >=.7 <.8\n"+
-  "     3 suites have suiteness >=.8 <.9\n"+
-  "     0 suites have suiteness >=.9    \n"
+out_1ehz = (
+    " :1: A:   1: : :  G inc  __ 0.000\n"
+    + " :1: A:   2: : :  C 33 p 1a 0.935\n"
+    + " :1: A:   3: : :  G 33 p 1a 0.868\n"
+    + " :1: A:   4: : :  G 33 p 1a 0.842\n"
+    + " :1: A:   5: : :  A 33 p 1a 0.847\n"
+    + " :1: A:   6: : :  U 33 p 1a 0.664\n"
+    + " :1: A:   7: : :  U 32 p 1b 0.803\n"
+    + " :1: A:   8: : :  U 23 p 2a 0.509\n"
+    + " :1: A:   9: : :  A 32 p 1[ 0.046\n"
+    + " :1: A:  10: : :2MG inc  __ 0.000\n"
+    + " :1: A:  11: : :  C inc  __ 0.000\n"
+    + " :1: A:  12: : :  U 33 p 1a 0.898\n"
+    + " :1: A:  13: : :  C 33 t 1c 0.824\n"
+    + " :1: A:  14: : :  A trig !! 0.000 gamma\n"
+    + " :1: A:  15: : :  G 33 p 1a 0.484\n"
+    + " :1: A:  16: : :H2U inc  __ 0.000\n"
+    + " :1: A:  17: : :H2U inc  __ 0.000\n"
+    + " :1: A:  18: : :  G inc  __ 0.000\n"
+    + " :1: A:  19: : :  G 22 p 4b 0.512\n"
+    + " :1: A:  20: : :  G 23 p 2a 0.623\n"
+    + " :1: A:  21: : :  A 33 t !! 0.000\n"
+    + " :1: A:  22: : :  G 33 t 1f 0.714\n"
+    + " :1: A:  23: : :  A 33 p 1a 0.840\n"
+    + " :1: A:  24: : :  G 33 p 1a 0.881\n"
+    + " :1: A:  25: : :  C 33 p 1a 0.967\n"
+    + " :1: A:  26: : :M2G inc  __ 0.000\n"
+    + " :1: A:  27: : :  C inc  __ 0.000\n"
+    + " :1: A:  28: : :  C 33 p 1a 0.923\n"
+    + " :1: A:  29: : :  A 33 p 1a 0.973\n"
+    + " :1: A:  30: : :  G 33 p 1a 0.838\n"
+    + " :1: A:  31: : :  A 33 p 1a 0.914\n"
+    + " :1: A:  32: : :OMC inc  __ 0.000\n"
+    + " :1: A:  33: : :  U inc  __ 0.000\n"
+    + " :1: A:  34: : :OMG inc  __ 0.000\n"
+    + " :1: A:  35: : :  A inc  __ 0.000\n"
+    + " :1: A:  36: : :  A 33 p 1a 0.670\n"
+    + " :1: A:  37: : :YYG inc  __ 0.000\n"
+    + " :1: A:  38: : :  A inc  __ 0.000\n"
+    + " :1: A:  39: : :PSU 33 p 1a 0.680\n"
+    + " :1: A:  40: : :5MC inc  __ 0.000\n"
+    + " :1: A:  41: : :  U inc  __ 0.000\n"
+    + " :1: A:  42: : :  G 33 p 1a 0.630\n"
+    + " :1: A:  43: : :  G 33 p 1a 0.882\n"
+    + " :1: A:  44: : :  A 33 p 1a 0.837\n"
+    + " :1: A:  45: : :  G 33 p 1a 0.749\n"
+    + " :1: A:  46: : :7MG inc  __ 0.000\n"
+    + " :1: A:  47: : :  U inc  __ 0.000\n"
+    + " :1: A:  48: : :  C 22 t 2u 0.283 wannabe\n"
+    + " :1: A:  49: : :5MC inc  __ 0.000\n"
+    + " :1: A:  50: : :  U inc  __ 0.000\n"
+    + " :1: A:  51: : :  G 33 p 1a 0.981\n"
+    + " :1: A:  52: : :  U 33 p 1a 0.945\n"
+    + " :1: A:  53: : :  G 33 p 1a 0.896\n"
+    + " :1: A:  54: : :5MU inc  __ 0.000\n"
+    + " :1: A:  55: : :PSU inc  __ 0.000\n"
+    + " :1: A:  56: : :  C 33 p 1g 0.894\n"
+    + " :1: A:  57: : :  G 33 p 1a 0.837\n"
+    + " :1: A:  58: : :1MA inc  __ 0.000\n"
+    + " :1: A:  59: : :  U inc  __ 0.000\n"
+    + " :1: A:  60: : :  C 32 p 1b 0.662\n"
+    + " :1: A:  61: : :  C 23 p 2a 0.553\n"
+    + " :1: A:  62: : :  A 33 p 1a 0.895\n"
+    + " :1: A:  63: : :  C 33 p 1a 0.964\n"
+    + " :1: A:  64: : :  A 33 p 1a 0.791\n"
+    + " :1: A:  65: : :  G 33 p 1a 0.586\n"
+    + " :1: A:  66: : :  A 33 p 1a 0.940\n"
+    + " :1: A:  67: : :  A 33 p 1a 0.941\n"
+    + " :1: A:  68: : :  U 33 p 1a 0.891\n"
+    + " :1: A:  69: : :  U 33 p 1a 0.951\n"
+    + " :1: A:  70: : :  C 33 p 1a 0.809\n"
+    + " :1: A:  71: : :  G 33 p 1a 0.761\n"
+    + " :1: A:  72: : :  C 33 p 1a 0.832\n"
+    + " :1: A:  73: : :  A 33 p 1a 0.965\n"
+    + " :1: A:  74: : :  C 33 p 1a 0.886\n"
+    + " :1: A:  75: : :  C 33 p 1a 0.639\n"
+    + " :1: A:  76: : :  A 32 t !! 0.000\n"
+    + " all general case widths, power = 3.00\n"
+    + "Found 52 complete suites derived from 76 entries\n"
+    + "1 suites were triaged, leaving 51 assigned to bins\n"
+    + "For all 51 suites: average suiteness== 0.750 (power==3.00)\n"
+    + "     2 suites are  outliers\n"
+    + "     0 suites have suiteness == 0    \n"
+    + "     1 suites have suiteness >  0 <.1\n"
+    + "     0 suites have suiteness >=.1 <.2\n"
+    + "     1 suites have suiteness >=.2 <.3\n"
+    + "     0 suites have suiteness >=.3 <.4\n"
+    + "     1 suites have suiteness >=.4 <.5\n"
+    + "     4 suites have suiteness >=.5 <.6\n"
+    + "     7 suites have suiteness >=.6 <.7\n"
+    + "     4 suites have suiteness >=.7 <.8\n"
+    + "    19 suites have suiteness >=.8 <.9\n"
+    + "    12 suites have suiteness >=.9    \n"
+    + " A form (1a) 38 suites: average suiteness== 0.838 (power==3.00)\n"
+    + "     0 suites have suiteness == 0    \n"
+    + "     0 suites have suiteness >  0 <.1\n"
+    + "     0 suites have suiteness >=.1 <.2\n"
+    + "     0 suites have suiteness >=.2 <.3\n"
+    + "     0 suites have suiteness >=.3 <.4\n"
+    + "     1 suites have suiteness >=.4 <.5\n"
+    + "     1 suites have suiteness >=.5 <.6\n"
+    + "     5 suites have suiteness >=.6 <.7\n"
+    + "     3 suites have suiteness >=.7 <.8\n"
+    + "    16 suites have suiteness >=.8 <.9\n"
+    + "    12 suites have suiteness >=.9    \n"
+    + " non-1a  has 11 suites: average suiteness== 0.584 (power==3.00)\n"
+    + "     0 suites have suiteness == 0    \n"
+    + "     1 suites have suiteness >  0 <.1\n"
+    + "     0 suites have suiteness >=.1 <.2\n"
+    + "     1 suites have suiteness >=.2 <.3\n"
+    + "     0 suites have suiteness >=.3 <.4\n"
+    + "     0 suites have suiteness >=.4 <.5\n"
+    + "     3 suites have suiteness >=.5 <.6\n"
+    + "     2 suites have suiteness >=.6 <.7\n"
+    + "     1 suites have suiteness >=.7 <.8\n"
+    + "     3 suites have suiteness >=.8 <.9\n"
+    + "     0 suites have suiteness >=.9    \n"
 )
 
-def regression(name, input, canonical_output):
-  inp = StringIO(input)
-  out = StringIO()
-  options2 = suites.parseOptions("report=True")
 
-  main(inStream=inp, outFile=out, optionsIn=options2)
-  output = out.getvalue()
-  assert output == canonical_output, name + " regression test failed"
+def regression(name, input, canonical_output):
+    inp = StringIO(input)
+    out = StringIO()
+    options2 = suites.parseOptions("report=True")
+
+    main(inStream=inp, outFile=out, optionsIn=options2)
+    output = out.getvalue()
+    assert output == canonical_output, name + " regression test failed"
 
 
 def test():
-  regression("1ehz", in_1ehz, out_1ehz)
-
+    regression("1ehz", in_1ehz, out_1ehz)

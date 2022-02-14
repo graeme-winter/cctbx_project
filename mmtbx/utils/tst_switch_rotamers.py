@@ -90,7 +90,7 @@ ATOM     72  CG1 VAL A  62      14.849   7.004   8.342  1.00 20.00           C
 ATOM     73  CG2 VAL A  62      13.279   5.181   7.645  1.00 20.00           C
 """
 
-min_distant="""\
+min_distant = """\
 ATOM      1  N   TYR A  58       8.659  20.073  11.185  1.00  7.73           N
 ATOM      2  CA  TYR A  58       9.250  19.144  10.233  1.00  8.65           C
 ATOM      3  C   TYR A  58       9.039  17.721  10.706  1.00  9.84           C
@@ -133,7 +133,7 @@ ATOM     72  CG1 VAL A  62      13.305   5.129   7.570  1.00 20.00           C
 ATOM     73  CG2 VAL A  62      15.496   5.710   6.506  1.00 20.00           C
 """
 
-exact_match="""\
+exact_match = """\
 ATOM      1  N   TYR A  58       8.659  20.073  11.185  1.00  7.73           N
 ATOM      2  CA  TYR A  58       9.250  19.144  10.233  1.00  8.65           C
 ATOM      3  C   TYR A  58       9.039  17.721  10.706  1.00  9.84           C
@@ -176,7 +176,7 @@ ATOM     72  CG1 VAL A  62      15.313   5.487   6.412  1.00 20.00           C
 ATOM     73  CG2 VAL A  62      14.836   7.001   8.350  1.00 20.00           C
 """
 
-fix_outliers="""\
+fix_outliers = """\
 ATOM      1  N   TYR A  58       8.659  20.073  11.185  1.00  7.73           N
 ATOM      2  CA  TYR A  58       9.250  19.144  10.233  1.00  8.65           C
 ATOM      3  C   TYR A  58       9.039  17.721  10.706  1.00  9.84           C
@@ -219,7 +219,7 @@ ATOM     72  CG1 VAL A  62      15.297   5.470   6.407  1.00 20.00           C
 ATOM     73  CG2 VAL A  62      14.857   7.004   8.337  1.00 20.00           C
 """
 
-selection="""\
+selection = """\
 ATOM      1  N   TYR A  58       8.659  20.073  11.185  1.00  7.73           N
 ATOM      2  CA  TYR A  58       9.250  19.144  10.233  1.00  8.65           C
 ATOM      3  C   TYR A  58       9.039  17.721  10.706  1.00  9.84           C
@@ -262,66 +262,72 @@ ATOM     72  CG1 VAL A  62      15.297   5.470   6.407  1.00 20.00           C
 ATOM     73  CG2 VAL A  62      14.857   7.004   8.337  1.00 20.00           C
 """
 
+
 def core(mode, result, t1, t2):
-  prefix = "exercise_%s"%mode
-  ph = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
-  s0 = ph.atoms().extract_xyz()
-  ph.write_pdb_file(file_name="%s_in.pdb"%prefix)
-  ph = mmtbx.utils.switch_rotamers(pdb_hierarchy=ph, mode=mode)
-  ph.write_pdb_file(file_name="%s_out.pdb"%prefix)
-  s1 = iotbx.pdb.input(source_info=None,lines=result).atoms().extract_xyz()
-  s2 = ph.atoms().extract_xyz()
-  d = flex.sqrt((s1 - s2).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, t1, 1.e-3)
-  d = flex.sqrt((s2 - s0).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, t2, 0.1)
+    prefix = "exercise_%s" % mode
+    ph = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
+    s0 = ph.atoms().extract_xyz()
+    ph.write_pdb_file(file_name="%s_in.pdb" % prefix)
+    ph = mmtbx.utils.switch_rotamers(pdb_hierarchy=ph, mode=mode)
+    ph.write_pdb_file(file_name="%s_out.pdb" % prefix)
+    s1 = iotbx.pdb.input(source_info=None, lines=result).atoms().extract_xyz()
+    s2 = ph.atoms().extract_xyz()
+    d = flex.sqrt((s1 - s2).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, t1, 1.0e-3)
+    d = flex.sqrt((s2 - s0).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, t2, 0.1)
+
 
 def exercise_fix_outliers(prefix="exercise_fix_outliers"):
-  ph = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
-  sel = ph.atom_selection_cache().selection(string =
-    "resname TYR and not (name O or name CA or name N or name C or name CB)")
-  s0 = ph.atoms().extract_xyz()
-  ph.write_pdb_file(file_name="%s_in.pdb"%prefix)
-  ph = mmtbx.utils.switch_rotamers(pdb_hierarchy=ph, mode="fix_outliers")
-  ph.write_pdb_file(file_name="%s_out.pdb"%prefix)
-  s1 =iotbx.pdb.input(source_info=None,lines=fix_outliers).atoms().extract_xyz()
-  s2 = ph.atoms().extract_xyz()
-  # assert fixed do not move
-  d = flex.sqrt((s1.select(~sel) - s2.select(~sel)).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [0,0,0])
-  d = flex.sqrt((s1.select(~sel) - s0.select(~sel)).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [0,0,0])
-  d = flex.sqrt((s2.select(~sel) - s0.select(~sel)).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [0,0,0])
-  #
-  d = flex.sqrt((s1.select(sel)-s2.select(sel)).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [0,0,0], 1.e-3)
-  d = flex.sqrt((s1.select(sel)-s0.select(sel)).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [1.1, 4.0, 2.6], 0.1)
-  d = flex.sqrt((s2.select(sel)-s0.select(sel)).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [1.1, 4.0, 2.6], 0.1)
+    ph = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
+    sel = ph.atom_selection_cache().selection(
+        string="resname TYR and not (name O or name CA or name N or name C or name CB)"
+    )
+    s0 = ph.atoms().extract_xyz()
+    ph.write_pdb_file(file_name="%s_in.pdb" % prefix)
+    ph = mmtbx.utils.switch_rotamers(pdb_hierarchy=ph, mode="fix_outliers")
+    ph.write_pdb_file(file_name="%s_out.pdb" % prefix)
+    s1 = iotbx.pdb.input(source_info=None, lines=fix_outliers).atoms().extract_xyz()
+    s2 = ph.atoms().extract_xyz()
+    # assert fixed do not move
+    d = flex.sqrt((s1.select(~sel) - s2.select(~sel)).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [0, 0, 0])
+    d = flex.sqrt((s1.select(~sel) - s0.select(~sel)).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [0, 0, 0])
+    d = flex.sqrt((s2.select(~sel) - s0.select(~sel)).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [0, 0, 0])
+    #
+    d = flex.sqrt((s1.select(sel) - s2.select(sel)).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [0, 0, 0], 1.0e-3)
+    d = flex.sqrt((s1.select(sel) - s0.select(sel)).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [1.1, 4.0, 2.6], 0.1)
+    d = flex.sqrt((s2.select(sel) - s0.select(sel)).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [1.1, 4.0, 2.6], 0.1)
+
 
 def exercise_selection(prefix="exercise_selection"):
-  ph = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
-  sel = ph.atom_selection_cache().selection(string = "not resname TYR")
-  s0 = ph.atoms().extract_xyz()
-  ph.write_pdb_file(file_name="%s_in.pdb"%prefix)
-  ph = mmtbx.utils.switch_rotamers(pdb_hierarchy=ph, mode="fix_outliers",
-    selection = sel)
-  ph.write_pdb_file(file_name="%s_out.pdb"%prefix)
-  s1 =iotbx.pdb.input(source_info=None,lines=selection).atoms().extract_xyz()
-  s2 = ph.atoms().extract_xyz()
-  # assert fixed do not move
-  d = flex.sqrt((s1 - s2).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [0,0,0])
-  d = flex.sqrt((s1 - s0).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [0,0,0])
-  d = flex.sqrt((s2 - s0).dot()).min_max_mean().as_tuple()
-  assert approx_equal(d, [0,0,0])
+    ph = iotbx.pdb.input(source_info=None, lines=pdb_str).construct_hierarchy()
+    sel = ph.atom_selection_cache().selection(string="not resname TYR")
+    s0 = ph.atoms().extract_xyz()
+    ph.write_pdb_file(file_name="%s_in.pdb" % prefix)
+    ph = mmtbx.utils.switch_rotamers(
+        pdb_hierarchy=ph, mode="fix_outliers", selection=sel
+    )
+    ph.write_pdb_file(file_name="%s_out.pdb" % prefix)
+    s1 = iotbx.pdb.input(source_info=None, lines=selection).atoms().extract_xyz()
+    s2 = ph.atoms().extract_xyz()
+    # assert fixed do not move
+    d = flex.sqrt((s1 - s2).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [0, 0, 0])
+    d = flex.sqrt((s1 - s0).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [0, 0, 0])
+    d = flex.sqrt((s2 - s0).dot()).min_max_mean().as_tuple()
+    assert approx_equal(d, [0, 0, 0])
 
-if (__name__ == "__main__"):
-  core(mode="max_distant", result=max_distant, t1=[0,0,0], t2=[0, 10.2, 1.5])
-  core(mode="min_distant", result=min_distant, t1=[0,0,0], t2=[0,  4.1, 0.8])
-  core(mode="exact_match", result=exact_match, t1=[0,0,0], t2=[0,  4.1, 0.4])
-  exercise_fix_outliers()
-  exercise_selection()
+
+if __name__ == "__main__":
+    core(mode="max_distant", result=max_distant, t1=[0, 0, 0], t2=[0, 10.2, 1.5])
+    core(mode="min_distant", result=min_distant, t1=[0, 0, 0], t2=[0, 4.1, 0.8])
+    core(mode="exact_match", result=exact_match, t1=[0, 0, 0], t2=[0, 4.1, 0.4])
+    exercise_fix_outliers()
+    exercise_selection()

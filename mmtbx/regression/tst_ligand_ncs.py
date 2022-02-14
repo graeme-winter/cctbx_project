@@ -1,4 +1,3 @@
-
 """
 Test for mmtbx.ncs.ligands module and associated command-line tool
 mmtbx.apply_ncs_to_ligands (used in phenix.ligand_pipeline)
@@ -12,8 +11,9 @@ from six.moves import cStringIO as StringIO
 import os.path as op
 import os
 
+
 def make_inputs(prefix="tst_ligand_ncs"):
-  pdb_raw = """\
+    pdb_raw = """\
 CRYST1   25.000   10.000   25.477  90.00 107.08  90.00 P 1
 ATOM      1  N   GLY A   1       9.010   0.535  -6.096  1.00 16.23           N
 ATOM      2  CA  GLY A   1       9.052   0.053  -4.707  1.00 16.20           C
@@ -154,10 +154,10 @@ HETATM  131  O   HOH B  11      11.846   5.122   9.956  1.00 27.52           O
 HETATM  132  O   HOH B  12      -1.576   1.103  11.035  1.00 44.76           O
 END
 """
-  pdb_in = prefix + "_in.pdb"
-  open(pdb_in, "w").write(pdb_raw)
-  mtz_in = prefix + "_in.mtz"
-  params = """
+    pdb_in = prefix + "_in.pdb"
+    open(pdb_in, "w").write(pdb_raw)
+    mtz_in = prefix + "_in.mtz"
+    params = """
     high_resolution = 1.75
     r_free_flags_fraction = 0.1
     add_sigmas = True
@@ -168,71 +168,88 @@ END
       type = *real complex
       file_name = %s
     }
-  """ % (pdb_in, mtz_in)
-  open("%s_fmodel.eff" % prefix, "w").write(params)
-  assert (easy_run.fully_buffered(
-      "phenix.fmodel %s_fmodel.eff" % prefix
-    ).raise_if_errors().return_code == 0)
-  return pdb_in, mtz_in
+  """ % (
+        pdb_in,
+        mtz_in,
+    )
+    open("%s_fmodel.eff" % prefix, "w").write(params)
+    assert (
+        easy_run.fully_buffered("phenix.fmodel %s_fmodel.eff" % prefix)
+        .raise_if_errors()
+        .return_code
+        == 0
+    )
+    return pdb_in, mtz_in
+
 
 def exercise():
-  #
-  # Test command-line program
-  #
-  pdb_in, mtz_in = make_inputs()
-  pdb_file = file_reader.any_file(pdb_in, force_type="pdb")
-  hierarchy = pdb_file.file_object.hierarchy
-  old_ligand = None
-  for chain in hierarchy.only_model().chains():
-    if (chain.id != "B") : continue
-    for residue_group in chain.residue_groups():
-      atom_group = residue_group.only_atom_group()
-      if (atom_group.resname == "ACT"):
-        old_ligand = atom_group.detached_copy()
-        residue_group.remove_atom_group(atom_group)
-        break
-  assert old_ligand is not None
-  open("tst_ligand_ncs_start.pdb", "w").write(hierarchy.as_pdb_string(
-    crystal_symmetry=pdb_file.file_object.crystal_symmetry()))
-  args = [
-    "tst_ligand_ncs_start.pdb",
-    mtz_in,
-    "ligand_code=ACT",
-  ]
-  from mmtbx.command_line import apply_ncs_to_ligand
-  if op.isfile("ncs_ligands.pdb"):
-    os.remove("ncs_ligands.pdb")
-  result = apply_ncs_to_ligand.run(args=args, out=null_out())
-  assert result.n_ligands_new == 1
-  assert op.isfile("ncs_ligands.pdb")
-  pdb_out = file_reader.any_file("ncs_ligands.pdb", force_type="pdb")
-  hierarchy_new = pdb_out.file_object.hierarchy
-  new_ligand = None
-  for chain in hierarchy_new.only_model().chains():
-    if (chain.id != "B") : continue
-    for residue_group in chain.residue_groups():
-      atom_group = residue_group.only_atom_group()
-      if (atom_group.resname == "ACT"):
-        new_ligand = atom_group.detached_copy()
-  assert new_ligand is not None
-  rmsd = old_ligand.atoms().extract_xyz().rms_difference(
-    new_ligand.atoms().extract_xyz())
-  assert (rmsd < 0.5)
-  #
-  # Unit tests
-  #
-  import mmtbx.ncs.ligands
-  operators = mmtbx.ncs.ligands.find_ncs_operators(hierarchy,
-    log=null_out())
-  assert len(operators) == 1
-  group_ops = operators[0]
-  assert len(group_ops) == 2
-  assert (len(group_ops[0].selection) == 7)
-  for g_op in group_ops:
-    out = StringIO()
-    g_op.show_summary(out=out, prefix=" ")
-    assert out.getvalue().count("Rotation:") == 1
+    #
+    # Test command-line program
+    #
+    pdb_in, mtz_in = make_inputs()
+    pdb_file = file_reader.any_file(pdb_in, force_type="pdb")
+    hierarchy = pdb_file.file_object.hierarchy
+    old_ligand = None
+    for chain in hierarchy.only_model().chains():
+        if chain.id != "B":
+            continue
+        for residue_group in chain.residue_groups():
+            atom_group = residue_group.only_atom_group()
+            if atom_group.resname == "ACT":
+                old_ligand = atom_group.detached_copy()
+                residue_group.remove_atom_group(atom_group)
+                break
+    assert old_ligand is not None
+    open("tst_ligand_ncs_start.pdb", "w").write(
+        hierarchy.as_pdb_string(
+            crystal_symmetry=pdb_file.file_object.crystal_symmetry()
+        )
+    )
+    args = [
+        "tst_ligand_ncs_start.pdb",
+        mtz_in,
+        "ligand_code=ACT",
+    ]
+    from mmtbx.command_line import apply_ncs_to_ligand
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+    if op.isfile("ncs_ligands.pdb"):
+        os.remove("ncs_ligands.pdb")
+    result = apply_ncs_to_ligand.run(args=args, out=null_out())
+    assert result.n_ligands_new == 1
+    assert op.isfile("ncs_ligands.pdb")
+    pdb_out = file_reader.any_file("ncs_ligands.pdb", force_type="pdb")
+    hierarchy_new = pdb_out.file_object.hierarchy
+    new_ligand = None
+    for chain in hierarchy_new.only_model().chains():
+        if chain.id != "B":
+            continue
+        for residue_group in chain.residue_groups():
+            atom_group = residue_group.only_atom_group()
+            if atom_group.resname == "ACT":
+                new_ligand = atom_group.detached_copy()
+    assert new_ligand is not None
+    rmsd = (
+        old_ligand.atoms()
+        .extract_xyz()
+        .rms_difference(new_ligand.atoms().extract_xyz())
+    )
+    assert rmsd < 0.5
+    #
+    # Unit tests
+    #
+    import mmtbx.ncs.ligands
+
+    operators = mmtbx.ncs.ligands.find_ncs_operators(hierarchy, log=null_out())
+    assert len(operators) == 1
+    group_ops = operators[0]
+    assert len(group_ops) == 2
+    assert len(group_ops[0].selection) == 7
+    for g_op in group_ops:
+        out = StringIO()
+        g_op.show_summary(out=out, prefix=" ")
+        assert out.getvalue().count("Rotation:") == 1
+
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

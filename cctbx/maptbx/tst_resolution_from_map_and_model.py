@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import iotbx.pdb
-from cctbx import  miller
+from cctbx import miller
 from cctbx import maptbx
 from libtbx.test_utils import approx_equal
 from cctbx.maptbx import resolution_from_map_and_model
@@ -448,37 +448,36 @@ TER
 END
 """
 
-def run(pdb_str, d_min, b):
-  #
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_box)
-  cs = pdb_inp.crystal_symmetry()
-  ph = pdb_inp.construct_hierarchy()
-  xrs = ph.extract_xray_structure(crystal_symmetry=cs)
-  xrs = xrs.set_b_iso(value=b)
-  fc = xrs.structure_factors(d_min=d_min).f_calc()
-  cg = maptbx.crystal_gridding(
-    unit_cell         = cs.unit_cell(),
-    space_group_info  = cs.space_group_info(),
-    d_min             = d_min)
-  fft_map = miller.fft_map(
-    crystal_gridding     = cg,
-    fourier_coefficients = fc)
-  map_obs = fft_map.real_map_unpadded()
-  #
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  xrs = ph.extract_xray_structure(crystal_symmetry=cs)
-  o = maptbx.resolution_from_map_and_model.run(map_data=map_obs,
-    xray_structure=xrs)
-  return o.d_min, o.b_iso, o.d_fsc_model
 
-if (__name__ == "__main__"):
-  for pdb_str in [pdb_str_5bb, pdb_str_5]:
-    for d_min in [2., 3., 4., 5.]:
-      for b in [20,80,100,200]:
-        if((d_min==2. or d_min==3.) and b>50.): continue
-        result, b_result, d_fsc_model = run(pdb_str=pdb_str, d_min=d_min, b=b)
-        print(b, d_min, "<>", b_result, result, d_fsc_model)
-        #assert approx_equal(d_min, result)
-        #XXX assert cc>0.9
-        #XXX if(not randomize):
-        #XXX   assert approx_equal(b, b_result,5.+1)
+def run(pdb_str, d_min, b):
+    #
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_box)
+    cs = pdb_inp.crystal_symmetry()
+    ph = pdb_inp.construct_hierarchy()
+    xrs = ph.extract_xray_structure(crystal_symmetry=cs)
+    xrs = xrs.set_b_iso(value=b)
+    fc = xrs.structure_factors(d_min=d_min).f_calc()
+    cg = maptbx.crystal_gridding(
+        unit_cell=cs.unit_cell(), space_group_info=cs.space_group_info(), d_min=d_min
+    )
+    fft_map = miller.fft_map(crystal_gridding=cg, fourier_coefficients=fc)
+    map_obs = fft_map.real_map_unpadded()
+    #
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    xrs = ph.extract_xray_structure(crystal_symmetry=cs)
+    o = maptbx.resolution_from_map_and_model.run(map_data=map_obs, xray_structure=xrs)
+    return o.d_min, o.b_iso, o.d_fsc_model
+
+
+if __name__ == "__main__":
+    for pdb_str in [pdb_str_5bb, pdb_str_5]:
+        for d_min in [2.0, 3.0, 4.0, 5.0]:
+            for b in [20, 80, 100, 200]:
+                if (d_min == 2.0 or d_min == 3.0) and b > 50.0:
+                    continue
+                result, b_result, d_fsc_model = run(pdb_str=pdb_str, d_min=d_min, b=b)
+                print(b, d_min, "<>", b_result, result, d_fsc_model)
+                # assert approx_equal(d_min, result)
+                # XXX assert cc>0.9
+                # XXX if(not randomize):
+                # XXX   assert approx_equal(b, b_result,5.+1)

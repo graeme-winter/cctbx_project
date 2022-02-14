@@ -5,161 +5,155 @@ import iotbx.pdb
 from libtbx.utils import null_out
 from libtbx import group_args
 
-#-------------------------------------------------
+# -------------------------------------------------
 # Test for deep_copy method in riding H manager
-#-------------------------------------------------
+# -------------------------------------------------
 def exercise1():
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  atoms = pdb_hierarchy.atoms()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    atoms = pdb_hierarchy.atoms()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  h_parameterization = riding_h_manager.h_parameterization
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_parameterization) - h_parameterization.count(None)
+    h_parameterization = riding_h_manager.h_parameterization
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_parameterization) - h_parameterization.count(None)
 
-  assert (number_h_para == number_h-1), 'Not all H atoms are parameterized'
+    assert number_h_para == number_h - 1, "Not all H atoms are parameterized"
 
-  rc = h_parameterization[20]
+    rc = h_parameterization[20]
 
-  new_manager = riding_h_manager.deep_copy()
-  new_h_parameterization = new_manager.h_parameterization
-  rc_new = new_h_parameterization[20]
+    new_manager = riding_h_manager.deep_copy()
+    new_h_parameterization = new_manager.h_parameterization
+    rc_new = new_h_parameterization[20]
 
-  assert (rc_new.htype == rc.htype)
-  assert (rc_new.ih    == rc.ih)
-  assert (rc_new.a0    == rc.a0)
-  assert (rc_new.a1    == rc.a1)
-  assert (rc_new.a2    == rc.a2)
-  assert (rc_new.a3    == rc.a3)
-  assert (rc_new.a     == rc.a)
-  assert (rc_new.b     == rc.b)
-  assert (rc_new.h     == rc.h)
-  assert (rc_new.n     == rc.n)
-  assert (rc_new.disth == rc.disth)
+    assert rc_new.htype == rc.htype
+    assert rc_new.ih == rc.ih
+    assert rc_new.a0 == rc.a0
+    assert rc_new.a1 == rc.a1
+    assert rc_new.a2 == rc.a2
+    assert rc_new.a3 == rc.a3
+    assert rc_new.a == rc.a
+    assert rc_new.b == rc.b
+    assert rc_new.h == rc.h
+    assert rc_new.n == rc.n
+    assert rc_new.disth == rc.disth
 
-  rc_new.htype = 'unk'
-  rc_new.ih    = 0
-  rc_new.a0    = 1
-  rc_new.a1    = 2
-  rc_new.a2    = 3
-  rc_new.a3    = 4
+    rc_new.htype = "unk"
+    rc_new.ih = 0
+    rc_new.a0 = 1
+    rc_new.a1 = 2
+    rc_new.a2 = 3
+    rc_new.a3 = 4
 
-  assert (rc_new.htype != rc.htype)
-  assert (rc_new.ih != rc.ih)
-  assert (rc_new.a0 != rc.a0)
-  assert (rc_new.a1 != rc.a1)
-  assert (rc_new.a2 != rc.a2)
-  assert (rc_new.a3 != rc.a3)
+    assert rc_new.htype != rc.htype
+    assert rc_new.ih != rc.ih
+    assert rc_new.a0 != rc.a0
+    assert rc_new.a1 != rc.a1
+    assert rc_new.a2 != rc.a2
+    assert rc_new.a3 != rc.a3
 
 
 def apply_selection(riding_h_manager, selection, answers):
-  entries_original_h_para = 21
-  entries_cpp_original    = 8
-  h_parameterization = riding_h_manager.h_parameterization
+    entries_original_h_para = 21
+    entries_cpp_original = 8
+    h_parameterization = riding_h_manager.h_parameterization
 
-  pdb_hierarchy = riding_h_manager.pdb_hierarchy
-  n_atoms = pdb_hierarchy.atoms_size()
+    pdb_hierarchy = riding_h_manager.pdb_hierarchy
+    n_atoms = pdb_hierarchy.atoms_size()
 
-  selected_manager = riding_h_manager.select(selection)
-  new_h_parameterization = selected_manager.h_parameterization
+    selected_manager = riding_h_manager.select(selection)
+    new_h_parameterization = selected_manager.h_parameterization
 
-  # Check that length of h_para corresponds to known answer and to number
-  # of atoms in hierarchy
-  assert (len(h_parameterization) == entries_original_h_para)
-  assert (len(h_parameterization) == n_atoms)
-  assert (len(new_h_parameterization) == answers.entries_selected_h_para)
-  assert (
-    len(new_h_parameterization) == selected_manager.pdb_hierarchy.atoms_size())
-  assert (len(riding_h_manager.parameterization_cpp) == entries_cpp_original)
-  assert (
-    len(selected_manager.parameterization_cpp) == answers.entries_cpp_selected)
-  #print 'number of entries in new_h_para_selected', len(new_h_parameterization)
-  #print 'para c++ new', len(selected_manager.parameterization_cpp)
+    # Check that length of h_para corresponds to known answer and to number
+    # of atoms in hierarchy
+    assert len(h_parameterization) == entries_original_h_para
+    assert len(h_parameterization) == n_atoms
+    assert len(new_h_parameterization) == answers.entries_selected_h_para
+    assert len(new_h_parameterization) == selected_manager.pdb_hierarchy.atoms_size()
+    assert len(riding_h_manager.parameterization_cpp) == entries_cpp_original
+    assert len(selected_manager.parameterization_cpp) == answers.entries_cpp_selected
+    # print 'number of entries in new_h_para_selected', len(new_h_parameterization)
+    # print 'para c++ new', len(selected_manager.parameterization_cpp)
 
-  assert (
-    selected_manager.hd_selection.count(True) == answers.h_in_selected_hierarchy)
+    assert selected_manager.hd_selection.count(True) == answers.h_in_selected_hierarchy
 
-  # check if calculated H position is close to input position (input H is ideal)
-  # This will (in most cases) produce large deviations if reindexing failed
-  atoms = selected_manager.pdb_hierarchy.atoms()
-  sites_cart = atoms.extract_xyz()
-  diagnostics = selected_manager.diagnostics(
-    sites_cart         = sites_cart,
-    threshold          = 0.05)
-  h_distances = diagnostics.h_distances
-  for ih in h_distances:
-    assert (h_distances[ih] < 0.0001), \
-      'distance too large: %s  atom: %s distance: %s ' \
-      % (new_h_parameterization[ih].htype, atoms[ih].id_str(), h_distances[ih])
+    # check if calculated H position is close to input position (input H is ideal)
+    # This will (in most cases) produce large deviations if reindexing failed
+    atoms = selected_manager.pdb_hierarchy.atoms()
+    sites_cart = atoms.extract_xyz()
+    diagnostics = selected_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
+    h_distances = diagnostics.h_distances
+    for ih in h_distances:
+        assert (
+            h_distances[ih] < 0.0001
+        ), "distance too large: %s  atom: %s distance: %s " % (
+            new_h_parameterization[ih].htype,
+            atoms[ih].id_str(),
+            h_distances[ih],
+        )
 
-#-------------------------------------------------
+
+# -------------------------------------------------
 # Test for select method in riding H manager
-#-------------------------------------------------
+# -------------------------------------------------
 def exercise2():
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  #sites_cart = model.get_sites_cart()
-  #atoms = pdb_hierarchy.atoms()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    # sites_cart = model.get_sites_cart()
+    # atoms = pdb_hierarchy.atoms()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  h_parameterization = riding_h_manager.h_parameterization
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_parameterization) - h_parameterization.count(None)
+    h_parameterization = riding_h_manager.h_parameterization
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_parameterization) - h_parameterization.count(None)
 
-  # Check that all H atoms are parameterized in original manager
-  assert (number_h_para == number_h - 1), 'Not all H atoms are parameterized'
+    # Check that all H atoms are parameterized in original manager
+    assert number_h_para == number_h - 1, "Not all H atoms are parameterized"
 
-  # Test several selections and compare with known answers
-  #
-  print('selection1 = not (name CE1 or name CB)')
-  selection1 = pdb_hierarchy.atom_selection_cache().\
-      selection("not (name CE1 or name CB)")
-  answers1 = group_args(
-    entries_selected_h_para = 19,
-    entries_cpp_selected    = 2,
-    h_in_selected_hierarchy = 9)
-  apply_selection(
-    riding_h_manager = riding_h_manager,
-    selection        = selection1,
-    answers          = answers1)
-  #
-  print('selection2 = not (name CD1 or name HD2 or name C)')
-  selection2 = pdb_hierarchy.atom_selection_cache().\
-      selection("not (name CD1 or name HD2 or name C)")
-  answers2 = group_args(
-    entries_selected_h_para = 18,
-    entries_cpp_selected    = 4,
-    h_in_selected_hierarchy = 8)
-  apply_selection(
-    riding_h_manager = riding_h_manager,
-    selection        = selection2,
-    answers          = answers2)
-  #
-  print('selection3 = not (name N or name HB2 or name CE2)')
-  selection3 = pdb_hierarchy.atom_selection_cache().\
-      selection("not (name N or name HB2 or name CE2)")
-  answers3 = group_args(
-    entries_selected_h_para = 18,
-    entries_cpp_selected    = 4,
-    h_in_selected_hierarchy = 8)
-  apply_selection(
-    riding_h_manager = riding_h_manager,
-    selection        = selection3,
-    answers          = answers3)
+    # Test several selections and compare with known answers
+    #
+    print("selection1 = not (name CE1 or name CB)")
+    selection1 = pdb_hierarchy.atom_selection_cache().selection(
+        "not (name CE1 or name CB)"
+    )
+    answers1 = group_args(
+        entries_selected_h_para=19, entries_cpp_selected=2, h_in_selected_hierarchy=9
+    )
+    apply_selection(
+        riding_h_manager=riding_h_manager, selection=selection1, answers=answers1
+    )
+    #
+    print("selection2 = not (name CD1 or name HD2 or name C)")
+    selection2 = pdb_hierarchy.atom_selection_cache().selection(
+        "not (name CD1 or name HD2 or name C)"
+    )
+    answers2 = group_args(
+        entries_selected_h_para=18, entries_cpp_selected=4, h_in_selected_hierarchy=8
+    )
+    apply_selection(
+        riding_h_manager=riding_h_manager, selection=selection2, answers=answers2
+    )
+    #
+    print("selection3 = not (name N or name HB2 or name CE2)")
+    selection3 = pdb_hierarchy.atom_selection_cache().selection(
+        "not (name N or name HB2 or name CE2)"
+    )
+    answers3 = group_args(
+        entries_selected_h_para=18, entries_cpp_selected=4, h_in_selected_hierarchy=8
+    )
+    apply_selection(
+        riding_h_manager=riding_h_manager, selection=selection3, answers=answers3
+    )
+
 
 # Ideal amino acid TYR
 pdb_str = """\
@@ -192,8 +186,8 @@ TER
 END
 """
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise1()
-  exercise2()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise1()
+    exercise2()
+    print("OK. Time: %8.3f" % (time.time() - t0))

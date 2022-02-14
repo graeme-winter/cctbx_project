@@ -1,14 +1,17 @@
 from __future__ import absolute_import, division, print_function
 from libtbx.phil.command_line import argument_interpreter as model_argument_interpreter
 from libtbx.utils import Sorry
-from spotfinder.command_line.signal_strength import additional_spotfinder_phil_defs # implicit import
+from spotfinder.command_line.signal_strength import (
+    additional_spotfinder_phil_defs,
+)  # implicit import
 
 try:
-  from dials.algorithms.integration.kapton_correction import absorption_defs
+    from dials.algorithms.integration.kapton_correction import absorption_defs
 except ImportError:
-  absorption_defs = ""
+    absorption_defs = ""
 
-libtbx_misc_defs = """
+libtbx_misc_defs = (
+    """
 predictions_file = ""
     .type = str
     .help = File has xds parameters for spot predictions in XDS XPARAM format.
@@ -171,7 +174,9 @@ integration {
       .help = either refine the distance or the wavelength for XFEL stills, or fix them both in place
   }%s
 }
-""" % absorption_defs
+"""
+    % absorption_defs
+)
 indexing_defs = """
 include scope spotfinder.command_line.signal_strength.master_params
 spotfinder = *distl speck
@@ -280,11 +285,14 @@ iotbx_defs_viewer_detail = """
   }
 """
 
-iotbx_defs_viewer = """
+iotbx_defs_viewer = (
+    """
 viewer {
   %s
 }
-"""%iotbx_defs_viewer_detail
+"""
+    % iotbx_defs_viewer_detail
+)
 
 iotbx_defs_target = """
 target_cell=None
@@ -321,65 +329,76 @@ libtbx_defs = indexing_defs + libtbx_misc_defs
 iotbx_defs = iotbx_defs_viewer + iotbx_defs_target
 indexing_api_defs = indexing_defs + iotbx_defs_target
 
+
 class EffectiveParamGenerator:
-  def __init__(self,libtbx_defs,iotbx_defs):
-    from libtbx import adopt_init_args
-    adopt_init_args(self, locals())
+    def __init__(self, libtbx_defs, iotbx_defs):
+        from libtbx import adopt_init_args
 
-  def master(self,package = 'iotbx'):
-    libselector = {'libtbx':self.libtbx_defs,
-                   'iotbx':self.iotbx_defs+self.libtbx_defs,
-                  } [package]
-    if (package == "libtbx"):
-      from libtbx import phil
-    else:
-      from iotbx import phil
-    return phil.parse(input_string=libselector, process_includes=True)
+        adopt_init_args(self, locals())
 
-  def default(self,item = 'iotbx'):
-    app_master = self.master(item)
-    return app_master.fetch(sources=[app_master,])
+    def master(self, package="iotbx"):
+        libselector = {
+            "libtbx": self.libtbx_defs,
+            "iotbx": self.iotbx_defs + self.libtbx_defs,
+        }[package]
+        if package == "libtbx":
+            from libtbx import phil
+        else:
+            from iotbx import phil
+        return phil.parse(input_string=libselector, process_includes=True)
 
-  def show(self, modpython):
-    modified_params = self.master().format(python_object = modpython)
-    modified_params.show()
-
-  def merge(self, args):
-    #future:  this member function should be deprecated; replace with preferences.py
-
-    effective_params = self.default()
-
-    argument_interpreter = model_argument_interpreter(
-      master_phil=self.master(),
-      #home_scope =
-    )
-    consume = []
-    for arg in args:
-
-      try:
-        command_line_params = argument_interpreter.process(
-          arg=arg
+    def default(self, item="iotbx"):
+        app_master = self.master(item)
+        return app_master.fetch(
+            sources=[
+                app_master,
+            ]
         )
-        effective_params = effective_params.fetch(sources=[command_line_params,])
-        consume.append(arg)
 
-      except Sorry as e:
+    def show(self, modpython):
+        modified_params = self.master().format(python_object=modpython)
+        modified_params.show()
+
+    def merge(self, args):
+        # future:  this member function should be deprecated; replace with preferences.py
+
+        effective_params = self.default()
+
+        argument_interpreter = model_argument_interpreter(
+            master_phil=self.master(),
+            # home_scope =
+        )
+        consume = []
+        for arg in args:
+
+            try:
+                command_line_params = argument_interpreter.process(arg=arg)
+                effective_params = effective_params.fetch(
+                    sources=[
+                        command_line_params,
+                    ]
+                )
+                consume.append(arg)
+
+            except Sorry as e:
+                pass
+
+        for item in consume:
+            args.remove(item)
+
+        # effective_params.show()
+
+        params = effective_params.extract()
+
+        self.validation(params)
+
+        self.effective_params = effective_params
+        return params
+
+    def validation(self, trial_params):
         pass
 
-    for item in consume:
-      args.remove(item)
 
-
-    # effective_params.show()
-
-    params = effective_params.extract()
-
-    self.validation(params)
-
-    self.effective_params = effective_params
-    return params
-
-  def validation(self,trial_params):
-    pass
-
-effective_param_generator = EffectiveParamGenerator(libtbx_defs,iotbx_defs) #singleton
+effective_param_generator = EffectiveParamGenerator(
+    libtbx_defs, iotbx_defs
+)  # singleton

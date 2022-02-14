@@ -3,12 +3,15 @@ from cctbx.web.asu_gallery import web_links
 from cctbx.web.asu_gallery import html_head_title
 import sys
 
+
 def write_html(f=None):
-  if (f is None): f = sys.stdout
-  iucrcompcomm_jul2003 = web_links.iucrcompcomm_jul2003
-  title = "ASU Gallery - Guide to notation"
-  print(html_head_title(title=title), file=f)
-  print("""\
+    if f is None:
+        f = sys.stdout
+    iucrcompcomm_jul2003 = web_links.iucrcompcomm_jul2003
+    title = "ASU Gallery - Guide to notation"
+    print(html_head_title(title=title), file=f)
+    print(
+        """\
 <body>
 
 <hr>
@@ -108,7 +111,11 @@ I&nbsp;41/a&nbsp;(No.&nbsp;88)</a>.
 
 <hr>
 </body>
-</html>""" % vars(), file=f)
+</html>"""
+        % vars(),
+        file=f,
+    )
 
-if (__name__ == "__main__"):
-  write_html()
+
+if __name__ == "__main__":
+    write_html()
