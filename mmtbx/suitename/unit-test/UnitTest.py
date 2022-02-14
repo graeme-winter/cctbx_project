@@ -1,7 +1,8 @@
 from __future__ import nested_scopes, generators, division, absolute_import
-from __future__ import  with_statement, print_function
+from __future__ import with_statement, print_function
 import os, sys, inspect
 from io import StringIO
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -19,7 +20,7 @@ import suitename, suites, regression
 # The second portion is to test triage by out of bounds angle
 # for each dihedral angle. The unnecessary part of each residue is damaged so
 # the extra suite generated will be incomplete and will vanish.
-input1=u''' :1a: : : : :  Z:  9999.000: 9999.000: 9999.000:   81.495:  212.250:  288.831:  180.000
+input1 = u""" :1a: : : : :  Z:  9999.000: 9999.000: 9999.000:   81.495:  212.250:  288.831:  180.000
  :1a: : : : :  Z:   294.967:  173.990:   53.550:   81.035: 9999.000: 9999.000:  180.000
  :1m: : : : :  Z:  9999.000: 9999.000: 9999.000:   83.513:  218.120:  291.593:  180.000
  :1m: : : : :  Z:   292.247:  222.300:   58.067:   86.093: 9999.000: 9999.000:  180.000
@@ -143,14 +144,14 @@ input1=u''' :1a: : : : :  Z:  9999.000: 9999.000: 9999.000:   81.495:  212.250: 
  :gamma: : : : :  Z:   294.967:  173.990:  139.000:   81.495:  212.250:  288.831:  180.000
  :delta: : : : :  Z:   294.967:  173.990:   53.550:   81.495:  212.250:  288.831:  180.000
  :delta: : : : :  Z:   294.967:  173.990:   53.550:   59.000:  212.250:  288.831:  180.000
-'''
+"""
 
 # A manually selected group of test cases from real files
 # designed to test each code path through membership(). The first residue from
 # each pair has intentionally been damaged so that it will not produce separate
 # output from a report. We use the causes option to illustrate what code path
 # is being used.
-input2 = u'''2xLk:1: C:  11: : :  G:__?__:__?__:__?__:81.132:-127.583:-70.677
+input2 = u"""2xLk:1: C:  11: : :  G:__?__:__?__:__?__:81.132:-127.583:-70.677
 2xLk:1: C:  12: : :  U:169.008:153.891:51.391:80.277:-135.347:-70.614
 3cgp:1: B:  19: : :  U:__?__:__?__:__?__:82.839:-147.528:-179.087
 3cgp:1: B:  20: : :  A:139.983:-154.445:63.134:88.055:-145.599:70.874
@@ -190,9 +191,9 @@ input2 = u'''2xLk:1: C:  11: : :  G:__?__:__?__:__?__:81.132:-127.583:-70.677
 3diL:1: A:  14: : :  G:75.452:147.741:32.719:83.048:-146.012:-75.223
 3pdr:1: X: 132: : :  U:__?__:__?__:__?__:77.469:-157.795:-115.458
 3pdr:1: X: 133: : :  U:47.309:136.943:-25.259:83.460:-150.210:-61.763
-'''
+"""
 
-output1='''
+output1 = """
  :1a: : : : :  Z 33 p 1a 1.000
  :1m: : : : :  Z 33 p 1m 1.000
  :1L: : : : :  Z 33 p 1L 1.000
@@ -261,9 +262,9 @@ output1='''
  :gamma: : : : :  Z trig !! 0.000 gamma
  :delta: : : : :  Z 33 p 1a 0.999
  :delta: : : : :  Z trig !! 0.000 delta
-'''
+"""
 
-output2 = '''2xLk:1: C:  12: : :  U 33 p 1g 0.839 1-only-one
+output2 = """2xLk:1: C:  12: : :  U 33 p 1g 0.839 1-only-one
 3cgp:1: B:  20: : :  A 33 p 3g 0.040 1-only-one wannabe
 4pco:1: B:   4: : :  G 33 t 1c 0.890 2-BETWEEN-dom-sat(   0.22|  0.913)
 5b2q:1: B:  63: : :  U 32 p 1[ 0.072 2-BETWEEN-dom-sat(  0.941|  0.829)
@@ -283,50 +284,51 @@ output2 = '''2xLk:1: C:  12: : :  U 33 p 1g 0.839 1-only-one
 4jah:1: B:  11: : :  G 33 p &a 0.912 5-BETWEEN-dom-sat(  0.442|  0.226)
 3diL:1: A:  14: : :  G 23 p !! 0.000 outlier distance 1.01
 3pdr:1: X: 133: : :  U 33 m !! 0.000 vacant bin
-'''
+"""
+
 
 def test(input, canonicalOutput, options, identity):
-  opt = suites.parseOptions(options)
-  stream = StringIO(input)
-  outFile=StringIO()
-  suitename.clearStats()
-  suitename.main(stream, outFile=outFile, optionsIn=opt)
-  suitename.clearStats()
+    opt = suites.parseOptions(options)
+    stream = StringIO(input)
+    outFile = StringIO()
+    suitename.clearStats()
+    suitename.main(stream, outFile=outFile, optionsIn=opt)
+    suitename.clearStats()
 
-  output = outFile.getvalue()
-  assert output.strip() == canonicalOutput.strip(), identity
+    output = outFile.getvalue()
+    assert output.strip() == canonicalOutput.strip(), identity
 
 
 def testAll():
-  test(input1, output1, "chart=true noinc=true", "cluster and triage test")
-  test(input2, output2, "chart=true noinc=true causes=true",
-      "code paths test")
-  test(regression.in_1ehz, regression.out_1ehz, "", "1ehz regression test")
+    test(input1, output1, "chart=true noinc=true", "cluster and triage test")
+    test(input2, output2, "chart=true noinc=true causes=true", "code paths test")
+    test(regression.in_1ehz, regression.out_1ehz, "", "1ehz regression test")
 
 
 # Not normally used, but useful for diagnosing failures
 def testVerbose(input, canonicalOutput, options, identity):
-  opt = suites.parseOptions(options)
-  stream = StringIO(input)
-  outFile=StringIO("")
-  suitename.clearStats()
-  suitename.main(stream, outFile=outFile, optionsIn=opt)
+    opt = suites.parseOptions(options)
+    stream = StringIO(input)
+    outFile = StringIO("")
+    suitename.clearStats()
+    suitename.main(stream, outFile=outFile, optionsIn=opt)
 
-  output = outFile.getvalue()
-  if output.strip() == canonicalOutput.strip():
-   result = True
-   sys.stderr.write("Success\n")
-  else:
-    result = False
-    sys.stderr.write("Failed\n")
-    sys.stderr.write("========================================\n")
-    sys.stderr.write(canonicalOutput.strip())
-    sys.stderr.write("\n\n=========================================\n")
-    sys.stderr.write(output.strip())
+    output = outFile.getvalue()
+    if output.strip() == canonicalOutput.strip():
+        result = True
+        sys.stderr.write("Success\n")
+    else:
+        result = False
+        sys.stderr.write("Failed\n")
+        sys.stderr.write("========================================\n")
+        sys.stderr.write(canonicalOutput.strip())
+        sys.stderr.write("\n\n=========================================\n")
+        sys.stderr.write(output.strip())
 
-    out2 = open("UnitTest-output.txt", "w")
-    out2.write(output.strip())
-    out2.close()
-    return result
+        out2 = open("UnitTest-output.txt", "w")
+        out2.write(output.strip())
+        out2.close()
+        return result
+
 
 testAll()

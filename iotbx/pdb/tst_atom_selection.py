@@ -5,8 +5,12 @@ from libtbx.test_utils import Exception_expected, show_diff
 from six.moves import range
 from six.moves import zip
 
+
 def exercise_selection():
-  pdb_inp = pdb.input(source_info=None, lines=flex.split_lines("""\
+    pdb_inp = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 CRYST1   50.800   50.800  155.300  90.00  90.00  90.00 P 43 21 2     8
 MODEL        1
 ATOM      4  N   SER     1       8.753  29.755  61.685  1.00 49.13
@@ -106,179 +110,271 @@ ATOM   2016  A1  CCCZZA003       9.242  30.200  62.974  1.00 46.62
 ATOM   2017  A1  AAAUU  1K       8.753  29.755  61.685  1.00 49.13
 ENDMDL
 END
-"""))
-  hierarchy = pdb_inp.construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache(
-    special_position_settings=pdb_inp.special_position_settings())
-  assert sel_cache.n_seq == hierarchy.atoms_size()
-  isel = sel_cache.iselection
-  assert isel("").size() == 0
-  assert isel("all").size() == sel_cache.n_seq
-  assert isel("none").size() == 0
-  assert isel("optional none", optional=True).size() == 0
-  assert isel("optional none", optional=False) is None
-  assert isel("not all").size() == 0
-  assert isel("not none").size() == sel_cache.n_seq
-  assert list(isel(r"name c?\*")) == [45,46,48,50,52]
-  assert list(isel(r"name 'C?\*'")) == []
-  assert list(isel(r"name ' C?\*'")) == [45,46,48,50,52]
-  assert list(isel(r"name ' c?\*'")) == [45,46,48,50,52]
-  assert list(isel(r"name n?'")) == [55, 59]
-  for conj in ["and ", ""]:
-    assert list(isel(r"altloc a %sname n" % conj)) == [24]
-    assert list(isel(r"altloc b %sname n" % conj)) == [32]
-    assert list(isel(r"altloc ' ' %sname n" % conj)) == [0,6,17]
-    assert list(isel(r"altid ' ' %sname n" % conj)) == [0,6,17]
-  assert list(isel(r"resname hoh")) == [69]
-  assert list(isel(r"resname SO4")) == [64,65,66,67,68]
-  assert list(isel(r"resname so4")) == [64,65,66,67,68]
-  assert list(isel(r"resname So4")) == [64,65,66,67,68]
-  assert list(isel(r"resname S?4")) == [64,65,66,67,68]
-  assert list(isel(r"resname pro and name cg")) == [22]
-  assert list(isel(r"resname pro and (name cg or name ca)")) == [18,22]
-  assert list(isel(r"resname pro AND (name cg or name ca)")) == [18,22]
-  assert list(isel(r"resname pro and (name cg OR name ca)")) == [18,22]
-  assert list(isel(r"resname pro AND (name cg OR name ca)")) == [18,22]
-  assert list(isel(r"not resname pro and (name cg or name ca)")
-              ) == [1,7,11,25,33]
-  assert list(isel(r"chain h and name o*")) == [41,42,43,44,47,49,51,58]
-  assert list(isel(r"(chain h or chain s) and name o[2-46]")) == [58,66,67,68]
-  assert list(isel(r"resseq 188")) == [64,65,66,67,68]
-  assert list(isel(r"resseq 188")) == [64,65,66,67,68]
-  assert list(isel(r"resseq 1:1")) == [0,1,2,3,4,5,70,71,74,75,78,81]
-  assert list(isel(r"resseq 2:2")) == list(range(6,17)) + [72,73,77,79,80,82]
-  assert list(isel(r"resseq 5:5")) == [76,83]
-  assert list(isel(r"resseq 1:5")) == list(range(40))+list(range(70,84))
-  assert list(isel(r"resseq 2:3")) == list(range(6,24))+[72,73,77,79,80,82]
-  assert list(isel(r"resseq 188:188")) == [64,65,66,67,68]
-  assert list(isel(r"resseq 200:200")) == [69]
-  assert list(isel(r"resseq 188:200")) == [64,65,66,67,68,69]
-  assert list(isel(r"resseq 9999:A002")) == [84,85]
-  assert list(isel(r"resseq A002:A003")) == [85,86]
-  assert list(isel(r"resseq :")) == list(range(88))
-  assert list(isel(r"resseq :2 and name n*")) == [0,6,13,15,16]
-  assert list(isel(r"resseq 2: and name cb")) == [10,21,28,36]
-  assert list(isel(r"resseq 1:2 and name n*")) == [0,6,13,15,16]
-  assert list(isel(r"resseq 2:4 and name cb")) == [10,21,28,36]
-  assert list(isel(r"model 1 and name cb")) == [4,10,21,28,36]
-  assert list(isel(r"model 2:3 and name o1*")) == [41,65]
-  assert list(isel(r"icode j and name c?")) == [18,21,22,23]
-  assert list(isel(r"resid 188")) == [64,65,66,67,68]
-  assert list(isel(r"resid 3J")) == [17,18,19,20,21,22,23]
-  assert list(isel(r"resid 1K")) == [78,81,87]
-  assert list(isel(r"resid '   1K'")) == [78,81]
-  assert list(isel(r"resid '  1K '")) == [87]
-  assert list(isel(r"resi '  1K'")) == []
-  assert list(isel(r"resid 1:2")) \
-      == list(range(17)) + [70,71,72,73,74,75,77,78,79,80,81,82]
-  expected = list(range(6,17)) + [72,73,77,78,79,80,81,82]
-  assert list(isel(r"resid 1K:2")) == expected
-  assert list(isel(r"resid '   1K:2'")) == expected
-  assert list(isel(r"resid '  1K:2'")) == expected
-  expected = list(range(6,40)) + [72,73,76,77,78,79,80,81,82,83,87]
-  assert list(isel(r"resi '  1K:  1K '")) == expected
-  #
-  expected = [7,18,25,33]
-  assert list(isel(r"resseq 2:4 and name ca")) == expected
-  assert list(isel(r"resseq 2 : 4 and name ca")) == expected
-  assert list(isel(r"resseq 2: 4 and name ca")) == expected
-  assert list(isel(r"resseq 2 :4 and name ca")) == expected
-  expected = [1,7,18]
-  assert list(isel(r"resseq :3 and name ca")) == expected
-  assert list(isel(r"resseq : 3 and name ca")) == expected
-  assert list(isel(r"name ca and resseq :3")) == expected
-  assert list(isel(r"name ca and resseq : 3")) == expected
-  expected = [18,25,33]
-  assert list(isel(r"resseq 3: and name ca")) == expected
-  assert list(isel(r"resseq 3 : and name ca")) == expected
-  assert list(isel(r"name ca and resseq 3:")) == expected
-  assert list(isel(r"name ca and resseq 3 :")) == expected
-  assert list(isel(r"name ca and resseq 3")) == [18]
-  expected = [1,7,18,25,33]
-  assert list(isel(r"resseq : and name ca")) == expected
-  assert list(isel(r"name ca and resseq :")) == expected
-  #
-  assert list(isel(r"segid wate")) == [69]
-  assert list(isel(r"element o")) == [65,66,67,68]
-  assert list(isel(r"charge 4+")) == [64]
-  assert list(isel(r"anisou")) == [1, 3]
-  assert list(isel(r"pepnames")) == list(range(40))
-  assert list(isel(r"single_atom_residue")) == [
-    69, 76, 77, 78, 81, 82, 83, 84, 85, 86, 87]
-  assert list(isel(r"hetero")) == list(isel(r"hetatm")) == [
-    40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58,
-    59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69]
-  assert list(isel("within(3, resname PRO)")) == [7, 8, 9, 17, 18, 19, 20, 21,
-    22, 23, 24, 25, 32, 33, 73, 77, 80]
-  assert list(isel("residues_within(3, resname PRO)")) == \
-    list(range(6, 40)) + [72, 73, 77, 79, 80]
-  #
-  try: isel(r"resseq")
-  except pdb.atom_selection.AtomSelectionError as e:
-    assert str(e).find(
-      "Missing argument for resseq.") >= 0
-  else: raise Exception_expected
-  try: isel(r"resseq 3:2")
-  except pdb.atom_selection.AtomSelectionError as e:
-    assert str(e).find(
-      "range with first index > last index: resseq 3:2") >= 0
-  else: raise Exception_expected
-  try: isel(r"resid ' 1K :2'")
-  except pdb.atom_selection.AtomSelectionError as e:
-    assert str(e).find(
-      "range with first index > last index: resid  1K :2") >= 0
-  else: raise Exception_expected
-  for s in ["altloc a and and name n",
-            "altloc a and or name n",
-            "altloc a or and name n",
-            "altloc a or or name n",
-            "and name n",
-            "or name n",
-            "not",
-            "not not",
-            "altloc a optional",
-            "optional optional altloc a"]:
-    try: isel(string=s)
+"""
+        ),
+    )
+    hierarchy = pdb_inp.construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache(
+        special_position_settings=pdb_inp.special_position_settings()
+    )
+    assert sel_cache.n_seq == hierarchy.atoms_size()
+    isel = sel_cache.iselection
+    assert isel("").size() == 0
+    assert isel("all").size() == sel_cache.n_seq
+    assert isel("none").size() == 0
+    assert isel("optional none", optional=True).size() == 0
+    assert isel("optional none", optional=False) is None
+    assert isel("not all").size() == 0
+    assert isel("not none").size() == sel_cache.n_seq
+    assert list(isel(r"name c?\*")) == [45, 46, 48, 50, 52]
+    assert list(isel(r"name 'C?\*'")) == []
+    assert list(isel(r"name ' C?\*'")) == [45, 46, 48, 50, 52]
+    assert list(isel(r"name ' c?\*'")) == [45, 46, 48, 50, 52]
+    assert list(isel(r"name n?'")) == [55, 59]
+    for conj in ["and ", ""]:
+        assert list(isel(r"altloc a %sname n" % conj)) == [24]
+        assert list(isel(r"altloc b %sname n" % conj)) == [32]
+        assert list(isel(r"altloc ' ' %sname n" % conj)) == [0, 6, 17]
+        assert list(isel(r"altid ' ' %sname n" % conj)) == [0, 6, 17]
+    assert list(isel(r"resname hoh")) == [69]
+    assert list(isel(r"resname SO4")) == [64, 65, 66, 67, 68]
+    assert list(isel(r"resname so4")) == [64, 65, 66, 67, 68]
+    assert list(isel(r"resname So4")) == [64, 65, 66, 67, 68]
+    assert list(isel(r"resname S?4")) == [64, 65, 66, 67, 68]
+    assert list(isel(r"resname pro and name cg")) == [22]
+    assert list(isel(r"resname pro and (name cg or name ca)")) == [18, 22]
+    assert list(isel(r"resname pro AND (name cg or name ca)")) == [18, 22]
+    assert list(isel(r"resname pro and (name cg OR name ca)")) == [18, 22]
+    assert list(isel(r"resname pro AND (name cg OR name ca)")) == [18, 22]
+    assert list(isel(r"not resname pro and (name cg or name ca)")) == [1, 7, 11, 25, 33]
+    assert list(isel(r"chain h and name o*")) == [41, 42, 43, 44, 47, 49, 51, 58]
+    assert list(isel(r"(chain h or chain s) and name o[2-46]")) == [58, 66, 67, 68]
+    assert list(isel(r"resseq 188")) == [64, 65, 66, 67, 68]
+    assert list(isel(r"resseq 188")) == [64, 65, 66, 67, 68]
+    assert list(isel(r"resseq 1:1")) == [0, 1, 2, 3, 4, 5, 70, 71, 74, 75, 78, 81]
+    assert list(isel(r"resseq 2:2")) == list(range(6, 17)) + [72, 73, 77, 79, 80, 82]
+    assert list(isel(r"resseq 5:5")) == [76, 83]
+    assert list(isel(r"resseq 1:5")) == list(range(40)) + list(range(70, 84))
+    assert list(isel(r"resseq 2:3")) == list(range(6, 24)) + [72, 73, 77, 79, 80, 82]
+    assert list(isel(r"resseq 188:188")) == [64, 65, 66, 67, 68]
+    assert list(isel(r"resseq 200:200")) == [69]
+    assert list(isel(r"resseq 188:200")) == [64, 65, 66, 67, 68, 69]
+    assert list(isel(r"resseq 9999:A002")) == [84, 85]
+    assert list(isel(r"resseq A002:A003")) == [85, 86]
+    assert list(isel(r"resseq :")) == list(range(88))
+    assert list(isel(r"resseq :2 and name n*")) == [0, 6, 13, 15, 16]
+    assert list(isel(r"resseq 2: and name cb")) == [10, 21, 28, 36]
+    assert list(isel(r"resseq 1:2 and name n*")) == [0, 6, 13, 15, 16]
+    assert list(isel(r"resseq 2:4 and name cb")) == [10, 21, 28, 36]
+    assert list(isel(r"model 1 and name cb")) == [4, 10, 21, 28, 36]
+    assert list(isel(r"model 2:3 and name o1*")) == [41, 65]
+    assert list(isel(r"icode j and name c?")) == [18, 21, 22, 23]
+    assert list(isel(r"resid 188")) == [64, 65, 66, 67, 68]
+    assert list(isel(r"resid 3J")) == [17, 18, 19, 20, 21, 22, 23]
+    assert list(isel(r"resid 1K")) == [78, 81, 87]
+    assert list(isel(r"resid '   1K'")) == [78, 81]
+    assert list(isel(r"resid '  1K '")) == [87]
+    assert list(isel(r"resi '  1K'")) == []
+    assert list(isel(r"resid 1:2")) == list(range(17)) + [
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+    ]
+    expected = list(range(6, 17)) + [72, 73, 77, 78, 79, 80, 81, 82]
+    assert list(isel(r"resid 1K:2")) == expected
+    assert list(isel(r"resid '   1K:2'")) == expected
+    assert list(isel(r"resid '  1K:2'")) == expected
+    expected = list(range(6, 40)) + [72, 73, 76, 77, 78, 79, 80, 81, 82, 83, 87]
+    assert list(isel(r"resi '  1K:  1K '")) == expected
+    #
+    expected = [7, 18, 25, 33]
+    assert list(isel(r"resseq 2:4 and name ca")) == expected
+    assert list(isel(r"resseq 2 : 4 and name ca")) == expected
+    assert list(isel(r"resseq 2: 4 and name ca")) == expected
+    assert list(isel(r"resseq 2 :4 and name ca")) == expected
+    expected = [1, 7, 18]
+    assert list(isel(r"resseq :3 and name ca")) == expected
+    assert list(isel(r"resseq : 3 and name ca")) == expected
+    assert list(isel(r"name ca and resseq :3")) == expected
+    assert list(isel(r"name ca and resseq : 3")) == expected
+    expected = [18, 25, 33]
+    assert list(isel(r"resseq 3: and name ca")) == expected
+    assert list(isel(r"resseq 3 : and name ca")) == expected
+    assert list(isel(r"name ca and resseq 3:")) == expected
+    assert list(isel(r"name ca and resseq 3 :")) == expected
+    assert list(isel(r"name ca and resseq 3")) == [18]
+    expected = [1, 7, 18, 25, 33]
+    assert list(isel(r"resseq : and name ca")) == expected
+    assert list(isel(r"name ca and resseq :")) == expected
+    #
+    assert list(isel(r"segid wate")) == [69]
+    assert list(isel(r"element o")) == [65, 66, 67, 68]
+    assert list(isel(r"charge 4+")) == [64]
+    assert list(isel(r"anisou")) == [1, 3]
+    assert list(isel(r"pepnames")) == list(range(40))
+    assert list(isel(r"single_atom_residue")) == [
+        69,
+        76,
+        77,
+        78,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+    ]
+    assert (
+        list(isel(r"hetero"))
+        == list(isel(r"hetatm"))
+        == [
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+        ]
+    )
+    assert list(isel("within(3, resname PRO)")) == [
+        7,
+        8,
+        9,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        32,
+        33,
+        73,
+        77,
+        80,
+    ]
+    assert list(isel("residues_within(3, resname PRO)")) == list(range(6, 40)) + [
+        72,
+        73,
+        77,
+        79,
+        80,
+    ]
+    #
+    try:
+        isel(r"resseq")
     except pdb.atom_selection.AtomSelectionError as e:
-      assert str(e).endswith("""\
+        assert str(e).find("Missing argument for resseq.") >= 0
+    else:
+        raise Exception_expected
+    try:
+        isel(r"resseq 3:2")
+    except pdb.atom_selection.AtomSelectionError as e:
+        assert str(e).find("range with first index > last index: resseq 3:2") >= 0
+    else:
+        raise Exception_expected
+    try:
+        isel(r"resid ' 1K :2'")
+    except pdb.atom_selection.AtomSelectionError as e:
+        assert str(e).find("range with first index > last index: resid  1K :2") >= 0
+    else:
+        raise Exception_expected
+    for s in [
+        "altloc a and and name n",
+        "altloc a and or name n",
+        "altloc a or and name n",
+        "altloc a or or name n",
+        "and name n",
+        "or name n",
+        "not",
+        "not not",
+        "altloc a optional",
+        "optional optional altloc a",
+    ]:
+        try:
+            isel(string=s)
+        except pdb.atom_selection.AtomSelectionError as e:
+            assert str(e).endswith(
+                """\
 Atom selection string leading to error:
-  %s""" % s), str(e)
-    else: raise Exception_expected
-  #
-  sel = sel_cache.get_labels(name=" CA ")
-  assert len(sel) == 1
-  assert list(sel[0]) == [1,7,18,25,33]
-  atoms = hierarchy.atoms()
-  for i_seq in sel[0]:
-    assert atoms[i_seq].name == " CA "
-  sel = sel_cache.get_labels(resseq="   5")
-  assert len(sel) == 1
-  assert list(sel[0]) == [76, 83]
-  #
-  atoms.reset_i_seq()
-  sel = sel_cache.selection("resname 5GP and name C6")
-  assert sel.count(True) == 1
-  sel_complete = pdb.atom_selection.expand_selection_to_entire_atom_groups(
-    selection=sel,
-    pdb_atoms=atoms)
-  assert sel_complete.count(True) == 24
-  #
-  link_records = [
-    pdb.records.link(pdb_str=pdb_str)
-      for pdb_str in """\
+  %s"""
+                % s
+            ), str(e)
+        else:
+            raise Exception_expected
+    #
+    sel = sel_cache.get_labels(name=" CA ")
+    assert len(sel) == 1
+    assert list(sel[0]) == [1, 7, 18, 25, 33]
+    atoms = hierarchy.atoms()
+    for i_seq in sel[0]:
+        assert atoms[i_seq].name == " CA "
+    sel = sel_cache.get_labels(resseq="   5")
+    assert len(sel) == 1
+    assert list(sel[0]) == [76, 83]
+    #
+    atoms.reset_i_seq()
+    sel = sel_cache.selection("resname 5GP and name C6")
+    assert sel.count(True) == 1
+    sel_complete = pdb.atom_selection.expand_selection_to_entire_atom_groups(
+        selection=sel, pdb_atoms=atoms
+    )
+    assert sel_complete.count(True) == 24
+    #
+    link_records = [
+        pdb.records.link(pdb_str=pdb_str)
+        for pdb_str in """\
 LINK         S   SO4 S 188                 O1  SO4 S 188
 LINK         S   SO4 S 188                 O2  SO4 S 188
 LINK         NZ  LYS A 680        1.260    C4A PLP D   1                LYS-PLP
-""".splitlines()]
-  expected_results = [
-    [[64], [65]],
-    [[64], [66]],
-    [[], []]]
-  for link_record,expected in zip(link_records, expected_results):
-    assert [list(sel) for sel in sel_cache.link_iselections(link_record)] \
-        == expected
-  #
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+""".splitlines()
+    ]
+    expected_results = [[[64], [65]], [[64], [66]], [[], []]]
+    for link_record, expected in zip(link_records, expected_results):
+        assert [
+            list(sel) for sel in sel_cache.link_iselections(link_record)
+        ] == expected
+    #
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      2  CA  GLY A   1      -9.052   4.207   4.651  1.00 16.57           C
 ATOM      6  CA  ASN A   2      -6.522   2.038   2.831  1.00 14.10           C
@@ -287,16 +383,21 @@ ATOM     22  CA  GLN a   4       0.384   1.888   3.199  1.00 10.53           C
 ATOM     31  CA  GLN a   5       3.270   2.361   5.640  1.00 11.39           C
 ATOM     40  CA  ASN a   6       6.831   2.310   4.318  1.00 12.30           C
 END
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  isel = sel_cache.iselection
-  assert list(isel("chain A")) == [0,1,2]
-  assert list(isel("chain a")) == [3,4,5]
-  assert list(isel("name ca")) == list(range(6))
-  assert list(isel("resname asn")) == [1,2,5]
-  assert list(isel("resname ASN")) == [1,2,5]
-  assert list(isel("resname Asn")) == [1,2,5]
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    isel = sel_cache.iselection
+    assert list(isel("chain A")) == [0, 1, 2]
+    assert list(isel("chain a")) == [3, 4, 5]
+    assert list(isel("name ca")) == list(range(6))
+    assert list(isel("resname asn")) == [1, 2, 5]
+    assert list(isel("resname ASN")) == [1, 2, 5]
+    assert list(isel("resname Asn")) == [1, 2, 5]
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      2  CA  GLY A   1      -9.052   4.207   4.651  1.00 16.57           C
 ATOM      6  CA  ASN A   2      -6.522   2.038   2.831  1.00 14.10           C
@@ -305,18 +406,23 @@ ATOM     22  CA  GLN b   4       0.384   1.888   3.199  1.00 10.53           C
 ATOM     31  CA  GLN b   5       3.270   2.361   5.640  1.00 11.39           C
 ATOM     40  CA  ASN b   6       6.831   2.310   4.318  1.00 12.30           C
 END
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  isel = sel_cache.iselection
-  assert list(isel("resname asn")) == [1,2,5]
-  assert list(isel("resname ASN")) == [1,2,5]
-  assert list(isel("resname Asn")) == [1,2,5]
-  assert list(isel("chain A")) == [0,1,2]
-  assert list(isel("chain a")) == []
-  assert list(isel("chain B")) == []
-  assert list(isel("chain b")) == [3,4,5]
-  #
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    isel = sel_cache.iselection
+    assert list(isel("resname asn")) == [1, 2, 5]
+    assert list(isel("resname ASN")) == [1, 2, 5]
+    assert list(isel("resname Asn")) == [1, 2, 5]
+    assert list(isel("chain A")) == [0, 1, 2]
+    assert list(isel("chain a")) == []
+    assert list(isel("chain B")) == []
+    assert list(isel("chain b")) == [3, 4, 5]
+    #
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 ATOM      5  CA  SER     1       9.242  30.200  62.974  1.00 46.62
 ATOM     11  CA  ARG     2      12.548  28.316  63.532  1.00 30.20
 ATOM     21  N   NON     3J     13.947  29.997  64.680  1.00 22.94
@@ -330,31 +436,45 @@ ATOM     41  N   PRO     5      13.947  29.997  64.680  1.00 22.94
 ATOM     42  CA  PRO     5      14.902  31.100  64.827  1.00 20.19
 ATOM     44  O   PRO     5      16.545  29.521  64.086  1.00 19.76
 ATOM     45  CA  CA      6      16.545  29.521  64.086  1.00 19.76
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  isel = sel_cache.iselection
-  assert list(isel("pepnames")) == [0,1,5,6,7,8,9,10,11]
-  #
-  for s in ["peptide", "protein"]:
-    assert list(isel(s)) == [0, 1, 5, 6, 7, 8, 9, 10, 11]
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    isel = sel_cache.iselection
+    assert list(isel("pepnames")) == [0, 1, 5, 6, 7, 8, 9, 10, 11]
+    #
+    for s in ["peptide", "protein"]:
+        assert list(isel(s)) == [0, 1, 5, 6, 7, 8, 9, 10, 11]
 
-  try:
-    isel("chain A or (peptyde and name ca)")
-  except pdb.atom_selection.AtomSelectionError as e:
-    assert not show_diff(str(e), """\
+    try:
+        isel("chain A or (peptyde and name ca)")
+    except pdb.atom_selection.AtomSelectionError as e:
+        assert not show_diff(
+            str(e),
+            """\
 RuntimeError: Atom selection syntax error at word "peptyde".
 Atom selection string leading to error:
-  chain A or (peptyde and name ca)""")
-  else: raise Exception_expected
-  #
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+  chain A or (peptyde and name ca)""",
+        )
+    else:
+        raise Exception_expected
+    #
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 ATOM    459  CA  SER A  58
 ATOM    463  OG ASER A  58
 ATOM    464  OG BSER A  58
-""")).construct_hierarchy()
-  sel_cache = hierarchy.atom_selection_cache()
-  assert sel_cache.iselection("single_atom_residue").size() == 0
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+"""
+        ),
+    ).construct_hierarchy()
+    sel_cache = hierarchy.atom_selection_cache()
+    assert sel_cache.iselection("single_atom_residue").size() == 0
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      2  CA  GLY A 666      -9.052   4.207   4.651  1.00 16.57           C
 ATOM      6  CA  ASN A 777      -6.522   2.038   2.831  1.00 14.10           C
@@ -367,18 +487,24 @@ ATOM      6  CA  ASN B 777      -6.522   2.038   2.831  1.00 14.10           C
 ATOM     14  CA  ASN B   1      -3.193   1.904   4.589  1.00 11.74           C
 ATOM     22  CA  GLN B   2       0.384   1.888   3.199  1.00 10.53           C
 END
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  sele = sel_cache.iselection("resid 777 through 3 and chain A")
-  assert (sele.size() == 4)
-  sele = sel_cache.iselection("resid 777 through 3")
-  assert (sele.size() == 7)
-  try :
-    sele = sel_cache.iselection("resid 777 through chain A")
-  except pdb.atom_selection.AtomSelectionError as e :
-    pass
-  else : raise Exception_expected
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    sele = sel_cache.iselection("resid 777 through 3 and chain A")
+    assert sele.size() == 4
+    sele = sel_cache.iselection("resid 777 through 3")
+    assert sele.size() == 7
+    try:
+        sele = sel_cache.iselection("resid 777 through chain A")
+    except pdb.atom_selection.AtomSelectionError as e:
+        pass
+    else:
+        raise Exception_expected
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      6  CA  ASN B 777      -6.522   2.038   2.831  1.00 14.10           C
 ATOM     14  CA  ASN B   1      -3.193   1.904   4.589  1.00 11.74           C
@@ -393,14 +519,19 @@ ATOM     40  CA AASN A   4       6.831   2.310   4.318  1.00 12.30           C
 ATOM     41  CA BASN A   4       6.831   2.310   4.318  1.00 12.30           C
 TER
 END
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  sele = sel_cache.iselection("resid 2 through 4")
-  assert (list(sele) == [2,6,7,8,9])
-  sele = sel_cache.iselection("chain A and resid 2 through 4")
-  assert (list(sele) == [6,7,8,9])
-  #
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    sele = sel_cache.iselection("resid 2 through 4")
+    assert list(sele) == [2, 6, 7, 8, 9]
+    sele = sel_cache.iselection("chain A and resid 2 through 4")
+    assert list(sele) == [6, 7, 8, 9]
+    #
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 ATOM      5  CA  SER     1       9.242  30.200  62.974  1.00 46.62
 ATOM     11  O   HOH     2      12.548  28.316  63.532  1.00 30.20
 ATOM     21  O   WAT C   3J     13.947  29.997  64.680  1.00 22.94           O
@@ -409,26 +540,31 @@ ATOM     42  CA  PRO     5      14.902  31.100  64.827  1.00 20.19
 ATOM     44  O   PRO     5      16.545  29.521  64.086  1.00 19.76
 HETATM   45  O  ZHOH     6      16.545  29.521  64.086  0.00 19.76
 HETATM   4   O  KHOH     6      16.545  29.521  64.086  0.00 19.76
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  isel = sel_cache.iselection
-  assert list(isel("water")) == [1,2,6,7]
-  #
-  assert list(isel("bfactor < 20")) == [5,6,7]
-  assert list(isel("name CA and bfactor = 20.19")) == [3,4]
-  assert list(isel("occupancy > 0")) == [0,1,2,3,4,5]
-  assert list(isel("occupancy < 1")) == [3,6,7]
-  assert list(isel("occupancy = 0")) == [6,7]
-  try :
-    isel("within(5, resname PRO)")
-  except pdb.atom_selection.AtomSelectionError :
-    pass
-  else :
-    raise Exception_expected
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    isel = sel_cache.iselection
+    assert list(isel("water")) == [1, 2, 6, 7]
+    #
+    assert list(isel("bfactor < 20")) == [5, 6, 7]
+    assert list(isel("name CA and bfactor = 20.19")) == [3, 4]
+    assert list(isel("occupancy > 0")) == [0, 1, 2, 3, 4, 5]
+    assert list(isel("occupancy < 1")) == [3, 6, 7]
+    assert list(isel("occupancy = 0")) == [6, 7]
+    try:
+        isel("within(5, resname PRO)")
+    except pdb.atom_selection.AtomSelectionError:
+        pass
+    else:
+        raise Exception_expected
 
-  # make sure that hybrid-36 numbers work with and without insertion codes
+    # make sure that hybrid-36 numbers work with and without insertion codes
 
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 ATOM      2  CA  SER  A13L      33.163  16.115  17.936  1.00 26.68           C
 ATOM      8  CA  ASP  A13M      34.633  18.762  20.254  1.00 22.59           C
 ATOM     16  CA  LYS  A13N      36.047  17.704  23.610  1.00 19.79           C
@@ -446,16 +582,28 @@ ATOM    217  N   SER A  33      20.230 -10.407  -3.567  1.00  4.02           N
 ATOM    223  N   GLY A  34      21.415 -13.600  -2.283  1.00  4.96           N
 ATOM    227  N   THR A  35      21.521 -17.105  -1.329  1.00  4.35           N
 ATOM    234  N   SER A  35A     23.294 -20.178  -1.426  1.00  4.63           N
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  isel = sel_cache.iselection
-  assert list(isel("resid A13L through A13N")) == [0, 1, 2]
-  assert list(isel("resid A002 through A003X")) == [3, 4]
-  assert list(isel("(resid A002 through A003X) and (altloc ' ' or altloc 'A') "))== [3, 4]
-  assert list(isel("(chain 'A' and resid 2A through 7 ) and (name N) and (altloc 'A' or altloc ' ')"))==[6, 7, 8, 9, 10]
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    isel = sel_cache.iselection
+    assert list(isel("resid A13L through A13N")) == [0, 1, 2]
+    assert list(isel("resid A002 through A003X")) == [3, 4]
+    assert list(isel("(resid A002 through A003X) and (altloc ' ' or altloc 'A') ")) == [
+        3,
+        4,
+    ]
+    assert list(
+        isel(
+            "(chain 'A' and resid 2A through 7 ) and (name N) and (altloc 'A' or altloc ' ')"
+        )
+    ) == [6, 7, 8, 9, 10]
 
-  # exercise peptide, protein
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+    # exercise peptide, protein
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 ATOM      5  CA  SER     1       9.242  30.200  62.974  1.00 46.62
 ATOM     11  CA  ARG     2      12.548  28.316  63.532  1.00 30.20
 ATOM     21  N   2AG     3J     13.947  29.997  64.680  1.00 22.94
@@ -469,14 +617,19 @@ ATOM     41  N   PRO     5      13.947  29.997  64.680  1.00 22.94
 ATOM     42  CA  HOH     6      14.902  31.100  64.827  1.00 20.19
 ATOM     44  O   HOH     7      16.545  29.521  64.086  1.00 19.76
 ATOM     45  CA  CA      8      16.545  29.521  64.086  1.00 19.76
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  isel = sel_cache.iselection
-  for s in ["peptide", "protein"]:
-    assert list(isel(s)) == [0,1,2,3,4,5,6,7,8,9], list(isel(s))
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    isel = sel_cache.iselection
+    for s in ["peptide", "protein"]:
+        assert list(isel(s)) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], list(isel(s))
 
-  # exercise nucleotide
-  hierarchy = pdb.input(source_info=None, lines=flex.split_lines("""\
+    # exercise nucleotide
+    hierarchy = pdb.input(
+        source_info=None,
+        lines=flex.split_lines(
+            """\
 ATOM      5  CA    A     1       9.242  30.200  62.974  1.00 46.62
 ATOM     11  CA    C     2      12.548  28.316  63.532  1.00 30.20
 ATOM     21  N   DA      3J     13.947  29.997  64.680  1.00 22.94
@@ -490,15 +643,21 @@ ATOM     41  N   PRO     5      13.947  29.997  64.680  1.00 22.94
 ATOM     42  CA  HOH     6      14.902  31.100  64.827  1.00 20.19
 ATOM     44  O   HOH     7      16.545  29.521  64.086  1.00 19.76
 ATOM     45  CA  CA      8      16.545  29.521  64.086  1.00 19.76
-""")).construct_hierarchy(sort_atoms=False)
-  sel_cache = hierarchy.atom_selection_cache()
-  isel = sel_cache.iselection
-  assert list(isel("nucleotide")) == [0,1,2,3,4,5,6,7,8], 'found %s' % list(isel("nucleotide"))
-  assert list(isel("nucleotide or protein")) == [0,1,2,3,4,5,6,7,8,9]
+"""
+        ),
+    ).construct_hierarchy(sort_atoms=False)
+    sel_cache = hierarchy.atom_selection_cache()
+    isel = sel_cache.iselection
+    assert list(isel("nucleotide")) == [0, 1, 2, 3, 4, 5, 6, 7, 8], "found %s" % list(
+        isel("nucleotide")
+    )
+    assert list(isel("nucleotide or protein")) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
 
 def run():
-  exercise_selection()
-  print("OK")
+    exercise_selection()
+    print("OK")
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

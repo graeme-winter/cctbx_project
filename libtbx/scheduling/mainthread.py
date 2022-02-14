@@ -23,105 +23,93 @@ from libtbx.scheduling import result
 
 
 class manager(object):
-  """
-  Mainthread manager
-  """
+    """
+    Mainthread manager
+    """
 
-  def __init__(self):
+    def __init__(self):
 
-    self.outqueue = deque()
-    self.inqueue = deque()
+        self.outqueue = deque()
+        self.inqueue = deque()
 
+    def job_count(self):
 
-  def job_count(self):
+        return len(self.outqueue)
 
-    return len( self.outqueue )
+    def has_results(self):
 
+        return self.inqueue
 
-  def has_results(self):
+    def results(self):
 
-    return self.inqueue
+        while not self.is_empty():
+            while not self.has_results():
+                self.poll()
 
+            yield self.inqueue.popleft()
 
-  def results(self):
+    def submit(self, target, args=(), kwargs={}):
 
-    while not self.is_empty():
-      while not self.has_results():
-        self.poll()
+        jobid = identifier()
+        self.outqueue.append((jobid, target, args, kwargs))
+        return jobid
 
-      yield self.inqueue.popleft()
+    def is_empty(self):
 
+        return not self.outqueue and not self.inqueue
 
-  def submit(self, target, args = (), kwargs = {}):
+    def is_full(self):
 
-    jobid = identifier()
-    self.outqueue.append( ( jobid, target, args, kwargs ) )
-    return jobid
+        return self.outqueue
 
+    def join(self):
 
-  def is_empty(self):
+        while self.outqueue:
+            self.poll()
 
-    return not self.outqueue and not self.inqueue
+    def shutdown(self):
 
+        pass
 
-  def is_full(self):
+    def resume(self):
 
-    return self.outqueue
+        pass
 
+    def terminate(self):
 
-  def join(self):
+        pass
 
-    while self.outqueue:
-      self.poll()
+    # Internal methods
+    def poll(self):
 
+        if self.outqueue:
+            (jobid, target, args, kwargs) = self.outqueue.popleft()
 
-  def shutdown(self):
+            try:
+                value = target(*args, **kwargs)
 
-    pass
+            except Exception as e:
+                res = result.error(exception=e, traceback=result.get_traceback_info())
 
+            else:
+                res = result.success(value=value)
 
-  def resume(self):
-
-    pass
-
-
-  def terminate(self):
-
-    pass
-
-
-  # Internal methods
-  def poll(self):
-
-    if self.outqueue:
-      ( jobid, target, args, kwargs ) = self.outqueue.popleft()
-
-      try:
-        value = target( *args, **kwargs )
-
-      except Exception as e:
-        res = result.error( exception = e, traceback = result.get_traceback_info() )
-
-      else:
-        res = result.success( value = value )
-
-      self.inqueue.append( ( jobid, res ) )
+            self.inqueue.append((jobid, res))
 
 
 class creator(object):
-  """
-  Creator for manager
+    """
+    Creator for manager
 
-  Note this is a singleton object
-  """
+    Note this is a singleton object
+    """
 
-  @staticmethod
-  def create():
+    @staticmethod
+    def create():
 
-    return manager()
+        return manager()
 
+    @staticmethod
+    def destroy(manager):
 
-  @staticmethod
-  def destroy(manager):
-
-    pass
+        pass

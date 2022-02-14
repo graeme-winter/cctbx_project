@@ -1,4 +1,3 @@
-
 # LIBTBX_SET_DISPATCHER_NAME cctbx.xfel.powder_from_spots
 from __future__ import division
 import logging
@@ -95,29 +94,26 @@ output {
 )
 
 
-
-
-
 class Script(object):
-  def __init__(self):
-    usage = "$ cctbx.xfel.powder_from_spots EXPERIMENTS REFLECTIONS [options]"
-    self.parser = OptionParser(
-        usage=usage,
-        phil=phil_scope,
-        epilog=help_message,
-        check_format=False,
-        read_reflections=True,
-        read_experiments=True,
+    def __init__(self):
+        usage = "$ cctbx.xfel.powder_from_spots EXPERIMENTS REFLECTIONS [options]"
+        self.parser = OptionParser(
+            usage=usage,
+            phil=phil_scope,
+            epilog=help_message,
+            check_format=False,
+            read_reflections=True,
+            read_experiments=True,
         )
 
-  def run(self):
-    params, options = self.parser.parse_args(show_diff_phil=False)
-    averager = Spotfinder_radial_average(params)
-    averager.calculate()
-    averager.plot()
+    def run(self):
+        params, options = self.parser.parse_args(show_diff_phil=False)
+        averager = Spotfinder_radial_average(params)
+        averager.calculate()
+        averager.plot()
 
 
 if __name__ == "__main__":
-  with show_mail_on_error():
-    script = Script()
-    script.run()
+    with show_mail_on_error():
+        script = Script()
+        script.run()

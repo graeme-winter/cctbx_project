@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import sys
 from libtbx import easy_run
 
-gnp = '''
+gnp = """
 HETATM 2435  PG  GNP A 201      -5.193  14.551 -21.840  1.00  9.31           P
 HETATM 2436  O1G GNP A 201      -6.728  14.452 -21.462  1.00 12.25           O
 HETATM 2437  O2G GNP A 201      -5.090  14.640 -23.230  1.00 18.00           O
@@ -49,28 +49,31 @@ HETATM 2477  H8  GNP A 201      -2.520   7.220 -17.970  1.00 14.18           H
 HETATM 2478  DN1 GNP A 201       1.698   2.933 -16.423  1.00 17.94           D
 HETATM 2479 DN21 GNP A 201       1.566   1.190 -18.004  1.00 21.01           D
 HETATM 2480 DN22 GNP A 201       0.995   1.532 -19.446  1.00 21.01           D
-'''
+"""
+
 
 def run():
-  f = open('tst_pH_gnp.pdb', 'w')
-  f.write(gnp)
-  f.close()
-  cmd = 'phenix.geometry_minimization tst_pH_gnp.pdb'
-  rc = easy_run.go(cmd)
-  find = ['Changed 28 bond restraint(s),  added 1 bond restraint(s)',
-          'Changed 43 angle restraint(s), added 1 angle restraint(s)',
-          ]
-  for f in find:
-    for line in rc.stdout_lines:
-      if line.find(f)>-1:
-        print(line)
-        break
-    else:
-      assert 0, 'line not found: %s' % f
-  return rc
+    f = open("tst_pH_gnp.pdb", "w")
+    f.write(gnp)
+    f.close()
+    cmd = "phenix.geometry_minimization tst_pH_gnp.pdb"
+    rc = easy_run.go(cmd)
+    find = [
+        "Changed 28 bond restraint(s),  added 1 bond restraint(s)",
+        "Changed 43 angle restraint(s), added 1 angle restraint(s)",
+    ]
+    for f in find:
+        for line in rc.stdout_lines:
+            if line.find(f) > -1:
+                print(line)
+                break
+        else:
+            assert 0, "line not found: %s" % f
+    return rc
 
-if __name__=="__main__":
-  args = sys.argv[1:]
-  del sys.argv[1:]
-  rc = run(*tuple(args))
-  assert rc.return_code==0
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    del sys.argv[1:]
+    rc = run(*tuple(args))
+    assert rc.return_code == 0

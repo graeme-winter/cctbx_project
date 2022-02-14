@@ -53,37 +53,39 @@ cutter {
 
 
 def master_params():
-  return iotbx.phil.parse(master_params_str, process_includes=True)
+    return iotbx.phil.parse(master_params_str, process_includes=True)
 
-class cutter():
-  """ This class is for cutting out pieces of chain out of hierarchy provided
-  chain id, start resid and end resid."""
-  def __init__(self, pdb_h, params, log):
-    # just basic setup.
-    self.pdb_h = pdb_h
-    self.params = params
-    self.log = log
 
-  def validate_inputs(self):
-    # Very specific validation goes here:
-    # How validation fails need to be determined.
-    # Sorry, return value, assertions allowed?
-    if self.params.start_resid is None or self.params.end_resid is None:
-      raise Sorry("Need to specify start_resid and start_resid params")
-    if len(self.params.chain_id) > 3:
-      raise Sorry("Do not support long chain ids yet.")
+class cutter:
+    """This class is for cutting out pieces of chain out of hierarchy provided
+    chain id, start resid and end resid."""
 
-  def run(self):
-    # here goes actual work
-    asc = self.pdb_h.atom_selection_cache()
-    sel = asc.selection("chain %s and resid %d through %d" % (
-        self.params.chain_id, self.params.start_resid, self.params.end_resid))
-    self.answer = self.pdb_h.select(sel)
+    def __init__(self, pdb_h, params, log):
+        # just basic setup.
+        self.pdb_h = pdb_h
+        self.params = params
+        self.log = log
 
-  def get_results(self):
-    # small, easy to understand function preparing results. This way other
-    # developers will not have to read run() to figure out what is returning.
-    # On top of that, this function could be overloaded if necessary!
-    return group_args(
-        answer = self.answer)
+    def validate_inputs(self):
+        # Very specific validation goes here:
+        # How validation fails need to be determined.
+        # Sorry, return value, assertions allowed?
+        if self.params.start_resid is None or self.params.end_resid is None:
+            raise Sorry("Need to specify start_resid and start_resid params")
+        if len(self.params.chain_id) > 3:
+            raise Sorry("Do not support long chain ids yet.")
 
+    def run(self):
+        # here goes actual work
+        asc = self.pdb_h.atom_selection_cache()
+        sel = asc.selection(
+            "chain %s and resid %d through %d"
+            % (self.params.chain_id, self.params.start_resid, self.params.end_resid)
+        )
+        self.answer = self.pdb_h.select(sel)
+
+    def get_results(self):
+        # small, easy to understand function preparing results. This way other
+        # developers will not have to read run() to figure out what is returning.
+        # On top of that, this function could be overloaded if necessary!
+        return group_args(answer=self.answer)

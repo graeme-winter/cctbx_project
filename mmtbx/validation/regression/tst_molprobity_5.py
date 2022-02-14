@@ -5,7 +5,7 @@ import mmtbx.model
 from libtbx.utils import null_out
 from mmtbx.validation import molprobity
 
-pdb_str="""
+pdb_str = """
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
@@ -84,18 +84,20 @@ MASTER      238    0    0    0    0    0    0    6   66    1    0    1
 END
 """
 
-def run():
-  result = []
-  for p in [True, False]:
-    for mr in [True, False]:
-      pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-      hierarchy = pdb_inp.construct_hierarchy()
-      model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
-      if(p):
-        model.process(make_restraints=mr)
-      o = molprobity.molprobity(model = model)
-      result.append("%8.4f"%o.rms_bonds())
-  assert len(list(set(result)))==1
 
-if __name__ == '__main__':
-  run()
+def run():
+    result = []
+    for p in [True, False]:
+        for mr in [True, False]:
+            pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+            hierarchy = pdb_inp.construct_hierarchy()
+            model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+            if p:
+                model.process(make_restraints=mr)
+            o = molprobity.molprobity(model=model)
+            result.append("%8.4f" % o.rms_bonds())
+    assert len(list(set(result))) == 1
+
+
+if __name__ == "__main__":
+    run()

@@ -4,81 +4,167 @@ import mmtbx.model
 import iotbx.pdb
 from libtbx.utils import null_out
 
-neutral_atoms_list = ['Ru', 'Re', 'Ra', 'Rb', 'Rn', 'Rh', 'Be', 'Ba', 'Bi',
-  'Bk', 'Br', 'H', 'P', 'Os', 'Ge', 'Gd', 'Ga', 'Pr', 'Pt', 'Pu', 'C', 'Pb',
-  'Pa', 'Pd', 'Xe', 'Po', 'Pm', 'Ho', 'Hf', 'Hg', 'He', 'Mg', 'K', 'Mn', 'O',
-  'S', 'W', 'Zn', 'Eu', 'Zr', 'Er', 'Ni', 'Na', 'Nb', 'Nd', 'Ne', 'Np', 'Fr',
-  'Fe', 'B', 'F', 'Sr', 'N', 'Kr', 'Si', 'Sn', 'Sm', 'V', 'Sc', 'Sb', 'Se',
-  'Co', 'Cm', 'Cl', 'Ca', 'Cf', 'Ce', 'Cd', 'Tm', 'Cs', 'Cr', 'Cu', 'La',
-  'Li', 'Tl', 'Lu', 'Th', 'Ti', 'Te', 'Tb', 'Tc', 'Ta', 'Yb', 'Dy', 'I', 'U',
-  'Y', 'Ac', 'Ag', 'Ir', 'Am', 'Al', 'As', 'Ar', 'Au', 'At', 'In', 'Mo']
+neutral_atoms_list = [
+    "Ru",
+    "Re",
+    "Ra",
+    "Rb",
+    "Rn",
+    "Rh",
+    "Be",
+    "Ba",
+    "Bi",
+    "Bk",
+    "Br",
+    "H",
+    "P",
+    "Os",
+    "Ge",
+    "Gd",
+    "Ga",
+    "Pr",
+    "Pt",
+    "Pu",
+    "C",
+    "Pb",
+    "Pa",
+    "Pd",
+    "Xe",
+    "Po",
+    "Pm",
+    "Ho",
+    "Hf",
+    "Hg",
+    "He",
+    "Mg",
+    "K",
+    "Mn",
+    "O",
+    "S",
+    "W",
+    "Zn",
+    "Eu",
+    "Zr",
+    "Er",
+    "Ni",
+    "Na",
+    "Nb",
+    "Nd",
+    "Ne",
+    "Np",
+    "Fr",
+    "Fe",
+    "B",
+    "F",
+    "Sr",
+    "N",
+    "Kr",
+    "Si",
+    "Sn",
+    "Sm",
+    "V",
+    "Sc",
+    "Sb",
+    "Se",
+    "Co",
+    "Cm",
+    "Cl",
+    "Ca",
+    "Cf",
+    "Ce",
+    "Cd",
+    "Tm",
+    "Cs",
+    "Cr",
+    "Cu",
+    "La",
+    "Li",
+    "Tl",
+    "Lu",
+    "Th",
+    "Ti",
+    "Te",
+    "Tb",
+    "Tc",
+    "Ta",
+    "Yb",
+    "Dy",
+    "I",
+    "U",
+    "Y",
+    "Ac",
+    "Ag",
+    "Ir",
+    "Am",
+    "Al",
+    "As",
+    "Ar",
+    "Au",
+    "At",
+    "In",
+    "Mo",
+]
+
 
 def run_tst_xrs_and_hierarchy():
-  # Check if scatterers in xrs are neutral after calling function
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  model = mmtbx.model.manager(
-      model_input       = pdb_inp,
-      log = null_out())
+    # Check if scatterers in xrs are neutral after calling function
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
 
-  model.neutralize_scatterers()
-  xrs = model.get_xray_structure()
-  for scatterer in xrs.scatterers():
-    assert (scatterer.scattering_type  in neutral_atoms_list)
+    model.neutralize_scatterers()
+    xrs = model.get_xray_structure()
+    for scatterer in xrs.scatterers():
+        assert scatterer.scattering_type in neutral_atoms_list
 
-  # Check if pdb_hierarchy has neutral atoms as well
-  pdb_str_neutralized = model.model_as_pdb()
-  pdb_inp_neutralized = iotbx.pdb.input(
-    source_info=None,
-    lines=pdb_str_neutralized)
-  model_neutralized = mmtbx.model.manager(
-      model_input       = pdb_inp_neutralized,
-      log = null_out())
-  xrs_neutralized = model_neutralized.get_xray_structure()
-  for scatterer in xrs_neutralized.scatterers():
-    assert (scatterer.scattering_type  in neutral_atoms_list)
+    # Check if pdb_hierarchy has neutral atoms as well
+    pdb_str_neutralized = model.model_as_pdb()
+    pdb_inp_neutralized = iotbx.pdb.input(source_info=None, lines=pdb_str_neutralized)
+    model_neutralized = mmtbx.model.manager(
+        model_input=pdb_inp_neutralized, log=null_out()
+    )
+    xrs_neutralized = model_neutralized.get_xray_structure()
+    for scatterer in xrs_neutralized.scatterers():
+        assert scatterer.scattering_type in neutral_atoms_list
+
 
 def run_tst_grm_after_neutralize_scatterers():
-  # Look at nonbonded interaction CB - OE2 in Glu
-  # OE2 has negative charge
-  # vdw distance is 2.560 A when OE2 is neutral
-  # vdw distance is 2.752 A when OE1 has O1- charge
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_2)
+    # Look at nonbonded interaction CB - OE2 in Glu
+    # OE2 has negative charge
+    # vdw distance is 2.560 A when OE2 is neutral
+    # vdw distance is 2.752 A when OE1 has O1- charge
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_2)
 
-  model = mmtbx.model.manager(
-      model_input       = pdb_inp,
-      log = null_out())
-  model.process(make_restraints=True)
-  atoms = model.get_hierarchy().atoms()
-  grm = model.get_restraints_manager()
-#  with open('1.geo', 'w') as f:
-#    f.write(model.restraints_as_geo())
-  nonbonded_proxies = grm.geometry.pair_proxies().nonbonded_proxies.simple
-  for nb_proxy in nonbonded_proxies:
-    iseq, jseq = nb_proxy.i_seqs
-    if (iseq==4 and jseq==8):
-      vdw_distance1 = nb_proxy.vdw_distance
-      assert(atoms[iseq].name.strip()=='CB')
-      assert(atoms[jseq].name.strip()=='OE2')
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    atoms = model.get_hierarchy().atoms()
+    grm = model.get_restraints_manager()
+    #  with open('1.geo', 'w') as f:
+    #    f.write(model.restraints_as_geo())
+    nonbonded_proxies = grm.geometry.pair_proxies().nonbonded_proxies.simple
+    for nb_proxy in nonbonded_proxies:
+        iseq, jseq = nb_proxy.i_seqs
+        if iseq == 4 and jseq == 8:
+            vdw_distance1 = nb_proxy.vdw_distance
+            assert atoms[iseq].name.strip() == "CB"
+            assert atoms[jseq].name.strip() == "OE2"
 
-  model = mmtbx.model.manager(
-      model_input       = pdb_inp,
-      log = null_out())
-  model.process(make_restraints=False)
-  model.neutralize_scatterers()
-  model.process(make_restraints=True)
-  atoms2 = model.get_hierarchy().atoms()
-  grm2 = model.get_restraints_manager()
-#  with open('2.geo', 'w') as f:
-#    f.write(model.restraints_as_geo())
-  nonbonded_proxies2 = grm2.geometry.pair_proxies().nonbonded_proxies.simple
-  for nb_proxy in nonbonded_proxies2:
-    iseq, jseq = nb_proxy.i_seqs
-    if (iseq==4 and jseq==8):
-      vdw_distance2 = nb_proxy.vdw_distance
-      assert(atoms2[iseq].name.strip()=='CB')
-      assert(atoms2[jseq].name.strip()=='OE2')
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=False)
+    model.neutralize_scatterers()
+    model.process(make_restraints=True)
+    atoms2 = model.get_hierarchy().atoms()
+    grm2 = model.get_restraints_manager()
+    #  with open('2.geo', 'w') as f:
+    #    f.write(model.restraints_as_geo())
+    nonbonded_proxies2 = grm2.geometry.pair_proxies().nonbonded_proxies.simple
+    for nb_proxy in nonbonded_proxies2:
+        iseq, jseq = nb_proxy.i_seqs
+        if iseq == 4 and jseq == 8:
+            vdw_distance2 = nb_proxy.vdw_distance
+            assert atoms2[iseq].name.strip() == "CB"
+            assert atoms2[jseq].name.strip() == "OE2"
 
-  assert(vdw_distance1 != vdw_distance2)
+    assert vdw_distance1 != vdw_distance2
 
 
 pdb_str = """
@@ -313,8 +399,8 @@ ATOM     77  OE1 GLU A 131      87.626 131.851  70.997  1.00204.16           O
 ATOM     78  OE2 GLU A 131      87.742 130.641  69.167  1.00204.16           O1-
 """
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run_tst_xrs_and_hierarchy()
-  run_tst_grm_after_neutralize_scatterers()
-  print("OK. Time:", round(time.time()-t0, 2))
+if __name__ == "__main__":
+    t0 = time.time()
+    run_tst_xrs_and_hierarchy()
+    run_tst_grm_after_neutralize_scatterers()
+    print("OK. Time:", round(time.time() - t0, 2))

@@ -1241,129 +1241,142 @@ TER
 END
 """
 
-def core(pdb_str, pair_proxies = None):
-  pdb_inp = iotbx.pdb.input(source_info = None, lines = pdb_str)
-  model = mmtbx.model.manager(
-    model_input   = pdb_inp,
-    log           = null_out())
-  model.process(make_restraints=True)
-  return mmtbx.nci.hbond.find(model=model, pair_proxies=pair_proxies)
+
+def core(pdb_str, pair_proxies=None):
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    return mmtbx.nci.hbond.find(model=model, pair_proxies=pair_proxies)
+
 
 def exercise_00():
-  r = core(pdb_str=pdb_str_00)
-  #r.show()
-  assert len(r.result) == 5
-  d_HA = flex.double()
-  d_AD = flex.double()
-  a_DHA = flex.double()
-  for r in r.result:
-    d_HA .append(r.d_HA )
-    d_AD .append(r.d_AD )
-    a_DHA.append(r.a_DHA)
-  assert approx_equal(flex.mean(d_HA), 2.104, 1.e-2)
-  assert approx_equal(flex.mean(d_AD), 2.899, 1.e-2)
-  assert approx_equal(flex.mean(a_DHA), 153.2, 1.e-1)
+    r = core(pdb_str=pdb_str_00)
+    # r.show()
+    assert len(r.result) == 5
+    d_HA = flex.double()
+    d_AD = flex.double()
+    a_DHA = flex.double()
+    for r in r.result:
+        d_HA.append(r.d_HA)
+        d_AD.append(r.d_AD)
+        a_DHA.append(r.a_DHA)
+    assert approx_equal(flex.mean(d_HA), 2.104, 1.0e-2)
+    assert approx_equal(flex.mean(d_AD), 2.899, 1.0e-2)
+    assert approx_equal(flex.mean(a_DHA), 153.2, 1.0e-1)
+
 
 def exercise_01():
-  r = core(pdb_str=pdb_str_01)
-  #r.show()
-  assert len(r.result) == 2
-  r0 = r.result[0]
-  r1 = r.result[1]
-  for r_ in r.result:
-    assert approx_equal(r_.d_HA, 2.206, 1.e-2)
-    assert approx_equal(r_.d_AD, 3.065, 1.e-2)
-    assert approx_equal(r_.a_DHA, 142.98, 1.e-1)
-    assert str(r_.symop) == "x-y,-y,-z+1"
-  assert [r0.i, r0.j] == [3,6], [r0.i, r0.j]
-  assert [r1.i, r1.j] == [6,3], [r1.i, r1.j]
+    r = core(pdb_str=pdb_str_01)
+    # r.show()
+    assert len(r.result) == 2
+    r0 = r.result[0]
+    r1 = r.result[1]
+    for r_ in r.result:
+        assert approx_equal(r_.d_HA, 2.206, 1.0e-2)
+        assert approx_equal(r_.d_AD, 3.065, 1.0e-2)
+        assert approx_equal(r_.a_DHA, 142.98, 1.0e-1)
+        assert str(r_.symop) == "x-y,-y,-z+1"
+    assert [r0.i, r0.j] == [3, 6], [r0.i, r0.j]
+    assert [r1.i, r1.j] == [6, 3], [r1.i, r1.j]
+
 
 def exercise_02():
-  r = core(pdb_str=pdb_str_02)
-  #r.show()
-  #r.as_pymol()
-  assert len(r.result) == 2
-  r0 = r.result[0]
-  r1 = r.result[1]
-  assert approx_equal(r0.d_HA, 2.523, 1.e-2)
-  assert approx_equal(r0.d_AD, 3.292, 1.e-2)
-  assert approx_equal(r0.a_DHA, 149.378, 1.e-1)
-  assert str(r0.symop) == "x,y,z"
-  assert approx_equal(r1.d_HA, 1.644, 1.e-2)
-  assert approx_equal(r1.d_AD, 2.472, 1.e-2)
-  assert approx_equal(r1.a_DHA, 160.475, 1.e-1)
-  assert str(r1.symop) == "x,y,z"
+    r = core(pdb_str=pdb_str_02)
+    # r.show()
+    # r.as_pymol()
+    assert len(r.result) == 2
+    r0 = r.result[0]
+    r1 = r.result[1]
+    assert approx_equal(r0.d_HA, 2.523, 1.0e-2)
+    assert approx_equal(r0.d_AD, 3.292, 1.0e-2)
+    assert approx_equal(r0.a_DHA, 149.378, 1.0e-1)
+    assert str(r0.symop) == "x,y,z"
+    assert approx_equal(r1.d_HA, 1.644, 1.0e-2)
+    assert approx_equal(r1.d_AD, 2.472, 1.0e-2)
+    assert approx_equal(r1.a_DHA, 160.475, 1.0e-1)
+    assert str(r1.symop) == "x,y,z"
+
 
 def exercise_03():
-  r1 = core(pdb_str=pdb_str_00)
-  assert len(r1.result) == 5
-  r2 = core(pdb_str=pdb_str_03, pair_proxies = r1.pair_proxies)
-  assert len(r2.result) == 5, len(r2.result)
-  r2.as_pymol()
-  for a,b in zip(r1.result, r2.result):
-    assert a.i == b.i
-    assert a.j == b.j
+    r1 = core(pdb_str=pdb_str_00)
+    assert len(r1.result) == 5
+    r2 = core(pdb_str=pdb_str_03, pair_proxies=r1.pair_proxies)
+    assert len(r2.result) == 5, len(r2.result)
+    r2.as_pymol()
+    for a, b in zip(r1.result, r2.result):
+        assert a.i == b.i
+        assert a.j == b.j
+
 
 def exercise_04():
-  """
-  Case when A is not bonded to anything (based on 1yjp).
-  """
-  r = core(pdb_str=pdb_str_04)
+    """
+    Case when A is not bonded to anything (based on 1yjp).
+    """
+    r = core(pdb_str=pdb_str_04)
+
 
 def exercise_05():
-  """
-  Exercise the use of a_YAH.
-  """
-  for pdb_str in [pdb_str_05, pdb_str_06, pdb_str_07, pdb_str_08]:
-    r = core(pdb_str=pdb_str_05)
-    assert len(r.result) == 0 and r.result == []
+    """
+    Exercise the use of a_YAH.
+    """
+    for pdb_str in [pdb_str_05, pdb_str_06, pdb_str_07, pdb_str_08]:
+        r = core(pdb_str=pdb_str_05)
+        assert len(r.result) == 0 and r.result == []
+
 
 def exercise_06():
-  """
-  Q|R/TeraChem refined 4gif (paper #3).
-  """
-  r = core(pdb_str=pdb_str_08)
-  assert len(r.result) == 76
-  cntr = 0
-  for r_ in r.result:
-    if(str(r_.symop)=="x,y,z"): continue
-    cntr += 1
-  assert cntr == 12 # number of symmetry H bonds
+    """
+    Q|R/TeraChem refined 4gif (paper #3).
+    """
+    r = core(pdb_str=pdb_str_08)
+    assert len(r.result) == 76
+    cntr = 0
+    for r_ in r.result:
+        if str(r_.symop) == "x,y,z":
+            continue
+        cntr += 1
+    assert cntr == 12  # number of symmetry H bonds
+
 
 def exercise_07():
-  """
-  Altlocs.
-  """
-  r = core(pdb_str=pdb_str_09)
-  assert len(r.result) == 2
-  for i, r_ in enumerate(r.result):
-    print (r_.i, r_.j)
-    if(i==0):
-      assert [r_.i, r_.j] == [10,19]
-    elif(i==1):
-      assert [r_.i, r_.j] == [15,33]
-    else: assert 0
+    """
+    Altlocs.
+    """
+    r = core(pdb_str=pdb_str_09)
+    assert len(r.result) == 2
+    for i, r_ in enumerate(r.result):
+        print(r_.i, r_.j)
+        if i == 0:
+            assert [r_.i, r_.j] == [10, 19]
+        elif i == 1:
+            assert [r_.i, r_.j] == [15, 33]
+        else:
+            assert 0
+
 
 def exercise_08():
-  from libtbx import easy_run
-  with open('exercise_08_01.pdb', 'w') as f:
-    f.write(pdb_str_01)
-  cmd = 'phenix.hbond exercise_08_01.pdb'
-  rc = easy_run.go(cmd)
-  for line in rc.stdout_lines:
-    if line.find('Per residue')>-1: break
-  else:
-    assert 'no Pre'
+    from libtbx import easy_run
 
-if __name__ == '__main__':
-  t0 = time.time()
-  exercise_00()
-  exercise_01()
-  exercise_02()
-  exercise_03()
-  exercise_04()
-  exercise_05()
-  exercise_06()
-  exercise_07()
-  exercise_08()
-  print("OK. Time: %6.3f"%(time.time()-t0))
+    with open("exercise_08_01.pdb", "w") as f:
+        f.write(pdb_str_01)
+    cmd = "phenix.hbond exercise_08_01.pdb"
+    rc = easy_run.go(cmd)
+    for line in rc.stdout_lines:
+        if line.find("Per residue") > -1:
+            break
+    else:
+        assert "no Pre"
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise_00()
+    exercise_01()
+    exercise_02()
+    exercise_03()
+    exercise_04()
+    exercise_05()
+    exercise_06()
+    exercise_07()
+    exercise_08()
+    print("OK. Time: %6.3f" % (time.time() - t0))

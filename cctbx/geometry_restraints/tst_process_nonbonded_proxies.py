@@ -17,243 +17,236 @@ import cctbx.geometry_restraints.process_nonbonded_proxies as pnp
 
 
 chem_data = libtbx.env.find_in_repositories(
-  relative_path="chem_data/geostd",
-  test=os.path.isdir)
+    relative_path="chem_data/geostd", test=os.path.isdir
+)
 
 
-def obtain_model(raw_records, stop_for_unknowns = True):
-  '''
-  Helper function to obtain model class from raw records
-  '''
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.allow_polymer_cross_special_position=True
-  pdb_inp = iotbx.pdb.input(lines=raw_records.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    stop_for_unknowns = stop_for_unknowns,
-    log         = null_out())
-  model.process(pdb_interpretation_params=params,
-    make_restraints=True)
-  return model
+def obtain_model(raw_records, stop_for_unknowns=True):
+    """
+    Helper function to obtain model class from raw records
+    """
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.allow_polymer_cross_special_position = True
+    pdb_inp = iotbx.pdb.input(lines=raw_records.split("\n"), source_info=None)
+    model = mmtbx.model.manager(
+        model_input=pdb_inp, stop_for_unknowns=stop_for_unknowns, log=null_out()
+    )
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    return model
 
 
 def get_clashes_result(raw_records, sel=None):
-  '''
-  Helper function to get clashes results from raw records
-  '''
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.allow_polymer_cross_special_position=True
-  params.pdb_interpretation.clash_guard.nonbonded_distance_threshold = None
-  pdb_inp = iotbx.pdb.input(lines=raw_records.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(pdb_interpretation_params=params,
-    make_restraints=True)
-  if sel is not None:
-    model = model.select(sel)
+    """
+    Helper function to get clashes results from raw records
+    """
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.allow_polymer_cross_special_position = True
+    params.pdb_interpretation.clash_guard.nonbonded_distance_threshold = None
+    pdb_inp = iotbx.pdb.input(lines=raw_records.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    if sel is not None:
+        model = model.select(sel)
 
-  pnps = pnp.manager(model = model)
-  clashes = pnps.get_clashes()
-  return clashes
+    pnps = pnp.manager(model=model)
+    clashes = pnps.get_clashes()
+    return clashes
 
 
 def test_overlap_atoms():
-  '''
-  Test that overlapping atoms are being counted
-  '''
-  clashes = get_clashes_result(raw_records=raw_records_5)
-  results = clashes.get_results()
-  assert(results.n_clashes == 6), 'Overlapping atoms are not counted properly.'
-  assert(results.clashscore == 1500), 'Clashscore is wrong'
+    """
+    Test that overlapping atoms are being counted
+    """
+    clashes = get_clashes_result(raw_records=raw_records_5)
+    results = clashes.get_results()
+    assert results.n_clashes == 6, "Overlapping atoms are not counted properly."
+    assert results.clashscore == 1500, "Clashscore is wrong"
 
-  clashes = get_clashes_result(raw_records=raw_records_4)
-  results = clashes.get_results()
-  assert(results.n_clashes == 15)
-  assert approx_equal(results.clashscore, 2500, eps=1)
+    clashes = get_clashes_result(raw_records=raw_records_4)
+    results = clashes.get_results()
+    assert results.n_clashes == 15
+    assert approx_equal(results.clashscore, 2500, eps=1)
 
 
 def test_inline_overlaps():
-  '''
-  Test non-bonded overlaps of C with H-C.
-  Check when valid overlaps and when it's considered to be inline
+    """
+    Test non-bonded overlaps of C with H-C.
+    Check when valid overlaps and when it's considered to be inline
 
-  - test when all are in the same residue
-  - test when C and H-C are in different residues
-  '''
-  clashes = get_clashes_result(raw_records=raw_records_2)
-  results = clashes.get_results()
-  assert(results.n_clashes == 4), 'Total nonbonded overlaps are incorrect.'
-  assert approx_equal(results.clashscore, 85.11, eps=0.1), 'Wrong clashscore.'
+    - test when all are in the same residue
+    - test when C and H-C are in different residues
+    """
+    clashes = get_clashes_result(raw_records=raw_records_2)
+    results = clashes.get_results()
+    assert results.n_clashes == 4, "Total nonbonded overlaps are incorrect."
+    assert approx_equal(results.clashscore, 85.11, eps=0.1), "Wrong clashscore."
 
 
 def test_manager_and_clashes_functions():
-  '''
-  Test some functions of the manager and the clashes class
-  '''
-  model = obtain_model(raw_records=raw_records_7)
-  pnps = pnp.manager(model = model)
-  assert(pnps.has_clashes())
-  clashes = pnps.get_clashes()
-  # sorted by overlap (default)
-  clashes.sort_clashes(by_value='overlap')
-  assert(list(clashes._clashes_dict.items())[11][0] == ((38, 39)))
-  # sorted by symmetry
-  clashes.sort_clashes(by_value='symmetry')
-  assert(list(clashes._clashes_dict.items())[11][0] == (27, 27))
+    """
+    Test some functions of the manager and the clashes class
+    """
+    model = obtain_model(raw_records=raw_records_7)
+    pnps = pnp.manager(model=model)
+    assert pnps.has_clashes()
+    clashes = pnps.get_clashes()
+    # sorted by overlap (default)
+    clashes.sort_clashes(by_value="overlap")
+    assert list(clashes._clashes_dict.items())[11][0] == ((38, 39))
+    # sorted by symmetry
+    clashes.sort_clashes(by_value="symmetry")
+    assert list(clashes._clashes_dict.items())[11][0] == (27, 27)
 
-  assert(clashes.iseq_is_clashing(iseq=27))
-  assert(clashes.iseq_is_clashing(iseq=44))
-  assert(clashes.iseq_is_clashing(iseq=13))
-  assert(clashes.iseq_is_clashing(iseq=38))
-  assert(clashes.iseq_is_clashing(iseq=3))
+    assert clashes.iseq_is_clashing(iseq=27)
+    assert clashes.iseq_is_clashing(iseq=44)
+    assert clashes.iseq_is_clashing(iseq=13)
+    assert clashes.iseq_is_clashing(iseq=38)
+    assert clashes.iseq_is_clashing(iseq=3)
 
 
 def test_vdw_dist():
-  '''
-  Test that overlaps are identified properly
+    """
+    Test that overlaps are identified properly
 
-  Test overlaps that are set to be on the limit of the
-  overlap distance 0.40
+    Test overlaps that are set to be on the limit of the
+    overlap distance 0.40
 
-  Test evaluation of vdw distances. if the parameters
-  1)  assume_hydrogens_all_missing=False
-  2)  hard_minimum_nonbonded_distance=0.0
-  are not set properly, the number of overlaps will change
-  '''
+    Test evaluation of vdw distances. if the parameters
+    1)  assume_hydrogens_all_missing=False
+    2)  hard_minimum_nonbonded_distance=0.0
+    are not set properly, the number of overlaps will change
+    """
 
-  clashes = get_clashes_result(raw_records=raw_records_0)
-  results = clashes.get_results()
-  assert(results.n_clashes == 2)
-  assert approx_equal(results.clashscore, 38.46, eps=0.1)
-  assert(results.n_clashes_sym == 2)
-  assert approx_equal(results.clashscore_sym, 38.46, eps=0.1)
-  assert(results.n_clashes_macro_mol == 0)
-  assert(results.clashscore_macro_mol == 0)
+    clashes = get_clashes_result(raw_records=raw_records_0)
+    results = clashes.get_results()
+    assert results.n_clashes == 2
+    assert approx_equal(results.clashscore, 38.46, eps=0.1)
+    assert results.n_clashes_sym == 2
+    assert approx_equal(results.clashscore_sym, 38.46, eps=0.1)
+    assert results.n_clashes_macro_mol == 0
+    assert results.clashscore_macro_mol == 0
 
-  clashes = get_clashes_result(raw_records=raw_records_1)
-  results = clashes.get_results()
-  assert(results.n_clashes == 4)
-  assert approx_equal(results.clashscore, 28.77, eps=0.1)
-  assert(results.n_clashes_sym == 0)
-  assert approx_equal(results.clashscore_sym, 0, eps=0.1)
-  assert(results.n_clashes_macro_mol == 4)
-  assert approx_equal(results.clashscore_macro_mol, 28.77, eps=0.1)
+    clashes = get_clashes_result(raw_records=raw_records_1)
+    results = clashes.get_results()
+    assert results.n_clashes == 4
+    assert approx_equal(results.clashscore, 28.77, eps=0.1)
+    assert results.n_clashes_sym == 0
+    assert approx_equal(results.clashscore_sym, 0, eps=0.1)
+    assert results.n_clashes_macro_mol == 4
+    assert approx_equal(results.clashscore_macro_mol, 28.77, eps=0.1)
 
 
 def test_atom_selection():
-  '''
-  Test clashes when atom is removed
-  '''
-  clashes = get_clashes_result(raw_records=raw_records_3)
-  results = clashes.get_results()
-  assert(results.n_clashes == 3)
-  assert approx_equal(results.clashscore, 1000, eps=0.1)
+    """
+    Test clashes when atom is removed
+    """
+    clashes = get_clashes_result(raw_records=raw_records_3)
+    results = clashes.get_results()
+    assert results.n_clashes == 3
+    assert approx_equal(results.clashscore, 1000, eps=0.1)
 
-  sel = flex.bool([True, True, False])
-  clashes = get_clashes_result(raw_records=raw_records_3, sel = sel)
-  results = clashes.get_results()
-  assert(results.n_clashes == 1)
-  assert approx_equal(results.clashscore, 500, eps=0.1)
+    sel = flex.bool([True, True, False])
+    clashes = get_clashes_result(raw_records=raw_records_3, sel=sel)
+    results = clashes.get_results()
+    assert results.n_clashes == 1
+    assert approx_equal(results.clashscore, 500, eps=0.1)
 
 
 def test_addition_scatterers():
-  '''
-  Test overlaps when adding and moving scatterers
-  Test water scatterers with and without labels
-  '''
-  clashes = get_clashes_result(raw_records=raw_records_3)
-  results = clashes.get_results()
-  assert(results.n_clashes == 3)
-  assert approx_equal(results.clashscore, 1000, eps=0.1)
+    """
+    Test overlaps when adding and moving scatterers
+    Test water scatterers with and without labels
+    """
+    clashes = get_clashes_result(raw_records=raw_records_3)
+    results = clashes.get_results()
+    assert results.n_clashes == 3
+    assert approx_equal(results.clashscore, 1000, eps=0.1)
 
-  # Add water scatterers
-  model = clashes.model
-  xrs = model.get_xray_structure()
-  new_scatterers = flex.xray_scatterer(
-    xrs.scatterers().size(),
-    xray.scatterer(occupancy = 1, b = 10, scattering_type = "O"))
-  new_sites_frac = xrs.unit_cell().fractionalize(xrs.sites_cart()+[0.5,0,0])
-  new_scatterers.set_sites(new_sites_frac)
-  new_xrs = xray.structure(
-    special_position_settings = xrs,
-    scatterers                = new_scatterers)
-  model.add_solvent(
-    solvent_xray_structure = new_xrs,
-    refine_occupancies     = False,
-    refine_adp             = "isotropic")
+    # Add water scatterers
+    model = clashes.model
+    xrs = model.get_xray_structure()
+    new_scatterers = flex.xray_scatterer(
+        xrs.scatterers().size(), xray.scatterer(occupancy=1, b=10, scattering_type="O")
+    )
+    new_sites_frac = xrs.unit_cell().fractionalize(xrs.sites_cart() + [0.5, 0, 0])
+    new_scatterers.set_sites(new_sites_frac)
+    new_xrs = xray.structure(special_position_settings=xrs, scatterers=new_scatterers)
+    model.add_solvent(
+        solvent_xray_structure=new_xrs, refine_occupancies=False, refine_adp="isotropic"
+    )
 
-  pnps = pnp.manager(model = model)
-  clashes = pnps.get_clashes()
-  results = clashes.get_results()
+    pnps = pnp.manager(model=model)
+    clashes = pnps.get_clashes()
+    results = clashes.get_results()
 
-  assert(results.n_clashes == 15)
-  assert approx_equal(results.clashscore, 2500, eps=5)
+    assert results.n_clashes == 15
+    assert approx_equal(results.clashscore, 2500, eps=5)
 
 
 def test_show():
-  '''
-  Test show
-  '''
-  clashes = get_clashes_result(raw_records=raw_records_7)
-  results = clashes.get_results()
-  assert(results.n_clashes == 12)
-  assert(results.n_clashes_sym == 2)
-  assert(results.n_clashes_macro_mol == 3)
-  assert approx_equal(results.clashscore, 260.87, eps=1)
-  assert approx_equal(results.clashscore_sym, 43.48, eps=1)
-  assert approx_equal(results.clashscore_macro_mol, 78.95, eps=1)
-  string_io = StringIO()
-  clashes.show(log=string_io)
-  lines = string_io.getvalue().split('\n')
-  assert(lines[8].startswith('--------'))
-  assert(lines[21].startswith('--------'))
+    """
+    Test show
+    """
+    clashes = get_clashes_result(raw_records=raw_records_7)
+    results = clashes.get_results()
+    assert results.n_clashes == 12
+    assert results.n_clashes_sym == 2
+    assert results.n_clashes_macro_mol == 3
+    assert approx_equal(results.clashscore, 260.87, eps=1)
+    assert approx_equal(results.clashscore_sym, 43.48, eps=1)
+    assert approx_equal(results.clashscore_macro_mol, 78.95, eps=1)
+    string_io = StringIO()
+    clashes.show(log=string_io)
+    lines = string_io.getvalue().split("\n")
+    assert lines[8].startswith("--------")
+    assert lines[21].startswith("--------")
 
 
 def test_unknown_pair_type():
-  '''
-  Make sure unknown pair types are not processed
-  '''
-  sorry = None
-  try:
-    clashes = get_clashes_result(raw_records=raw_records_6)
-  except Sorry as e:
-    sorry = e
-  assert(sorry is not None)
+    """
+    Make sure unknown pair types are not processed
+    """
+    sorry = None
+    try:
+        clashes = get_clashes_result(raw_records=raw_records_6)
+    except Sorry as e:
+        sorry = e
+    assert sorry is not None
 
 
 def test_running_from_command_line():
-  '''
-  Make sure mmtbx.nonbonded_overlaps can run without errors
-  '''
-  file_name = 'test_pdb_file.pdb'
-  if not os.path.isfile(file_name):
-    open(file_name,'w').write(raw_records_1)
-    #self.file_to_delete.append(self.file_name)
-  cmd = 'mmtbx.nonbonded_overlaps {}'
-  cmd = cmd.format(file_name)
-  r = easy_run.go(cmd, join_stdout_stderr=False)
-  assert(not bool(r.stderr_lines))
+    """
+    Make sure mmtbx.nonbonded_overlaps can run without errors
+    """
+    file_name = "test_pdb_file.pdb"
+    if not os.path.isfile(file_name):
+        open(file_name, "w").write(raw_records_1)
+        # self.file_to_delete.append(self.file_name)
+    cmd = "mmtbx.nonbonded_overlaps {}"
+    cmd = cmd.format(file_name)
+    r = easy_run.go(cmd, join_stdout_stderr=False)
+    assert not bool(r.stderr_lines)
 
 
 def test_file_with_unknown_pair_type():
-  '''
-  Verify that ready_set can fix issues with unknown_pair_type
-  '''
-  model = obtain_model(raw_records = unknown_pairs_pdb_str,
-                       stop_for_unknowns = False)
-  ph = model.get_hierarchy()
-  pdb_with_h, h_were_added = mvc.check_and_add_hydrogen(
-    pdb_hierarchy         = ph,
-    allow_multiple_models = False,
-    crystal_symmetry      = model.crystal_symmetry(),
-    log                   = null_out())
-  sorry = None
-  try:
-    model = obtain_model(raw_records=pdb_with_h)
-  except Sorry as e:
-    sorry = e
-  assert(sorry is not None)
+    """
+    Verify that ready_set can fix issues with unknown_pair_type
+    """
+    model = obtain_model(raw_records=unknown_pairs_pdb_str, stop_for_unknowns=False)
+    ph = model.get_hierarchy()
+    pdb_with_h, h_were_added = mvc.check_and_add_hydrogen(
+        pdb_hierarchy=ph,
+        allow_multiple_models=False,
+        crystal_symmetry=model.crystal_symmetry(),
+        log=null_out(),
+    )
+    sorry = None
+    try:
+        model = obtain_model(raw_records=pdb_with_h)
+    except Sorry as e:
+        sorry = e
+    assert sorry is not None
+
 
 #  test = nbo.unknown_pairs_present(grm=grm,sites_cart=sites,site_labels=labels)
 #  # make sure we have unknown pairs
@@ -271,70 +264,70 @@ def test_file_with_unknown_pair_type():
 
 
 def test_small_cell():
-  '''
-  Test what happens with small cell.
-  '''
-  clashes = get_clashes_result(raw_records=raw_records_8)
-  results = clashes.get_results()
-  assert(results.n_clashes == 0)
-  assert approx_equal(results.clashscore, 0, eps=0.1)
+    """
+    Test what happens with small cell.
+    """
+    clashes = get_clashes_result(raw_records=raw_records_8)
+    results = clashes.get_results()
+    assert results.n_clashes == 0
+    assert approx_equal(results.clashscore, 0, eps=0.1)
 
 
 def test_inline_angle():
-  '''
-  Test cos_vec(u,v)
-  '''
-  u = (40.196,3.261,-48.474)
-  v = (39.466,4.279,-52.202)
-  w = (37.407,5.077,-51.025)
-  result = pnp.cos_vec(u, v, w)
-  expected = 0.5072
-  msg = 'The difference is: {}'.format(result - expected)
-  assert approx_equal(result, expected, eps=0.001), msg
+    """
+    Test cos_vec(u,v)
+    """
+    u = (40.196, 3.261, -48.474)
+    v = (39.466, 4.279, -52.202)
+    w = (37.407, 5.077, -51.025)
+    result = pnp.cos_vec(u, v, w)
+    expected = 0.5072
+    msg = "The difference is: {}".format(result - expected)
+    assert approx_equal(result, expected, eps=0.001), msg
 
 
 def test_1_5_overlaps():
-  '''
-  Test if 1_5 overlaps are correctly identified
-  '''
-  model = obtain_model(raw_records_0)
-  hd_sel = model.get_hd_selection()
-  grm = model.get_restraints_manager().geometry
-  full_connectivity_table = grm.shell_sym_tables[0].full_simple_connectivity()
+    """
+    Test if 1_5 overlaps are correctly identified
+    """
+    model = obtain_model(raw_records_0)
+    hd_sel = model.get_hd_selection()
+    grm = model.get_restraints_manager().geometry
+    full_connectivity_table = grm.shell_sym_tables[0].full_simple_connectivity()
 
-  outstring = '1-5 Interaction test error. {}'
-  # check that direction of function calling does not matter
-  tst = pnp.check_if_1_5_interaction(21, 33,hd_sel,full_connectivity_table)
-  msg = 'Test results depend on atoms order'
-  assert(tst), msg
-  tst = pnp.check_if_1_5_interaction(33, 21,hd_sel,full_connectivity_table)
-  assert(tst), msg
-  # check 1-4 interaction
-  tst = pnp.check_if_1_5_interaction(33, 20,hd_sel,full_connectivity_table)
-  msg = 'Test fails on 1-4 interaction'
-  assert(not tst), msg
-  # check 1-6 interaction
-  tst = pnp.check_if_1_5_interaction(33, 38,hd_sel,full_connectivity_table)
-  msg = 'Test fails on 1-6 interaction'
-  assert(not tst), msg
-  # 1-5 interaction of atoms other than hydrogen
-  tst = pnp.check_if_1_5_interaction(38, 25,hd_sel,full_connectivity_table)
-  msg = 'Test fails on 1-5 non hydrogen interaction'
-  assert(not tst), msg
-  # 1-5 interaction of two hydrogens
-  tst = pnp.check_if_1_5_interaction(33, 31,hd_sel,full_connectivity_table)
-  msg = 'Test fails on 1-5 two hydrogen interaction'
-  assert(not tst), msg
+    outstring = "1-5 Interaction test error. {}"
+    # check that direction of function calling does not matter
+    tst = pnp.check_if_1_5_interaction(21, 33, hd_sel, full_connectivity_table)
+    msg = "Test results depend on atoms order"
+    assert tst, msg
+    tst = pnp.check_if_1_5_interaction(33, 21, hd_sel, full_connectivity_table)
+    assert tst, msg
+    # check 1-4 interaction
+    tst = pnp.check_if_1_5_interaction(33, 20, hd_sel, full_connectivity_table)
+    msg = "Test fails on 1-4 interaction"
+    assert not tst, msg
+    # check 1-6 interaction
+    tst = pnp.check_if_1_5_interaction(33, 38, hd_sel, full_connectivity_table)
+    msg = "Test fails on 1-6 interaction"
+    assert not tst, msg
+    # 1-5 interaction of atoms other than hydrogen
+    tst = pnp.check_if_1_5_interaction(38, 25, hd_sel, full_connectivity_table)
+    msg = "Test fails on 1-5 non hydrogen interaction"
+    assert not tst, msg
+    # 1-5 interaction of two hydrogens
+    tst = pnp.check_if_1_5_interaction(33, 31, hd_sel, full_connectivity_table)
+    msg = "Test fails on 1-5 two hydrogen interaction"
+    assert not tst, msg
 
 
 def test_no_unit_cell():
-  '''
-  Make sure NBO code does not crash if no unit cell provided
-  '''
-  clashes = get_clashes_result(raw_records=raw_records_9)
-  results = clashes.get_results()
-  assert(results.n_clashes == 15)
-  assert approx_equal(results.clashscore, 468, eps=2.0)
+    """
+    Make sure NBO code does not crash if no unit cell provided
+    """
+    clashes = get_clashes_result(raw_records=raw_records_9)
+    results = clashes.get_results()
+    assert results.n_clashes == 15
+    assert approx_equal(results.clashscore, 468, eps=2.0)
 
 
 raw_records_0 = """
@@ -587,14 +580,14 @@ ATOM   1956  HB3 SER B 124      22.084  18.454 -48.612  1.00 24.00           H
 ATOM   1957  HG  SER B 124      21.258  20.773 -49.552  1.00 27.42           H
 """
 
-raw_records_3="""
+raw_records_3 = """
 CRYST1   20.000   20.000   20.000  90.00  90.00  90.00 P 1
 ATOM      1  N   LYS     1       5.000   5.000   5.000  1.00 20.00           N
 ATOM      1  N   LYS     2       6.000   5.000   5.000  1.00 20.00           N
 ATOM      1  N   LYS     4       5.000   5.500   5.500  1.00 20.00           N
 """
 
-raw_records_4="""
+raw_records_4 = """
 CRYST1   20.000   20.000   20.000  90.00  90.00  90.00 P 1
 SCALE1      0.050000  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.050000  0.000000        0.00000
@@ -618,7 +611,7 @@ ATOM      1  N   LYS     3       5.000   5.500   5.500  1.00 20.00           N
 ATOM      1  N   LYS     4       5.000   5.500   5.500  1.00 20.00           N
 """
 
-raw_records_6="""
+raw_records_6 = """
 CRYST1   44.060   35.400   48.340  90.00  95.00  90.00 C 1 2 1       8
 HETATM  410  O3' A44 B  17      21.829   8.287   7.189  1.00 36.66           O
 HETATM  411  C2' A44 B  17      23.214   6.318   6.661  1.00 33.97           C
@@ -626,7 +619,7 @@ HETATM  412  O2' A44 B  17      23.644   7.009   5.493  1.00 33.08           O
 HETATM  413  z!# A44 B  17      24.403   5.690   7.395  1.00 32.76           C
 """
 
-raw_records_7="""
+raw_records_7 = """
 CRYST1   44.060   35.400   48.340  90.00  95.00  90.00 C 1 2 1       4
 ATOM      1  N   GLY A   1      -6.724   4.519  10.133  1.00 16.77           N
 ATOM      2  CA  GLY A   1      -7.194   4.166   8.745  1.00 16.57           C
@@ -777,23 +770,27 @@ HETATM 2073  O   HOH A 412      20.790   1.172  -9.857  1.00 30.79           O
 END
 """
 
-if (__name__ == "__main__"):
-  if not os.getenv("MMTBX_CCP4_MONOMER_LIB") and not os.getenv("CLIBD_MONCLIBD") and chem_data is None:
-    print("Test skipped, need monomer library")
-    sys.exit()
-  t0 = time.time()
-  test_1_5_overlaps()
-  test_inline_angle()
-  test_inline_overlaps()
-  test_overlap_atoms()
-  test_vdw_dist()
-  test_atom_selection()
-  test_addition_scatterers()
-  test_show()
-  test_unknown_pair_type()
-  test_running_from_command_line()
-  test_file_with_unknown_pair_type()
-  test_small_cell()
-  test_manager_and_clashes_functions()
-  test_no_unit_cell()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    if (
+        not os.getenv("MMTBX_CCP4_MONOMER_LIB")
+        and not os.getenv("CLIBD_MONCLIBD")
+        and chem_data is None
+    ):
+        print("Test skipped, need monomer library")
+        sys.exit()
+    t0 = time.time()
+    test_1_5_overlaps()
+    test_inline_angle()
+    test_inline_overlaps()
+    test_overlap_atoms()
+    test_vdw_dist()
+    test_atom_selection()
+    test_addition_scatterers()
+    test_show()
+    test_unknown_pair_type()
+    test_running_from_command_line()
+    test_file_with_unknown_pair_type()
+    test_small_cell()
+    test_manager_and_clashes_functions()
+    test_no_unit_cell()
+    print("OK. Time: %8.3f" % (time.time() - t0))

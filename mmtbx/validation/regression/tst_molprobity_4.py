@@ -33,14 +33,16 @@ ATOM    590  O   GLY    77      19.179  39.865  22.918  1.00 34.11      A    O
 END
 """
 
-def test1(prefix="tst_mp4"):
-  """
-  Illustrating failure in twin refine tutorial data, discovered 2/26/2018.
-  """
-  with open("%s.pdb" % prefix, 'w') as f:
-    f.write(pdb_txt)
-  result = molprobity.run(args=['%s.pdb' % prefix])
 
-if (__name__ == "__main__"):
-  test1()
-  print("OK")
+def test1(prefix="tst_mp4"):
+    """
+    Illustrating failure in twin refine tutorial data, discovered 2/26/2018.
+    """
+    with open("%s.pdb" % prefix, "w") as f:
+        f.write(pdb_txt)
+    result = molprobity.run(args=["%s.pdb" % prefix])
+
+
+if __name__ == "__main__":
+    test1()
+    print("OK")

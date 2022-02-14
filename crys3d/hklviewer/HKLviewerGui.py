@@ -11,16 +11,46 @@
 from __future__ import absolute_import, division, print_function
 
 from .qt import QWebEngineView
-try: # if invoked by cctbx.python or some such
-  from crys3d.hklviewer.helpers import HeaderDataTableWidget, MyQDoubleSpinBox # implicit import
-except Exception as e: # if invoked by a generic python that doesn't know cctbx modules
-  from .helpers import HeaderDataTableWidget, MyQDoubleSpinBox # implicit import
 
-from .qt import ( QCoreApplication, QMetaObject, QRect, QSize, Qt,  # implicit import
- QFont, QAbstractItemView, QAction, QCheckBox, QComboBox, QLineEdit,
- QDoubleSpinBox, QFrame, QGridLayout, QGroupBox, QLabel, QPlainTextEdit,
- QPushButton, QRadioButton, QScrollArea, QSlider, QSplitter, QSizePolicy, QSpinBox,
- QTableWidget, QTabWidget, QTextEdit, QWidget, QIcon )
+try:  # if invoked by cctbx.python or some such
+    from crys3d.hklviewer.helpers import (
+        HeaderDataTableWidget,
+        MyQDoubleSpinBox,
+    )  # implicit import
+except Exception as e:  # if invoked by a generic python that doesn't know cctbx modules
+    from .helpers import HeaderDataTableWidget, MyQDoubleSpinBox  # implicit import
+
+from .qt import (
+    QCoreApplication,
+    QMetaObject,
+    QRect,
+    QSize,
+    Qt,  # implicit import
+    QFont,
+    QAbstractItemView,
+    QAction,
+    QCheckBox,
+    QComboBox,
+    QLineEdit,
+    QDoubleSpinBox,
+    QFrame,
+    QGridLayout,
+    QGroupBox,
+    QLabel,
+    QPlainTextEdit,
+    QPushButton,
+    QRadioButton,
+    QScrollArea,
+    QSlider,
+    QSplitter,
+    QSizePolicy,
+    QSpinBox,
+    QTableWidget,
+    QTabWidget,
+    QTextEdit,
+    QWidget,
+    QIcon,
+)
 
 
 class Ui_MainWindow(object):
@@ -59,7 +89,9 @@ class Ui_MainWindow(object):
         self.actionHKLviewer_Tutorial.setObjectName(u"actionHKLviewer_Tutorial")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.centralwidget.sizePolicy().hasHeightForWidth()
+        )
         self.centralwidget.setSizePolicy(sizePolicy)
         self.gridLayout_2 = QGridLayout(self.centralwidget)
         self.gridLayout_2.setSpacing(4)
@@ -113,9 +145,9 @@ class Ui_MainWindow(object):
         self.gridLayout_5.setObjectName(u"gridLayout_5")
         self.gridLayout_5.setContentsMargins(0, 0, 0, 0)
         self.millertable = HeaderDataTableWidget(self.widget_4)
-        if (self.millertable.columnCount() < 2):
+        if self.millertable.columnCount() < 2:
             self.millertable.setColumnCount(2)
-        if (self.millertable.rowCount() < 1):
+        if self.millertable.rowCount() < 1:
             self.millertable.setRowCount(1)
         self.millertable.setObjectName(u"millertable")
         sizePolicy4 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -150,7 +182,9 @@ class Ui_MainWindow(object):
         sizePolicy6 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
         sizePolicy6.setHorizontalStretch(0)
         sizePolicy6.setVerticalStretch(0)
-        sizePolicy6.setHeightForWidth(self.SpaceGrpUCellText.sizePolicy().hasHeightForWidth())
+        sizePolicy6.setHeightForWidth(
+            self.SpaceGrpUCellText.sizePolicy().hasHeightForWidth()
+        )
         self.SpaceGrpUCellText.setSizePolicy(sizePolicy6)
         self.SpaceGrpUCellText.setMinimumSize(QSize(0, 30))
         self.SpaceGrpUCellText.setMaximumSize(QSize(16777215, 16777215))
@@ -171,7 +205,9 @@ class Ui_MainWindow(object):
         self.gridLayout_4.setContentsMargins(0, 0, 0, 0)
         self.functionTabWidget = QTabWidget(self.scrollAreaWidgetContents)
         self.functionTabWidget.setObjectName(u"functionTabWidget")
-        sizePolicy4.setHeightForWidth(self.functionTabWidget.sizePolicy().hasHeightForWidth())
+        sizePolicy4.setHeightForWidth(
+            self.functionTabWidget.sizePolicy().hasHeightForWidth()
+        )
         self.functionTabWidget.setSizePolicy(sizePolicy4)
         self.tab = QWidget()
         self.tab.setObjectName(u"tab")
@@ -184,7 +220,9 @@ class Ui_MainWindow(object):
         sizePolicy7 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         sizePolicy7.setHorizontalStretch(0)
         sizePolicy7.setVerticalStretch(0)
-        sizePolicy7.setHeightForWidth(self.ExpandReflsGroupBox.sizePolicy().hasHeightForWidth())
+        sizePolicy7.setHeightForWidth(
+            self.ExpandReflsGroupBox.sizePolicy().hasHeightForWidth()
+        )
         self.ExpandReflsGroupBox.setSizePolicy(sizePolicy7)
         self.ExpandReflsGroupBox.setCheckable(True)
         self.ExpandReflsGroupBox.setChecked(False)
@@ -203,7 +241,6 @@ class Ui_MainWindow(object):
 
         self.gridLayout_3.addWidget(self.expandAnomalouscheckbox, 0, 1, 1, 1)
 
-
         self.gridLayout_28.addWidget(self.ExpandReflsGroupBox, 0, 0, 1, 3, Qt.AlignTop)
 
         self.SpacegroupLabel = QLabel(self.tab)
@@ -211,7 +248,9 @@ class Ui_MainWindow(object):
         sizePolicy8 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         sizePolicy8.setHorizontalStretch(0)
         sizePolicy8.setVerticalStretch(2)
-        sizePolicy8.setHeightForWidth(self.SpacegroupLabel.sizePolicy().hasHeightForWidth())
+        sizePolicy8.setHeightForWidth(
+            self.SpacegroupLabel.sizePolicy().hasHeightForWidth()
+        )
         self.SpacegroupLabel.setSizePolicy(sizePolicy8)
 
         self.gridLayout_28.addWidget(self.SpacegroupLabel, 2, 0, 1, 1, Qt.AlignTop)
@@ -240,12 +279,13 @@ class Ui_MainWindow(object):
 
         self.gridLayout_20.addWidget(self.onlymissingcheckbox, 2, 0, 1, 1)
 
-
         self.gridLayout_28.addWidget(self.widget_3, 1, 1, 1, 2, Qt.AlignTop)
 
         self.SpaceGroupComboBox = QComboBox(self.tab)
         self.SpaceGroupComboBox.setObjectName(u"SpaceGroupComboBox")
-        sizePolicy8.setHeightForWidth(self.SpaceGroupComboBox.sizePolicy().hasHeightForWidth())
+        sizePolicy8.setHeightForWidth(
+            self.SpaceGroupComboBox.sizePolicy().hasHeightForWidth()
+        )
         self.SpaceGroupComboBox.setSizePolicy(sizePolicy8)
 
         self.gridLayout_28.addWidget(self.SpaceGroupComboBox, 2, 1, 1, 2, Qt.AlignTop)
@@ -262,9 +302,13 @@ class Ui_MainWindow(object):
         sizePolicy9 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy9.setHorizontalStretch(0)
         sizePolicy9.setVerticalStretch(1)
-        sizePolicy9.setHeightForWidth(self.ClipPlaneChkGroupBox.sizePolicy().hasHeightForWidth())
+        sizePolicy9.setHeightForWidth(
+            self.ClipPlaneChkGroupBox.sizePolicy().hasHeightForWidth()
+        )
         self.ClipPlaneChkGroupBox.setSizePolicy(sizePolicy9)
-        self.ClipPlaneChkGroupBox.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+        self.ClipPlaneChkGroupBox.setAlignment(
+            Qt.AlignLeading | Qt.AlignLeft | Qt.AlignVCenter
+        )
         self.ClipPlaneChkGroupBox.setCheckable(True)
         self.ClipPlaneChkGroupBox.setChecked(False)
         self.gridLayout_9 = QGridLayout(self.ClipPlaneChkGroupBox)
@@ -272,11 +316,15 @@ class Ui_MainWindow(object):
         self.gridLayout_9.setContentsMargins(3, 3, 3, 3)
         self.gridLayout_9.setObjectName(u"gridLayout_9")
         self.parallel_current_orientation_btn = QRadioButton(self.ClipPlaneChkGroupBox)
-        self.parallel_current_orientation_btn.setObjectName(u"parallel_current_orientation_btn")
+        self.parallel_current_orientation_btn.setObjectName(
+            u"parallel_current_orientation_btn"
+        )
         sizePolicy10 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         sizePolicy10.setHorizontalStretch(0)
         sizePolicy10.setVerticalStretch(0)
-        sizePolicy10.setHeightForWidth(self.parallel_current_orientation_btn.sizePolicy().hasHeightForWidth())
+        sizePolicy10.setHeightForWidth(
+            self.parallel_current_orientation_btn.sizePolicy().hasHeightForWidth()
+        )
         self.parallel_current_orientation_btn.setSizePolicy(sizePolicy10)
         self.parallel_current_orientation_btn.setChecked(True)
 
@@ -287,7 +335,9 @@ class Ui_MainWindow(object):
         sizePolicy11 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         sizePolicy11.setHorizontalStretch(0)
         sizePolicy11.setVerticalStretch(0)
-        sizePolicy11.setHeightForWidth(self.normal_realspace_vec_btn.sizePolicy().hasHeightForWidth())
+        sizePolicy11.setHeightForWidth(
+            self.normal_realspace_vec_btn.sizePolicy().hasHeightForWidth()
+        )
         self.normal_realspace_vec_btn.setSizePolicy(sizePolicy11)
 
         self.gridLayout_9.addWidget(self.normal_realspace_vec_btn, 1, 0, 1, 1)
@@ -304,7 +354,9 @@ class Ui_MainWindow(object):
         self.gridLayout_9.addWidget(self.label_9, 1, 1, 1, 2)
 
         self.clipplane_normal_vector_combo = QComboBox(self.ClipPlaneChkGroupBox)
-        self.clipplane_normal_vector_combo.setObjectName(u"clipplane_normal_vector_combo")
+        self.clipplane_normal_vector_combo.setObjectName(
+            u"clipplane_normal_vector_combo"
+        )
 
         self.gridLayout_9.addWidget(self.clipplane_normal_vector_combo, 1, 3, 1, 1)
 
@@ -313,16 +365,20 @@ class Ui_MainWindow(object):
         sizePolicy7.setHeightForWidth(self.label_13.sizePolicy().hasHeightForWidth())
         self.label_13.setSizePolicy(sizePolicy7)
         self.label_13.setTextFormat(Qt.RichText)
-        self.label_13.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+        self.label_13.setAlignment(Qt.AlignLeading | Qt.AlignLeft | Qt.AlignVCenter)
 
         self.gridLayout_9.addWidget(self.label_13, 1, 4, 1, 1)
 
         self.clipplane_normal_vector_length = QLineEdit(self.ClipPlaneChkGroupBox)
-        self.clipplane_normal_vector_length.setObjectName(u"clipplane_normal_vector_length")
+        self.clipplane_normal_vector_length.setObjectName(
+            u"clipplane_normal_vector_length"
+        )
         sizePolicy13 = QSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         sizePolicy13.setHorizontalStretch(0)
         sizePolicy13.setVerticalStretch(0)
-        sizePolicy13.setHeightForWidth(self.clipplane_normal_vector_length.sizePolicy().hasHeightForWidth())
+        sizePolicy13.setHeightForWidth(
+            self.clipplane_normal_vector_length.sizePolicy().hasHeightForWidth()
+        )
         self.clipplane_normal_vector_length.setSizePolicy(sizePolicy13)
         self.clipplane_normal_vector_length.setReadOnly(False)
 
@@ -339,7 +395,9 @@ class Ui_MainWindow(object):
         sizePolicy14 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy14.setHorizontalStretch(0)
         sizePolicy14.setVerticalStretch(0)
-        sizePolicy14.setHeightForWidth(self.hkldist_spinBox.sizePolicy().hasHeightForWidth())
+        sizePolicy14.setHeightForWidth(
+            self.hkldist_spinBox.sizePolicy().hasHeightForWidth()
+        )
         self.hkldist_spinBox.setSizePolicy(sizePolicy14)
         self.hkldist_spinBox.setDecimals(4)
         self.hkldist_spinBox.setMinimum(-1000.000000000000000)
@@ -351,20 +409,21 @@ class Ui_MainWindow(object):
         self.label_21.setObjectName(u"label_21")
         sizePolicy11.setHeightForWidth(self.label_21.sizePolicy().hasHeightForWidth())
         self.label_21.setSizePolicy(sizePolicy11)
-        self.label_21.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.label_21.setAlignment(Qt.AlignRight | Qt.AlignTrailing | Qt.AlignVCenter)
 
         self.gridLayout_9.addWidget(self.label_21, 2, 3, 1, 2)
 
         self.clipwidth_spinBox = MyQDoubleSpinBox(self.ClipPlaneChkGroupBox)
         self.clipwidth_spinBox.setObjectName(u"clipwidth_spinBox")
-        sizePolicy14.setHeightForWidth(self.clipwidth_spinBox.sizePolicy().hasHeightForWidth())
+        sizePolicy14.setHeightForWidth(
+            self.clipwidth_spinBox.sizePolicy().hasHeightForWidth()
+        )
         self.clipwidth_spinBox.setSizePolicy(sizePolicy14)
         self.clipwidth_spinBox.setMinimum(0.500000000000000)
         self.clipwidth_spinBox.setMaximum(100.000000000000000)
         self.clipwidth_spinBox.setSingleStep(0.500000000000000)
 
         self.gridLayout_9.addWidget(self.clipwidth_spinBox, 2, 5, 1, 1)
-
 
         self.gridLayout_7.addWidget(self.ClipPlaneChkGroupBox, 0, 0, 1, 1)
 
@@ -379,13 +438,15 @@ class Ui_MainWindow(object):
         self.gridLayout_22.setContentsMargins(0, 3, 0, 0)
         self.label_14 = QLabel(self.groupBox)
         self.label_14.setObjectName(u"label_14")
-        self.label_14.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.label_14.setAlignment(Qt.AlignRight | Qt.AlignTrailing | Qt.AlignVCenter)
 
         self.gridLayout_22.addWidget(self.label_14, 0, 0, 1, 1)
 
         self.angleStepHKLrotSpinBox = QDoubleSpinBox(self.groupBox)
         self.angleStepHKLrotSpinBox.setObjectName(u"angleStepHKLrotSpinBox")
-        sizePolicy10.setHeightForWidth(self.angleStepHKLrotSpinBox.sizePolicy().hasHeightForWidth())
+        sizePolicy10.setHeightForWidth(
+            self.angleStepHKLrotSpinBox.sizePolicy().hasHeightForWidth()
+        )
         self.angleStepHKLrotSpinBox.setSizePolicy(sizePolicy10)
         self.angleStepHKLrotSpinBox.setWrapping(True)
         self.angleStepHKLrotSpinBox.setDecimals(1)
@@ -416,7 +477,9 @@ class Ui_MainWindow(object):
 
         self.xHKLbackrotBtn = QPushButton(self.groupBox_2)
         self.xHKLbackrotBtn.setObjectName(u"xHKLbackrotBtn")
-        sizePolicy13.setHeightForWidth(self.xHKLbackrotBtn.sizePolicy().hasHeightForWidth())
+        sizePolicy13.setHeightForWidth(
+            self.xHKLbackrotBtn.sizePolicy().hasHeightForWidth()
+        )
         self.xHKLbackrotBtn.setSizePolicy(sizePolicy13)
         icon1 = QIcon()
         icon1.addFile(u"roundarrow.png", QSize(), QIcon.Normal, QIcon.Off)
@@ -424,7 +487,6 @@ class Ui_MainWindow(object):
         self.xHKLbackrotBtn.setFlat(False)
 
         self.gridLayout_16.addWidget(self.xHKLbackrotBtn, 0, 1, 1, 1)
-
 
         self.gridLayout_22.addWidget(self.groupBox_2, 1, 0, 1, 1)
 
@@ -445,12 +507,13 @@ class Ui_MainWindow(object):
 
         self.yHKLbackrotBtn = QPushButton(self.groupBox_4)
         self.yHKLbackrotBtn.setObjectName(u"yHKLbackrotBtn")
-        sizePolicy13.setHeightForWidth(self.yHKLbackrotBtn.sizePolicy().hasHeightForWidth())
+        sizePolicy13.setHeightForWidth(
+            self.yHKLbackrotBtn.sizePolicy().hasHeightForWidth()
+        )
         self.yHKLbackrotBtn.setSizePolicy(sizePolicy13)
         self.yHKLbackrotBtn.setIcon(icon1)
 
         self.gridLayout_19.addWidget(self.yHKLbackrotBtn, 0, 1, 1, 1)
-
 
         self.gridLayout_22.addWidget(self.groupBox_4, 1, 1, 1, 1)
 
@@ -471,15 +534,15 @@ class Ui_MainWindow(object):
 
         self.zHKLbackrotBtn = QPushButton(self.groupBox_6)
         self.zHKLbackrotBtn.setObjectName(u"zHKLbackrotBtn")
-        sizePolicy13.setHeightForWidth(self.zHKLbackrotBtn.sizePolicy().hasHeightForWidth())
+        sizePolicy13.setHeightForWidth(
+            self.zHKLbackrotBtn.sizePolicy().hasHeightForWidth()
+        )
         self.zHKLbackrotBtn.setSizePolicy(sizePolicy13)
         self.zHKLbackrotBtn.setIcon(icon1)
 
         self.gridLayout_21.addWidget(self.zHKLbackrotBtn, 0, 1, 1, 1)
 
-
         self.gridLayout_22.addWidget(self.groupBox_6, 1, 2, 1, 1)
-
 
         self.gridLayout_7.addWidget(self.groupBox, 1, 0, 1, 1)
 
@@ -507,7 +570,9 @@ class Ui_MainWindow(object):
         sizePolicy16 = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         sizePolicy16.setHorizontalStretch(0)
         sizePolicy16.setVerticalStretch(0)
-        sizePolicy16.setHeightForWidth(self.radii_scale_spinBox.sizePolicy().hasHeightForWidth())
+        sizePolicy16.setHeightForWidth(
+            self.radii_scale_spinBox.sizePolicy().hasHeightForWidth()
+        )
         self.radii_scale_spinBox.setSizePolicy(sizePolicy16)
         self.radii_scale_spinBox.setDecimals(2)
         self.radii_scale_spinBox.setMinimum(0.000000000000000)
@@ -522,7 +587,9 @@ class Ui_MainWindow(object):
         sizePolicy17 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
         sizePolicy17.setHorizontalStretch(0)
         sizePolicy17.setVerticalStretch(0)
-        sizePolicy17.setHeightForWidth(self.ManualPowerScalecheckbox.sizePolicy().hasHeightForWidth())
+        sizePolicy17.setHeightForWidth(
+            self.ManualPowerScalecheckbox.sizePolicy().hasHeightForWidth()
+        )
         self.ManualPowerScalecheckbox.setSizePolicy(sizePolicy17)
 
         self.gridLayout_10.addWidget(self.ManualPowerScalecheckbox, 1, 0, 1, 2)
@@ -531,14 +598,16 @@ class Ui_MainWindow(object):
         self.label_10.setObjectName(u"label_10")
         sizePolicy17.setHeightForWidth(self.label_10.sizePolicy().hasHeightForWidth())
         self.label_10.setSizePolicy(sizePolicy17)
-        self.label_10.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.label_10.setAlignment(Qt.AlignRight | Qt.AlignTrailing | Qt.AlignVCenter)
         self.label_10.setIndent(1)
 
         self.gridLayout_10.addWidget(self.label_10, 1, 2, 1, 1)
 
         self.power_scale_spinBox = MyQDoubleSpinBox(self.groupBox_3)
         self.power_scale_spinBox.setObjectName(u"power_scale_spinBox")
-        sizePolicy16.setHeightForWidth(self.power_scale_spinBox.sizePolicy().hasHeightForWidth())
+        sizePolicy16.setHeightForWidth(
+            self.power_scale_spinBox.sizePolicy().hasHeightForWidth()
+        )
         self.power_scale_spinBox.setSizePolicy(sizePolicy16)
         self.power_scale_spinBox.setMinimum(-10.000000000000000)
         self.power_scale_spinBox.setMaximum(10.000000000000000)
@@ -553,7 +622,7 @@ class Ui_MainWindow(object):
         self.label_7.setSizePolicy(sizePolicy7)
         self.label_7.setTextFormat(Qt.RichText)
         self.label_7.setScaledContents(False)
-        self.label_7.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+        self.label_7.setAlignment(Qt.AlignLeading | Qt.AlignLeft | Qt.AlignVCenter)
         self.label_7.setWordWrap(True)
 
         self.gridLayout_10.addWidget(self.label_7, 0, 0, 1, 4)
@@ -564,7 +633,6 @@ class Ui_MainWindow(object):
         self.label_11.setSizePolicy(sizePolicy17)
 
         self.gridLayout_10.addWidget(self.label_11, 2, 0, 1, 1)
-
 
         self.gridLayout_27.addWidget(self.groupBox_3, 0, 0, 1, 1, Qt.AlignTop)
 
@@ -588,7 +656,9 @@ class Ui_MainWindow(object):
         sizePolicy18 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         sizePolicy18.setHorizontalStretch(2)
         sizePolicy18.setVerticalStretch(0)
-        sizePolicy18.setHeightForWidth(self.BinDataComboBox.sizePolicy().hasHeightForWidth())
+        sizePolicy18.setHeightForWidth(
+            self.BinDataComboBox.sizePolicy().hasHeightForWidth()
+        )
         self.BinDataComboBox.setSizePolicy(sizePolicy18)
 
         self.gridLayout_11.addWidget(self.BinDataComboBox, 0, 0, 1, 1)
@@ -603,13 +673,14 @@ class Ui_MainWindow(object):
         sizePolicy19 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
         sizePolicy19.setHorizontalStretch(0)
         sizePolicy19.setVerticalStretch(0)
-        sizePolicy19.setHeightForWidth(self.Nbins_spinBox.sizePolicy().hasHeightForWidth())
+        sizePolicy19.setHeightForWidth(
+            self.Nbins_spinBox.sizePolicy().hasHeightForWidth()
+        )
         self.Nbins_spinBox.setSizePolicy(sizePolicy19)
         self.Nbins_spinBox.setMinimum(1)
         self.Nbins_spinBox.setMaximum(20)
 
         self.gridLayout_11.addWidget(self.Nbins_spinBox, 0, 2, 1, 1)
-
 
         self.gridLayout_13.addWidget(self.groupBox_5, 0, 0, 1, 1)
 
@@ -628,9 +699,9 @@ class Ui_MainWindow(object):
         self.gridLayout_12.addWidget(self.OpaqueAllCheckbox, 0, 0, 1, 1)
 
         self.binstable = QTableWidget(self.widget_6)
-        if (self.binstable.columnCount() < 4):
+        if self.binstable.columnCount() < 4:
             self.binstable.setColumnCount(4)
-        if (self.binstable.rowCount() < 5):
+        if self.binstable.rowCount() < 5:
             self.binstable.setRowCount(5)
         self.binstable.setObjectName(u"binstable")
         sizePolicy4.setHeightForWidth(self.binstable.sizePolicy().hasHeightForWidth())
@@ -639,7 +710,6 @@ class Ui_MainWindow(object):
         self.binstable.setColumnCount(4)
 
         self.gridLayout_12.addWidget(self.binstable, 1, 0, 1, 1)
-
 
         self.gridLayout_13.addWidget(self.widget_6, 1, 0, 1, 1)
 
@@ -655,7 +725,9 @@ class Ui_MainWindow(object):
         sizePolicy20 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
         sizePolicy20.setHorizontalStretch(0)
         sizePolicy20.setVerticalStretch(0)
-        sizePolicy20.setHeightForWidth(self.RotationVectorsBox.sizePolicy().hasHeightForWidth())
+        sizePolicy20.setHeightForWidth(
+            self.RotationVectorsBox.sizePolicy().hasHeightForWidth()
+        )
         self.RotationVectorsBox.setSizePolicy(sizePolicy20)
         self.RotationVectorsBox.setMaximumSize(QSize(16777215, 16777215))
         self.RotationVectorsBox.setCheckable(False)
@@ -665,15 +737,17 @@ class Ui_MainWindow(object):
         self.gridLayout_8.setObjectName(u"gridLayout_8")
         self.gridLayout_8.setContentsMargins(3, 3, 3, 3)
         self.vectortable2 = QTableWidget(self.RotationVectorsBox)
-        if (self.vectortable2.columnCount() < 4):
+        if self.vectortable2.columnCount() < 4:
             self.vectortable2.setColumnCount(4)
-        if (self.vectortable2.rowCount() < 4):
+        if self.vectortable2.rowCount() < 4:
             self.vectortable2.setRowCount(4)
         self.vectortable2.setObjectName(u"vectortable2")
         sizePolicy21 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy21.setHorizontalStretch(3)
         sizePolicy21.setVerticalStretch(3)
-        sizePolicy21.setHeightForWidth(self.vectortable2.sizePolicy().hasHeightForWidth())
+        sizePolicy21.setHeightForWidth(
+            self.vectortable2.sizePolicy().hasHeightForWidth()
+        )
         self.vectortable2.setSizePolicy(sizePolicy21)
         self.vectortable2.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.vectortable2.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
@@ -699,7 +773,9 @@ class Ui_MainWindow(object):
         sizePolicy22 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         sizePolicy22.setHorizontalStretch(1)
         sizePolicy22.setVerticalStretch(0)
-        sizePolicy22.setHeightForWidth(self.RotateAroundframe.sizePolicy().hasHeightForWidth())
+        sizePolicy22.setHeightForWidth(
+            self.RotateAroundframe.sizePolicy().hasHeightForWidth()
+        )
         self.RotateAroundframe.setSizePolicy(sizePolicy22)
         self.RotateAroundframe.setFrameShape(QFrame.StyledPanel)
         self.RotateAroundframe.setFrameShadow(QFrame.Raised)
@@ -712,7 +788,9 @@ class Ui_MainWindow(object):
         sizePolicy23 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         sizePolicy23.setHorizontalStretch(0)
         sizePolicy23.setVerticalStretch(0)
-        sizePolicy23.setHeightForWidth(self.rotavecangle_labeltxt.sizePolicy().hasHeightForWidth())
+        sizePolicy23.setHeightForWidth(
+            self.rotavecangle_labeltxt.sizePolicy().hasHeightForWidth()
+        )
         self.rotavecangle_labeltxt.setSizePolicy(sizePolicy23)
         self.rotavecangle_labeltxt.setMinimumSize(QSize(120, 0))
         self.rotavecangle_labeltxt.setWordWrap(True)
@@ -724,7 +802,9 @@ class Ui_MainWindow(object):
         sizePolicy24 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
         sizePolicy24.setHorizontalStretch(0)
         sizePolicy24.setVerticalStretch(0)
-        sizePolicy24.setHeightForWidth(self.rotavecangle_slider.sizePolicy().hasHeightForWidth())
+        sizePolicy24.setHeightForWidth(
+            self.rotavecangle_slider.sizePolicy().hasHeightForWidth()
+        )
         self.rotavecangle_slider.setSizePolicy(sizePolicy24)
         self.rotavecangle_slider.setMinimumSize(QSize(120, 0))
         self.rotavecangle_slider.setMaximum(720)
@@ -738,7 +818,9 @@ class Ui_MainWindow(object):
         self.AlignVectorGroupBox = QGroupBox(self.RotateAroundframe)
         self.AlignVectorGroupBox.setObjectName(u"AlignVectorGroupBox")
         self.AlignVectorGroupBox.setEnabled(True)
-        sizePolicy5.setHeightForWidth(self.AlignVectorGroupBox.sizePolicy().hasHeightForWidth())
+        sizePolicy5.setHeightForWidth(
+            self.AlignVectorGroupBox.sizePolicy().hasHeightForWidth()
+        )
         self.AlignVectorGroupBox.setSizePolicy(sizePolicy5)
         self.AlignVectorGroupBox.setCheckable(True)
         self.AlignVectorGroupBox.setChecked(False)
@@ -758,12 +840,13 @@ class Ui_MainWindow(object):
 
         self.gridLayout_17.addWidget(self.AlignNormalBtn, 1, 0, 1, 1)
 
-
         self.gridLayout_18.addWidget(self.AlignVectorGroupBox, 2, 0, 1, 2)
 
         self.AnimaRotCheckBox = QCheckBox(self.RotateAroundframe)
         self.AnimaRotCheckBox.setObjectName(u"AnimaRotCheckBox")
-        sizePolicy24.setHeightForWidth(self.AnimaRotCheckBox.sizePolicy().hasHeightForWidth())
+        sizePolicy24.setHeightForWidth(
+            self.AnimaRotCheckBox.sizePolicy().hasHeightForWidth()
+        )
         self.AnimaRotCheckBox.setSizePolicy(sizePolicy24)
 
         self.gridLayout_18.addWidget(self.AnimaRotCheckBox, 3, 0, 1, 2)
@@ -786,9 +869,7 @@ class Ui_MainWindow(object):
 
         self.gridLayout_18.addWidget(self.AnimateSpeedSlider, 4, 1, 1, 1)
 
-
         self.gridLayout_8.addWidget(self.RotateAroundframe, 0, 1, 2, 1)
-
 
         self.gridLayout_14.addWidget(self.RotationVectorsBox, 0, 0, 1, 1)
 
@@ -814,7 +895,9 @@ class Ui_MainWindow(object):
         sizePolicy25 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         sizePolicy25.setHorizontalStretch(0)
         sizePolicy25.setVerticalStretch(0)
-        sizePolicy25.setHeightForWidth(self.reciprocunitcellslider.sizePolicy().hasHeightForWidth())
+        sizePolicy25.setHeightForWidth(
+            self.reciprocunitcellslider.sizePolicy().hasHeightForWidth()
+        )
         self.reciprocunitcellslider.setSizePolicy(sizePolicy25)
         self.reciprocunitcellslider.setMinimum(0)
         self.reciprocunitcellslider.setMaximum(100)
@@ -827,7 +910,6 @@ class Ui_MainWindow(object):
         self.label_4.setWordWrap(True)
 
         self.gridLayout_15.addWidget(self.label_4, 0, 2, 1, 1)
-
 
         self.gridLayout_14.addWidget(self.DrawReciprocUnitCellBox, 1, 0, 1, 1)
 
@@ -859,7 +941,6 @@ class Ui_MainWindow(object):
         self.label_5.setWordWrap(True)
 
         self.gridLayout_26.addWidget(self.label_5, 0, 2, 1, 1)
-
 
         self.gridLayout_14.addWidget(self.DrawRealUnitCellBox, 2, 0, 1, 1)
 
@@ -897,7 +978,6 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
 
-
         self.gridLayout_2.addWidget(self.widget, 0, 0, 1, 1)
 
         MainWindow.setCentralWidget(self.centralwidget)
@@ -908,135 +988,389 @@ class Ui_MainWindow(object):
         self.xHKLrotBtn.setDefault(False)
         self.xHKLbackrotBtn.setDefault(False)
 
-
         QMetaObject.connectSlotsByName(MainWindow)
+
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.actionOpen_reflection_file.setText(QCoreApplication.translate("MainWindow", u"Open reflection file...", None))
-        self.actionSettings.setText(QCoreApplication.translate("MainWindow", u"Settings", None))
-        self.actiondebug.setText(QCoreApplication.translate("MainWindow", u"Debug", None))
+        MainWindow.setWindowTitle(
+            QCoreApplication.translate("MainWindow", u"MainWindow", None)
+        )
+        self.actionOpen_reflection_file.setText(
+            QCoreApplication.translate("MainWindow", u"Open reflection file...", None)
+        )
+        self.actionSettings.setText(
+            QCoreApplication.translate("MainWindow", u"Settings", None)
+        )
+        self.actiondebug.setText(
+            QCoreApplication.translate("MainWindow", u"Debug", None)
+        )
         self.actionExit.setText(QCoreApplication.translate("MainWindow", u"Exit", None))
-        self.actionSave_reflection_file.setText(QCoreApplication.translate("MainWindow", u"Save reflection file...", None))
-        self.actionReset_View.setText(QCoreApplication.translate("MainWindow", u"Reset View", None))
-        self.actionSave_Current_Image.setText(QCoreApplication.translate("MainWindow", u"Save Current Image...", None))
-        self.actionCCTBXwebsite.setText(QCoreApplication.translate("MainWindow", u"CCTBX Documentation", None))
-        self.actionLocal_Help.setText(QCoreApplication.translate("MainWindow", u"Documentation", None))
-        self.actionAbout.setText(QCoreApplication.translate("MainWindow", u"About", None))
-        self.actionColour_Gradient.setText(QCoreApplication.translate("MainWindow", u"Colour Gradient...", None))
-        self.actionHKLviewer_Tutorial.setText(QCoreApplication.translate("MainWindow", u"Tutorial", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Display a dataset with a double-click. Right-click table for more options.", None))
-        self.SpaceGrpUCellText.setHtml(QCoreApplication.translate("MainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:600;\">Space group: </span>P21 21 21<span style=\" font-weight:600;\"><br />Unit cell: </span>(98.371, 98.371, 263.131, 90, 90, 120)</p></body></html>", None))
-        self.ExpandReflsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"Expand reflections", None))
-#if QT_CONFIG(tooltip)
-        self.expandP1checkbox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Expand reflections from their asymmetric wedge by replicating reflections from succesive rotations operations defined by the spacegroup. If the set of reflections is not symmetry unique some (h,k,l) indices may display more than one reflection.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.expandP1checkbox.setText(QCoreApplication.translate("MainWindow", u"Expand to P1", None))
-#if QT_CONFIG(tooltip)
-        self.expandAnomalouscheckbox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Expand reflections to include -h,-k,-l</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.expandAnomalouscheckbox.setText(QCoreApplication.translate("MainWindow", u"Show Friedel pairs", None))
-        self.SpacegroupLabel.setText(QCoreApplication.translate("MainWindow", u"Space Subgroups", None))
-        self.sysabsentcheckbox.setText(QCoreApplication.translate("MainWindow", u"Show Systematic Absences", None))
-#if QT_CONFIG(tooltip)
-        self.missingcheckbox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Show those reflections not recorded, assuming the set of reflections forms a sphere.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.missingcheckbox.setText(QCoreApplication.translate("MainWindow", u"Show Missing Reflections", None))
-        self.onlymissingcheckbox.setText(QCoreApplication.translate("MainWindow", u"Only", None))
-#if QT_CONFIG(tooltip)
-        self.SpaceGroupComboBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Expand the original dataset to a lower symmetry. This dataset can be saved from the menu to a new file.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.functionTabWidget.setTabText(self.functionTabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"Expansion", None))
-#if QT_CONFIG(tooltip)
-        self.ClipPlaneChkGroupBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Limit the view of reflections with a clip plane parallel to the screen</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.ClipPlaneChkGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"Slice with a clip plane which:", None))
-        self.parallel_current_orientation_btn.setText(QCoreApplication.translate("MainWindow", u"is parallel to current orientation", None))
+        self.actionSave_reflection_file.setText(
+            QCoreApplication.translate("MainWindow", u"Save reflection file...", None)
+        )
+        self.actionReset_View.setText(
+            QCoreApplication.translate("MainWindow", u"Reset View", None)
+        )
+        self.actionSave_Current_Image.setText(
+            QCoreApplication.translate("MainWindow", u"Save Current Image...", None)
+        )
+        self.actionCCTBXwebsite.setText(
+            QCoreApplication.translate("MainWindow", u"CCTBX Documentation", None)
+        )
+        self.actionLocal_Help.setText(
+            QCoreApplication.translate("MainWindow", u"Documentation", None)
+        )
+        self.actionAbout.setText(
+            QCoreApplication.translate("MainWindow", u"About", None)
+        )
+        self.actionColour_Gradient.setText(
+            QCoreApplication.translate("MainWindow", u"Colour Gradient...", None)
+        )
+        self.actionHKLviewer_Tutorial.setText(
+            QCoreApplication.translate("MainWindow", u"Tutorial", None)
+        )
+        self.label.setText(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"Display a dataset with a double-click. Right-click table for more options.",
+                None,
+            )
+        )
+        self.SpaceGrpUCellText.setHtml(
+            QCoreApplication.translate(
+                "MainWindow",
+                u'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">\n'
+                '<html><head><meta name="qrichtext" content="1" /><style type="text/css">\n'
+                "p, li { white-space: pre-wrap; }\n"
+                "</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;\">\n"
+                '<p style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-weight:600;">Space group: </span>P21 21 21<span style=" font-weight:600;"><br />Unit cell: </span>(98.371, 98.371, 263.131, 90, 90, 120)</p></body></html>',
+                None,
+            )
+        )
+        self.ExpandReflsGroupBox.setTitle(
+            QCoreApplication.translate("MainWindow", u"Expand reflections", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.expandP1checkbox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Expand reflections from their asymmetric wedge by replicating reflections from succesive rotations operations defined by the spacegroup. If the set of reflections is not symmetry unique some (h,k,l) indices may display more than one reflection.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.expandP1checkbox.setText(
+            QCoreApplication.translate("MainWindow", u"Expand to P1", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.expandAnomalouscheckbox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Expand reflections to include -h,-k,-l</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.expandAnomalouscheckbox.setText(
+            QCoreApplication.translate("MainWindow", u"Show Friedel pairs", None)
+        )
+        self.SpacegroupLabel.setText(
+            QCoreApplication.translate("MainWindow", u"Space Subgroups", None)
+        )
+        self.sysabsentcheckbox.setText(
+            QCoreApplication.translate("MainWindow", u"Show Systematic Absences", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.missingcheckbox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Show those reflections not recorded, assuming the set of reflections forms a sphere.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.missingcheckbox.setText(
+            QCoreApplication.translate("MainWindow", u"Show Missing Reflections", None)
+        )
+        self.onlymissingcheckbox.setText(
+            QCoreApplication.translate("MainWindow", u"Only", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.SpaceGroupComboBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Expand the original dataset to a lower symmetry. This dataset can be saved from the menu to a new file.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.functionTabWidget.setTabText(
+            self.functionTabWidget.indexOf(self.tab),
+            QCoreApplication.translate("MainWindow", u"Expansion", None),
+        )
+        # if QT_CONFIG(tooltip)
+        self.ClipPlaneChkGroupBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Limit the view of reflections with a clip plane parallel to the screen</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.ClipPlaneChkGroupBox.setTitle(
+            QCoreApplication.translate(
+                "MainWindow", u"Slice with a clip plane which:", None
+            )
+        )
+        self.parallel_current_orientation_btn.setText(
+            QCoreApplication.translate(
+                "MainWindow", u"is parallel to current orientation", None
+            )
+        )
         self.normal_realspace_vec_btn.setText("")
-        self.label_9.setText(QCoreApplication.translate("MainWindow", u"is normal to real space vector associated with:", None))
+        self.label_9.setText(
+            QCoreApplication.translate(
+                "MainWindow", u"is normal to real space vector associated with:", None
+            )
+        )
         self.label_13.setText(QCoreApplication.translate("MainWindow", u"Scale:", None))
-        self.label_15.setText(QCoreApplication.translate("MainWindow", u"Distance from origin", None))
-        self.label_21.setText(QCoreApplication.translate("MainWindow", u"Clip Plane Width:", None))
-        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Rotate reflections around X, Y, Z axes", None))
-        self.label_14.setText(QCoreApplication.translate("MainWindow", u"Angular step of:", None))
-        self.angleStepHKLrotSpinBox.setSuffix(QCoreApplication.translate("MainWindow", u"\u00ba", None))
-        self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Rotate around X", None))
+        self.label_15.setText(
+            QCoreApplication.translate("MainWindow", u"Distance from origin", None)
+        )
+        self.label_21.setText(
+            QCoreApplication.translate("MainWindow", u"Clip Plane Width:", None)
+        )
+        self.groupBox.setTitle(
+            QCoreApplication.translate(
+                "MainWindow", u"Rotate reflections around X, Y, Z axes", None
+            )
+        )
+        self.label_14.setText(
+            QCoreApplication.translate("MainWindow", u"Angular step of:", None)
+        )
+        self.angleStepHKLrotSpinBox.setSuffix(
+            QCoreApplication.translate("MainWindow", u"\u00ba", None)
+        )
+        self.groupBox_2.setTitle(
+            QCoreApplication.translate("MainWindow", u"Rotate around X", None)
+        )
         self.xHKLrotBtn.setText(QCoreApplication.translate("MainWindow", u"+", None))
-        self.xHKLbackrotBtn.setText(QCoreApplication.translate("MainWindow", u"-", None))
-        self.groupBox_4.setTitle(QCoreApplication.translate("MainWindow", u"Rotate around Y", None))
+        self.xHKLbackrotBtn.setText(
+            QCoreApplication.translate("MainWindow", u"-", None)
+        )
+        self.groupBox_4.setTitle(
+            QCoreApplication.translate("MainWindow", u"Rotate around Y", None)
+        )
         self.yHKLrotBtn.setText(QCoreApplication.translate("MainWindow", u"+", None))
-        self.yHKLbackrotBtn.setText(QCoreApplication.translate("MainWindow", u"-", None))
-        self.groupBox_6.setTitle(QCoreApplication.translate("MainWindow", u"Rotate around Z", None))
+        self.yHKLbackrotBtn.setText(
+            QCoreApplication.translate("MainWindow", u"-", None)
+        )
+        self.groupBox_6.setTitle(
+            QCoreApplication.translate("MainWindow", u"Rotate around Z", None)
+        )
         self.zHKLrotBtn.setText(QCoreApplication.translate("MainWindow", u"+", None))
-        self.zHKLbackrotBtn.setText(QCoreApplication.translate("MainWindow", u"-", None))
-        self.functionTabWidget.setTabText(self.functionTabWidget.indexOf(self.tab_2), QCoreApplication.translate("MainWindow", u"Slicing", None))
-        self.groupBox_3.setTitle(QCoreApplication.translate("MainWindow", u"Radii size of HKL spheres", None))
-#if QT_CONFIG(tooltip)
-        self.radii_scale_spinBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>A linear scale factor of 1 means that if two reflectiions with the largest data values happen to be next to each other their spheres will touch but not overlap.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-#if QT_CONFIG(tooltip)
+        self.zHKLbackrotBtn.setText(
+            QCoreApplication.translate("MainWindow", u"-", None)
+        )
+        self.functionTabWidget.setTabText(
+            self.functionTabWidget.indexOf(self.tab_2),
+            QCoreApplication.translate("MainWindow", u"Slicing", None),
+        )
+        self.groupBox_3.setTitle(
+            QCoreApplication.translate("MainWindow", u"Radii size of HKL spheres", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.radii_scale_spinBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>A linear scale factor of 1 means that if two reflectiions with the largest data values happen to be next to each other their spheres will touch but not overlap.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.ManualPowerScalecheckbox.setToolTip("")
-#endif // QT_CONFIG(tooltip)
-        self.ManualPowerScalecheckbox.setText(QCoreApplication.translate("MainWindow", u"User defined power scaling", None))
-        self.label_10.setText(QCoreApplication.translate("MainWindow", u"Power scale factor:", None))
-#if QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
+        self.ManualPowerScalecheckbox.setText(
+            QCoreApplication.translate(
+                "MainWindow", u"User defined power scaling", None
+            )
+        )
+        self.label_10.setText(
+            QCoreApplication.translate("MainWindow", u"Power scale factor:", None)
+        )
+        # if QT_CONFIG(tooltip)
         self.power_scale_spinBox.setToolTip("")
-#endif // QT_CONFIG(tooltip)
-        self.label_7.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Tick the &quot;User defined power scaling&quot; box for chosing a power scale factor. Untick this box to get an <span style=\" font-weight:600;\">automatic power scale factor.</span><br/>An <span style=\" font-weight:600;\">automatic power scale</span> factor will size the reflections so that the reflection with the smallest data value is rendered about 10 times smaller than the reflection with the largest data value. <br/>A <span style=\" font-weight:600;\">power scale factor of 1</span> will size the reflections proportional to their data value. <br/>A <span style=\" font-weight:600;\">power scale factor of 0</span> causes all reflections to have the same size regardless of their data values. </p></body></html>", None))
-#if QT_CONFIG(tooltip)
-        self.label_11.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>A linear scale factor of 1 means that if two reflectiions with the largest data values happen to be next to each other their spheres will touch but not overlap.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.label_11.setText(QCoreApplication.translate("MainWindow", u"Linear scale factor", None))
-        self.functionTabWidget.setTabText(self.functionTabWidget.indexOf(self.tab_3), QCoreApplication.translate("MainWindow", u"Sizing", None))
-        self.groupBox_5.setTitle(QCoreApplication.translate("MainWindow", u"Bin according to", None))
-#if QT_CONFIG(tooltip)
-        self.BinDataComboBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Rank the currently displayed dataset in bins according resolution or the values of a selected dataset or singletons. Reflections in the currently displayed dataset not matching any reflections in the selected dataset will be put in a bin labelled with &quot;nan&quot;.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.label_12.setText(QCoreApplication.translate("MainWindow", u"Number of bins:", None))
-#if QT_CONFIG(tooltip)
-        self.Nbins_spinBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Select the number of bins for ordering the currently displayed data set. More than about 10-15 bins will slow down the HKLviewer when working with large datasets.<br/>The requested number of bins may not be created if there are zero reflections in some bins.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.OpaqueAllCheckbox.setText(QCoreApplication.translate("MainWindow", u"Show/hide all data", None))
-#if QT_CONFIG(tooltip)
-        self.binstable.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Change a bin threshold by entering a preferred value in the in the &quot;lower bin value&quot; column for a particular bin.<br/>Change visibility of bins either by ticking or unticking the check boxes or by entering opacity values between 0 and 1. Reflections with values less than 0.3 will not respond to mouse clicks.<br/></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.functionTabWidget.setTabText(self.functionTabWidget.indexOf(self.tab_4), QCoreApplication.translate("MainWindow", u"Binning", None))
-        self.RotationVectorsBox.setTitle(QCoreApplication.translate("MainWindow", u"Rotation Operators or Vector(s)", None))
-#if QT_CONFIG(tooltip)
-        self.vectortable2.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Tick checkboxes to draw the rotation axes defined by the space group.<br/>Enter additional vectors from origin defined either as axes of rotation operators, plain reciprocal coordinates (as hkl) or plain real space fractional coordinates (as abc).<br/>To enter a new vector, first override the &quot;new vector&quot; name with a preferred name. Then enter the definition of the vector in either the &quot;rotation&quot;, the &quot;as hkl&quot; or the &quot;as abc&quot; column.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.ShowAllVectorsBtn.setText(QCoreApplication.translate("MainWindow", u"Show All", None))
-        self.rotavecangle_labeltxt.setText(QCoreApplication.translate("MainWindow", u"Rotate Reflections around Vector with Angle", None))
-#if QT_CONFIG(tooltip)
-        self.rotavecangle_slider.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>If just one vector is drawn the reflections can be rotated to a particular angle around that vector.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-#if QT_CONFIG(tooltip)
-        self.AlignVectorGroupBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>If just one vector is drawn it can be oriented together with the reflections by ticking this checkbox.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.AlignVectorGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"Orient Vector", None))
-        self.AlignParallelBtn.setText(QCoreApplication.translate("MainWindow", u"Parallel to Screen", None))
-        self.AlignNormalBtn.setText(QCoreApplication.translate("MainWindow", u"Normal to Screen", None))
-#if QT_CONFIG(tooltip)
-        self.AnimaRotCheckBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>If just one vector is drawn the reflections can be rotated continuously around that vector.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.AnimaRotCheckBox.setText(QCoreApplication.translate("MainWindow", u"Rotate continuously", None))
+        # endif // QT_CONFIG(tooltip)
+        self.label_7.setText(
+            QCoreApplication.translate(
+                "MainWindow",
+                u'<html><head/><body><p>Tick the &quot;User defined power scaling&quot; box for chosing a power scale factor. Untick this box to get an <span style=" font-weight:600;">automatic power scale factor.</span><br/>An <span style=" font-weight:600;">automatic power scale</span> factor will size the reflections so that the reflection with the smallest data value is rendered about 10 times smaller than the reflection with the largest data value. <br/>A <span style=" font-weight:600;">power scale factor of 1</span> will size the reflections proportional to their data value. <br/>A <span style=" font-weight:600;">power scale factor of 0</span> causes all reflections to have the same size regardless of their data values. </p></body></html>',
+                None,
+            )
+        )
+        # if QT_CONFIG(tooltip)
+        self.label_11.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>A linear scale factor of 1 means that if two reflectiions with the largest data values happen to be next to each other their spheres will touch but not overlap.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.label_11.setText(
+            QCoreApplication.translate("MainWindow", u"Linear scale factor", None)
+        )
+        self.functionTabWidget.setTabText(
+            self.functionTabWidget.indexOf(self.tab_3),
+            QCoreApplication.translate("MainWindow", u"Sizing", None),
+        )
+        self.groupBox_5.setTitle(
+            QCoreApplication.translate("MainWindow", u"Bin according to", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.BinDataComboBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Rank the currently displayed dataset in bins according resolution or the values of a selected dataset or singletons. Reflections in the currently displayed dataset not matching any reflections in the selected dataset will be put in a bin labelled with &quot;nan&quot;.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.label_12.setText(
+            QCoreApplication.translate("MainWindow", u"Number of bins:", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.Nbins_spinBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Select the number of bins for ordering the currently displayed data set. More than about 10-15 bins will slow down the HKLviewer when working with large datasets.<br/>The requested number of bins may not be created if there are zero reflections in some bins.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.OpaqueAllCheckbox.setText(
+            QCoreApplication.translate("MainWindow", u"Show/hide all data", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.binstable.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Change a bin threshold by entering a preferred value in the in the &quot;lower bin value&quot; column for a particular bin.<br/>Change visibility of bins either by ticking or unticking the check boxes or by entering opacity values between 0 and 1. Reflections with values less than 0.3 will not respond to mouse clicks.<br/></p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.functionTabWidget.setTabText(
+            self.functionTabWidget.indexOf(self.tab_4),
+            QCoreApplication.translate("MainWindow", u"Binning", None),
+        )
+        self.RotationVectorsBox.setTitle(
+            QCoreApplication.translate(
+                "MainWindow", u"Rotation Operators or Vector(s)", None
+            )
+        )
+        # if QT_CONFIG(tooltip)
+        self.vectortable2.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>Tick checkboxes to draw the rotation axes defined by the space group.<br/>Enter additional vectors from origin defined either as axes of rotation operators, plain reciprocal coordinates (as hkl) or plain real space fractional coordinates (as abc).<br/>To enter a new vector, first override the &quot;new vector&quot; name with a preferred name. Then enter the definition of the vector in either the &quot;rotation&quot;, the &quot;as hkl&quot; or the &quot;as abc&quot; column.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.ShowAllVectorsBtn.setText(
+            QCoreApplication.translate("MainWindow", u"Show All", None)
+        )
+        self.rotavecangle_labeltxt.setText(
+            QCoreApplication.translate(
+                "MainWindow", u"Rotate Reflections around Vector with Angle", None
+            )
+        )
+        # if QT_CONFIG(tooltip)
+        self.rotavecangle_slider.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>If just one vector is drawn the reflections can be rotated to a particular angle around that vector.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
+        self.AlignVectorGroupBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>If just one vector is drawn it can be oriented together with the reflections by ticking this checkbox.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.AlignVectorGroupBox.setTitle(
+            QCoreApplication.translate("MainWindow", u"Orient Vector", None)
+        )
+        self.AlignParallelBtn.setText(
+            QCoreApplication.translate("MainWindow", u"Parallel to Screen", None)
+        )
+        self.AlignNormalBtn.setText(
+            QCoreApplication.translate("MainWindow", u"Normal to Screen", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.AnimaRotCheckBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>If just one vector is drawn the reflections can be rotated continuously around that vector.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.AnimaRotCheckBox.setText(
+            QCoreApplication.translate("MainWindow", u"Rotate continuously", None)
+        )
         self.label_8.setText(QCoreApplication.translate("MainWindow", u"Speed", None))
-#if QT_CONFIG(tooltip)
-        self.DrawReciprocUnitCellBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>The reciprocal unit cell spanning a*,b*,c* from (0,0,0) to (1,1,1) is located in the centre of the displayed reflections. and is therefore quite small. Adjust the slider to scale its outline to become compatible with the sphere of displayed reflections.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.DrawReciprocUnitCellBox.setTitle(QCoreApplication.translate("MainWindow", u"Show Reciprocal Unit Cell", None))
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u"True to Scale", None))
-        self.label_4.setText(QCoreApplication.translate("MainWindow", u"Close to radius of sphere of reflections", None))
-#if QT_CONFIG(tooltip)
-        self.DrawRealUnitCellBox.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>The real space unit cell is often much larger than the sphere of displayed reflections. Adjust the slider to scale its outline to become compatible with the sphere of displayed reflections.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.DrawRealUnitCellBox.setTitle(QCoreApplication.translate("MainWindow", u"Show Real Space Unit Cell", None))
-        self.label_6.setText(QCoreApplication.translate("MainWindow", u"True to Scale", None))
-        self.label_5.setText(QCoreApplication.translate("MainWindow", u"Close to radius of sphere of reflections", None))
-        self.functionTabWidget.setTabText(self.functionTabWidget.indexOf(self.tab_5), QCoreApplication.translate("MainWindow", u"Vectors", None))
+        # if QT_CONFIG(tooltip)
+        self.DrawReciprocUnitCellBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>The reciprocal unit cell spanning a*,b*,c* from (0,0,0) to (1,1,1) is located in the centre of the displayed reflections. and is therefore quite small. Adjust the slider to scale its outline to become compatible with the sphere of displayed reflections.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.DrawReciprocUnitCellBox.setTitle(
+            QCoreApplication.translate("MainWindow", u"Show Reciprocal Unit Cell", None)
+        )
+        self.label_2.setText(
+            QCoreApplication.translate("MainWindow", u"True to Scale", None)
+        )
+        self.label_4.setText(
+            QCoreApplication.translate(
+                "MainWindow", u"Close to radius of sphere of reflections", None
+            )
+        )
+        # if QT_CONFIG(tooltip)
+        self.DrawRealUnitCellBox.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                u"<html><head/><body><p>The real space unit cell is often much larger than the sphere of displayed reflections. Adjust the slider to scale its outline to become compatible with the sphere of displayed reflections.</p></body></html>",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.DrawRealUnitCellBox.setTitle(
+            QCoreApplication.translate("MainWindow", u"Show Real Space Unit Cell", None)
+        )
+        self.label_6.setText(
+            QCoreApplication.translate("MainWindow", u"True to Scale", None)
+        )
+        self.label_5.setText(
+            QCoreApplication.translate(
+                "MainWindow", u"Close to radius of sphere of reflections", None
+            )
+        )
+        self.functionTabWidget.setTabText(
+            self.functionTabWidget.indexOf(self.tab_5),
+            QCoreApplication.translate("MainWindow", u"Vectors", None),
+        )
+
     # retranslateUi

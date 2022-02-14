@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division, print_function
 import os, sys
 import time
-#import libtbx.load_env
+
+# import libtbx.load_env
 
 from mmtbx import monomer_library
 import mmtbx.monomer_library.server
@@ -9,8 +10,9 @@ from cctbx.array_family import flex
 import mmtbx.model
 import mmtbx.monomer_library.pdb_interpretation
 from six.moves import cStringIO as StringIO
-#from mmtbx import utils
-#from libtbx.utils import format_cpu_times
+
+# from mmtbx import utils
+# from libtbx.utils import format_cpu_times
 
 from mmtbx import conformation_dependent_library as cdl
 from mmtbx.conformation_dependent_library import cdl_utils, cdl_setup
@@ -18,167 +20,167 @@ from mmtbx.conformation_dependent_library.cdl_database import cdl_database
 from six.moves import range
 
 filenames = {
-  "cdl_test_1.pdb" : [
-    [
-      "IleVal_nonxpro",
-      "NonPGIV_nonxpro",
-      "Gly_nonxpro",
-      ],
-    [
-      (-100, 110),
-      ( -70, 150),
-      ( -80, 160),
-      ],
-    [
-      ["B",  30, 122.93],
-      ["B", 177, 120.94],
-      ["B",  16, 120.64],
-      ],
+    "cdl_test_1.pdb": [
+        [
+            "IleVal_nonxpro",
+            "NonPGIV_nonxpro",
+            "Gly_nonxpro",
+        ],
+        [
+            (-100, 110),
+            (-70, 150),
+            (-80, 160),
+        ],
+        [
+            ["B", 30, 122.93],
+            ["B", 177, 120.94],
+            ["B", 16, 120.64],
+        ],
     ],
-  "cdl_test_2.pdb" : [
-    [
-      "NonPGIV_nonxpro",
-      "NonPGIV_nonxpro",
-      "NonPGIV_nonxpro",
-      "NonPGIV_nonxpro",
-      ],
-    [
-      ( 170, -40),
-      (-110, 160),
-      ( 170, -40),
-      (-110, 160),
-      ],
-    [
-      ["I", 10921, 121.54],
-      ["B",    85, 122.92],
-      ["I", 10921, 121.54],
-      ["B",    85, 122.92],
-      ],
+    "cdl_test_2.pdb": [
+        [
+            "NonPGIV_nonxpro",
+            "NonPGIV_nonxpro",
+            "NonPGIV_nonxpro",
+            "NonPGIV_nonxpro",
+        ],
+        [
+            (170, -40),
+            (-110, 160),
+            (170, -40),
+            (-110, 160),
+        ],
+        [
+            ["I", 10921, 121.54],
+            ["B", 85, 122.92],
+            ["I", 10921, 121.54],
+            ["B", 85, 122.92],
+        ],
     ],
-  "cdl_test_3.pdb" : [
-    [
-      "NonPGIV_nonxpro",
-      "NonPGIV_xpro",
-      "Pro_nonxpro",
-      "Gly_nonxpro",
-      ],
-    [
-      (-130,  20),
-      (-120,  90),
-      ( -50, 130),
-      (  90,   0),
-      ],
-    [
-      ["B",    24, 122.14],
-      ["B",     7, 123.30],
-      ["B",    21, 119.93],
-      ["B",    79, 122.05],
-      ],
+    "cdl_test_3.pdb": [
+        [
+            "NonPGIV_nonxpro",
+            "NonPGIV_xpro",
+            "Pro_nonxpro",
+            "Gly_nonxpro",
+        ],
+        [
+            (-130, 20),
+            (-120, 90),
+            (-50, 130),
+            (90, 0),
+        ],
+        [
+            ["B", 24, 122.14],
+            ["B", 7, 123.30],
+            ["B", 21, 119.93],
+            ["B", 79, 122.05],
+        ],
     ],
-  "cdl_test_4.pdb" : [
-    [
-      "IleVal_xpro",
-      "Pro_nonxpro",
-      "IleVal_xpro",
-      "Pro_nonxpro",
-      ],
-    [
-      (-150, 150),
-      ( -70, 140),
-      (-150, 150),
-      ( -70, 140),
-      ],
-    [
-      ["I",    81, 122.13],
-      ["B",    44, 119.76],
-      ["I",    81, 122.13],
-      ["B",    44, 119.76],
-      ],
+    "cdl_test_4.pdb": [
+        [
+            "IleVal_xpro",
+            "Pro_nonxpro",
+            "IleVal_xpro",
+            "Pro_nonxpro",
+        ],
+        [
+            (-150, 150),
+            (-70, 140),
+            (-150, 150),
+            (-70, 140),
+        ],
+        [
+            ["I", 81, 122.13],
+            ["B", 44, 119.76],
+            ["I", 81, 122.13],
+            ["B", 44, 119.76],
+        ],
     ],
-  "cdl_test_5.pdb" : [
-    [
-      "Gly_xpro",
-      "Pro_xpro",
-      "Pro_nonxpro",
-      "Gly_nonxpro",
-      ],
-    [
-      ( 170,  70),
-      ( -30, 160),
-      ( -30, 160),
-      (-180,-160),
-      ],
-    [
-      ["I",    44, 121.87],
-      ["I",    12, 120.38],
-      ["I",   639, 119.84],
-      ["B",     7, 120.51],
-      ],
+    "cdl_test_5.pdb": [
+        [
+            "Gly_xpro",
+            "Pro_xpro",
+            "Pro_nonxpro",
+            "Gly_nonxpro",
+        ],
+        [
+            (170, 70),
+            (-30, 160),
+            (-30, 160),
+            (-180, -160),
+        ],
+        [
+            ["I", 44, 121.87],
+            ["I", 12, 120.38],
+            ["I", 639, 119.84],
+            ["B", 7, 120.51],
+        ],
     ],
-  "cdl_test_7.pdb" : [
-    [
-      "NonPGIV_nonxpro", # A
-      "NonPGIV_nonxpro",
-      "NonPGIV_nonxpro",
-      "NonPGIV_nonxpro", # B
-      "NonPGIV_nonxpro",
-      "NonPGIV_nonxpro",
-      ],
-    [
-      (-110, 100),
-      ( -60, -30),
-      ( -60, -30),
-      (-110, 100),
-      ( -50, -40),
-      ( -70, -20),
-      ],
-    [
-      ["B",    46, 123.14],
-      ["B",   718, 120.28],
-      ["B",   718, 120.28],
-      ["B",    46, 123.14],
-      ["B",   254, 120.38],
-      ["B",   436, 120.72],
-      ],
-    [
-     (27, 28, 29),
-     (29, 28, 27),
-     (28, 29),
-     (11, 27, 28),
-     (28, 27, 11),
-     (11, 27),
-     (27, 28),
-     ],
+    "cdl_test_7.pdb": [
+        [
+            "NonPGIV_nonxpro",  # A
+            "NonPGIV_nonxpro",
+            "NonPGIV_nonxpro",
+            "NonPGIV_nonxpro",  # B
+            "NonPGIV_nonxpro",
+            "NonPGIV_nonxpro",
+        ],
+        [
+            (-110, 100),
+            (-60, -30),
+            (-60, -30),
+            (-110, 100),
+            (-50, -40),
+            (-70, -20),
+        ],
+        [
+            ["B", 46, 123.14],
+            ["B", 718, 120.28],
+            ["B", 718, 120.28],
+            ["B", 46, 123.14],
+            ["B", 254, 120.38],
+            ["B", 436, 120.72],
+        ],
+        [
+            (27, 28, 29),
+            (29, 28, 27),
+            (28, 29),
+            (11, 27, 28),
+            (28, 27, 11),
+            (11, 27),
+            (27, 28),
+        ],
     ],
-  "cdl_test_8.pdb" : [
-    [
-      "NonPGIV_xpro",
-      ],
-    [
-      ( -70, 130),
-      ],
-    [
-      ['B', 15, 120.67],
-      ],
-    [
-      True,
-      ],
+    "cdl_test_8.pdb": [
+        [
+            "NonPGIV_xpro",
+        ],
+        [
+            (-70, 130),
+        ],
+        [
+            ["B", 15, 120.67],
+        ],
+        [
+            True,
+        ],
     ],
-  "cdl_test_9.pdb" : [
-    [
-      'IleVal_nonxpro',
-      ],
-    [
-      None,
-      ],
-    [
-      None,
-      ],
-    ]
-  }
+    "cdl_test_9.pdb": [
+        [
+            "IleVal_nonxpro",
+        ],
+        [
+            None,
+        ],
+        [
+            None,
+        ],
+    ],
+}
 
 output_filenames = {
-  "cdl_test_1.pdb" : """CRYST1   78.400   78.400   36.970  90.00  90.00  90.00 P 43 21 2     8
+    "cdl_test_1.pdb": """CRYST1   78.400   78.400   36.970  90.00  90.00  90.00 P 43 21 2     8
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
 ORIGX3      0.000000  0.000000  1.000000        0.00000
@@ -229,7 +231,7 @@ ATOM     41  NH1 ARG A   5      -7.155  25.021   3.533  1.00 29.05           N
 ATOM     42  NH2 ARG A   5      -6.634  24.532   1.335  1.00 30.26           N
 END
 """,
-  "cdl_test_2.pdb" : """CRYST1   59.140   59.140  186.740  90.00  90.00 120.00 P 32 2 1      6
+    "cdl_test_2.pdb": """CRYST1   59.140   59.140  186.740  90.00  90.00 120.00 P 32 2 1      6
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
 ORIGX3      0.000000  0.000000  1.000000        0.00000
@@ -418,7 +420,7 @@ ATOM   3825 HG23 VAL A 250     -12.960  10.048   5.311  1.00 34.39           H
 END
 
 """,
-  "cdl_test_3.pdb" : """CRYST1   78.400   78.400   36.970  90.00  90.00  90.00 P 43 21 2     8
+    "cdl_test_3.pdb": """CRYST1   78.400   78.400   36.970  90.00  90.00  90.00 P 43 21 2     8
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
 ORIGX3      0.000000  0.000000  1.000000        0.00000
@@ -467,7 +469,7 @@ ATOM    584  OG  SER A  72       9.706  14.690  32.833  1.00 26.85           O
 END
 
 """,
-  "cdl_test_4.pdb" : """CRYST1   78.400   78.400   36.970  90.00  90.00  90.00 P 43 21 2     8
+    "cdl_test_4.pdb": """CRYST1   78.400   78.400   36.970  90.00  90.00  90.00 P 43 21 2     8
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
 ORIGX3      0.000000  0.000000  1.000000        0.00000
@@ -511,7 +513,7 @@ ATOM    651  SG  CYS A  80       7.072  12.387  26.105  1.00 13.81           S
 END
 
 """,
-  "cdl_test_5.pdb" : """CRYST1   78.400   78.400   36.970  90.00  90.00  90.00 P 43 21 2     8
+    "cdl_test_5.pdb": """CRYST1   78.400   78.400   36.970  90.00  90.00  90.00 P 43 21 2     8
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
 ORIGX3      0.000000  0.000000  1.000000        0.00000
@@ -585,7 +587,7 @@ HETATM   64  O   ALA A   6       6.608   0.723   6.689  1.00 20.00      A    O
 END
 
 """,
-  "cdl_test_7.pdb" : """CRYST1   63.800   30.630   34.420  90.00 105.80  90.00 P 1 21 1      2
+    "cdl_test_7.pdb": """CRYST1   63.800   30.630   34.420  90.00 105.80  90.00 P 1 21 1      2
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
 ORIGX3      0.000000  0.000000  1.000000        0.00000
@@ -737,7 +739,7 @@ ANISOU  427  CZ  PHE A  46     1580   2503   2357    121     92    996       C
 END
 
 """,
-  "cdl_test_8.pdb" : """CRYST1   29.475   29.475   29.480  90.00  90.00  90.00 P 41 21 2    16
+    "cdl_test_8.pdb": """CRYST1   29.475   29.475   29.480  90.00  90.00  90.00 P 41 21 2    16
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
 ORIGX3      0.000000  0.000000  1.000000        0.00000
@@ -770,8 +772,8 @@ ATOM     47  CA  PRO A   6      -6.759  11.758   0.397  1.00  5.50           C
 ATOM     48  C   PRO A   6      -5.935  10.619   0.104  1.00  5.60           C
 ATOM     49  OXT PRO A   6      -5.268  10.568  -1.166  1.00  6.37           O
 """,
-  # added for test_omega,py
-  "cdl_test_9.pdb" : """CRYST1   74.560  104.040   69.150  90.00  90.00  90.00 C 2 2 21
+    # added for test_omega,py
+    "cdl_test_9.pdb": """CRYST1   74.560  104.040   69.150  90.00  90.00  90.00 C 2 2 21
 SCALE1      0.013412  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.009612  0.000000        0.00000
 SCALE3      0.000000  0.000000  0.014461        0.00000
@@ -815,208 +817,237 @@ ATOM   3622 HD12 ILE A 266      14.171  23.101  -6.847  1.00 46.46           H
 ATOM   3623 HD13 ILE A 266      14.967  23.413  -5.508  1.00 46.46           H
 ATOM   3624  N   SER A 267      11.505  19.495  -4.440  1.00 41.57           N
 """,
-  }
+}
 
-def test_res_type(hierarchy,
-                  filename,
-                  restraints_manager,
-                  ):
-  for i, threes in enumerate(cdl.generate_protein_threes(
-    hierarchy,
-    #restraints_manager=restraints_manager
-    geometry=restraints_manager.geometry,
-    cdl_class=True,
-    )
-                             ):
-    print(threes.show(), end=' ')
-    res_type_group = cdl_utils.get_res_type_group(
-      threes[1].resname,
-      threes[2].resname,
-      )
-    assert res_type_group
-    print(i, res_type_group, filenames[filename][0][i])
-    assert res_type_group == filenames[filename][0][i]
 
-def test_phi_psi_key(hierarchy,
-                     filename,
-                     restraints_manager,
-                     ):
-  for i, threes in enumerate(cdl.generate_protein_threes(
+def test_res_type(
     hierarchy,
-    #restraints_manager=restraints_manager
-    geometry=restraints_manager.geometry,
-    cdl_class=True,
-    )
-                             ):
-    key = threes.get_cdl_key()
-    print(i,key,filenames[filename][1])
-    assert key == filenames[filename][1][i]
+    filename,
+    restraints_manager,
+):
+    for i, threes in enumerate(
+        cdl.generate_protein_threes(
+            hierarchy,
+            # restraints_manager=restraints_manager
+            geometry=restraints_manager.geometry,
+            cdl_class=True,
+        )
+    ):
+        print(threes.show(), end=" ")
+        res_type_group = cdl_utils.get_res_type_group(
+            threes[1].resname,
+            threes[2].resname,
+        )
+        assert res_type_group
+        print(i, res_type_group, filenames[filename][0][i])
+        assert res_type_group == filenames[filename][0][i]
 
-def test_cdl_lookup(hierarchy,
-                    filename,
-                    restraints_manager,
-                    ):
-  for i, threes in enumerate(cdl.generate_protein_threes(
-    hierarchy,
-    #restraints_manager=restraints_manager
-    geometry=restraints_manager.geometry,
-    cdl_class=True,
-    )
-                             ):
-    res_type_group = cdl_utils.get_res_type_group(
-      threes[1].resname,
-      threes[2].resname,
-      )
-    key = threes.get_cdl_key()
-    print('key',key)
-    if key is None:
-      assert filenames[filename][2][i] is None
-      continue
-    restraint_values = cdl_database[res_type_group][key]
-    print(restraint_values[:4])
-    assert restraint_values[:3] == filenames[filename][2][i]
 
-def test_cis_trans_peptide(hierarchy,
-                           filename,
-                           restraints_manager,
-                           ):
-  for i, threes in enumerate(cdl.generate_protein_threes(
+def test_phi_psi_key(
     hierarchy,
-    geometry=restraints_manager.geometry,
-    cdl_class=True,
-    )
-                             ):
-    cis_peptide_bond = threes.cis_group()
-    if cis_peptide_bond:
-      print(cis_peptide_bond)
-      assert cis_peptide_bond == filenames[filename][3][i]
+    filename,
+    restraints_manager,
+):
+    for i, threes in enumerate(
+        cdl.generate_protein_threes(
+            hierarchy,
+            # restraints_manager=restraints_manager
+            geometry=restraints_manager.geometry,
+            cdl_class=True,
+        )
+    ):
+        key = threes.get_cdl_key()
+        print(i, key, filenames[filename][1])
+        assert key == filenames[filename][1][i]
 
-def test_average(hierarchy,
-                 filename,
-                 restraints_manager,
-                 ):
-  for i, threes in enumerate(cdl.generate_protein_threes(
+
+def test_cdl_lookup(
     hierarchy,
-    geometry=restraints_manager.geometry,
-    cdl_class=True,
-    )
-                             ):
-    if threes.registry.n:
-      for key in threes.registry.n.keys():
-        assert key in filenames[filename][3]
+    filename,
+    restraints_manager,
+):
+    for i, threes in enumerate(
+        cdl.generate_protein_threes(
+            hierarchy,
+            # restraints_manager=restraints_manager
+            geometry=restraints_manager.geometry,
+            cdl_class=True,
+        )
+    ):
+        res_type_group = cdl_utils.get_res_type_group(
+            threes[1].resname,
+            threes[2].resname,
+        )
+        key = threes.get_cdl_key()
+        print("key", key)
+        if key is None:
+            assert filenames[filename][2][i] is None
+            continue
+        restraint_values = cdl_database[res_type_group][key]
+        print(restraint_values[:4])
+        assert restraint_values[:3] == filenames[filename][2][i]
+
+
+def test_cis_trans_peptide(
+    hierarchy,
+    filename,
+    restraints_manager,
+):
+    for i, threes in enumerate(
+        cdl.generate_protein_threes(
+            hierarchy,
+            geometry=restraints_manager.geometry,
+            cdl_class=True,
+        )
+    ):
+        cis_peptide_bond = threes.cis_group()
+        if cis_peptide_bond:
+            print(cis_peptide_bond)
+            assert cis_peptide_bond == filenames[filename][3][i]
+
+
+def test_average(
+    hierarchy,
+    filename,
+    restraints_manager,
+):
+    for i, threes in enumerate(
+        cdl.generate_protein_threes(
+            hierarchy,
+            geometry=restraints_manager.geometry,
+            cdl_class=True,
+        )
+    ):
+        if threes.registry.n:
+            for key in threes.registry.n.keys():
+                assert key in filenames[filename][3]
+
 
 def get_managers(filename, testing=False, verbose=False):
-  mon_lib_srv = monomer_library.server.server()
-  ener_lib = monomer_library.server.ener_lib()
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-                                       mon_lib_srv               = mon_lib_srv,
-                                       ener_lib                  = ener_lib,
-                                       file_name                 = filename,
-                                       raw_records               = None,
-                                       force_symmetry            = True,
-                                       )
-################
-  geometry = processed_pdb_file.geometry_restraints_manager(
-                                                    show_energies      = False,
-                                                    plain_pairs_radius = 5.0)
-  restraints_manager = mmtbx.restraints.manager(geometry      = geometry,
-                                                normalization = False)
-  xray_structure = processed_pdb_file.xray_structure()
-  selection = flex.bool(xray_structure.scatterers().size(), True)
-  # Not used anywhere, incorrect creation.
-  # mol = mmtbx.model.manager(
-  #   restraints_manager = restraints_manager,
-  #   xray_structure = xray_structure,
-  #   pdb_hierarchy = processed_pdb_file.all_chain_proxies.pdb_hierarchy)
-  return processed_pdb_file, restraints_manager
+    mon_lib_srv = monomer_library.server.server()
+    ener_lib = monomer_library.server.ener_lib()
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        file_name=filename,
+        raw_records=None,
+        force_symmetry=True,
+    )
+    ################
+    geometry = processed_pdb_file.geometry_restraints_manager(
+        show_energies=False, plain_pairs_radius=5.0
+    )
+    restraints_manager = mmtbx.restraints.manager(
+        geometry=geometry, normalization=False
+    )
+    xray_structure = processed_pdb_file.xray_structure()
+    selection = flex.bool(xray_structure.scatterers().size(), True)
+    # Not used anywhere, incorrect creation.
+    # mol = mmtbx.model.manager(
+    #   restraints_manager = restraints_manager,
+    #   xray_structure = xray_structure,
+    #   pdb_hierarchy = processed_pdb_file.all_chain_proxies.pdb_hierarchy)
+    return processed_pdb_file, restraints_manager
+
 
 def run_apply(filename, testing=False, verbose=False):
-  processed_pdb_file, restraints_manager = get_managers(filename)
-  if testing:
-    test_res_type(processed_pdb_file.all_chain_proxies.pdb_hierarchy,
-                  filename,
-                  restraints_manager,
-                  )
-    test_phi_psi_key(processed_pdb_file.all_chain_proxies.pdb_hierarchy,
-                     filename,
-                     restraints_manager,
-                     )
-    test_cdl_lookup(processed_pdb_file.all_chain_proxies.pdb_hierarchy,
-                    filename,
-                    restraints_manager,
-                    )
-    test_cis_trans_peptide(processed_pdb_file.all_chain_proxies.pdb_hierarchy,
-                           filename,
-                           restraints_manager,
-                           )
-    print("OK")
+    processed_pdb_file, restraints_manager = get_managers(filename)
+    if testing:
+        test_res_type(
+            processed_pdb_file.all_chain_proxies.pdb_hierarchy,
+            filename,
+            restraints_manager,
+        )
+        test_phi_psi_key(
+            processed_pdb_file.all_chain_proxies.pdb_hierarchy,
+            filename,
+            restraints_manager,
+        )
+        test_cdl_lookup(
+            processed_pdb_file.all_chain_proxies.pdb_hierarchy,
+            filename,
+            restraints_manager,
+        )
+        test_cis_trans_peptide(
+            processed_pdb_file.all_chain_proxies.pdb_hierarchy,
+            filename,
+            restraints_manager,
+        )
+        print("OK")
 
-  sites_cart = processed_pdb_file.all_chain_proxies.sites_cart_exact()
-  if True:
-    lines = StringIO()
-    restraints_manager.geometry.show_sorted(sites_cart=sites_cart,
-                                                  f=lines)
-    f=open("%s_pre.geo" % os.path.basename(filename)[:-4], "w")
-    f.write(lines.getvalue())
-    f.close()
+    sites_cart = processed_pdb_file.all_chain_proxies.sites_cart_exact()
+    if True:
+        lines = StringIO()
+        restraints_manager.geometry.show_sorted(sites_cart=sites_cart, f=lines)
+        f = open("%s_pre.geo" % os.path.basename(filename)[:-4], "w")
+        f.write(lines.getvalue())
+        f.close()
 
-  t0=time.time()
-  cdl_proxies = cdl_setup.setup_restraints(restraints_manager.geometry,
-                                           verbose=verbose,
-                                         )
-  cdl.update_restraints(processed_pdb_file.all_chain_proxies.pdb_hierarchy,
-                        geometry=restraints_manager.geometry,
-                        cdl_proxies=cdl_proxies,
-                        verbose=verbose,
-                        )
-  if testing:
-    test_average(processed_pdb_file.all_chain_proxies.pdb_hierarchy,
-                 filename,
-                 restraints_manager,
-                 )
-    print('OK')
+    t0 = time.time()
+    cdl_proxies = cdl_setup.setup_restraints(
+        restraints_manager.geometry,
+        verbose=verbose,
+    )
+    cdl.update_restraints(
+        processed_pdb_file.all_chain_proxies.pdb_hierarchy,
+        geometry=restraints_manager.geometry,
+        cdl_proxies=cdl_proxies,
+        verbose=verbose,
+    )
+    if testing:
+        test_average(
+            processed_pdb_file.all_chain_proxies.pdb_hierarchy,
+            filename,
+            restraints_manager,
+        )
+        print("OK")
 
-  print('Time to update restraints %0.5fs' % (time.time()-t0))
-  if True:
-    lines = StringIO()
-    restraints_manager.geometry.show_sorted(sites_cart=sites_cart,
-                                                  f=lines)
-    f=open("%s_post.geo" % os.path.basename(filename)[:-4], "w")
-    f.write(lines.getvalue())
-    f.close()
+    print("Time to update restraints %0.5fs" % (time.time() - t0))
+    if True:
+        lines = StringIO()
+        restraints_manager.geometry.show_sorted(sites_cart=sites_cart, f=lines)
+        f = open("%s_post.geo" % os.path.basename(filename)[:-4], "w")
+        f.write(lines.getvalue())
+        f.close()
 
-def convert_dict_to_excel(keys_number=4,
-                          column_number=6,
-                          ):
-  key = sorted(cdl_database.keys())[keys_number]
-  outl = " "
-  phi_range = (0, 370, 10)
-  psi_range = (0, 370, 10)
-  phi_range = (180, -190, -10)
-  psi_range = (-180, 190, 10)
-  for i, psi in enumerate(range(*psi_range)):
-    outl += ", %d" % psi
-  outl += "\n"
-  for i, phi in enumerate(range(*phi_range)):
-    outl += "%3d" % phi
-    if phi>=180: phi-=360
-    for j, psi in enumerate(range(*psi_range)):
-      if psi>=180: psi-=360
-      print(phi, psi, cdl_database[key][(phi, psi)][column_number])
-      outl += ", %0.2f" %  cdl_database[key][(phi, psi)][column_number]
+
+def convert_dict_to_excel(
+    keys_number=4,
+    column_number=6,
+):
+    key = sorted(cdl_database.keys())[keys_number]
+    outl = " "
+    phi_range = (0, 370, 10)
+    psi_range = (0, 370, 10)
+    phi_range = (180, -190, -10)
+    psi_range = (-180, 190, 10)
+    for i, psi in enumerate(range(*psi_range)):
+        outl += ", %d" % psi
     outl += "\n"
-  outl += "\n"
-  print(outl)
-  return outl
+    for i, phi in enumerate(range(*phi_range)):
+        outl += "%3d" % phi
+        if phi >= 180:
+            phi -= 360
+        for j, psi in enumerate(range(*psi_range)):
+            if psi >= 180:
+                psi -= 360
+            print(phi, psi, cdl_database[key][(phi, psi)][column_number])
+            outl += ", %0.2f" % cdl_database[key][(phi, psi)][column_number]
+        outl += "\n"
+    outl += "\n"
+    print(outl)
+    return outl
 
-def convert_dict_to_gnuplot(keys_number=4,
-                            column_number=6,
-                            dales_format=False,
-                            ):
-  key = sorted(cdl_database.keys())[keys_number]
-  outl = " "
-  if dales_format:
-    header = """set terminal png size 1850,2000 linewidth 1
+
+def convert_dict_to_gnuplot(
+    keys_number=4,
+    column_number=6,
+    dales_format=False,
+):
+    key = sorted(cdl_database.keys())[keys_number]
+    outl = " "
+    if dales_format:
+        header = """set terminal png size 1850,2000 linewidth 1
 set output '%s.png'
 set border 4095 front linetype -1 linewidth 1.000
 
@@ -1041,217 +1072,268 @@ set samples 36, 36
 set isosamples 36, 36
 splot '-' matrix using (10*$2-180):(10*$1-180):3 with image
 """
-    outl = ""
-    phi_range = (-180, 190, 10)
-    psi_range = (-180, 190, 10)
-    data = []
-    for i, phi in enumerate(range(*phi_range)):
-      if phi>=180: kphi=phi-360
-      else: kphi=phi
-      for j, psi in enumerate(range(*psi_range)):
-        if psi>=180: kpsi=psi-360
-        else: kpsi=psi
-        outl += " %7.3f" % (cdl_database[key][(kphi, kpsi)][column_number])
-        data.append(cdl_database[key][(kphi, kpsi)][column_number])
-      outl += "\n"
-    outl = header % (key, min(data), max(data)) + outl
-  else:
+        outl = ""
+        phi_range = (-180, 190, 10)
+        psi_range = (-180, 190, 10)
+        data = []
+        for i, phi in enumerate(range(*phi_range)):
+            if phi >= 180:
+                kphi = phi - 360
+            else:
+                kphi = phi
+            for j, psi in enumerate(range(*psi_range)):
+                if psi >= 180:
+                    kpsi = psi - 360
+                else:
+                    kpsi = psi
+                outl += " %7.3f" % (cdl_database[key][(kphi, kpsi)][column_number])
+                data.append(cdl_database[key][(kphi, kpsi)][column_number])
+            outl += "\n"
+        outl = header % (key, min(data), max(data)) + outl
+    else:
+        phi_range = (0, 370, 10)
+        psi_range = (0, 370, 10)
+        for i, phi in enumerate(range(*phi_range)):
+            if phi >= 180:
+                kphi = phi - 360
+            else:
+                kphi = phi
+            for j, psi in enumerate(range(*psi_range)):
+                if psi >= 180:
+                    kpsi = psi - 360
+                else:
+                    kpsi = psi
+                outl += " %12.5f %12.5f %12.5f\n" % (
+                    phi,
+                    psi,
+                    cdl_database[key][(kphi, kpsi)][column_number],
+                )
+    return outl
+
+
+def convert_dict_to_scilab(
+    keys_number=4,
+    column_number=6,
+):
+    key = sorted(cdl_database.keys())[keys_number]
     phi_range = (0, 370, 10)
     psi_range = (0, 370, 10)
+    # phi_range = (-180, 190, 10)
+    # psi_range = (-180, 190, 10)
+    outl = ""
+    outl += "X = [\n"
     for i, phi in enumerate(range(*phi_range)):
-      if phi>=180: kphi=phi-360
-      else: kphi=phi
-      for j, psi in enumerate(range(*psi_range)):
-        if psi>=180: kpsi=psi-360
-        else: kpsi=psi
-        outl += " %12.5f %12.5f %12.5f\n" % (phi, psi, cdl_database[key][(kphi, kpsi)][column_number])
-  return outl
-
-def convert_dict_to_scilab(keys_number=4,
-                           column_number=6,
-                           ):
-  key = sorted(cdl_database.keys())[keys_number]
-  phi_range = (0, 370, 10)
-  psi_range = (0, 370, 10)
-  #phi_range = (-180, 190, 10)
-  #psi_range = (-180, 190, 10)
-  outl = ''
-  outl += "X = [\n"
-  for i, phi in enumerate(range(*phi_range)):
-    outl += " %12.5f" % phi
-  outl += "];\n"
-  outl += "Y = [\n"
-  for i, psi in enumerate(range(*psi_range)):
-    outl += " %12.5f" % psi
-  outl += "];\n"
-  outl += "Z = ["
-  for i, phi in enumerate(range(*phi_range)):
-    if phi>=180: kphi=phi-360
-    else: kphi=phi
-    for j, psi in enumerate(range(*psi_range)):
-      if psi>=180: kpsi=psi-360
-      else: kpsi=psi
-      outl += " %12.5f" % (cdl_database[key][(kphi, kpsi)][column_number]-110)
-    outl += "\n"
-  outl += "];\n"
-  outl += """
+        outl += " %12.5f" % phi
+    outl += "];\n"
+    outl += "Y = [\n"
+    for i, psi in enumerate(range(*psi_range)):
+        outl += " %12.5f" % psi
+    outl += "];\n"
+    outl += "Z = ["
+    for i, phi in enumerate(range(*phi_range)):
+        if phi >= 180:
+            kphi = phi - 360
+        else:
+            kphi = phi
+        for j, psi in enumerate(range(*psi_range)):
+            if psi >= 180:
+                kpsi = psi - 360
+            else:
+                kpsi = psi
+            outl += " %12.5f" % (cdl_database[key][(kphi, kpsi)][column_number] - 110)
+        outl += "\n"
+    outl += "];\n"
+    outl += """
   surf(X,Y,Z);
   """
-  #scf(10)
-  #axfig10=gca();
-  #surf(axfig10,Z,'zdat',[100:119],'marker','d','markerfac','green','markeredg','yel') // draw onto the axe of figure 10
+    # scf(10)
+    # axfig10=gca();
+    # surf(axfig10,Z,'zdat',[100:119],'marker','d','markerfac','green','markeredg','yel') // draw onto the axe of figure 10
 
-  print(outl)
-  return outl
+    print(outl)
+    return outl
 
-def convert_dict_to_kin2Dcont(keys_number=4,
-                           column_number=6,
-                           ):
-  key = sorted(cdl_database.keys())[keys_number]
-  outl = "PHI/PSI %s %s" % (key, column_number)
-  outl = """# Table name/description: "motif.loose_threeten"
+
+def convert_dict_to_kin2Dcont(
+    keys_number=4,
+    column_number=6,
+):
+    key = sorted(cdl_database.keys())[keys_number]
+    outl = "PHI/PSI %s %s" % (key, column_number)
+    outl = """# Table name/description: "motif.loose_threeten"
   # Number of dimensions: 2
   # For each dimension, 1 to 2: lower_bound  upper_bound  number_of_bins  wrapping
   #   x1: -180.0 180.0 120 true
   #   x2: -180.0 180.0 120 true
   # List of table coordinates and values. (Value is last number on each line.)
   """
-  phi_range = (0, 370, 10)
-  psi_range = (0, 370, 10)
-  #phi_range = (-180, 190, 10)
-  #psi_range = (-180, 190, 10)
-  for i, phi in enumerate(range(*phi_range)):
-    if phi>=180: kphi=phi-360
-    else: kphi=phi
-    for j, psi in enumerate(range(*psi_range)):
-      if psi>=180: kpsi=psi-360
-      else: kpsi=psi
-      outl += " %12.5f %12.5f %12.5f\n" % (phi, psi, cdl_database[key][(kphi, kpsi)][column_number])
+    phi_range = (0, 370, 10)
+    psi_range = (0, 370, 10)
+    # phi_range = (-180, 190, 10)
+    # psi_range = (-180, 190, 10)
+    for i, phi in enumerate(range(*phi_range)):
+        if phi >= 180:
+            kphi = phi - 360
+        else:
+            kphi = phi
+        for j, psi in enumerate(range(*psi_range)):
+            if psi >= 180:
+                kpsi = psi - 360
+            else:
+                kpsi = psi
+            outl += " %12.5f %12.5f %12.5f\n" % (
+                phi,
+                psi,
+                cdl_database[key][(kphi, kpsi)][column_number],
+            )
 
-  print(outl)
-  return outl
+    print(outl)
+    return outl
+
 
 def get_min_max_table():
-  from mmtbx.conformation_dependent_library import columns
-  def anglise(s):
-    outl = ""
-    for c in s:
-      if c in ["m", "s"]: continue
-      if c=="A":
-        outl += "%s-" % "CA"
-      elif c=="B":
-        outl += "%s-" % "CB"
-      else:
-        outl += "%s-" % c
-    return outl[:-1]
-  svl_data = [None, None,
-              121.7, 1.8,
-              110.4, 1.5,
-              111.2, 2.8,
-              None, None,
-              120.8, 1.7,
-              116.2, 2.0,
-              123.0, 1.6,
-              ]
-  ##
-  min_values = [1e9]*26
-  min_data = [None]*26
-  max_values = [-1e9]*26
-  max_data = [None]*26
-  for i, (residue_class, resdiue_data) in enumerate(cdl_database.items()):
-    if residue_class.startswith("Gly"): continue
-    if residue_class.startswith("Pro"): continue
-    print(residue_class)
-    for j, (phi_psi, data) in enumerate(sorted(resdiue_data.items())):
-      for k, d in enumerate(data):
-        if k<2: continue
-        if d<min_values[k]:
-          min_values[k]=d
-          min_data[k]=(residue_class, phi_psi)
-        if d>max_values[k]:
-          max_values[k]=d
-          max_data[k]=(residue_class, phi_psi)
-  print(min_values)
-  print(max_values)
-  print(min_data)
-  print(max_data)
-  outl = "Angle\tSVL\tmin(CDL)\tmax(CDL)\n"
-  for i, c in enumerate(columns):
-    if i<2: continue
-    if i>15: continue
-    if c.startswith("s"): continue
-    print(i, c)
-    outl += anglise(c)
-    if svl_data[i] is None:
-      outl += "\t-"
-    else:
-      outl += "\t%0.1f" % svl_data[i]
-    outl += "\t%0.1f" % min_values[i]
-    outl += "\t%0.1f" % max_values[i]
-    #outl += "\t#%s %s" % min_data[i]
-    #outl += "\t%s %s" % max_data[i]
-    outl += "\n"
-    print(outl)
-  assert 0
+    from mmtbx.conformation_dependent_library import columns
+
+    def anglise(s):
+        outl = ""
+        for c in s:
+            if c in ["m", "s"]:
+                continue
+            if c == "A":
+                outl += "%s-" % "CA"
+            elif c == "B":
+                outl += "%s-" % "CB"
+            else:
+                outl += "%s-" % c
+        return outl[:-1]
+
+    svl_data = [
+        None,
+        None,
+        121.7,
+        1.8,
+        110.4,
+        1.5,
+        111.2,
+        2.8,
+        None,
+        None,
+        120.8,
+        1.7,
+        116.2,
+        2.0,
+        123.0,
+        1.6,
+    ]
+    ##
+    min_values = [1e9] * 26
+    min_data = [None] * 26
+    max_values = [-1e9] * 26
+    max_data = [None] * 26
+    for i, (residue_class, resdiue_data) in enumerate(cdl_database.items()):
+        if residue_class.startswith("Gly"):
+            continue
+        if residue_class.startswith("Pro"):
+            continue
+        print(residue_class)
+        for j, (phi_psi, data) in enumerate(sorted(resdiue_data.items())):
+            for k, d in enumerate(data):
+                if k < 2:
+                    continue
+                if d < min_values[k]:
+                    min_values[k] = d
+                    min_data[k] = (residue_class, phi_psi)
+                if d > max_values[k]:
+                    max_values[k] = d
+                    max_data[k] = (residue_class, phi_psi)
+    print(min_values)
+    print(max_values)
+    print(min_data)
+    print(max_data)
+    outl = "Angle\tSVL\tmin(CDL)\tmax(CDL)\n"
+    for i, c in enumerate(columns):
+        if i < 2:
+            continue
+        if i > 15:
+            continue
+        if c.startswith("s"):
+            continue
+        print(i, c)
+        outl += anglise(c)
+        if svl_data[i] is None:
+            outl += "\t-"
+        else:
+            outl += "\t%0.1f" % svl_data[i]
+        outl += "\t%0.1f" % min_values[i]
+        outl += "\t%0.1f" % max_values[i]
+        # outl += "\t#%s %s" % min_data[i]
+        # outl += "\t%s %s" % max_data[i]
+        outl += "\n"
+        print(outl)
+    assert 0
+
 
 def run(filename=None):
-  if 0:
-    print(get_min_max_table())
-    assert 0
-  if 0:
-    for i, key in enumerate(sorted(cdl_database)):
-      output = "n_ca_c_m_%s.dat" % key
-      print(i+1,key,output)
-      f=open(output, "w")
-      f.write(convert_dict_to_gnuplot(keys_number=i, dales_format=True))
-      f.close()
-      cmd = "gnuplot %s" % output
-      os.system(cmd)
-    assert 0
-    f=open("n_ca_c_e.dat", "w")
-    f.write(convert_dict_to_gnuplot(column_number=7))
-    f.close()
-    f=open("n_ca_c_m.csv", "w")
-    f.write(convert_dict_to_excel())
-    f.close()
-    f=open("n_ca_c_m.cse", "w")
-    f.write(convert_dict_to_scilab())
-    f.close()
-    assert 0
+    if 0:
+        print(get_min_max_table())
+        assert 0
+    if 0:
+        for i, key in enumerate(sorted(cdl_database)):
+            output = "n_ca_c_m_%s.dat" % key
+            print(i + 1, key, output)
+            f = open(output, "w")
+            f.write(convert_dict_to_gnuplot(keys_number=i, dales_format=True))
+            f.close()
+            cmd = "gnuplot %s" % output
+            os.system(cmd)
+        assert 0
+        f = open("n_ca_c_e.dat", "w")
+        f.write(convert_dict_to_gnuplot(column_number=7))
+        f.close()
+        f = open("n_ca_c_m.csv", "w")
+        f.write(convert_dict_to_excel())
+        f.close()
+        f = open("n_ca_c_m.cse", "w")
+        f.write(convert_dict_to_scilab())
+        f.close()
+        assert 0
 
-  if filename:
-    print('run CDL on',filename)
-    run_apply(filename,
-              #verbose=True,
-              )
-  else:
-    print('Running tests')
-    for filename in output_filenames:
-      print(filename)
-      f=open(filename, "w")
-      f.write(output_filenames[filename])
-      f.close()
-    for filename in filenames:
-      #if filename.find("_8")==-1: continue
-      print(('%s ' % filename)*5)
-      run_apply(filename, testing=True)
+    if filename:
+        print("run CDL on", filename)
+        run_apply(
+            filename,
+            # verbose=True,
+        )
+    else:
+        print("Running tests")
+        for filename in output_filenames:
+            print(filename)
+            f = open(filename, "w")
+            f.write(output_filenames[filename])
+            f.close()
+        for filename in filenames:
+            # if filename.find("_8")==-1: continue
+            print(("%s " % filename) * 5)
+            run_apply(filename, testing=True)
+
 
 def test_threes_methods():
-  import iotbx.pdb
-  from mmtbx.conformation_dependent_library import generate_protein_threes
-  tmp_hierarchy = iotbx.pdb.input(
-      source_info=None,
-      lines=flex.split_lines(output_filenames["cdl_test_8.pdb"])).\
-    construct_hierarchy()
-  for three in generate_protein_threes(
-      hierarchy=tmp_hierarchy,
-      geometry=None):
-    # there should be only one!
-    assert three.get_resnames() == ["CYS", "TYR", "PRO"], '%s!=%s' % (
-      three.get_resnames(), ["CYS", "TYR", "PRO"])
+    import iotbx.pdb
+    from mmtbx.conformation_dependent_library import generate_protein_threes
 
-if __name__=="__main__":
-  args = sys.argv[1:]
-  del sys.argv[1:]
-  run(*tuple(args))
-  test_threes_methods()
+    tmp_hierarchy = iotbx.pdb.input(
+        source_info=None, lines=flex.split_lines(output_filenames["cdl_test_8.pdb"])
+    ).construct_hierarchy()
+    for three in generate_protein_threes(hierarchy=tmp_hierarchy, geometry=None):
+        # there should be only one!
+        assert three.get_resnames() == ["CYS", "TYR", "PRO"], "%s!=%s" % (
+            three.get_resnames(),
+            ["CYS", "TYR", "PRO"],
+        )
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    del sys.argv[1:]
+    run(*tuple(args))
+    test_threes_methods()

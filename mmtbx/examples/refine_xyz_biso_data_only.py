@@ -38,121 +38,133 @@ TER
 END
 """
 
-class minimizer(object):
-  def __init__(self,
-        fmodel,
-        max_iterations=100,
-        sites = False,
-        u_iso = False):
-    self.fmodel = fmodel
-    self.fmodel.xray_structure.scatterers().flags_set_grads(state=False)
-    self.x_target_functor = self.fmodel.target_functor()
-    self.sites = sites
-    self.u_iso = u_iso
-    if(self.sites):
-      self.x = self.fmodel.xray_structure.sites_cart().as_double()
-    if(self.u_iso):
-      assert self.fmodel.xray_structure.scatterers().size() == \
-        self.fmodel.xray_structure.use_u_iso().count(True)
-      self.x = self.fmodel.xray_structure.extract_u_iso_or_u_equiv()
-    if(self.sites):
-      xray.set_scatterer_grad_flags(
-        scatterers = self.fmodel.xray_structure.scatterers(),
-        site       = True)
-    if(self.u_iso):
-      sel = flex.bool(
-        self.fmodel.xray_structure.scatterers().size(), True).iselection()
-      self.fmodel.xray_structure.scatterers().flags_set_grad_u_iso(
-        iselection = sel)
-    self.minimizer = scitbx.lbfgs.run(
-      target_evaluator=self,
-      termination_params=scitbx.lbfgs.termination_parameters(
-        max_iterations=max_iterations),
-      exception_handling_params=scitbx.lbfgs.exception_handling_parameters(
-        ignore_line_search_failed_rounding_errors=True,
-        ignore_line_search_failed_step_at_lower_bound=True,
-        ignore_line_search_failed_maxfev=True))
-    self.fmodel.xray_structure.tidy_us()
-    self.fmodel.xray_structure.apply_symmetry_sites()
-    self.fmodel.update_xray_structure(
-      xray_structure = self.fmodel.xray_structure,
-      update_f_calc  = True)
 
-  def compute_functional_and_gradients(self):
-    if(self.sites):
-      self.fmodel.xray_structure.set_sites_cart(
-        sites_cart = flex.vec3_double(self.x))
-    if(self.u_iso):
-      self.fmodel.xray_structure.set_u_iso(values = self.x)
-    self.fmodel.update_xray_structure(
-      xray_structure = self.fmodel.xray_structure,
-      update_f_calc  = True)
-    tgx = self.x_target_functor(compute_gradients=True)
-    if(self.sites):
-      tx = tgx.target_work()
-      gx = flex.vec3_double(tgx.\
-        gradients_wrt_atomic_parameters(site=True).packed())
-      f = tx
-      g = gx
-    if(self.u_iso):
-      tx = tgx.target_work()
-      gx = tgx.gradients_wrt_atomic_parameters(u_iso=True)
-      f = tx
-      g = gx
-    return f, g.as_double()
+class minimizer(object):
+    def __init__(self, fmodel, max_iterations=100, sites=False, u_iso=False):
+        self.fmodel = fmodel
+        self.fmodel.xray_structure.scatterers().flags_set_grads(state=False)
+        self.x_target_functor = self.fmodel.target_functor()
+        self.sites = sites
+        self.u_iso = u_iso
+        if self.sites:
+            self.x = self.fmodel.xray_structure.sites_cart().as_double()
+        if self.u_iso:
+            assert (
+                self.fmodel.xray_structure.scatterers().size()
+                == self.fmodel.xray_structure.use_u_iso().count(True)
+            )
+            self.x = self.fmodel.xray_structure.extract_u_iso_or_u_equiv()
+        if self.sites:
+            xray.set_scatterer_grad_flags(
+                scatterers=self.fmodel.xray_structure.scatterers(), site=True
+            )
+        if self.u_iso:
+            sel = flex.bool(
+                self.fmodel.xray_structure.scatterers().size(), True
+            ).iselection()
+            self.fmodel.xray_structure.scatterers().flags_set_grad_u_iso(iselection=sel)
+        self.minimizer = scitbx.lbfgs.run(
+            target_evaluator=self,
+            termination_params=scitbx.lbfgs.termination_parameters(
+                max_iterations=max_iterations
+            ),
+            exception_handling_params=scitbx.lbfgs.exception_handling_parameters(
+                ignore_line_search_failed_rounding_errors=True,
+                ignore_line_search_failed_step_at_lower_bound=True,
+                ignore_line_search_failed_maxfev=True,
+            ),
+        )
+        self.fmodel.xray_structure.tidy_us()
+        self.fmodel.xray_structure.apply_symmetry_sites()
+        self.fmodel.update_xray_structure(
+            xray_structure=self.fmodel.xray_structure, update_f_calc=True
+        )
+
+    def compute_functional_and_gradients(self):
+        if self.sites:
+            self.fmodel.xray_structure.set_sites_cart(
+                sites_cart=flex.vec3_double(self.x)
+            )
+        if self.u_iso:
+            self.fmodel.xray_structure.set_u_iso(values=self.x)
+        self.fmodel.update_xray_structure(
+            xray_structure=self.fmodel.xray_structure, update_f_calc=True
+        )
+        tgx = self.x_target_functor(compute_gradients=True)
+        if self.sites:
+            tx = tgx.target_work()
+            gx = flex.vec3_double(
+                tgx.gradients_wrt_atomic_parameters(site=True).packed()
+            )
+            f = tx
+            g = gx
+        if self.u_iso:
+            tx = tgx.target_work()
+            gx = tgx.gradients_wrt_atomic_parameters(u_iso=True)
+            f = tx
+            g = gx
+        return f, g.as_double()
+
 
 def get_inputs(pdb_str):
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  ph = pdb_inp.construct_hierarchy()
-  xrs = ph.extract_xray_structure(crystal_symmetry =
-    pdb_inp.crystal_symmetry())
-  return group_args(pdb_hierarchy = ph, xray_structure = xrs)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph = pdb_inp.construct_hierarchy()
+    xrs = ph.extract_xray_structure(crystal_symmetry=pdb_inp.crystal_symmetry())
+    return group_args(pdb_hierarchy=ph, xray_structure=xrs)
+
 
 def run(refine_xyz=True, refine_adp=False):
-  # get xray_structure from PDB file
-  inp = get_inputs(pdb_str = pdb_str)
-  if(1):
-    inp.pdb_hierarchy.adopt_xray_structure(inp.xray_structure)
-    inp.pdb_hierarchy.write_pdb_file(file_name="start.pdb")
-  # simulate poor starting model: shake coordinates and B-factors
-  xrs_poor = inp.xray_structure.deep_copy_scatterers()
-  if(refine_xyz):
-    xrs_poor.shake_sites_in_place(mean_distance = 0.3)
-  if(refine_adp):
-    for sc in xrs_poor.scatterers():
-      sc.u_iso = adptbx.b_as_u(random.choice([7,8,9,11,12,13]))
-  if(1):
-    inp.pdb_hierarchy.adopt_xray_structure(xrs_poor)
-    inp.pdb_hierarchy.write_pdb_file(file_name="poor.pdb")
-  # simulate Fobs
-  f_obs = abs(inp.xray_structure.structure_factors(
-    d_min = 1.0,
-    algorithm="direct").f_calc())
-  r_free_flags = f_obs.generate_r_free_flags()
-  # get fmodel
-  params = mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
-  params.algorithm = "direct"
-  fmodel = mmtbx.f_model.manager(
-    f_obs                        = f_obs,
-    r_free_flags                 = r_free_flags,
-    xray_structure               = xrs_poor,
-    sf_and_grads_accuracy_params = params,
-    target_name                  = "ls_wunit_kunit")
-  # refinement loop
-  print("start r_factor: %6.4f" % fmodel.r_work())
-  for macro_cycle in range(100):
-    # refine coordinates
-    if(refine_xyz):
-      minimized = minimizer(fmodel = fmodel, sites = True)
-      print("  macro_cycle %3d (sites) r_factor: %6.4f"%(macro_cycle,
-        fmodel.r_work()))
-    # refine ADPs
-    if(refine_adp):
-      minimized = minimizer(fmodel = fmodel, u_iso = True)
-      print("  macro_cycle %3d (adp)   r_factor: %6.4f"%(macro_cycle, fmodel.r_work()))
-  if(1):
-    inp.pdb_hierarchy.adopt_xray_structure(fmodel.xray_structure)
-    inp.pdb_hierarchy.write_pdb_file(file_name="refined.pdb")
+    # get xray_structure from PDB file
+    inp = get_inputs(pdb_str=pdb_str)
+    if 1:
+        inp.pdb_hierarchy.adopt_xray_structure(inp.xray_structure)
+        inp.pdb_hierarchy.write_pdb_file(file_name="start.pdb")
+    # simulate poor starting model: shake coordinates and B-factors
+    xrs_poor = inp.xray_structure.deep_copy_scatterers()
+    if refine_xyz:
+        xrs_poor.shake_sites_in_place(mean_distance=0.3)
+    if refine_adp:
+        for sc in xrs_poor.scatterers():
+            sc.u_iso = adptbx.b_as_u(random.choice([7, 8, 9, 11, 12, 13]))
+    if 1:
+        inp.pdb_hierarchy.adopt_xray_structure(xrs_poor)
+        inp.pdb_hierarchy.write_pdb_file(file_name="poor.pdb")
+    # simulate Fobs
+    f_obs = abs(
+        inp.xray_structure.structure_factors(d_min=1.0, algorithm="direct").f_calc()
+    )
+    r_free_flags = f_obs.generate_r_free_flags()
+    # get fmodel
+    params = mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
+    params.algorithm = "direct"
+    fmodel = mmtbx.f_model.manager(
+        f_obs=f_obs,
+        r_free_flags=r_free_flags,
+        xray_structure=xrs_poor,
+        sf_and_grads_accuracy_params=params,
+        target_name="ls_wunit_kunit",
+    )
+    # refinement loop
+    print("start r_factor: %6.4f" % fmodel.r_work())
+    for macro_cycle in range(100):
+        # refine coordinates
+        if refine_xyz:
+            minimized = minimizer(fmodel=fmodel, sites=True)
+            print(
+                "  macro_cycle %3d (sites) r_factor: %6.4f"
+                % (macro_cycle, fmodel.r_work())
+            )
+        # refine ADPs
+        if refine_adp:
+            minimized = minimizer(fmodel=fmodel, u_iso=True)
+            print(
+                "  macro_cycle %3d (adp)   r_factor: %6.4f"
+                % (macro_cycle, fmodel.r_work())
+            )
+    if 1:
+        inp.pdb_hierarchy.adopt_xray_structure(fmodel.xray_structure)
+        inp.pdb_hierarchy.write_pdb_file(file_name="refined.pdb")
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

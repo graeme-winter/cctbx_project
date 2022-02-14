@@ -787,29 +787,38 @@ END
 """
 
 
-def run(prefix, target, pdb_strs, eps=1.e-3):
-  """
-  Exercise phenix.angle command.
-  """
-  cntr = 0
-  for pdb_str in pdb_strs:
-    of = open("%s.pdb"%prefix, "w")
-    print(pdb_str, file=of)
-    of.close()
-    cmd1='phenix.angle %s.pdb "chain X" "chain Y" '%(prefix)
-    cmd2='phenix.angle %s.pdb "chain Y" "chain X" '%(prefix)
-    for cmd in [cmd1,cmd2]:
-      print(cmd)
-      r = float(easy_run.go(cmd).stdout_lines[2].split()[2])
-      assert approx_equal(r, target, eps)
-      cntr += 1
-  assert cntr == len(pdb_strs)*2, cntr
+def run(prefix, target, pdb_strs, eps=1.0e-3):
+    """
+    Exercise phenix.angle command.
+    """
+    cntr = 0
+    for pdb_str in pdb_strs:
+        of = open("%s.pdb" % prefix, "w")
+        print(pdb_str, file=of)
+        of.close()
+        cmd1 = 'phenix.angle %s.pdb "chain X" "chain Y" ' % (prefix)
+        cmd2 = 'phenix.angle %s.pdb "chain Y" "chain X" ' % (prefix)
+        for cmd in [cmd1, cmd2]:
+            print(cmd)
+            r = float(easy_run.go(cmd).stdout_lines[2].split()[2])
+            assert approx_equal(r, target, eps)
+            cntr += 1
+    assert cntr == len(pdb_strs) * 2, cntr
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run(prefix="tst_angle_exercise_1", target=90., pdb_strs=[pdb_str_1, pdb_str_2, pdb_str_3])
-  run(prefix="tst_angle_exercise_2", target=0.,  pdb_strs=[pdb_str_4, pdb_str_5, pdb_str_6, pdb_str_7])
-  run(prefix="tst_angle_exercise_3", target=45., pdb_strs=[pdb_str_8, pdb_str_9])
-  run(prefix="tst_angle_exercise_4", target=8.98, pdb_strs=[pdb_str_10], eps=0.1)
-  print("Time: %6.4f"%(time.time()-t0))
-  print("OK")
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run(
+        prefix="tst_angle_exercise_1",
+        target=90.0,
+        pdb_strs=[pdb_str_1, pdb_str_2, pdb_str_3],
+    )
+    run(
+        prefix="tst_angle_exercise_2",
+        target=0.0,
+        pdb_strs=[pdb_str_4, pdb_str_5, pdb_str_6, pdb_str_7],
+    )
+    run(prefix="tst_angle_exercise_3", target=45.0, pdb_strs=[pdb_str_8, pdb_str_9])
+    run(prefix="tst_angle_exercise_4", target=8.98, pdb_strs=[pdb_str_10], eps=0.1)
+    print("Time: %6.4f" % (time.time() - t0))
+    print("OK")

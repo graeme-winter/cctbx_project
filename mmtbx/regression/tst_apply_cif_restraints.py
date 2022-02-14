@@ -4,9 +4,11 @@ from six.moves import cStringIO as StringIO
 
 from libtbx import easy_run
 
-preamble='apply_cif_restraints'
+preamble = "apply_cif_restraints"
 
-files = {"%s.pdb" % preamble : '''
+files = {
+    "%s.pdb"
+    % preamble: """
 HETATM    1  C01 LIG A   1      -1.100   0.000  -0.436  1.00 20.00      A    C
 HETATM    2  C02 LIG A   1       0.428   0.000  -0.436  1.00 20.00      A    C
 HETATM    3  C03 LIG A   1       1.007   0.000   0.977  1.00 20.00      A    C
@@ -28,8 +30,9 @@ HETATM    8 H013 LIG B   1       9.652   0.020  -1.660  1.00 20.00      A    H
 HETATM    9 H021 LIG B   1      10.588   0.778  -1.169  1.00 20.00      A    H
 HETATM   10 H022 LIG B   1      10.588  -0.985  -1.169  1.00 20.00      A    H
 HETATM   11 H051 LIG B   1      11.846   0.855   2.091  1.00 20.00      A    H
-''',
-  '%s_01.cif' % preamble : '''
+""",
+    "%s_01.cif"
+    % preamble: """
 data_comp_list
 loop_
 _chem_comp.id
@@ -117,8 +120,9 @@ _chem_comp_tor.value_angle_esd
 _chem_comp_tor.period
 LIG Var_01         O04     C03     C02     C01          90.00  30.0 2
 LIG Var_02        H011     C01     C02     C03         -60.00  30.0 3
-  ''',
-  '%s_02.cif' % preamble : '''
+  """,
+    "%s_02.cif"
+    % preamble: """
 data_comp_list
 loop_
 _chem_comp.id
@@ -221,37 +225,43 @@ LIG plan-1    C03 0.020
 LIG plan-1    O04 0.020
 LIG plan-1    O05 0.020
 LIG plan-1   H051 0.020
-  ''',
-  '%s.eff' % preamble : '''
+  """,
+    "%s.eff"
+    % preamble: """
 pdb_interpretation {
   apply_cif_restraints {
     restraints_file_name=%s_02.cif
     residue_selection="chain B and resname LIG"
   }
 }
-  ''' % preamble,
+  """
+    % preamble,
 }
 
-def run():
-  for name, text in files.items():
-    f=open(name, 'w')
-    f.write(text)
-    f.close()
-  cmd = 'phenix.geometry_minimization %(preamble)s.pdb %(preamble)s_01.cif' % {'preamble' : preamble}
-  print(cmd)
-  ero = easy_run.fully_buffered(command=cmd)
-  err = StringIO()
-  ero.show_stderr(out=err)
-  assert err.getvalue()
-  print('ok')
-  cmd += ' %(preamble)s.eff' % {'preamble' : preamble}
-  print(cmd)
-  ero = easy_run.fully_buffered(command=cmd)
-  err = StringIO()
-  ero.show_stderr(out=err)
-  assert not err.getvalue()
-  print('ok')
-  return err.getvalue()
 
-if __name__=="__main__":
-  run()#sys.argv[1])
+def run():
+    for name, text in files.items():
+        f = open(name, "w")
+        f.write(text)
+        f.close()
+    cmd = "phenix.geometry_minimization %(preamble)s.pdb %(preamble)s_01.cif" % {
+        "preamble": preamble
+    }
+    print(cmd)
+    ero = easy_run.fully_buffered(command=cmd)
+    err = StringIO()
+    ero.show_stderr(out=err)
+    assert err.getvalue()
+    print("ok")
+    cmd += " %(preamble)s.eff" % {"preamble": preamble}
+    print(cmd)
+    ero = easy_run.fully_buffered(command=cmd)
+    err = StringIO()
+    ero.show_stderr(out=err)
+    assert not err.getvalue()
+    print("ok")
+    return err.getvalue()
+
+
+if __name__ == "__main__":
+    run()  # sys.argv[1])

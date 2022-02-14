@@ -3,58 +3,62 @@ from cctbx import miller
 from cctbx import maptbx
 import mmtbx.masks
 
+
 class target_map(object):
-  """
-  Data structure for real-space refinement. Holds map and its reciprocal-space
-  equivalent, and its masked version that can be updated as model changes.
-  """
-  def __init__(self, map_data, xray_structure, d_min, atom_radius,
-         map_manager=None):
-    self.d_min = d_min
-    self.map_data = map_data
-    self.map_manager = map_manager  # XXX switching to map_manager from map_data
-    self.atom_radius = atom_radius
-    self.f_map_diff = None # XXX rudimentary left-over, remove later
-    self.crystal_gridding = maptbx.crystal_gridding( #XXX Likewise, remove later
-      unit_cell             = xray_structure.unit_cell(),
-      pre_determined_n_real = map_data.all(),
-        space_group_info    = xray_structure.space_group_info())
-    self.miller_array = None
-    while d_min<d_min+10.:
-      try:
-        self.complete_set = miller.build_set(
-          crystal_symmetry = xray_structure.crystal_symmetry(),
-          anomalous_flag   = False,
-          d_min            = d_min)
-        self.miller_array = self.map_to_sf(map_data = self.map_data)
-      except: # intentional
-        d_min += 0.1
-      if(self.miller_array is not None): break
-    self.miller_array_masked = self.update_miller_array_masked(
-      xray_structure = xray_structure)
+    """
+    Data structure for real-space refinement. Holds map and its reciprocal-space
+    equivalent, and its masked version that can be updated as model changes.
+    """
 
-  def update_miller_array_masked(self, xray_structure):
-    if(xray_structure.crystal_symmetry().space_group().type().number()!=1):
-      return None
-    mask_params = mmtbx.masks.mask_master_params.extract()
-    mask_params.solvent_radius = 0
-    mask_params.shrink_truncation_radius = 0
-    mask_params.ignore_zero_occupancy_atoms = False
-    mask_params.ignore_hydrogens = False
-    mmtbx_masks_asu_mask_obj = mmtbx.masks.asu_mask(
-      xray_structure = xray_structure,
-      n_real         = self.map_data.all(),
-      mask_params    = mask_params,
-      atom_radius    = self.atom_radius)
-    mask = mmtbx_masks_asu_mask_obj.mask_data_whole_uc()
-    self.miller_array_masked = self.map_to_sf(map_data = self.map_data*mask)
+    def __init__(self, map_data, xray_structure, d_min, atom_radius, map_manager=None):
+        self.d_min = d_min
+        self.map_data = map_data
+        self.map_manager = map_manager  # XXX switching to map_manager from map_data
+        self.atom_radius = atom_radius
+        self.f_map_diff = None  # XXX rudimentary left-over, remove later
+        self.crystal_gridding = maptbx.crystal_gridding(  # XXX Likewise, remove later
+            unit_cell=xray_structure.unit_cell(),
+            pre_determined_n_real=map_data.all(),
+            space_group_info=xray_structure.space_group_info(),
+        )
+        self.miller_array = None
+        while d_min < d_min + 10.0:
+            try:
+                self.complete_set = miller.build_set(
+                    crystal_symmetry=xray_structure.crystal_symmetry(),
+                    anomalous_flag=False,
+                    d_min=d_min,
+                )
+                self.miller_array = self.map_to_sf(map_data=self.map_data)
+            except:  # intentional
+                d_min += 0.1
+            if self.miller_array is not None:
+                break
+        self.miller_array_masked = self.update_miller_array_masked(
+            xray_structure=xray_structure
+        )
 
-  def map_to_sf(self, map_data):
-    return self.complete_set.structure_factors_from_map(
-      map            = map_data,
-      use_scale      = True,
-      anomalous_flag = False,
-      use_sg         = True)
+    def update_miller_array_masked(self, xray_structure):
+        if xray_structure.crystal_symmetry().space_group().type().number() != 1:
+            return None
+        mask_params = mmtbx.masks.mask_master_params.extract()
+        mask_params.solvent_radius = 0
+        mask_params.shrink_truncation_radius = 0
+        mask_params.ignore_zero_occupancy_atoms = False
+        mask_params.ignore_hydrogens = False
+        mmtbx_masks_asu_mask_obj = mmtbx.masks.asu_mask(
+            xray_structure=xray_structure,
+            n_real=self.map_data.all(),
+            mask_params=mask_params,
+            atom_radius=self.atom_radius,
+        )
+        mask = mmtbx_masks_asu_mask_obj.mask_data_whole_uc()
+        self.miller_array_masked = self.map_to_sf(map_data=self.map_data * mask)
+
+    def map_to_sf(self, map_data):
+        return self.complete_set.structure_factors_from_map(
+            map=map_data, use_scale=True, anomalous_flag=False, use_sg=True
+        )
 
 
 #
@@ -62,29 +66,29 @@ class target_map(object):
 # COMPLETE REMOVAL.
 #
 #
-#from __future__ import absolute_import, division, print_function
-#import mmtbx.monomer_library.pdb_interpretation
-#import iotbx.mtz
-#import iotbx.phil, libtbx.phil
-#from cctbx import maptbx
-#from cctbx import miller
-#import cctbx.maptbx.real_space_refinement_simple
-#import cctbx.geometry_restraints.flags
-#from cctbx.array_family import flex
-#import scitbx.rigid_body
-#import scitbx.graph.tardy_tree
-#import scitbx.lbfgs
-#import scitbx.math.superpose
-#from scitbx import matrix
-#from libtbx.str_utils import show_string
-#from libtbx.utils import Sorry, null_out
-#from libtbx import Auto, group_args
-#import libtbx
-#import sys, os
-#import mmtbx.rotamer
-#op = os.path
+# from __future__ import absolute_import, division, print_function
+# import mmtbx.monomer_library.pdb_interpretation
+# import iotbx.mtz
+# import iotbx.phil, libtbx.phil
+# from cctbx import maptbx
+# from cctbx import miller
+# import cctbx.maptbx.real_space_refinement_simple
+# import cctbx.geometry_restraints.flags
+# from cctbx.array_family import flex
+# import scitbx.rigid_body
+# import scitbx.graph.tardy_tree
+# import scitbx.lbfgs
+# import scitbx.math.superpose
+# from scitbx import matrix
+# from libtbx.str_utils import show_string
+# from libtbx.utils import Sorry, null_out
+# from libtbx import Auto, group_args
+# import libtbx
+# import sys, os
+# import mmtbx.rotamer
+# op = os.path
 #
-#def real_space_rigid_body_gradients_simple(
+# def real_space_rigid_body_gradients_simple(
 #      unit_cell,
 #      density_map,
 #      sites_cart_0,
@@ -113,7 +117,7 @@ class target_map(object):
 #  for i in range(3): get(i=i+4, delta=translation_delta)
 #  return result
 #
-#class residue_refine_constrained(object):
+# class residue_refine_constrained(object):
 #
 #  def __init__(O,
 #        pdb_hierarchy,
@@ -203,7 +207,7 @@ class target_map(object):
 #    del O.__d_e_pot_d_sites
 #    return result
 #
-#class residue_refine_restrained(object):
+# class residue_refine_restrained(object):
 #
 #  def __init__(O,
 #        pdb_hierarchy,
@@ -272,7 +276,7 @@ class target_map(object):
 #      g = rs_g + gr_e.gradients.select(indices=O.residue_i_seqs)
 #    return f, g.as_double()
 #
-#def compute_functional_lite(pdb_hierarchy,
+# def compute_functional_lite(pdb_hierarchy,
 #                            residue,
 #                            density_map,
 #                            geometry_restraints_manager,
@@ -289,7 +293,7 @@ class target_map(object):
 #    selection=flex.bool(sites_cart_residue.size(),True))
 #  return rs_f
 #
-#def rotamer_score_and_choose_best(
+# def rotamer_score_and_choose_best(
 #      mon_lib_srv,
 #      density_map,
 #      pdb_hierarchy,
@@ -366,7 +370,7 @@ class target_map(object):
 #  print
 #  sys.stdout.flush()
 #
-#def get_best_rotamer(processed_pdb_file,
+# def get_best_rotamer(processed_pdb_file,
 #                     fft_map,
 #                     d_max,
 #                     d_min):
@@ -423,16 +427,16 @@ class target_map(object):
 #            residue.atoms().set_xyz(new_xyz=best_sites_cart)
 #            #print
 #
-#real_space_params_phil_str = """\
-#real_space_target_weight = 10
+# real_space_params_phil_str = """\
+# real_space_target_weight = 10
 #  .type = float
-#real_space_gradients_delta_resolution_factor = 1/3
+# real_space_gradients_delta_resolution_factor = 1/3
 #  .type = float
-#"""
+# """
 #
-#coordinate_refinement_export_phil_str = """\
-#finishing_geometry_minimization
-#{
+# coordinate_refinement_export_phil_str = """\
+# finishing_geometry_minimization
+# {
 #  cycles_max = 100
 #    .type = int
 #  first_weight_scale = 0.1
@@ -445,8 +449,8 @@ class target_map(object):
 #    .type = bool
 #  output_file = Auto
 #    .type = str
-#}
-#real_space_target_weights {
+# }
+# real_space_target_weights {
 #  first_sample = 10
 #    .type = float
 #  sampling_step = 30
@@ -461,13 +465,13 @@ class target_map(object):
 #    max_pool_average = 0.1
 #      .type = float
 #  }
-#}
-#lbfgs_max_iterations = 500
+# }
+# lbfgs_max_iterations = 500
 #  .type = int
-#"""
+# """
 #
-#coordinate_refinement_params_phil_str = """\
-#coordinate_refinement {
+# coordinate_refinement_params_phil_str = """\
+# coordinate_refinement {
 #  run = False
 #    .type = bool
 #  atom_selection = Auto
@@ -485,18 +489,18 @@ class target_map(object):
 #      .type = float
 #  }
 #  %(coordinate_refinement_export_phil_str)s
-#}
-#""" % vars()
+# }
+# """ % vars()
 #
-#def get_master_phil():
+# def get_master_phil():
 #  return iotbx.phil.parse(
 #    input_string="""\
-#atom_selection = None
+# atom_selection = None
 #  .type = str
-#strict_processing = True
+# strict_processing = True
 #  .type = bool
 #
-#map {
+# map {
 #  coeff_labels {
 #    f = 2FOFCWT,PH2FOFCWT
 #      .type = str
@@ -519,24 +523,24 @@ class target_map(object):
 #    .type = float
 #  grid_resolution_factor = 1/3
 #    .type = float
-#}
+# }
 #
-#output_file = Auto
+# output_file = Auto
 #  .type = str
-#final_geo_file = Auto
+# final_geo_file = Auto
 #  .type = str
 #
 #%s
-#local_standard_deviations_radius = None
+# local_standard_deviations_radius = None
 #  .type = float
-#weight_map_normalization = *fourier sigma
+# weight_map_normalization = *fourier sigma
 #  .type = choice
-#weight_map_scale_factor = None
+# weight_map_scale_factor = None
 #  .type = float
 #
 #%s
 #
-#rotamer_score_and_choose_best {
+# rotamer_score_and_choose_best {
 #  run = False
 #    .type = bool
 #  atom_selection = Auto
@@ -545,13 +549,13 @@ class target_map(object):
 #    .type = int
 #  output_file = Auto
 #    .type = str
-#}
+# }
 #
-#include scope mmtbx.monomer_library.pdb_interpretation.grand_master_phil_str
-#""" % (real_space_params_phil_str, coordinate_refinement_params_phil_str),
+# include scope mmtbx.monomer_library.pdb_interpretation.grand_master_phil_str
+# """ % (real_space_params_phil_str, coordinate_refinement_params_phil_str),
 #    process_includes=True)
 #
-#def extract_map_coeffs(params, optional, miller_arrays):
+# def extract_map_coeffs(params, optional, miller_arrays):
 #  def find(labels):
 #    for miller_array in miller_arrays:
 #      if (",".join(miller_array.info().labels) == labels):
@@ -610,7 +614,7 @@ class target_map(object):
 #    f = cf.customized_copy(data=cw.data()*cf.data())
 #  return f
 #
-#class home_restraints(object):
+# class home_restraints(object):
 #
 #  __slots__ = ["iselection", "weight", "slack"]
 #
@@ -619,7 +623,7 @@ class target_map(object):
 #    O.weight = weight
 #    O.slack = slack
 #
-#def process_home_restraints_params(work_params, processed_pdb_file):
+# def process_home_restraints_params(work_params, processed_pdb_file):
 #  result = []
 #  for params in work_params:
 #    sigma = params.sigma
@@ -639,7 +643,7 @@ class target_map(object):
 #        iselection=bsel.iselection(), weight=1/sigma**2, slack=slack))
 #  return result
 #
-#class geometry_restraints_manager_plus(object):
+# class geometry_restraints_manager_plus(object):
 #
 #  __slots__ = [
 #    "manager",
@@ -751,7 +755,7 @@ class target_map(object):
 #  def select(O, selection=None, iselection=None):
 #    return O.manager.select(selection=selection, iselection=iselection)
 #
-#def fit_rotamers_simple(processed_pdb_file,
+# def fit_rotamers_simple(processed_pdb_file,
 #                        fft_map,
 #                        d_max,
 #                        d_min):
@@ -782,7 +786,7 @@ class target_map(object):
 #          .rotamer_score_and_choose_best.lbfgs_max_iterations),
 #      force_rotamer=True)
 #
-#def get_atom_selection_bool(scope_extract,
+# def get_atom_selection_bool(scope_extract,
 #                            attr,
 #                            processed_pdb_file,
 #                            work_params):
@@ -806,7 +810,7 @@ class target_map(object):
 #          allow_none=True))
 #  return common_atom_selection_bool_cache[0]
 #
-#def compose_output_file_name(input_pdb_file_name, new_suffix):
+# def compose_output_file_name(input_pdb_file_name, new_suffix):
 #  result = op.basename(input_pdb_file_name)
 #  if (   result.endswith(".pdb")
 #      or result.endswith(".ent")):
@@ -814,7 +818,7 @@ class target_map(object):
 #  result += new_suffix
 #  return result
 #
-#def write_pdb(
+# def write_pdb(
 #      file_name,
 #      input_pdb_file_name,
 #      processed_pdb_file,
@@ -833,7 +837,7 @@ class target_map(object):
 #      crystal_symmetry=grm.crystal_symmetry)
 #    print
 #
-#def run_coordinate_refinement_driver(
+# def run_coordinate_refinement_driver(
 #      processed_pdb_file,
 #      geometry_restraints_manager,
 #      fft_map,
@@ -880,7 +884,7 @@ class target_map(object):
 #    write_pdb_callback=write_pdb_callback,
 #    log=log)
 #
-#def run_coordinate_refinement(
+# def run_coordinate_refinement(
 #      geometry_restraints_manager,
 #      selection_variable,
 #      density_map,
@@ -1080,7 +1084,7 @@ class target_map(object):
 #      best_info.fgm_region_cc = None
 #  return best_info
 #
-#def run(args,log=None):
+# def run(args,log=None):
 #  if log is None:
 #    log = sys.stdout
 #
@@ -1294,6 +1298,6 @@ class target_map(object):
 #  sys.stdout.flush()
 #  return best_info
 #
-#if (__name__ == "__main__"):
+# if (__name__ == "__main__"):
 #  run(args=sys.argv[1:],log=None)
 #

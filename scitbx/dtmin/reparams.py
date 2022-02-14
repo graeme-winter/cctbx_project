@@ -1,14 +1,15 @@
 from __future__ import division
 import math
 
+
 class Reparams(object):
-    def __init__(self, reparamed_=False, offset_=0.):
+    def __init__(self, reparamed_=False, offset_=0.0):
         self.reparamed = reparamed_
         self.offset = offset_
 
     def off(self):
         self.reparamed = False
-        self.offset = 0.
+        self.offset = 0.0
 
     def on(self, f):
         self.reparamed = True
@@ -21,4 +22,4 @@ class Reparams(object):
         return math.exp(par) - self.offset if self.reparamed else par
 
     def gradient(self, par, grad):
-        return grad*(par + self.offset) if self.reparamed else par
+        return grad * (par + self.offset) if self.reparamed else par

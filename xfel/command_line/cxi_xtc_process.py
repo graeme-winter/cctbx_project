@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 from six.moves import range
+
 # -*- Mode: Python; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 8 -*-
 #
 # LIBTBX_SET_DISPATCHER_NAME cxi.xtc_process
@@ -40,7 +41,8 @@ resultant log in out.log.
 
 """
 
-phil_scope = parse('''
+phil_scope = parse(
+    """
   dispatch {
     max_events = None
       .type = int
@@ -102,161 +104,205 @@ phil_scope = parse('''
       .type = str
       .help = "If set to be a timestamp, will only process the event that matches it"
   }
-''', process_includes=True)
+""",
+    process_includes=True,
+)
+
 
 class Script(object):
-  """ Script to process XFEL data at LCLS """
-  def __init__(self):
-    pass
+    """Script to process XFEL data at LCLS"""
 
-  def run(self):
-    """ Process all images assigned to this thread """
-    if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv or "-c" in sys.argv:
-      print(help_str)
-      print("Showing phil parameters:")
-      print(phil_scope.as_str(attributes_level = 2))
-      return
+    def __init__(self):
+        pass
 
-    user_phil = []
-    for arg in sys.argv[1:]:
-      if (os.path.isfile(arg)):
-        user_phil.append(parse(file_name=arg))
-      else:
-        try:
-          user_phil.append(parse(arg))
-        except RuntimeError as e:
-          raise Sorry("Unrecognized argument '%s' (error: %s)" % (arg, str(e)))
+    def run(self):
+        """Process all images assigned to this thread"""
+        if (
+            len(sys.argv) == 1
+            or "-h" in sys.argv
+            or "--help" in sys.argv
+            or "-c" in sys.argv
+        ):
+            print(help_str)
+            print("Showing phil parameters:")
+            print(phil_scope.as_str(attributes_level=2))
+            return
 
-    params = phil_scope.fetch(sources=user_phil).extract()
-    self.params = params
+        user_phil = []
+        for arg in sys.argv[1:]:
+            if os.path.isfile(arg):
+                user_phil.append(parse(file_name=arg))
+            else:
+                try:
+                    user_phil.append(parse(arg))
+                except RuntimeError as e:
+                    raise Sorry(
+                        "Unrecognized argument '%s' (error: %s)" % (arg, str(e))
+                    )
 
-    assert params.input.cfg is not None
-    assert params.input.experiment is not None
-    assert params.input.run_num is not None
+        params = phil_scope.fetch(sources=user_phil).extract()
+        self.params = params
 
-    print("Processing run %d of experiment %s using config file %s"%(params.input.run_num, params.input.experiment, params.input.cfg))
+        assert params.input.cfg is not None
+        assert params.input.experiment is not None
+        assert params.input.run_num is not None
 
-    if params.mp.method == "mpi":
-      from mpi4py import MPI
-      comm = MPI.COMM_WORLD
-      rank = comm.Get_rank() # each process in MPI has a unique id, 0-indexed
-      size = comm.Get_size() # size: number of processes running in this job
-    elif params.mp.method == "sge" and \
-        'SGE_TASK_ID'    in os.environ and \
-        'SGE_TASK_FIRST' in os.environ and \
-        'SGE_TASK_LAST'  in os.environ:
-      if 'SGE_STEP_SIZE' in os.environ:
-        assert int(os.environ['SGE_STEP_SIZE']) == 1
-      if os.environ['SGE_TASK_ID'] == 'undefined' or os.environ['SGE_TASK_ID'] == 'undefined' or os.environ['SGE_TASK_ID'] == 'undefined':
-        rank = 0
-        size = 1
-      else:
-        rank = int(os.environ['SGE_TASK_ID']) - int(os.environ['SGE_TASK_FIRST'])
-        size = int(os.environ['SGE_TASK_LAST']) - int(os.environ['SGE_TASK_FIRST']) + 1
-    else:
-      rank = 0
-      size = 1
+        print(
+            "Processing run %d of experiment %s using config file %s"
+            % (params.input.run_num, params.input.experiment, params.input.cfg)
+        )
 
-    # set up psana
-    setConfigFile(params.input.cfg)
-    dataset_name = "exp=%s:run=%s:idx"%(params.input.experiment,params.input.run_num)
-    if params.input.xtc_dir is not None:
-      if params.input.use_ffb:
-        raise Sorry("Cannot specify the xtc_dir and use SLAC's ffb system")
-      dataset_name += ":dir=%s"%params.input.xtc_dir
-    elif params.input.use_ffb:
-      # as ffb is only at SLAC, ok to hardcode /reg/d here
-      dataset_name += ":dir=/reg/d/ffb/%s/%s/xtc"%(params.input.experiment[0:3],params.input.experiment)
-    if params.input.stream is not None:
-      dataset_name += ":stream=%d"%params.input.stream
-    ds = DataSource(dataset_name)
+        if params.mp.method == "mpi":
+            from mpi4py import MPI
 
-    # set this to sys.maxint to analyze all events
-    if params.dispatch.max_events is None:
-      max_events = sys.maxsize
-    else:
-      max_events = params.dispatch.max_events
-
-    for run in ds.runs():
-      # list of all events
-      times = run.times()
-      nevents = min(len(times),max_events)
-
-      if params.mp.method == "mpi" and size > 2 and params.mp.mpi.method == 'client_server':
-        # use a client/server approach to be sure every process is busy as much as possible
-        # only do this if there are more than 2 processes, as one process will be a server
-        print("Using MPI client server")
-        if rank == 0:
-          # server process
-          for t in times[:nevents]:
-            # a client process will indicate it's ready by sending its rank
-            rankreq = comm.recv(source=MPI.ANY_SOURCE)
-            comm.send(t,dest=rankreq)
-          # send a stop command to each process
-          for rankreq in range(size-1):
-            rankreq = comm.recv(source=MPI.ANY_SOURCE)
-            comm.send('endrun',dest=rankreq)
+            comm = MPI.COMM_WORLD
+            rank = comm.Get_rank()  # each process in MPI has a unique id, 0-indexed
+            size = comm.Get_size()  # size: number of processes running in this job
+        elif (
+            params.mp.method == "sge"
+            and "SGE_TASK_ID" in os.environ
+            and "SGE_TASK_FIRST" in os.environ
+            and "SGE_TASK_LAST" in os.environ
+        ):
+            if "SGE_STEP_SIZE" in os.environ:
+                assert int(os.environ["SGE_STEP_SIZE"]) == 1
+            if (
+                os.environ["SGE_TASK_ID"] == "undefined"
+                or os.environ["SGE_TASK_ID"] == "undefined"
+                or os.environ["SGE_TASK_ID"] == "undefined"
+            ):
+                rank = 0
+                size = 1
+            else:
+                rank = int(os.environ["SGE_TASK_ID"]) - int(
+                    os.environ["SGE_TASK_FIRST"]
+                )
+                size = (
+                    int(os.environ["SGE_TASK_LAST"])
+                    - int(os.environ["SGE_TASK_FIRST"])
+                    + 1
+                )
         else:
-          # client process
-          while True:
-            # inform the server this process is ready for an event
-            comm.send(rank,dest=0)
-            evttime = comm.recv(source=0)
-            if evttime == 'endrun': break
-            self.process_event(run, evttime)
-      else:
-        # chop the list into pieces, depending on rank.  This assigns each process
-        # events such that the get every Nth event where N is the number of processes
-        print("Striping events")
-        mytimes = [times[i] for i in range(nevents) if (i+rank)%size == 0]
+            rank = 0
+            size = 1
 
-        for i in range(len(mytimes)):
-          self.process_event(run, mytimes[i])
-      run.end()
-    ds.end()
+        # set up psana
+        setConfigFile(params.input.cfg)
+        dataset_name = "exp=%s:run=%s:idx" % (
+            params.input.experiment,
+            params.input.run_num,
+        )
+        if params.input.xtc_dir is not None:
+            if params.input.use_ffb:
+                raise Sorry("Cannot specify the xtc_dir and use SLAC's ffb system")
+            dataset_name += ":dir=%s" % params.input.xtc_dir
+        elif params.input.use_ffb:
+            # as ffb is only at SLAC, ok to hardcode /reg/d here
+            dataset_name += ":dir=/reg/d/ffb/%s/%s/xtc" % (
+                params.input.experiment[0:3],
+                params.input.experiment,
+            )
+        if params.input.stream is not None:
+            dataset_name += ":stream=%d" % params.input.stream
+        ds = DataSource(dataset_name)
 
-  def process_event(self, run, timestamp):
-    """
-    Process a single event from a run
-    @param run psana run object
-    @param timestamp psana timestamp object
-    """
+        # set this to sys.maxint to analyze all events
+        if params.dispatch.max_events is None:
+            max_events = sys.maxsize
+        else:
+            max_events = params.dispatch.max_events
 
-    ts = cspad_tbx.evt_timestamp((timestamp.seconds(),timestamp.nanoseconds()/1e6))
-    if self.params.debug.event_timestamp is not None and self.params.debug.event_timestamp != ts:
-      return
+        for run in ds.runs():
+            # list of all events
+            times = run.times()
+            nevents = min(len(times), max_events)
 
-    ts_path = os.path.join(self.params.output.output_dir, "debug-" + ts + ".txt")
+            if (
+                params.mp.method == "mpi"
+                and size > 2
+                and params.mp.mpi.method == "client_server"
+            ):
+                # use a client/server approach to be sure every process is busy as much as possible
+                # only do this if there are more than 2 processes, as one process will be a server
+                print("Using MPI client server")
+                if rank == 0:
+                    # server process
+                    for t in times[:nevents]:
+                        # a client process will indicate it's ready by sending its rank
+                        rankreq = comm.recv(source=MPI.ANY_SOURCE)
+                        comm.send(t, dest=rankreq)
+                    # send a stop command to each process
+                    for rankreq in range(size - 1):
+                        rankreq = comm.recv(source=MPI.ANY_SOURCE)
+                        comm.send("endrun", dest=rankreq)
+                else:
+                    # client process
+                    while True:
+                        # inform the server this process is ready for an event
+                        comm.send(rank, dest=0)
+                        evttime = comm.recv(source=0)
+                        if evttime == "endrun":
+                            break
+                        self.process_event(run, evttime)
+            else:
+                # chop the list into pieces, depending on rank.  This assigns each process
+                # events such that the get every Nth event where N is the number of processes
+                print("Striping events")
+                mytimes = [times[i] for i in range(nevents) if (i + rank) % size == 0]
 
-    if self.params.debug.use_debug_files:
-      if not os.path.exists(ts_path):
-        print("Skipping event %s: no debug file found"%ts)
-        return
+                for i in range(len(mytimes)):
+                    self.process_event(run, mytimes[i])
+            run.end()
+        ds.end()
 
-      f = open(ts_path, "r")
-      if len(f.readlines()) > 1:
-        print("Skipping event %s: processed successfully previously"%ts)
-        return
-      f.close()
-      print("Accepted", ts)
+    def process_event(self, run, timestamp):
+        """
+        Process a single event from a run
+        @param run psana run object
+        @param timestamp psana timestamp object
+        """
 
-    if self.params.debug.write_debug_files:
-      f = open(ts_path, "w")
-      f.write("%s about to process %s\n"%(socket.gethostname(), ts))
-      f.close()
+        ts = cspad_tbx.evt_timestamp(
+            (timestamp.seconds(), timestamp.nanoseconds() / 1e6)
+        )
+        if (
+            self.params.debug.event_timestamp is not None
+            and self.params.debug.event_timestamp != ts
+        ):
+            return
 
-    # load the event.  This will cause any modules to be run.
-    evt = run.event(timestamp)
+        ts_path = os.path.join(self.params.output.output_dir, "debug-" + ts + ".txt")
 
-    if self.params.debug.write_debug_files:
-      f = open(ts_path, "a")
-      f.write("done\n")
-      f.close()
+        if self.params.debug.use_debug_files:
+            if not os.path.exists(ts_path):
+                print("Skipping event %s: no debug file found" % ts)
+                return
 
-    id = evt.get(EventId)
+            f = open(ts_path, "r")
+            if len(f.readlines()) > 1:
+                print("Skipping event %s: processed successfully previously" % ts)
+                return
+            f.close()
+            print("Accepted", ts)
 
-    # nop since the module does all the work.
+        if self.params.debug.write_debug_files:
+            f = open(ts_path, "w")
+            f.write("%s about to process %s\n" % (socket.gethostname(), ts))
+            f.close()
+
+        # load the event.  This will cause any modules to be run.
+        evt = run.event(timestamp)
+
+        if self.params.debug.write_debug_files:
+            f = open(ts_path, "a")
+            f.write("done\n")
+            f.close()
+
+        id = evt.get(EventId)
+
+        # nop since the module does all the work.
+
 
 if __name__ == "__main__":
-  script = Script()
-  script.run()
+    script = Script()
+    script.run()

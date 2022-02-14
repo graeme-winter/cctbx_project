@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 from libtbx.test_utils import approx_equal
 import iotbx.pdb
 from cctbx import maptbx
-from  cctbx import maptbx
+from cctbx import maptbx
 from six.moves import zip
 
 raw_records = """\
@@ -371,101 +371,116 @@ ATOM    178  CG2 THRA1  20       9.986  22.643  12.860  1.00 20.00           C
 """.splitlines()
 
 
-def get_b_and_occ(hierarchy=None,atom_selection=None):
-  atom_selection="name CA and (resid 5 or resid 15)"
-  asc1=hierarchy.atom_selection_cache()
-  sel1 = asc1.selection(string = atom_selection)
-  b_values=list(hierarchy.select(sel1).atoms().extract_b())
-  resolutions=list(hierarchy.select(sel1).atoms().extract_occ())
-  return b_values,resolutions
+def get_b_and_occ(hierarchy=None, atom_selection=None):
+    atom_selection = "name CA and (resid 5 or resid 15)"
+    asc1 = hierarchy.atom_selection_cache()
+    sel1 = asc1.selection(string=atom_selection)
+    b_values = list(hierarchy.select(sel1).atoms().extract_b())
+    resolutions = list(hierarchy.select(sel1).atoms().extract_occ())
+    return b_values, resolutions
 
-def make_map_from_pdb(raw_records=None,set_b_iso=None):
+
+def make_map_from_pdb(raw_records=None, set_b_iso=None):
     pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records)
     ph = pdb_inp.construct_hierarchy()
     xrs = pdb_inp.xray_structure_simple()
     if set_b_iso:
-      xrs.set_b_iso(value=set_b_iso)
-    crystal_symmetry=xrs.crystal_symmetry()
-    fc = xrs.structure_factors(d_min = 3, algorithm = "direct").f_calc()
-    fft_map = fc.fft_map(resolution_factor = 0.25)
+        xrs.set_b_iso(value=set_b_iso)
+    crystal_symmetry = xrs.crystal_symmetry()
+    fc = xrs.structure_factors(d_min=3, algorithm="direct").f_calc()
+    fft_map = fc.fft_map(resolution_factor=0.25)
     fft_map.apply_sigma_scaling()
     map_data = fft_map.real_map_unpadded()
     # Create model instead of pdb_hierarchy
     ph.adopt_xray_structure(xrs)
     import mmtbx.model
-    model=mmtbx.model.manager(
-          model_input = ph.as_pdb_input(),
-          crystal_symmetry = crystal_symmetry)
-    return model,map_data,crystal_symmetry
+
+    model = mmtbx.model.manager(
+        model_input=ph.as_pdb_input(), crystal_symmetry=crystal_symmetry
+    )
+    return model, map_data, crystal_symmetry
+
 
 def tst_0():
-  model,map_data,crystal_symmetry=make_map_from_pdb(raw_records=raw_records)
+    model, map_data, crystal_symmetry = make_map_from_pdb(raw_records=raw_records)
 
-  method="rscc"
-  pdb_hierarchy_new  = maptbx.loc_res(
-     map              = map_data,
-     model            = model,
-     crystal_symmetry = crystal_symmetry,
-     chunk_size       = 10,
-     soft_mask_radius = 3.,
-     method           = method)
+    method = "rscc"
+    pdb_hierarchy_new = maptbx.loc_res(
+        map=map_data,
+        model=model,
+        crystal_symmetry=crystal_symmetry,
+        chunk_size=10,
+        soft_mask_radius=3.0,
+        method=method,
+    )
 
-  b_values,occs=get_b_and_occ(hierarchy=pdb_hierarchy_new,
-     atom_selection="name CA and (resid 5 or resid 15)")
-  print("\nBvalues (resolutions): for %s: %s" %(method,str(b_values)))
+    b_values, occs = get_b_and_occ(
+        hierarchy=pdb_hierarchy_new, atom_selection="name CA and (resid 5 or resid 15)"
+    )
+    print("\nBvalues (resolutions): for %s: %s" % (method, str(b_values)))
 
-  assert  approx_equal(b_values,[7.5, 3.0])
+    assert approx_equal(b_values, [7.5, 3.0])
 
-  method = "fsc"
-  pdb_hierarchy_new  = maptbx.loc_res(
-     map              = map_data,
-     model= model,
-     crystal_symmetry = crystal_symmetry,
-     chunk_size       = 10,
-     soft_mask_radius = 3.,
-     method           = method,
-     fsc_cutoff       = 0.143)
-  b_values,occs=get_b_and_occ(hierarchy=pdb_hierarchy_new,
-     atom_selection="name CA and (resid 5 or resid 15)")
-  print("\nBvalues (resolutions): for %s: %s" %(method,str(b_values)))
-  assert  approx_equal(b_values,[2.72, 2.27],eps=.05)
+    method = "fsc"
+    pdb_hierarchy_new = maptbx.loc_res(
+        map=map_data,
+        model=model,
+        crystal_symmetry=crystal_symmetry,
+        chunk_size=10,
+        soft_mask_radius=3.0,
+        method=method,
+        fsc_cutoff=0.143,
+    )
+    b_values, occs = get_b_and_occ(
+        hierarchy=pdb_hierarchy_new, atom_selection="name CA and (resid 5 or resid 15)"
+    )
+    print("\nBvalues (resolutions): for %s: %s" % (method, str(b_values)))
+    assert approx_equal(b_values, [2.72, 2.27], eps=0.05)
 
 
 def tst_1():
 
-  for set_b_iso,expected_b_values,expected_occs in zip(
-     [-200,0,200],
-     [[200.0, 200.0],[-20.0, -20.0],[-160.0, -180.0]],
-     [[3.0, 3.0],[3.4, 3.0],[3.2, 3.1]]   ):
+    for set_b_iso, expected_b_values, expected_occs in zip(
+        [-200, 0, 200],
+        [[200.0, 200.0], [-20.0, -20.0], [-160.0, -180.0]],
+        [[3.0, 3.0], [3.4, 3.0], [3.2, 3.1]],
+    ):
 
-    model,map_data,crystal_symmetry=make_map_from_pdb(raw_records=raw_records_2,
-     set_b_iso=set_b_iso)
+        model, map_data, crystal_symmetry = make_map_from_pdb(
+            raw_records=raw_records_2, set_b_iso=set_b_iso
+        )
 
-    method = "rscc_d_min_b"
-    print("Running test of rscc_d_min_b")
-    pdb_hierarchy_new  = maptbx.loc_res(
-     map              = map_data,
-     model            = model,
-     crystal_symmetry = crystal_symmetry,
-     chunk_size       = 10,
-     method           = method,
-     soft_mask_radius = 3.,
-     hard_d_min=3.,
-     b_range_low=-1000,
-     b_range_high=1000,)
+        method = "rscc_d_min_b"
+        print("Running test of rscc_d_min_b")
+        pdb_hierarchy_new = maptbx.loc_res(
+            map=map_data,
+            model=model,
+            crystal_symmetry=crystal_symmetry,
+            chunk_size=10,
+            method=method,
+            soft_mask_radius=3.0,
+            hard_d_min=3.0,
+            b_range_low=-1000,
+            b_range_high=1000,
+        )
 
-    b_values,occs=get_b_and_occ(hierarchy=pdb_hierarchy_new,
-     atom_selection="name CA and (resid 5 or resid 15)")
-    print("Bvalues (b_sharpen)  expected: %s     found: %s " %(
-      str(expected_b_values),str(b_values)))
-    print("Occ values(d_min)  expected: %s     found: %s " %(
-      str(expected_occs),str(occs)))
-    assert approx_equal(expected_b_values,b_values)
-    assert approx_equal(expected_occs,occs)
+        b_values, occs = get_b_and_occ(
+            hierarchy=pdb_hierarchy_new,
+            atom_selection="name CA and (resid 5 or resid 15)",
+        )
+        print(
+            "Bvalues (b_sharpen)  expected: %s     found: %s "
+            % (str(expected_b_values), str(b_values))
+        )
+        print(
+            "Occ values(d_min)  expected: %s     found: %s "
+            % (str(expected_occs), str(occs))
+        )
+        assert approx_equal(expected_b_values, b_values)
+        assert approx_equal(expected_occs, occs)
 
 
-
-if (__name__ == "__main__"):
-  tst_0()
-  tst_1()
-  print("OK")
+if __name__ == "__main__":
+    tst_0()
+    tst_1()
+    print("OK")

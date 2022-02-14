@@ -2,9 +2,9 @@ from __future__ import absolute_import, division, print_function
 
 from iotbx.phil import parse
 
-help_message = '''
+help_message = """
 Redesign script for merging xfel data
-'''
+"""
 
 dispatch_phil = """
 dispatch {
@@ -616,74 +616,93 @@ program_defaults_phil_str = """
 modify.cosym.use_curvatures=False
 """
 
-master_phil = dispatch_phil + input_phil + tdata_phil + filter_phil + modify_phil + \
-              select_phil + scaling_phil + postrefinement_phil + merging_phil + \
-              output_phil + statistics_phil + group_phil + lunus_phil + publish_phil + diffbragg_phil
+master_phil = (
+    dispatch_phil
+    + input_phil
+    + tdata_phil
+    + filter_phil
+    + modify_phil
+    + select_phil
+    + scaling_phil
+    + postrefinement_phil
+    + merging_phil
+    + output_phil
+    + statistics_phil
+    + group_phil
+    + lunus_phil
+    + publish_phil
+    + diffbragg_phil
+)
 
 import os, importlib
-custom_phil_pathstr = os.path.join(
-  "~", ".cctbx.xfel", "merging", "application"
-)
+
+custom_phil_pathstr = os.path.join("~", ".cctbx.xfel", "merging", "application")
 custom_phil_pathstr = os.path.expanduser(custom_phil_pathstr)
 if os.path.isdir(custom_phil_pathstr):
-  for dir in os.listdir(custom_phil_pathstr):
-    path = os.path.join(custom_phil_pathstr, dir, 'phil.py')
-    if not os.path.isfile(path): continue
-    spec = importlib.util.spec_from_file_location('_', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    master_phil += module.phil_str
+    for dir in os.listdir(custom_phil_pathstr):
+        path = os.path.join(custom_phil_pathstr, dir, "phil.py")
+        if not os.path.isfile(path):
+            continue
+        spec = importlib.util.spec_from_file_location("_", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        master_phil += module.phil_str
 
 
-phil_scope = parse(master_phil, process_includes = True)
+phil_scope = parse(master_phil, process_includes=True)
 phil_scope = phil_scope.fetch(parse(program_defaults_phil_str))
 
+
 class Script(object):
-  '''A class for running the script.'''
+    """A class for running the script."""
 
-  def __init__(self):
-    # The script usage
-    import libtbx.load_env
-    self.usage = "usage: %s [options] [param.phil] " % libtbx.env.dispatcher_name
-    self.parser = None
+    def __init__(self):
+        # The script usage
+        import libtbx.load_env
 
-  def initialize(self):
-    '''Initialise the script.'''
-    from dials.util.options import OptionParser
-    # Create the parser
-    self.parser = OptionParser(
-      usage=self.usage,
-      phil=phil_scope,
-      epilog=help_message)
-    self.parser.add_option(
-        '--plots',
-        action='store_true',
-        default=False,
-        dest='show_plots',
-        help='Show some plots.')
+        self.usage = "usage: %s [options] [param.phil] " % libtbx.env.dispatcher_name
+        self.parser = None
 
-    # Parse the command line. quick_parse is required for MPI compatibility
-    params, options = self.parser.parse_args(show_diff_phil=True,quick_parse=True)
-    self.params = params
-    self.options = options
+    def initialize(self):
+        """Initialise the script."""
+        from dials.util.options import OptionParser
 
-  def validate(self):
-    from xfel.merging.application.validation.application import application
-    application(self.params)
+        # Create the parser
+        self.parser = OptionParser(
+            usage=self.usage, phil=phil_scope, epilog=help_message
+        )
+        self.parser.add_option(
+            "--plots",
+            action="store_true",
+            default=False,
+            dest="show_plots",
+            help="Show some plots.",
+        )
 
-  def modify(self, experiments, reflections):
-    return experiments, reflections #nop
+        # Parse the command line. quick_parse is required for MPI compatibility
+        params, options = self.parser.parse_args(show_diff_phil=True, quick_parse=True)
+        self.params = params
+        self.options = options
 
-  def run(self):
-    print('''Initializing and validating phil...''')
+    def validate(self):
+        from xfel.merging.application.validation.application import application
 
-    self.initialize()
-    self.validate()
+        application(self.params)
 
-    # do other stuff
-    return
+    def modify(self, experiments, reflections):
+        return experiments, reflections  # nop
 
-if __name__ == '__main__':
-  script = Script()
-  result = script.run()
-  print ("OK")
+    def run(self):
+        print("""Initializing and validating phil...""")
+
+        self.initialize()
+        self.validate()
+
+        # do other stuff
+        return
+
+
+if __name__ == "__main__":
+    script = Script()
+    result = script.run()
+    print("OK")

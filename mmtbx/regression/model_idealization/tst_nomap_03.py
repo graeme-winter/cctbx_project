@@ -226,36 +226,42 @@ ATOM      5  CB  ALA B  21      10.799  11.332  12.178  1.00 50.00           C
 TER
 """
 
-def exercise_03(prefix="tst_mi_test_03"):
-  """ Check if working with NCS in the model"""
-  # with cryst
-  pdb_file = open("%s_start.pdb" % prefix, "w")
-  pdb_file.write(cryst_str)
-  pdb_file.write(pdb_str)
-  pdb_file.close()
-  cmd = " ".join([
-      "phenix.model_idealization",
-      "%s_start.pdb" % prefix,
-      "number_of_refinement_cycles=1",
-      "use_map_for_reference=False",
-      "n_macro=1",
-      ">%s.log" % prefix])
-  print(cmd)
-  assert not easy_run.call(cmd)
-  assert os.path.isfile("%s_start.pdb_all_idealized.pdb" % prefix)
-  res_log = open("%s.log" % prefix, "r")
-  log_lines = res_log.readlines()
-  for l in [
-      # "Using NCS constraints.\n",
-      "All done.\n"]:
-    assert l in log_lines, "'%s' not in log file." % l
-  res_log.close()
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  if (not libtbx.env.has_module(name="probe")):
-    print("Skipping test: probe not configured")
-  else:
-    exercise_03()
-  print("Time: %.2f" % (time.time() - t0))
-  print("OK")
+def exercise_03(prefix="tst_mi_test_03"):
+    """Check if working with NCS in the model"""
+    # with cryst
+    pdb_file = open("%s_start.pdb" % prefix, "w")
+    pdb_file.write(cryst_str)
+    pdb_file.write(pdb_str)
+    pdb_file.close()
+    cmd = " ".join(
+        [
+            "phenix.model_idealization",
+            "%s_start.pdb" % prefix,
+            "number_of_refinement_cycles=1",
+            "use_map_for_reference=False",
+            "n_macro=1",
+            ">%s.log" % prefix,
+        ]
+    )
+    print(cmd)
+    assert not easy_run.call(cmd)
+    assert os.path.isfile("%s_start.pdb_all_idealized.pdb" % prefix)
+    res_log = open("%s.log" % prefix, "r")
+    log_lines = res_log.readlines()
+    for l in [
+        # "Using NCS constraints.\n",
+        "All done.\n"
+    ]:
+        assert l in log_lines, "'%s' not in log file." % l
+    res_log.close()
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    if not libtbx.env.has_module(name="probe"):
+        print("Skipping test: probe not configured")
+    else:
+        exercise_03()
+    print("Time: %.2f" % (time.time() - t0))
+    print("OK")

@@ -1385,108 +1385,105 @@ TER
 END
 """
 
+
 def write_plor_map(map_data, file_name, n_real, unit_cell):
-  import iotbx.xplor.map
-  frac_min, frac_max = (0.0, 0.0, 0.0), (1.0, 1.0, 1.0)
-  gridding_first=[ifloor(f*n) for f,n in zip(frac_min,n_real)]
-  gridding_last=[iceil(f*n) for f,n in zip(frac_max,n_real)]
-  gridding = iotbx.xplor.map.gridding(n     = map_data.focus(),
-                                      first = gridding_first,
-                                      last  = gridding_last)
-  iotbx.xplor.map.writer(
-    file_name          = file_name,
-    is_p1_cell         = True,
-    title_lines        = [' None',],
-    unit_cell          = unit_cell,
-    gridding           = gridding,
-    data               = map_data,
-    average            = -1,
-    standard_deviation = -1)
+    import iotbx.xplor.map
+
+    frac_min, frac_max = (0.0, 0.0, 0.0), (1.0, 1.0, 1.0)
+    gridding_first = [ifloor(f * n) for f, n in zip(frac_min, n_real)]
+    gridding_last = [iceil(f * n) for f, n in zip(frac_max, n_real)]
+    gridding = iotbx.xplor.map.gridding(
+        n=map_data.focus(), first=gridding_first, last=gridding_last
+    )
+    iotbx.xplor.map.writer(
+        file_name=file_name,
+        is_p1_cell=True,
+        title_lines=[
+            " None",
+        ],
+        unit_cell=unit_cell,
+        gridding=gridding,
+        data=map_data,
+        average=-1,
+        standard_deviation=-1,
+    )
+
 
 def exercise():
-  import iotbx.pdb
-  #
-  xrs_orig = iotbx.pdb.input(source_info=None, lines=pdb_str).\
-    xray_structure_simple()
-  #
-  fc_1 = xrs_orig.structure_factors(d_min = 3).f_calc()
-  fft_map_1 = fc_1.fft_map(resolution_factor=1./3)
-  n_real = fft_map_1.n_real()
-  #>>> map 1
-  fft_map = miller.fft_map(
-    crystal_gridding = fft_map_1,
-    fourier_coefficients = fc_1)
-  fft_map.apply_sigma_scaling()
-  map_data_1 = fft_map.real_map_unpadded()
-  #
-  write_plor_map(
-    map_data=map_data_1,
-    file_name="map_1_SigmaScaled.xplor",
-    n_real=n_real,
-    unit_cell=fc_1.unit_cell())
-  #>>> map 2
-  fc_2 = fc_1.resolution_filter(d_max=30)
-  fft_map = miller.fft_map(
-    crystal_gridding = fft_map_1,
-    fourier_coefficients = fc_2)
-  fft_map.apply_sigma_scaling()
-  map_data_2 = fft_map.real_map_unpadded()
-  #
-  write_plor_map(
-    map_data=map_data_2,
-    file_name="map_2_SigmaScaled.xplor",
-    n_real=n_real,
-    unit_cell=fc_2.unit_cell())
-  #-----------------------------------------------------------------------------
-  result = []
-  print("Original (sigma-scaled):")
-  cc = maptbx.ccv(
-    centered = True,
-    modified = False,
-    map_1    = map_data_1,
-    map_2    = map_data_2)
-  print("  CC(centered): %7.5f"%cc)
-  result.append(cc)
-  #
-  cc = maptbx.ccv(
-    centered = False,
-    modified = False,
-    map_1    = map_data_1,
-    map_2    = map_data_2)
-  print("  CC(non-cen):  %7.5f"%cc)
-  result.append(cc)
-  assert approx_equal(result, [0.81510, 0.81510], 1.e-4)
-  assert approx_equal(result[0], result[1], 1.e-6)
-  #-----------------------------------------------------------------------------
-  result = []
-  print("Percentile:")
-  print("  Centered:")
-  for p in [None, 0.5,0.6,0.7,0.8,0.9,0.95,0.99]:
-    cc = maptbx.ccv(
-      centered   = True,
-      modified   = True,
-      cutoff     = p,
-      map_1      = map_data_1,
-      map_2      = map_data_2)
-    result.append(cc)
-    print("    CC%s: %7.5f"%(str(p), cc))
-  assert approx_equal(result, [0.17736, 0.12442, 0.19184, 0.32817, 0.57918,
-    0.89395, 0.87455, 0.65101], 1.e-4)
-  #-----------------------------------------------------------------------------
-  result = []
-  print("Percentile:")
-  print("  Non-centered:")
-  for p in [None, 0.5,0.6,0.7,0.8,0.9,0.95,0.99]:
-    cc = maptbx.ccv(
-      centered   = False,
-      modified   = True,
-      cutoff     = p,
-      map_1      = map_data_1,
-      map_2      = map_data_2)
-    result.append(cc)
-    print("    CC%s: %7.5f"%(str(p), cc))
-  assert approx_equal(result, [0.79293, 0.56875, 0.58151, 0.64248, 0.78119,
-    0.95907, 0.95905, 0.86516], 1.e-4)
+    import iotbx.pdb
 
-if (__name__ == "__main__"):
-  exercise()
+    #
+    xrs_orig = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
+    #
+    fc_1 = xrs_orig.structure_factors(d_min=3).f_calc()
+    fft_map_1 = fc_1.fft_map(resolution_factor=1.0 / 3)
+    n_real = fft_map_1.n_real()
+    # >>> map 1
+    fft_map = miller.fft_map(crystal_gridding=fft_map_1, fourier_coefficients=fc_1)
+    fft_map.apply_sigma_scaling()
+    map_data_1 = fft_map.real_map_unpadded()
+    #
+    write_plor_map(
+        map_data=map_data_1,
+        file_name="map_1_SigmaScaled.xplor",
+        n_real=n_real,
+        unit_cell=fc_1.unit_cell(),
+    )
+    # >>> map 2
+    fc_2 = fc_1.resolution_filter(d_max=30)
+    fft_map = miller.fft_map(crystal_gridding=fft_map_1, fourier_coefficients=fc_2)
+    fft_map.apply_sigma_scaling()
+    map_data_2 = fft_map.real_map_unpadded()
+    #
+    write_plor_map(
+        map_data=map_data_2,
+        file_name="map_2_SigmaScaled.xplor",
+        n_real=n_real,
+        unit_cell=fc_2.unit_cell(),
+    )
+    # -----------------------------------------------------------------------------
+    result = []
+    print("Original (sigma-scaled):")
+    cc = maptbx.ccv(centered=True, modified=False, map_1=map_data_1, map_2=map_data_2)
+    print("  CC(centered): %7.5f" % cc)
+    result.append(cc)
+    #
+    cc = maptbx.ccv(centered=False, modified=False, map_1=map_data_1, map_2=map_data_2)
+    print("  CC(non-cen):  %7.5f" % cc)
+    result.append(cc)
+    assert approx_equal(result, [0.81510, 0.81510], 1.0e-4)
+    assert approx_equal(result[0], result[1], 1.0e-6)
+    # -----------------------------------------------------------------------------
+    result = []
+    print("Percentile:")
+    print("  Centered:")
+    for p in [None, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99]:
+        cc = maptbx.ccv(
+            centered=True, modified=True, cutoff=p, map_1=map_data_1, map_2=map_data_2
+        )
+        result.append(cc)
+        print("    CC%s: %7.5f" % (str(p), cc))
+    assert approx_equal(
+        result,
+        [0.17736, 0.12442, 0.19184, 0.32817, 0.57918, 0.89395, 0.87455, 0.65101],
+        1.0e-4,
+    )
+    # -----------------------------------------------------------------------------
+    result = []
+    print("Percentile:")
+    print("  Non-centered:")
+    for p in [None, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99]:
+        cc = maptbx.ccv(
+            centered=False, modified=True, cutoff=p, map_1=map_data_1, map_2=map_data_2
+        )
+        result.append(cc)
+        print("    CC%s: %7.5f" % (str(p), cc))
+    assert approx_equal(
+        result,
+        [0.79293, 0.56875, 0.58151, 0.64248, 0.78119, 0.95907, 0.95905, 0.86516],
+        1.0e-4,
+    )
+
+
+if __name__ == "__main__":
+    exercise()

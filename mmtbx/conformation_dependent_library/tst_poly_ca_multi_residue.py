@@ -2,79 +2,121 @@ from __future__ import absolute_import, division, print_function
 from mmtbx.conformation_dependent_library import generate_protein_fragments
 import iotbx.pdb
 import mmtbx.model
-#import os, sys
+
+# import os, sys
 
 pdb_str = """
 """
 
+
 def count_residue_sets(pdb_hierarchy=None, length=3, allow_poly_ca=False):
-  count = 0
-  resnames = []
-  for residue_set in generate_protein_fragments(hierarchy=pdb_hierarchy,
-                                          geometry=None,
-                                          length=length,
-                                          include_non_linked=False,
-                                          backbone_only=True,
-                                          include_non_standard_peptides=True,
-                                          allow_poly_ca=allow_poly_ca,
-                                          verbose=False):
-    count += 1
-    #resnames = []
-    #for res in residue_set:
-    #  resnames.append(res.resname+res.resseq)
-    #resstring = '-'.join(resnames)
-    #print(resstring)
-  #print(count)
-  return count
+    count = 0
+    resnames = []
+    for residue_set in generate_protein_fragments(
+        hierarchy=pdb_hierarchy,
+        geometry=None,
+        length=length,
+        include_non_linked=False,
+        backbone_only=True,
+        include_non_standard_peptides=True,
+        allow_poly_ca=allow_poly_ca,
+        verbose=False,
+    ):
+        count += 1
+        # resnames = []
+        # for res in residue_set:
+        #  resnames.append(res.resname+res.resseq)
+        # resstring = '-'.join(resnames)
+        # print(resstring)
+    # print(count)
+    return count
+
 
 def test_ca_only():
-  pdb_inp = iotbx.pdb.input(lines=ca_only.split("\n"), source_info=None)
-  model = mmtbx.model.manager(model_input=pdb_inp)
-  pdb_hierarchy = model.get_hierarchy()
-  twos_count_no_ca =   count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=2, allow_poly_ca=False)
-  threes_count_no_ca = count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=3, allow_poly_ca=False)
-  fives_count_no_ca = count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=5, allow_poly_ca=False)
-  twos_count_ca =   count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=2, allow_poly_ca=True)
-  threes_count_ca = count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=3, allow_poly_ca=True)
-  fives_count_ca = count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=5, allow_poly_ca=True)
-  print("Check allow_poly_ca=False on ca-only chain")
-  print("twos:%i threes:%i fives:%i" % (twos_count_no_ca,threes_count_no_ca,fives_count_no_ca))
-  assert [twos_count_no_ca,threes_count_no_ca,fives_count_no_ca] == [0,0,0]
-  print("OK")
-  print("Check allow_poly_ca=False on mixed chain")
-  print("twos:%i threes:%i fives:%i" % (twos_count_ca,threes_count_ca,fives_count_ca))
-  assert [twos_count_ca,threes_count_ca,fives_count_ca] == [12,10,7]
-  print("OK")
+    pdb_inp = iotbx.pdb.input(lines=ca_only.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    pdb_hierarchy = model.get_hierarchy()
+    twos_count_no_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=2, allow_poly_ca=False
+    )
+    threes_count_no_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=3, allow_poly_ca=False
+    )
+    fives_count_no_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=5, allow_poly_ca=False
+    )
+    twos_count_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=2, allow_poly_ca=True
+    )
+    threes_count_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=3, allow_poly_ca=True
+    )
+    fives_count_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=5, allow_poly_ca=True
+    )
+    print("Check allow_poly_ca=False on ca-only chain")
+    print(
+        "twos:%i threes:%i fives:%i"
+        % (twos_count_no_ca, threes_count_no_ca, fives_count_no_ca)
+    )
+    assert [twos_count_no_ca, threes_count_no_ca, fives_count_no_ca] == [0, 0, 0]
+    print("OK")
+    print("Check allow_poly_ca=False on mixed chain")
+    print(
+        "twos:%i threes:%i fives:%i" % (twos_count_ca, threes_count_ca, fives_count_ca)
+    )
+    assert [twos_count_ca, threes_count_ca, fives_count_ca] == [12, 10, 7]
+    print("OK")
+
 
 def test_mixed():
-  pdb_inp = iotbx.pdb.input(lines=mixed_ca_and_full.split("\n"), source_info=None)
-  model = mmtbx.model.manager(model_input=pdb_inp)
-  pdb_hierarchy = model.get_hierarchy()
-  twos_count_no_ca =   count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=2, allow_poly_ca=False)
-  threes_count_no_ca = count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=3, allow_poly_ca=False)
-  fives_count_no_ca = count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=5, allow_poly_ca=False)
-  twos_count_ca =   count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=2, allow_poly_ca=True)
-  threes_count_ca = count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=3, allow_poly_ca=True)
-  fives_count_ca = count_residue_sets(pdb_hierarchy=pdb_hierarchy, length=5, allow_poly_ca=True)
+    pdb_inp = iotbx.pdb.input(lines=mixed_ca_and_full.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    pdb_hierarchy = model.get_hierarchy()
+    twos_count_no_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=2, allow_poly_ca=False
+    )
+    threes_count_no_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=3, allow_poly_ca=False
+    )
+    fives_count_no_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=5, allow_poly_ca=False
+    )
+    twos_count_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=2, allow_poly_ca=True
+    )
+    threes_count_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=3, allow_poly_ca=True
+    )
+    fives_count_ca = count_residue_sets(
+        pdb_hierarchy=pdb_hierarchy, length=5, allow_poly_ca=True
+    )
 
-  print("Check allow_poly_ca=True on ca-only chain")
-  print("twos:%i threes:%i fives:%i" % (twos_count_no_ca,threes_count_no_ca,fives_count_no_ca))
-  assert [twos_count_no_ca,threes_count_no_ca,fives_count_no_ca] == [3,1,0]
-  print("OK")
-  print("Check allow_poly_ca=True on mixed chain")
-  print("twos:%i threes:%i fives:%i" % (twos_count_ca,threes_count_ca,fives_count_ca))
-  assert [twos_count_ca,threes_count_ca,fives_count_ca] == [11,8,4]
-  print("OK")
+    print("Check allow_poly_ca=True on ca-only chain")
+    print(
+        "twos:%i threes:%i fives:%i"
+        % (twos_count_no_ca, threes_count_no_ca, fives_count_no_ca)
+    )
+    assert [twos_count_no_ca, threes_count_no_ca, fives_count_no_ca] == [3, 1, 0]
+    print("OK")
+    print("Check allow_poly_ca=True on mixed chain")
+    print(
+        "twos:%i threes:%i fives:%i" % (twos_count_ca, threes_count_ca, fives_count_ca)
+    )
+    assert [twos_count_ca, threes_count_ca, fives_count_ca] == [11, 8, 4]
+    print("OK")
+
 
 def run():
-  print("Running tests")
-  test_ca_only()
-  test_mixed()
-  print("Tests complete")
-  print("OK")
+    print("Running tests")
+    test_ca_only()
+    test_mixed()
+    print("Tests complete")
+    print("OK")
 
-#These coordinates are taken from 1ubq
-#residue 12 has been modified to create breaks 11-12 and 12-13
+
+# These coordinates are taken from 1ubq
+# residue 12 has been modified to create breaks 11-12 and 12-13
 ca_only = """ATOM      2  CA  MET A   1      26.266  25.413   2.842  1.00 10.38           C
 ATOM     10  CA  GLN A   2      26.850  29.021   3.898  1.00  9.07           C
 ATOM     19  CA  ILE A   3      26.235  30.058   7.497  1.00  5.07           C
@@ -92,7 +134,7 @@ ATOM    104  CA  THR A  14      30.505  33.884   6.512  1.00  9.63           C
 ATOM    111  CA  LEU A  15      31.677  30.275   6.639  1.00  9.03           C
 """
 
-#same residues, edited to have a ca-ca break between 11-12 and 12-13,
+# same residues, edited to have a ca-ca break between 11-12 and 12-13,
 #  and a peptide break between 8-9
 mixed_ca_and_full = """ATOM      2  CA  MET A   1      26.266  25.413   2.842  1.00 10.38           C
 ATOM     10  CA  GLN A   2      26.850  29.021   3.898  1.00  9.07           C
@@ -142,5 +184,4 @@ ATOM    111  CA  LEU A  15      31.677  30.275   6.639  1.00  9.03           C
 """
 
 if __name__ == "__main__":
-  run()
-
+    run()

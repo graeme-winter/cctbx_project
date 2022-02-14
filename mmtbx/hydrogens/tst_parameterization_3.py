@@ -5,46 +5,46 @@ import iotbx.pdb
 from libtbx.utils import null_out
 from six.moves import zip
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # This test checks the parameterization of hydrogen atoms for planar X-H2 groups
 # Aim is to test if ideal dihedral angles are correct for any configuration
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def exercise(pdb_str):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  atoms = pdb_hierarchy.atoms()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    atoms = pdb_hierarchy.atoms()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  h_parameterization = riding_h_manager.h_parameterization
+    h_parameterization = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart         = sites_cart,
-    threshold          = 0.05)
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart         = sites_cart,
-    threshold          = 0.05)
-  h_distances   = diagnostics.h_distances
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
+    h_distances = diagnostics.h_distances
 
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_parameterization) - h_parameterization.count(None)
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_parameterization) - h_parameterization.count(None)
 
-# There are 90 H atoms in pdb_string, check if all of them are recognized
-  assert (number_h_para == number_h), 'Not all H atoms are parameterized'
+    # There are 90 H atoms in pdb_string, check if all of them are recognized
+    assert number_h_para == number_h, "Not all H atoms are parameterized"
 
-  for ih in h_distances:
-    labels = atoms[ih].fetch_labels()
-    assert (h_distances[ih] < 0.01), \
-      'distance too large: %s  atom: %s (%s) residue: %s ' \
-      % (h_parameterization[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
+    for ih in h_distances:
+        labels = atoms[ih].fetch_labels()
+        assert (
+            h_distances[ih] < 0.01
+        ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+            h_parameterization[ih].htype,
+            atoms[ih].name,
+            ih,
+            labels.resseq.strip(),
+        )
 
 
 pdb_str_00 = """
@@ -193,18 +193,25 @@ ATOM     16 HE21 GLN A  70      10.103   7.233  10.832  1.00 10.00           H
 ATOM     15 HE22 GLN A  70       9.210   6.057  10.635  1.00 10.00           H
 """
 
-pdb_list = [pdb_str_00, pdb_str_01, pdb_str_02, pdb_str_03,
-  pdb_str_04, pdb_str_05]
+pdb_list = [pdb_str_00, pdb_str_01, pdb_str_02, pdb_str_03, pdb_str_04, pdb_str_05]
 
-pdb_list_name = ['pdb_str_00', 'pdb_str_01', 'pdb_str_02', 'pdb_str_03',
-  'pdb_str_04', 'pdb_str_05']
+pdb_list_name = [
+    "pdb_str_00",
+    "pdb_str_01",
+    "pdb_str_02",
+    "pdb_str_03",
+    "pdb_str_04",
+    "pdb_str_05",
+]
+
 
 def run():
-  for pdb_str, str_name in zip(pdb_list,pdb_list_name):
-    #print 'pdb_string:', str_name, 'use_ideal_bonds_angles =', True
-    exercise(pdb_str=pdb_str)
+    for pdb_str, str_name in zip(pdb_list, pdb_list_name):
+        # print 'pdb_string:', str_name, 'use_ideal_bonds_angles =', True
+        exercise(pdb_str=pdb_str)
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time: %8.3f" % (time.time() - t0))

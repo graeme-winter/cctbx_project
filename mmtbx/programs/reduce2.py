@@ -24,6 +24,7 @@ from libtbx.utils import Sorry
 import mmtbx
 from mmtbx.probe import Helpers
 from iotbx import pdb
+
 # @todo See if we can remove the shift and box once reduce_hydrogen is complete
 from cctbx.maptbx.box import shift_and_box_model
 from mmtbx.hydrogens import reduce_hydrogen
@@ -32,7 +33,8 @@ from libtbx.development.timers import work_clock
 
 version = "0.2.0"
 
-master_phil_str = '''
+master_phil_str = (
+    """
 approach = *add remove
   .type = choice
   .help = Determines whether Reduce will add (and optimize) or remove Hydrogens from the model
@@ -68,9 +70,12 @@ output
     .short_caption = Description output file name
     .help = Description output file name
 }
-''' + Helpers.probe_phil_parameters
+"""
+    + Helpers.probe_phil_parameters
+)
 
-program_citations = phil.parse('''
+program_citations = phil.parse(
+    """
 citation {
   authors = Word, et. al.
   journal = J. Mol. Biol.
@@ -79,12 +84,14 @@ citation {
   year = 1999
   external = True
 }
-''')
+"""
+)
 
 # ------------------------------------------------------------------------------
 
+
 class Program(ProgramTemplate):
-  description = '''
+    description = """
 Reduce2 version {}
 Add Hydrogens to a model and optimize their placement by adjusting movable groups and
 flippable groups of atoms.
@@ -113,148 +120,165 @@ NOTES:
     -noflip: approach=add add_flip_movers=True preference_magnitude=9999
     -onlya: alt_id=A
      @todo
-'''.format(version)
-  datatypes = ['model', 'restraint', 'phil']
-  master_phil_str = master_phil_str
-  data_manager_options = ['model_skip_expand_with_mtrix',
-                          'model_skip_ss_annotations']
-  citations = program_citations
-  epilog = '''
+""".format(
+        version
+    )
+    datatypes = ["model", "restraint", "phil"]
+    master_phil_str = master_phil_str
+    data_manager_options = ["model_skip_expand_with_mtrix", "model_skip_ss_annotations"]
+    citations = program_citations
+    epilog = """
   For additional information and help, see http://kinemage.biochem.duke.edu/software/probe
   and http://molprobity.biochem.duke.edu
-  '''
+  """
 
-# ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
 
-  def validate(self):
-    self.data_manager.has_models(raise_sorry=True)
-    #if self.params.output.model_file_name is None:
-    #  raise Sorry("Must specify output.model_file_name")
-    if self.params.output.description_file_name is None:
-      raise Sorry("Must specify output.description_file_name")
+    def validate(self):
+        self.data_manager.has_models(raise_sorry=True)
+        # if self.params.output.model_file_name is None:
+        #  raise Sorry("Must specify output.model_file_name")
+        if self.params.output.description_file_name is None:
+            raise Sorry("Must specify output.description_file_name")
 
-    # Turn on profiling if we've been asked to in the Phil parameters
-    if self.params.profile:
-      import cProfile
-      self._pr = cProfile.Profile()
-      self._pr.enable()
+        # Turn on profiling if we've been asked to in the Phil parameters
+        if self.params.profile:
+            import cProfile
 
-# ------------------------------------------------------------------------------
+            self._pr = cProfile.Profile()
+            self._pr.enable()
 
-  def run(self):
+    # ------------------------------------------------------------------------------
 
-    # String describing the run that will be output to the specified file.
-    outString = 'reduce2 v.{}, run {}\n'.format(version, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    for a in sys.argv:
-      outString += ' {}'.format(a)
-    outString += '\n'
+    def run(self):
 
-    make_sub_header('Interpreting Model', out=self.logger)
+        # String describing the run that will be output to the specified file.
+        outString = "reduce2 v.{}, run {}\n".format(
+            version, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        for a in sys.argv:
+            outString += " {}".format(a)
+        outString += "\n"
 
-    # Get our model.
-    self.model = self.data_manager.get_model()
+        make_sub_header("Interpreting Model", out=self.logger)
 
-    # Fix up bogus unit cell when it occurs by checking crystal symmetry.
-    cs = self.model.crystal_symmetry()
-    if (cs is None) or (cs.unit_cell() is None):
-      self.model = shift_and_box_model(model = self.model)
+        # Get our model.
+        self.model = self.data_manager.get_model()
 
-    if self.params.approach == 'add':
-      # Add Hydrogens to the model
-      make_sub_header('Adding Hydrogens', out=self.logger)
-      startAdd = work_clock()
-      reduce_add_h_obj = reduce_hydrogen.place_hydrogens(
-        model = self.model,
-        n_terminal_charge=self.params.n_terminal_charge
-      )
-      reduce_add_h_obj.run()
-      model = reduce_add_h_obj.get_model()
-      doneAdd = work_clock()
+        # Fix up bogus unit cell when it occurs by checking crystal symmetry.
+        cs = self.model.crystal_symmetry()
+        if (cs is None) or (cs.unit_cell() is None):
+            self.model = shift_and_box_model(model=self.model)
 
-      # Interpret the model after shifting and adding Hydrogens to it so that
-      # all of the needed fields are filled in when we use them below.
-      # @todo Remove this once place_hydrogens() does all the interpretation we need.
-      make_sub_header('Interpreting Hydrogenated Model', out=self.logger)
-      startInt = work_clock()
-      p = mmtbx.model.manager.get_default_pdb_interpretation_params()
-      p.pdb_interpretation.allow_polymer_cross_special_position=True
-      p.pdb_interpretation.clash_guard.nonbonded_distance_threshold=None
-      p.pdb_interpretation.proceed_with_excessive_length_bonds=True
-      model.process(make_restraints=True, pdb_interpretation_params=p) # make restraints
-      doneInt = work_clock()
+        if self.params.approach == "add":
+            # Add Hydrogens to the model
+            make_sub_header("Adding Hydrogens", out=self.logger)
+            startAdd = work_clock()
+            reduce_add_h_obj = reduce_hydrogen.place_hydrogens(
+                model=self.model, n_terminal_charge=self.params.n_terminal_charge
+            )
+            reduce_add_h_obj.run()
+            model = reduce_add_h_obj.get_model()
+            doneAdd = work_clock()
 
-      make_sub_header('Optimizing', out=self.logger)
-      startOpt = work_clock()
-      Optimizers.probePhil = self.params.probe
-      opt = Optimizers.FastOptimizer(self.params.add_flip_movers, model, probeRadius=0.25,
-        altID=self.params.alt_id, preferenceMagnitude=self.params.preference_magnitude)
-      doneOpt = work_clock()
-      outString += opt.getInfo()
-      outString += 'Time to Add Hydrogen = '+str(doneAdd-startAdd)+'\n'
-      outString += 'Time to Interpret = '+str(doneInt-startInt)+'\n'
-      outString += 'Time to Optimize = '+str(doneOpt-startOpt)+'\n'
+            # Interpret the model after shifting and adding Hydrogens to it so that
+            # all of the needed fields are filled in when we use them below.
+            # @todo Remove this once place_hydrogens() does all the interpretation we need.
+            make_sub_header("Interpreting Hydrogenated Model", out=self.logger)
+            startInt = work_clock()
+            p = mmtbx.model.manager.get_default_pdb_interpretation_params()
+            p.pdb_interpretation.allow_polymer_cross_special_position = True
+            p.pdb_interpretation.clash_guard.nonbonded_distance_threshold = None
+            p.pdb_interpretation.proceed_with_excessive_length_bonds = True
+            model.process(
+                make_restraints=True, pdb_interpretation_params=p
+            )  # make restraints
+            doneInt = work_clock()
 
-    else: # Removing Hydrogens from the model rather than adding them.
-      make_sub_header('Removing Hydrogens', out=self.logger)
-      sel = self.model.selection("element H")
-      for a in self.model.get_atoms():
-        if sel[a.i_seq]:
-          a.parent().remove_atom(a)
-      model = self.model
+            make_sub_header("Optimizing", out=self.logger)
+            startOpt = work_clock()
+            Optimizers.probePhil = self.params.probe
+            opt = Optimizers.FastOptimizer(
+                self.params.add_flip_movers,
+                model,
+                probeRadius=0.25,
+                altID=self.params.alt_id,
+                preferenceMagnitude=self.params.preference_magnitude,
+            )
+            doneOpt = work_clock()
+            outString += opt.getInfo()
+            outString += "Time to Add Hydrogen = " + str(doneAdd - startAdd) + "\n"
+            outString += "Time to Interpret = " + str(doneInt - startInt) + "\n"
+            outString += "Time to Optimize = " + str(doneOpt - startOpt) + "\n"
 
-    # Re-process the model because we have removed some atoms that were previously
-    # bonded.  Don't make restraints during the reprocessing.
-    # We had to do this to keep from carshing on a call to pair_proxies when generating
-    # mmCIF files, so we always do it for safety.
-    model.process(make_restraints=False, pdb_interpretation_params=p)
+        else:  # Removing Hydrogens from the model rather than adding them.
+            make_sub_header("Removing Hydrogens", out=self.logger)
+            sel = self.model.selection("element H")
+            for a in self.model.get_atoms():
+                if sel[a.i_seq]:
+                    a.parent().remove_atom(a)
+            model = self.model
 
-    make_sub_header('Writing output', out=self.logger)
+        # Re-process the model because we have removed some atoms that were previously
+        # bonded.  Don't make restraints during the reprocessing.
+        # We had to do this to keep from carshing on a call to pair_proxies when generating
+        # mmCIF files, so we always do it for safety.
+        model.process(make_restraints=False, pdb_interpretation_params=p)
 
-    # Write the description output to the specified file.
-    of = open(self.params.output.description_file_name,"w")
-    of.write(outString)
-    of.close()
+        make_sub_header("Writing output", out=self.logger)
 
-    # Determine whether to write a PDB or CIF file and write the appropriate text output.
-    # Then determine the output file name and write it there.
-    if str(self.params.output.suffix).lower() == "pdb":
-      txt = model.model_as_pdb()
-      suffix = ".pdb"
-    else:
-      txt = model.model_as_mmcif()
-      suffix = ".cif"
-    if self.params.output.model_file_base_name is not None:
-      base = self.params.output.model_file_base_name
-    else:
-      file_name = self.data_manager.get_model_names()[0]
-      base = os.path.splitext(os.path.basename(file_name))[0] + "_reduced"
-    fullname = base+suffix
-    with open(fullname, 'w') as f:
-      f.write(txt)
+        # Write the description output to the specified file.
+        of = open(self.params.output.description_file_name, "w")
+        of.write(outString)
+        of.close()
 
-    print('Wrote',fullname,'and',self.params.output.description_file_name, file = self.logger)
+        # Determine whether to write a PDB or CIF file and write the appropriate text output.
+        # Then determine the output file name and write it there.
+        if str(self.params.output.suffix).lower() == "pdb":
+            txt = model.model_as_pdb()
+            suffix = ".pdb"
+        else:
+            txt = model.model_as_mmcif()
+            suffix = ".cif"
+        if self.params.output.model_file_base_name is not None:
+            base = self.params.output.model_file_base_name
+        else:
+            file_name = self.data_manager.get_model_names()[0]
+            base = os.path.splitext(os.path.basename(file_name))[0] + "_reduced"
+        fullname = base + suffix
+        with open(fullname, "w") as f:
+            f.write(txt)
 
-    # Report profiling info if we've been asked to in the Phil parameters
-    if self.params.profile:
-      print('Profile results:')
-      import pstats
-      profile_params = {'sort_by': 'time', 'num_entries': 20}
-      self._pr.disable()
-      ps = pstats.Stats(self._pr).sort_stats(profile_params['sort_by'])
-      ps.print_stats(profile_params['num_entries'])
+        print(
+            "Wrote",
+            fullname,
+            "and",
+            self.params.output.description_file_name,
+            file=self.logger,
+        )
 
-# ------------------------------------------------------------------------------
+        # Report profiling info if we've been asked to in the Phil parameters
+        if self.params.profile:
+            print("Profile results:")
+            import pstats
 
-  def get_results(self):
-    return group_args(model = self.model)
+            profile_params = {"sort_by": "time", "num_entries": 20}
+            self._pr.disable()
+            ps = pstats.Stats(self._pr).sort_stats(profile_params["sort_by"])
+            ps.print_stats(profile_params["num_entries"])
 
-# ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
 
-  def Test(self):
-    '''
-      Run tests on the methods of the class.  Throw an assertion error if there is a problem with
-      one of them and return normally if there is not a problem.
-    '''
+    def get_results(self):
+        return group_args(model=self.model)
 
-    #=====================================================================================
-    # @todo Unit tests for other methods
+    # ------------------------------------------------------------------------------
+
+    def Test(self):
+        """
+        Run tests on the methods of the class.  Throw an assertion error if there is a problem with
+        one of them and return normally if there is not a problem.
+        """
+
+        # =====================================================================================
+        # @todo Unit tests for other methods

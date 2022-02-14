@@ -3,6 +3,7 @@ import time
 import mmtbx.refinement.real_space.fit_residues
 import mmtbx.refinement.real_space
 from mmtbx.rotamer.rotamer_eval import RotamerEval
+
 rotamer_eval = RotamerEval()
 
 pdb_poor = """\
@@ -193,75 +194,82 @@ pdb_for_map = pdb_answer
 
 
 def count_outliers(h):
-  n_outliers = 0
-  for model in h.models():
-    for chain in model.chains():
-      for residue_group in chain.residue_groups():
-        conformers = residue_group.conformers()
-        for conformer in residue_group.conformers():
-          residue = conformer.only_residue()
-          fl = rotamer_eval.evaluate_residue(residue = residue)
-          if fl.strip().upper()=="OUTLIER":
-            n_outliers += 1
-  return n_outliers
-
-def exercise(i_pdb=0, d_min = 3, resolution_factor = 0.1):
-  """
-  Testing selections
-  """
-  t = mmtbx.refinement.real_space.setup_test(
-    pdb_answer        = pdb_answer,
-    pdb_poor          = pdb_poor,
-    i_pdb             = i_pdb,
-    d_min             = d_min,
-    residues          = ["SER","HIS","ILE","LYS","GLN"],
-    resolution_factor = resolution_factor,
-    pdb_for_map       = pdb_for_map)
-  #
-  assert count_outliers(t.ph_poor) == 3
-  assert count_outliers(t.ph_answer) == 0
-  #
-  result = mmtbx.refinement.real_space.fit_residues.run(
-    pdb_hierarchy     = t.ph_poor,
-    vdw_radii         = t.vdw,
-    crystal_symmetry  = t.crystal_symmetry,
-    map_data          = t.target_map,
-    backbone_sample   = False,
-    rotatable_hd      = t.rotatable_hd,
-    rotamer_manager   = t.rotamer_manager,
-    sin_cos_table     = t.sin_cos_table,
-    mon_lib_srv       = t.mon_lib_srv)
-  result.pdb_hierarchy.write_pdb_file(file_name = "refined_%s.pdb"%str(i_pdb),
-    crystal_symmetry = t.crystal_symmetry)
-  assert count_outliers(result.pdb_hierarchy) == 0
-
-  # Now with selection
-  t = mmtbx.refinement.real_space.setup_test(
-    pdb_answer        = pdb_answer,
-    pdb_poor          = pdb_poor,
-    i_pdb             = i_pdb,
-    d_min             = d_min,
-    resolution_factor = resolution_factor,
-    pdb_for_map       = pdb_for_map)
-
-  bselection = t.ph_poor.atom_selection_cache().selection('resid 23:25')
-  result = mmtbx.refinement.real_space.fit_residues.run(
-    pdb_hierarchy     = t.ph_poor,
-    vdw_radii         = t.vdw,
-    crystal_symmetry  = t.crystal_symmetry,
-    map_data          = t.target_map,
-    bselection        = bselection,
-    backbone_sample   = False,
-    rotatable_hd      = t.rotatable_hd,
-    rotamer_manager   = t.rotamer_manager,
-    sin_cos_table     = t.sin_cos_table,
-    mon_lib_srv       = t.mon_lib_srv)
-  result.pdb_hierarchy.write_pdb_file(file_name = "refined_%s.pdb"%str(i_pdb),
-    crystal_symmetry = t.crystal_symmetry)
-  assert count_outliers(result.pdb_hierarchy) == 1
+    n_outliers = 0
+    for model in h.models():
+        for chain in model.chains():
+            for residue_group in chain.residue_groups():
+                conformers = residue_group.conformers()
+                for conformer in residue_group.conformers():
+                    residue = conformer.only_residue()
+                    fl = rotamer_eval.evaluate_residue(residue=residue)
+                    if fl.strip().upper() == "OUTLIER":
+                        n_outliers += 1
+    return n_outliers
 
 
-if(__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("Time: %6.4f"%(time.time()-t0))
+def exercise(i_pdb=0, d_min=3, resolution_factor=0.1):
+    """
+    Testing selections
+    """
+    t = mmtbx.refinement.real_space.setup_test(
+        pdb_answer=pdb_answer,
+        pdb_poor=pdb_poor,
+        i_pdb=i_pdb,
+        d_min=d_min,
+        residues=["SER", "HIS", "ILE", "LYS", "GLN"],
+        resolution_factor=resolution_factor,
+        pdb_for_map=pdb_for_map,
+    )
+    #
+    assert count_outliers(t.ph_poor) == 3
+    assert count_outliers(t.ph_answer) == 0
+    #
+    result = mmtbx.refinement.real_space.fit_residues.run(
+        pdb_hierarchy=t.ph_poor,
+        vdw_radii=t.vdw,
+        crystal_symmetry=t.crystal_symmetry,
+        map_data=t.target_map,
+        backbone_sample=False,
+        rotatable_hd=t.rotatable_hd,
+        rotamer_manager=t.rotamer_manager,
+        sin_cos_table=t.sin_cos_table,
+        mon_lib_srv=t.mon_lib_srv,
+    )
+    result.pdb_hierarchy.write_pdb_file(
+        file_name="refined_%s.pdb" % str(i_pdb), crystal_symmetry=t.crystal_symmetry
+    )
+    assert count_outliers(result.pdb_hierarchy) == 0
+
+    # Now with selection
+    t = mmtbx.refinement.real_space.setup_test(
+        pdb_answer=pdb_answer,
+        pdb_poor=pdb_poor,
+        i_pdb=i_pdb,
+        d_min=d_min,
+        resolution_factor=resolution_factor,
+        pdb_for_map=pdb_for_map,
+    )
+
+    bselection = t.ph_poor.atom_selection_cache().selection("resid 23:25")
+    result = mmtbx.refinement.real_space.fit_residues.run(
+        pdb_hierarchy=t.ph_poor,
+        vdw_radii=t.vdw,
+        crystal_symmetry=t.crystal_symmetry,
+        map_data=t.target_map,
+        bselection=bselection,
+        backbone_sample=False,
+        rotatable_hd=t.rotatable_hd,
+        rotamer_manager=t.rotamer_manager,
+        sin_cos_table=t.sin_cos_table,
+        mon_lib_srv=t.mon_lib_srv,
+    )
+    result.pdb_hierarchy.write_pdb_file(
+        file_name="refined_%s.pdb" % str(i_pdb), crystal_symmetry=t.crystal_symmetry
+    )
+    assert count_outliers(result.pdb_hierarchy) == 1
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Time: %6.4f" % (time.time() - t0))

@@ -42,89 +42,113 @@ TER
 END
 """
 
-def dist(a,b):
-  return math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2)
+
+def dist(a, b):
+    return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2)
+
 
 def exercise(tolerance=0.01):
-  for use_neutron_distances in [True, False]:
-    mon_lib_srv = monomer_library.server.server()
-    ener_lib = monomer_library.server.ener_lib()
-    inp = iotbx.pdb.input(lines=pdb_str.splitlines(), source_info=None)
-    params = iotbx.phil.parse(
-          input_string=grand_master_phil_str, process_includes=True).extract()
-    params.pdb_interpretation.use_neutron_distances = use_neutron_distances
-    model = mmtbx.model.manager(model_input = inp)
-    model.process(pdb_interpretation_params=params, make_restraints=True)
-    ph = model.get_hierarchy()
-    ph.write_pdb_file(file_name="input.pdb")
+    for use_neutron_distances in [True, False]:
+        mon_lib_srv = monomer_library.server.server()
+        ener_lib = monomer_library.server.ener_lib()
+        inp = iotbx.pdb.input(lines=pdb_str.splitlines(), source_info=None)
+        params = iotbx.phil.parse(
+            input_string=grand_master_phil_str, process_includes=True
+        ).extract()
+        params.pdb_interpretation.use_neutron_distances = use_neutron_distances
+        model = mmtbx.model.manager(model_input=inp)
+        model.process(pdb_interpretation_params=params, make_restraints=True)
+        ph = model.get_hierarchy()
+        ph.write_pdb_file(file_name="input.pdb")
 
-    m = geometry_minimization.run2(
-      restraints_manager = model.get_restraints_manager(),
-      pdb_hierarchy = ph,
-      correct_special_position_tolerance=1.0,
-      bond      = True,
-      nonbonded = True,
-      angle     = True,
-      dihedral  = True,
-      chirality = True,
-      planarity = True)
-    model.set_sites_cart_from_hierarchy()
-    suffix = "X"
-    if(use_neutron_distances): suffix = "N"
-    ph.write_pdb_file(file_name="output_%s.pdb"%suffix)
-  # check X-H distances: x-ray
-  cntr = 0
-  awl = iotbx.pdb.input(file_name="output_X.pdb").atoms_with_labels()
-  for a1 in awl:
-    n1 = a1.name.strip()
-    for a2 in awl:
-      n2 = a2.name.strip()
-      if([n1,n2]==["CD1","HD1"] or [n1,n2]==["CD2","HD2"] or
-         [n1,n2]==["CE1","HE1"] or [n1,n2]==["CE2","HE2"]):
-        assert approx_equal(dist(a1.xyz, a2.xyz), 0.93, tolerance)
-        cntr += 1
-      if(n1=="OH" and n2 in ["HH","DH"]):
-        assert approx_equal(dist(a1.xyz, a2.xyz), 0.84, tolerance)
-        cntr += 1
-      if([n1,n2]==["CB","HB2"] or [n1,n2]==["CB","HB3"] or
-         [n1,n2]==["CA","HA"]):
-        assert approx_equal(dist(a1.xyz, a2.xyz), 0.97, tolerance)
-        cntr += 1
-      if(n1=="O" and n2 in ["D1","D2"] and a1.resname=="HOH"):
-        assert approx_equal(dist(a1.xyz, a2.xyz), 0.84, tolerance)
-        cntr += 1
-  assert cntr == 11, cntr
-  # check X-H distances: neutron
-  cntr = 0
-  awl = iotbx.pdb.input(file_name="output_N.pdb").atoms_with_labels()
-  for a1 in awl:
-    n1 = a1.name.strip()
-    for a2 in awl:
-      n2 = a2.name.strip()
-      if([n1,n2]==["CD1","HD1"] or [n1,n2]==["CD2","HD2"] or
-         [n1,n2]==["CE1","HE1"] or [n1,n2]==["CE2","HE2"]):
-        assert approx_equal(dist(a1.xyz, a2.xyz), 1.08, tolerance), """
+        m = geometry_minimization.run2(
+            restraints_manager=model.get_restraints_manager(),
+            pdb_hierarchy=ph,
+            correct_special_position_tolerance=1.0,
+            bond=True,
+            nonbonded=True,
+            angle=True,
+            dihedral=True,
+            chirality=True,
+            planarity=True,
+        )
+        model.set_sites_cart_from_hierarchy()
+        suffix = "X"
+        if use_neutron_distances:
+            suffix = "N"
+        ph.write_pdb_file(file_name="output_%s.pdb" % suffix)
+    # check X-H distances: x-ray
+    cntr = 0
+    awl = iotbx.pdb.input(file_name="output_X.pdb").atoms_with_labels()
+    for a1 in awl:
+        n1 = a1.name.strip()
+        for a2 in awl:
+            n2 = a2.name.strip()
+            if (
+                [n1, n2] == ["CD1", "HD1"]
+                or [n1, n2] == ["CD2", "HD2"]
+                or [n1, n2] == ["CE1", "HE1"]
+                or [n1, n2] == ["CE2", "HE2"]
+            ):
+                assert approx_equal(dist(a1.xyz, a2.xyz), 0.93, tolerance)
+                cntr += 1
+            if n1 == "OH" and n2 in ["HH", "DH"]:
+                assert approx_equal(dist(a1.xyz, a2.xyz), 0.84, tolerance)
+                cntr += 1
+            if (
+                [n1, n2] == ["CB", "HB2"]
+                or [n1, n2] == ["CB", "HB3"]
+                or [n1, n2] == ["CA", "HA"]
+            ):
+                assert approx_equal(dist(a1.xyz, a2.xyz), 0.97, tolerance)
+                cntr += 1
+            if n1 == "O" and n2 in ["D1", "D2"] and a1.resname == "HOH":
+                assert approx_equal(dist(a1.xyz, a2.xyz), 0.84, tolerance)
+                cntr += 1
+    assert cntr == 11, cntr
+    # check X-H distances: neutron
+    cntr = 0
+    awl = iotbx.pdb.input(file_name="output_N.pdb").atoms_with_labels()
+    for a1 in awl:
+        n1 = a1.name.strip()
+        for a2 in awl:
+            n2 = a2.name.strip()
+            if (
+                [n1, n2] == ["CD1", "HD1"]
+                or [n1, n2] == ["CD2", "HD2"]
+                or [n1, n2] == ["CE1", "HE1"]
+                or [n1, n2] == ["CE2", "HE2"]
+            ):
+                assert approx_equal(
+                    dist(a1.xyz, a2.xyz), 1.08, tolerance
+                ), """
         dist(a1.xyz, a2.xyz) : %f
         tolerance            : %f
-        """ % (dist(a1.xyz, a2.xyz),
-               tolerance,
-          )
-        cntr += 1
-      if(n1=="OH" and n2 in ["HH","DH"]):
-        assert approx_equal(dist(a1.xyz, a2.xyz), 0.98, tolerance)
-        cntr += 1
-      if([n1,n2]==["CB","HB2"] or [n1,n2]==["CB","HB3"] or
-         [n1,n2]==["CA","HA"]):
-        assert approx_equal(dist(a1.xyz, a2.xyz), 1.09, tolerance)
-        cntr += 1
-      if(n1=="O" and n2 in ["D1","D2"] and a1.resname=="HOH"):
-        assert approx_equal(dist(a1.xyz, a2.xyz), 0.95, tolerance)
-        cntr += 1
-  assert cntr == 11, cntr
+        """ % (
+                    dist(a1.xyz, a2.xyz),
+                    tolerance,
+                )
+                cntr += 1
+            if n1 == "OH" and n2 in ["HH", "DH"]:
+                assert approx_equal(dist(a1.xyz, a2.xyz), 0.98, tolerance)
+                cntr += 1
+            if (
+                [n1, n2] == ["CB", "HB2"]
+                or [n1, n2] == ["CB", "HB3"]
+                or [n1, n2] == ["CA", "HA"]
+            ):
+                assert approx_equal(dist(a1.xyz, a2.xyz), 1.09, tolerance)
+                cntr += 1
+            if n1 == "O" and n2 in ["D1", "D2"] and a1.resname == "HOH":
+                assert approx_equal(dist(a1.xyz, a2.xyz), 0.95, tolerance)
+                cntr += 1
+    assert cntr == 11, cntr
+
 
 def run():
-  exercise()
-  print(format_cpu_times())
+    exercise()
+    print(format_cpu_times())
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

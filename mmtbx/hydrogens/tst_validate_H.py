@@ -7,7 +7,8 @@ from libtbx.test_utils import approx_equal
 from mmtbx.hydrogens.validate_H import validate_H, validate_H_results
 from libtbx.utils import null_out
 from six.moves import zip
-#from validate_H_cl_app import master_params_str
+
+# from validate_H_cl_app import master_params_str
 
 pdb_str = """
 CRYST1   43.705   48.284   96.292  90.00  90.00  90.00 P 1
@@ -669,111 +670,117 @@ ATOM     93  H62   A A   3      17.091  -2.744  -3.464  1.00 26.84           H
 ATOM     94  H2    A A   3      16.073  -7.585  -3.310  1.00 27.93           H
 """
 
+
 def get_results_from_validate_H(neutron_distances, pdb_str):
-  pdb_interpretation_phil = iotbx.phil.parse(
-    input_string = grand_master_phil_str, process_includes = True)
-  pi_params = pdb_interpretation_phil.extract()
-  pi_params.pdb_interpretation.use_neutron_distances = neutron_distances
-  pi_params.pdb_interpretation.flip_symmetric_amino_acids=False
+    pdb_interpretation_phil = iotbx.phil.parse(
+        input_string=grand_master_phil_str, process_includes=True
+    )
+    pi_params = pdb_interpretation_phil.extract()
+    pi_params.pdb_interpretation.use_neutron_distances = neutron_distances
+    pi_params.pdb_interpretation.flip_symmetric_amino_acids = False
 
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    stop_for_unknowns = False,
-    log = null_out())
-  model.process(pdb_interpretation_params=pi_params,
-    make_restraints=True)
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(
+        model_input=pdb_inp, stop_for_unknowns=False, log=null_out()
+    )
+    model.process(pdb_interpretation_params=pi_params, make_restraints=True)
 
-  c = validate_H(model = model,
-                 use_neutron_distances = neutron_distances)
-  r = c.validate_inputs()
-  c.run()
-  results = c.get_results()
-  return results
+    c = validate_H(model=model, use_neutron_distances=neutron_distances)
+    r = c.validate_inputs()
+    c.run()
+    results = c.get_results()
+    return results
+
 
 def test_output(results):
-  out = validate_H_results(results)
-  log = open(os.devnull, 'w')
-  out.print_results(prefix='  ', log=log)
-  log.close()
+    out = validate_H_results(results)
+    log = open(os.devnull, "w")
+    out.print_results(prefix="  ", log=log)
+    log.close()
 
-  # export data for wxGUI
-  out.export_renamed_for_wxGUI()
-  out.export_occupancies_0_for_wxGUI()
-  out.export_occupancies_lt_1_for_wxGUI()
-  out.export_missing_HD_atoms_for_wxGUI()
-  out.export_outliers_bonds_for_wxGUI()
-  out.export_outliers_angles_for_wxGUI()
-  out.export_sites_different_xyz_for_wxGUI()
-  out.export_sites_different_b_for_wxGUI()
-  out.export_sites_sum_occ_for_wxGUI()
-  out.export_sites_occ_scattering_for_wxGUI()
+    # export data for wxGUI
+    out.export_renamed_for_wxGUI()
+    out.export_occupancies_0_for_wxGUI()
+    out.export_occupancies_lt_1_for_wxGUI()
+    out.export_missing_HD_atoms_for_wxGUI()
+    out.export_outliers_bonds_for_wxGUI()
+    out.export_outliers_angles_for_wxGUI()
+    out.export_sites_different_xyz_for_wxGUI()
+    out.export_sites_different_b_for_wxGUI()
+    out.export_sites_sum_occ_for_wxGUI()
+    out.export_sites_occ_scattering_for_wxGUI()
+
 
 def exercise():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str)
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str)
 
-  oc = results.overall_counts_hd
-  hd_atoms_with_occ_0 = oc.hd_atoms_with_occ_0
+    oc = results.overall_counts_hd
+    hd_atoms_with_occ_0 = oc.hd_atoms_with_occ_0
 
-  assert (oc.count_h == 42)
-  assert (oc.count_d == 39)
-  assert (oc.count_h_protein == 30)
-  assert (oc.count_d_protein == 29)
-  assert (oc.count_h_water == 0)
-  assert (oc.count_d_water == 10)
-  assert (oc.count_water == 5 + 1)
-  assert (oc.count_water_0h == 1)
-  assert (oc.count_water_1h == 1)
-  assert (oc.count_water_2h == 1)
-  assert (oc.count_water_altconf == 1)
-  assert (oc.count_water_no_oxygen == 1)
-  assert (oc.count_h_other == 12)
-  assert (oc.count_d_other == 0)
+    assert oc.count_h == 42
+    assert oc.count_d == 39
+    assert oc.count_h_protein == 30
+    assert oc.count_d_protein == 29
+    assert oc.count_h_water == 0
+    assert oc.count_d_water == 10
+    assert oc.count_water == 5 + 1
+    assert oc.count_water_0h == 1
+    assert oc.count_water_1h == 1
+    assert oc.count_water_2h == 1
+    assert oc.count_water_altconf == 1
+    assert oc.count_water_no_oxygen == 1
+    assert oc.count_h_other == 12
+    assert oc.count_d_other == 0
 
-  answer = ['DD22ALEU A   3 ', ' HB2ASER A   5 ']
-  for item, answer in zip(hd_atoms_with_occ_0, answer):
-    assert(item[0][5:-1] == answer)
+    answer = ["DD22ALEU A   3 ", " HB2ASER A   5 "]
+    for item, answer in zip(hd_atoms_with_occ_0, answer):
+        assert item[0][5:-1] == answer
 
-  renamed_answer = [('DB2', 'DB3'), ('DB3', 'DB2'),('DB2', 'DB3'),
-    ('DB3', 'DB2'),('DB2', 'DB3'), ('DB3', 'DB2')]
-  renamed = results.renamed
-  for entry, answer in zip(renamed, renamed_answer):
-    oldname = entry[2].strip()
-    newname = entry[1].strip()
-    assert(oldname == answer[0])
-    assert(newname == answer[1])
-    assert (entry[3] is not None)
+    renamed_answer = [
+        ("DB2", "DB3"),
+        ("DB3", "DB2"),
+        ("DB2", "DB3"),
+        ("DB3", "DB2"),
+        ("DB2", "DB3"),
+        ("DB3", "DB2"),
+    ]
+    renamed = results.renamed
+    for entry, answer in zip(renamed, renamed_answer):
+        oldname = entry[2].strip()
+        newname = entry[1].strip()
+        assert oldname == answer[0]
+        assert newname == answer[1]
+        assert entry[3] is not None
 
-  assert (results.count_exchanged_sites == 22)
+    assert results.count_exchanged_sites == 22
 
-  hd_sites_analysis  = results.hd_sites_analysis
-  sites_different_xyz = hd_sites_analysis.sites_different_xyz
-  xyz_answer = [0.0712]
-  for item, answer in zip(sites_different_xyz, xyz_answer):
-    assert approx_equal(item[2],answer, 1.e-2)
+    hd_sites_analysis = results.hd_sites_analysis
+    sites_different_xyz = hd_sites_analysis.sites_different_xyz
+    xyz_answer = [0.0712]
+    for item, answer in zip(sites_different_xyz, xyz_answer):
+        assert approx_equal(item[2], answer, 1.0e-2)
 
-  sites_different_b   = hd_sites_analysis.sites_different_b
-  b_answer = [-2]
-  for item, answer in zip(sites_different_b, b_answer):
-    assert approx_equal(item[2],answer, 1.e-1)
+    sites_different_b = hd_sites_analysis.sites_different_b
+    b_answer = [-2]
+    for item, answer in zip(sites_different_b, b_answer):
+        assert approx_equal(item[2], answer, 1.0e-1)
 
-  sites_sum_occ_not_1 = hd_sites_analysis.sites_sum_occ_not_1
-  sum_occ_answer=[0.58, 0.9]
-  for item, answer in zip(sites_sum_occ_not_1, sum_occ_answer):
-    assert approx_equal(item[2], answer, 1.e-2)
+    sites_sum_occ_not_1 = hd_sites_analysis.sites_sum_occ_not_1
+    sum_occ_answer = [0.58, 0.9]
+    for item, answer in zip(sites_sum_occ_not_1, sum_occ_answer):
+        assert approx_equal(item[2], answer, 1.0e-2)
 
-  sites_occ_sum_no_scattering = hd_sites_analysis.sites_occ_sum_no_scattering
-  sum_scatt_answer=[0.4, 0.36]
-  for item, answer in zip(sites_occ_sum_no_scattering, sum_scatt_answer):
-    assert approx_equal(item[3], answer, 1.e-2)
+    sites_occ_sum_no_scattering = hd_sites_analysis.sites_occ_sum_no_scattering
+    sum_scatt_answer = [0.4, 0.36]
+    for item, answer in zip(sites_occ_sum_no_scattering, sum_scatt_answer):
+        assert approx_equal(item[3], answer, 1.0e-2)
 
-  missing_HD_atoms   = results.missing_HD_atoms
+    missing_HD_atoms = results.missing_HD_atoms
 
-  test_output(results)
+    test_output(results)
 
-  # XXX TODO
+    # XXX TODO
+
 
 # ------------------------------------------------------------------------------
 # Input has H and D everywhere (all exchanged)
@@ -781,34 +788,31 @@ def exercise():
 # b) The C beta HB2 and HB3 atoms are swapped
 # ------------------------------------------------------------------------------
 def exercise1():
-  renamed_answer = [('DB2', 'DB3')]
+    renamed_answer = [("DB2", "DB3")]
 
-  # DB2 and DB3 swapped
-  results1 = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str1a)
+    # DB2 and DB3 swapped
+    results1 = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str1a)
 
-  for entry, answer in zip(results1.renamed, renamed_answer):
-    oldname = entry[2].strip()
-    newname = entry[1].strip()
-    assert(oldname == answer[0])
-    assert(newname == answer[1])
-    assert (entry[3] is not None)
+    for entry, answer in zip(results1.renamed, renamed_answer):
+        oldname = entry[2].strip()
+        newname = entry[1].strip()
+        assert oldname == answer[0]
+        assert newname == answer[1]
+        assert entry[3] is not None
 
-  # HB2 and HB3 swapped --> D atoms are renamed
-  results2 = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str1b)
+    # HB2 and HB3 swapped --> D atoms are renamed
+    results2 = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str1b)
 
-  for entry, answer in zip(results1.renamed, renamed_answer):
-    oldname = entry[2].strip()
-    newname = entry[1].strip()
-    assert(oldname == answer[0])
-    assert(newname == answer[1])
-    assert (entry[3] is not None)
+    for entry, answer in zip(results1.renamed, renamed_answer):
+        oldname = entry[2].strip()
+        newname = entry[1].strip()
+        assert oldname == answer[0]
+        assert newname == answer[1]
+        assert entry[3] is not None
 
-  test_output(results1)
-  test_output(results2)
+    test_output(results1)
+    test_output(results2)
+
 
 # ------------------------------------------------------------------------------
 # PROPERTIES H/D SITES
@@ -818,40 +822,40 @@ def exercise1():
 #    create a warning for zero scattering sum
 # ------------------------------------------------------------------------------
 def exercise2():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str2)
-  hd_sites_analysis  = results.hd_sites_analysis
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str2)
+    hd_sites_analysis = results.hd_sites_analysis
 
-  assert (results.count_exchanged_sites == 8)
+    assert results.count_exchanged_sites == 8
 
-  sites_different_xyz = hd_sites_analysis.sites_different_xyz
-  xyz_answer = [
-    ('pdb=" HA ATYR A 139 "', 'pdb=" DA BTYR A 139 "', 0.141),
-    ('pdb=" HH ATYR A 139 "', 'pdb=" DH BTYR A 139 "', 0.704)]
-  for item, answer in zip(sites_different_xyz, xyz_answer):
-    assert approx_equal(item[2],answer[2], 1.e-2)
-    assert (item[3] is not None and item[4] is not None) # make sure xyz exist
-    assert (item[0].strip() == answer[0].strip())
-    assert (item[1].strip() == answer[1].strip())
+    sites_different_xyz = hd_sites_analysis.sites_different_xyz
+    xyz_answer = [
+        ('pdb=" HA ATYR A 139 "', 'pdb=" DA BTYR A 139 "', 0.141),
+        ('pdb=" HH ATYR A 139 "', 'pdb=" DH BTYR A 139 "', 0.704),
+    ]
+    for item, answer in zip(sites_different_xyz, xyz_answer):
+        assert approx_equal(item[2], answer[2], 1.0e-2)
+        assert item[3] is not None and item[4] is not None  # make sure xyz exist
+        assert item[0].strip() == answer[0].strip()
+        assert item[1].strip() == answer[1].strip()
 
-  sites_different_b   = hd_sites_analysis.sites_different_b
-  b_answer = [('pdb=" HD1ATYR A 139 "', 'pdb=" DD1BTYR A 139 "', -2)]
-  for item, answer in zip(sites_different_b, b_answer):
-    assert approx_equal(item[2],answer[2], 1.e-1)
-    assert (item[3] is not None and item[4] is not None) # make sure xyz exist
-    assert (item[0].strip() == answer[0].strip())
-    assert (item[1].strip() == answer[1].strip())
+    sites_different_b = hd_sites_analysis.sites_different_b
+    b_answer = [('pdb=" HD1ATYR A 139 "', 'pdb=" DD1BTYR A 139 "', -2)]
+    for item, answer in zip(sites_different_b, b_answer):
+        assert approx_equal(item[2], answer[2], 1.0e-1)
+        assert item[3] is not None and item[4] is not None  # make sure xyz exist
+        assert item[0].strip() == answer[0].strip()
+        assert item[1].strip() == answer[1].strip()
 
-  sites_occ_sum_no_scattering = hd_sites_analysis.sites_occ_sum_no_scattering
-  sum_scatt_answer=[('pdb=" HH ATYR A 139 "', 'pdb=" DH BTYR A 139 "', 0.6, 0.4)]
-  for item, answer in zip(sites_occ_sum_no_scattering, sum_scatt_answer):
-    assert approx_equal(item[3], answer[3], 1.e-2)
-    assert (item[3] is not None and item[4] is not None) # make sure xyz exist
-    assert (item[0].strip() == answer[0].strip())
-    assert (item[1].strip() == answer[1].strip())
+    sites_occ_sum_no_scattering = hd_sites_analysis.sites_occ_sum_no_scattering
+    sum_scatt_answer = [('pdb=" HH ATYR A 139 "', 'pdb=" DH BTYR A 139 "', 0.6, 0.4)]
+    for item, answer in zip(sites_occ_sum_no_scattering, sum_scatt_answer):
+        assert approx_equal(item[3], answer[3], 1.0e-2)
+        assert item[3] is not None and item[4] is not None  # make sure xyz exist
+        assert item[0].strip() == answer[0].strip()
+        assert item[1].strip() == answer[1].strip()
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # OCCUPANCIES
@@ -861,38 +865,38 @@ def exercise2():
 # d) HD1 has occupancy < 1 (no exchanged partner)
 # ------------------------------------------------------------------------------
 def exercise3():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str3)
-  hd_sites_analysis  = results.hd_sites_analysis
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str3)
+    hd_sites_analysis = results.hd_sites_analysis
 
-  sites_sum_occ_not_1 = hd_sites_analysis.sites_sum_occ_not_1
+    sites_sum_occ_not_1 = hd_sites_analysis.sites_sum_occ_not_1
 
-  sum_occ_answer=[
-    ('pdb=" HD2ATYR A 139 "', 'pdb=" DD2BTYR A 139 "', 0.9),
-    ('pdb=" HE2ATYR A 139 "', 'pdb=" DE2BTYR A 139 "', 1.1)]
-  for item, answer in zip(sites_sum_occ_not_1, sum_occ_answer):
-    assert approx_equal(item[2], answer[2], 1.e-2)
-    assert (item[3] is not None and item[4] is not None) # make sure xyz exist
-    assert (item[0].strip() == answer[0].strip())
-    assert (item[1].strip() == answer[1].strip())
+    sum_occ_answer = [
+        ('pdb=" HD2ATYR A 139 "', 'pdb=" DD2BTYR A 139 "', 0.9),
+        ('pdb=" HE2ATYR A 139 "', 'pdb=" DE2BTYR A 139 "', 1.1),
+    ]
+    for item, answer in zip(sites_sum_occ_not_1, sum_occ_answer):
+        assert approx_equal(item[2], answer[2], 1.0e-2)
+        assert item[3] is not None and item[4] is not None  # make sure xyz exist
+        assert item[0].strip() == answer[0].strip()
+        assert item[1].strip() == answer[1].strip()
 
-  oc = results.overall_counts_hd
-  hd_atoms_with_occ_0 = oc.hd_atoms_with_occ_0
-  single_hd_atoms_occ_lt_1 = oc.single_hd_atoms_occ_lt_1
+    oc = results.overall_counts_hd
+    hd_atoms_with_occ_0 = oc.hd_atoms_with_occ_0
+    single_hd_atoms_occ_lt_1 = oc.single_hd_atoms_occ_lt_1
 
-  occ_0_answer = ['pdb=" HB2ATYR A 139 "']
-  for item, answer in zip(hd_atoms_with_occ_0, occ_0_answer):
-    assert (item[0].strip() == answer.strip())
-    assert (item[1] is not None) # make sure xyz exist
+    occ_0_answer = ['pdb=" HB2ATYR A 139 "']
+    for item, answer in zip(hd_atoms_with_occ_0, occ_0_answer):
+        assert item[0].strip() == answer.strip()
+        assert item[1] is not None  # make sure xyz exist
 
-  occ_lt_1_answer = [('pdb=" HD1 TYR A 139 "', 0.5)]
-  for item, answer in zip(single_hd_atoms_occ_lt_1, occ_lt_1_answer):
-    assert (item[0].strip() == answer[0].strip())
-    assert (item[1] == answer[1])
-    assert (item[2] is not None) # make sure xyz exist
+    occ_lt_1_answer = [('pdb=" HD1 TYR A 139 "', 0.5)]
+    for item, answer in zip(single_hd_atoms_occ_lt_1, occ_lt_1_answer):
+        assert item[0].strip() == answer[0].strip()
+        assert item[1] == answer[1]
+        assert item[2] is not None  # make sure xyz exist
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # MISSING ATOMS
@@ -901,19 +905,18 @@ def exercise3():
 # (takes into account naming ambiguity HB1+HB2 and HB2+HB3)
 # ------------------------------------------------------------------------------
 def exercise4():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str4)
-  missing = results.missing_HD_atoms
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str4)
+    missing = results.missing_HD_atoms
 
-  missing_answer = [('pdbres="TYR A 139 "', ['HE1', 'H', 'HB2'])]
-  for item, answer in zip(missing, missing_answer):
-    assert (item[0].strip() == answer[0].strip())
-    assert (item[2] is not None) # make sure xyz exist
-    for atom, aatom in zip(sorted(item[1]), sorted(answer[1])):
-      assert (atom.strip() == aatom.strip())
+    missing_answer = [('pdbres="TYR A 139 "', ["HE1", "H", "HB2"])]
+    for item, answer in zip(missing, missing_answer):
+        assert item[0].strip() == answer[0].strip()
+        assert item[2] is not None  # make sure xyz exist
+        for atom, aatom in zip(sorted(item[1]), sorted(answer[1])):
+            assert atom.strip() == aatom.strip()
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # MISSING ATOMS
@@ -922,19 +925,18 @@ def exercise4():
 # (takes into account naming ambiguity HB1+HB2 and HB2+HB3)
 # ------------------------------------------------------------------------------
 def exercise5():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str5)
-  missing = results.missing_HD_atoms
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str5)
+    missing = results.missing_HD_atoms
 
-  missing_answer = [('pdbres="TYR A 139 "', ['HE1', 'H', 'HB2'])]
-  for item, answer in zip(missing, missing_answer):
-    assert (item[0].strip() == answer[0].strip())
-    assert (item[2] is not None) # make sure xyz exist
-    for atom, aatom in zip(sorted(item[1]), sorted(answer[1])):
-      assert (atom.strip() == aatom.strip())
+    missing_answer = [('pdbres="TYR A 139 "', ["HE1", "H", "HB2"])]
+    for item, answer in zip(missing, missing_answer):
+        assert item[0].strip() == answer[0].strip()
+        assert item[2] is not None  # make sure xyz exist
+        for atom, aatom in zip(sorted(item[1]), sorted(answer[1])):
+            assert atom.strip() == aatom.strip()
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # MISSING ATOMS
@@ -946,23 +948,22 @@ def exercise5():
 # HB3 --> is present as HB3 in conf A but missing DB3 in conf B
 # ------------------------------------------------------------------------------
 def exercise6():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str6)
-  missing = results.missing_HD_atoms
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str6)
+    missing = results.missing_HD_atoms
 
-  #missing_answer = [('pdbres="TYR A 139 "', ['HE1', 'H', 'HD2', 'HB3'])]
-  # XXX HB3 was never compared because missing only had 3 items. Removed it
-  #  for compatibility with python 3.8
-  missing_answer = [('pdbres="TYR A 139 "', ['HE1', 'H', 'HD2'])]
-  for item, answer in zip(missing, missing_answer):
-    assert (item[0].strip() == answer[0].strip())
-    assert (item[2] is not None) # make sure xyz exist
-    for atom, aatom in zip(sorted(item[1]), sorted(answer[1])):
-      assert (atom.strip() == aatom.strip())
-      assert (atom.strip() != 'CG')
+    # missing_answer = [('pdbres="TYR A 139 "', ['HE1', 'H', 'HD2', 'HB3'])]
+    # XXX HB3 was never compared because missing only had 3 items. Removed it
+    #  for compatibility with python 3.8
+    missing_answer = [('pdbres="TYR A 139 "', ["HE1", "H", "HD2"])]
+    for item, answer in zip(missing, missing_answer):
+        assert item[0].strip() == answer[0].strip()
+        assert item[2] is not None  # make sure xyz exist
+        for atom, aatom in zip(sorted(item[1]), sorted(answer[1])):
+            assert atom.strip() == aatom.strip()
+            assert atom.strip() != "CG"
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # BOND OUTLIERS
@@ -973,28 +974,27 @@ def exercise6():
 # Bond CD2--HD2, observed: 1.209, delta from target: -0.129
 # ------------------------------------------------------------------------------
 def exercise7():
-  print('exercise7')
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str7)
-  outliers_bonds = results.outliers_bonds
+    print("exercise7")
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str7)
+    outliers_bonds = results.outliers_bonds
 
-  outliers_bond_answer = [
-    [' A 139 ATYR  HD2', 1.209, 1.08 ],
-    [' A 139 ATYR  HB2', 0.936, 1.09 ],
-    [' A 139 ATYR  HB3', 0.930, 1.09 ],
-    [' A 139 ATYR  HH ', 0.769, 0.98 ]
-     ]
+    outliers_bond_answer = [
+        [" A 139 ATYR  HD2", 1.209, 1.08],
+        [" A 139 ATYR  HB2", 0.936, 1.09],
+        [" A 139 ATYR  HB3", 0.930, 1.09],
+        [" A 139 ATYR  HH ", 0.769, 0.98],
+    ]
 
-  for item, answer in zip(outliers_bonds, outliers_bond_answer):
-    #print(item)
-    #print(answer)
-    assert (item[0].strip() == answer[0].strip()) # pdb_str
-    assert (item[5] is not None)                  # make sure xyz exist
-    assert approx_equal(item[2],answer[1], 1.e-2) # bond length model
-    assert approx_equal(item[4],answer[2], 1.e-1) # target
+    for item, answer in zip(outliers_bonds, outliers_bond_answer):
+        # print(item)
+        # print(answer)
+        assert item[0].strip() == answer[0].strip()  # pdb_str
+        assert item[5] is not None  # make sure xyz exist
+        assert approx_equal(item[2], answer[1], 1.0e-2)  # bond length model
+        assert approx_equal(item[4], answer[2], 1.0e-1)  # target
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # BOND OUTLIERS
@@ -1005,25 +1005,24 @@ def exercise7():
 # Bond CB--DB2,  observed: 1.002, delta from target:  0.087
 # ------------------------------------------------------------------------------
 def exercise8():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str8)
-  outliers_bonds = results.outliers_bonds
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str8)
+    outliers_bonds = results.outliers_bonds
 
-  outliers_bond_answer = [
-    [' A 139  TYR  DB2', 1.002, 1.09],
-    [' A 139  TYR  DD1', 1.236, 1.08],
-    [' A 139  TYR  DB3', 1.264, 1.09],
-    [' A 139  TYR  DE2', 0.876, 1.08]
-     ]
+    outliers_bond_answer = [
+        [" A 139  TYR  DB2", 1.002, 1.09],
+        [" A 139  TYR  DD1", 1.236, 1.08],
+        [" A 139  TYR  DB3", 1.264, 1.09],
+        [" A 139  TYR  DE2", 0.876, 1.08],
+    ]
 
-  for item, answer in zip(outliers_bonds, outliers_bond_answer):
-    assert (item[0].strip() == answer[0].strip()) # pdb_str
-    assert (item[5] is not None)                  # make sure xyz exist
-    assert approx_equal(item[2],answer[1], 1.e-2) # bond length model
-    assert approx_equal(item[4],answer[2], 1.e-1) # target
+    for item, answer in zip(outliers_bonds, outliers_bond_answer):
+        assert item[0].strip() == answer[0].strip()  # pdb_str
+        assert item[5] is not None  # make sure xyz exist
+        assert approx_equal(item[2], answer[1], 1.0e-2)  # bond length model
+        assert approx_equal(item[4], answer[2], 1.0e-1)  # target
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # BOND OUTLIERS
@@ -1034,25 +1033,24 @@ def exercise8():
 # Bond CB--DB2,  observed: 1.002, delta from target:  0.087
 # ------------------------------------------------------------------------------
 def exercise9():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str9)
-  outliers_bonds = results.outliers_bonds
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str9)
+    outliers_bonds = results.outliers_bonds
 
-  outliers_bond_answer = [
-    [' A 139 ATYR  HE2',  0.986, 1.08],
-    [' A 139 BTYR  DH ',  1.123, 0.98],
-    [' A 139 BTYR  DD1',  1.243, 1.08],
-    [' A 139 ATYR  HB2',  0.893, 1.09],
-     ]
+    outliers_bond_answer = [
+        [" A 139 ATYR  HE2", 0.986, 1.08],
+        [" A 139 BTYR  DH ", 1.123, 0.98],
+        [" A 139 BTYR  DD1", 1.243, 1.08],
+        [" A 139 ATYR  HB2", 0.893, 1.09],
+    ]
 
-  for item, answer in zip(outliers_bonds, outliers_bond_answer):
-    assert (item[0].strip() == answer[0].strip()) # pdb_str
-    assert (item[5] is not None)                  # make sure xyz exist
-    assert approx_equal(item[2],answer[1], 1.e-2) # bond length model
-    assert approx_equal(item[4],answer[2], 1.e-1) # target
+    for item, answer in zip(outliers_bonds, outliers_bond_answer):
+        assert item[0].strip() == answer[0].strip()  # pdb_str
+        assert item[5] is not None  # make sure xyz exist
+        assert approx_equal(item[2], answer[1], 1.0e-2)  # bond length model
+        assert approx_equal(item[4], answer[2], 1.0e-1)  # target
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # ANGLE OUTLIERS
@@ -1061,23 +1059,22 @@ def exercise9():
 # Angle 'CB-CA-DA',observed: 121.11, delta from target: -12.11
 # ------------------------------------------------------------------------------
 def exercise10():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str10)
-  outliers_angles = results.outliers_angles
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str10)
+    outliers_angles = results.outliers_angles
 
-  outliers_angles_answer = [
-    [' A 139 BTYR  DA ',  121.11, 109.0, (10.557, 8.334, 6.899)],
-    [' A 139 ATYR  HA ',  123.01, 110.0, (10.583, 7.992, 7.177)]
-      ]
+    outliers_angles_answer = [
+        [" A 139 BTYR  DA ", 121.11, 109.0, (10.557, 8.334, 6.899)],
+        [" A 139 ATYR  HA ", 123.01, 110.0, (10.583, 7.992, 7.177)],
+    ]
 
-  for item, answer in zip(outliers_angles, outliers_angles_answer):
-    assert (item[0].strip() == answer[0].strip()) # pdb_str
-    assert (item[5] is not None)                  # make sure xyz exist
-    assert approx_equal(item[2],answer[1], 1.e-2) # angle in model
-    assert approx_equal(item[4],answer[2], 1.e-1) # target
+    for item, answer in zip(outliers_angles, outliers_angles_answer):
+        assert item[0].strip() == answer[0].strip()  # pdb_str
+        assert item[5] is not None  # make sure xyz exist
+        assert approx_equal(item[2], answer[1], 1.0e-2)  # angle in model
+        assert approx_equal(item[4], answer[2], 1.0e-1)  # target
 
-  test_output(results)
+    test_output(results)
+
 
 # ------------------------------------------------------------------------------
 # Mismatch between expected restraints and X-H(D) bond lengths
@@ -1085,86 +1082,75 @@ def exercise10():
 # --> xray_distances_used flag should be True
 # ------------------------------------------------------------------------------
 def exercise11():
-  results = get_results_from_validate_H(
-    neutron_distances = True,
-    pdb_str = pdb_str11)
-  bond_results = results.bond_results
+    results = get_results_from_validate_H(neutron_distances=True, pdb_str=pdb_str11)
+    bond_results = results.bond_results
 
-  assert(bond_results.xray_distances_used == True)
+    assert bond_results.xray_distances_used == True
 
-  test_output(results)
+    test_output(results)
 
 
 def exercise12():
-  '''
-  Make sure that RNA H atoms are correctly identified as missing or present
-  These atoms have names with '*' in libraries, but most recent used is "'"
-  for example: H5*2 is in the database and in the file is H5''
-  (issue raised by Jermaine Jenkins July 2019)
-  '''
-  results = get_results_from_validate_H(
-    neutron_distances = False,
-    pdb_str = pdb_str12a)
-  missing = results.missing_HD_atoms
-  assert (len(missing)==0)
+    """
+    Make sure that RNA H atoms are correctly identified as missing or present
+    These atoms have names with '*' in libraries, but most recent used is "'"
+    for example: H5*2 is in the database and in the file is H5''
+    (issue raised by Jermaine Jenkins July 2019)
+    """
+    results = get_results_from_validate_H(neutron_distances=False, pdb_str=pdb_str12a)
+    missing = results.missing_HD_atoms
+    assert len(missing) == 0
 
-  test_output(results)
+    test_output(results)
 
-  results = get_results_from_validate_H(
-    neutron_distances = False,
-    pdb_str = pdb_str12b)
-  missing = results.missing_HD_atoms
-  mt = missing[0]
-  atom_names = mt[1]
-  assert ("H5''" in atom_names and "H5'" in atom_names)
-  assert (len(atom_names) == 2)
+    results = get_results_from_validate_H(neutron_distances=False, pdb_str=pdb_str12b)
+    missing = results.missing_HD_atoms
+    mt = missing[0]
+    atom_names = mt[1]
+    assert "H5''" in atom_names and "H5'" in atom_names
+    assert len(atom_names) == 2
 
 
 def exercise_hd_state():
-  '''
-  CHECK HD STATE (hd_state)
-  This is not a result but used internally to decide if H/D site analysis is
-  necessary or not
-  '''
-  pdb_inp = iotbx.pdb.input(lines=pdb_str4.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp,
-      log = null_out())
-  c = validate_H(model = model,
-                 use_neutron_distances = True)
-  assert (c.get_hd_state() == 'all_h')
+    """
+    CHECK HD STATE (hd_state)
+    This is not a result but used internally to decide if H/D site analysis is
+    necessary or not
+    """
+    pdb_inp = iotbx.pdb.input(lines=pdb_str4.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    c = validate_H(model=model, use_neutron_distances=True)
+    assert c.get_hd_state() == "all_h"
 
-  pdb_inp = iotbx.pdb.input(lines=pdb_str5.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  c = validate_H(model = model,
-                 use_neutron_distances = True)
-  assert (c.get_hd_state() == 'all_d')
+    pdb_inp = iotbx.pdb.input(lines=pdb_str5.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    c = validate_H(model=model, use_neutron_distances=True)
+    assert c.get_hd_state() == "all_d"
 
-  pdb_inp = iotbx.pdb.input(lines=pdb_str3.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  c = validate_H(model = model,
-                 use_neutron_distances = True)
-  assert (c.get_hd_state() == 'h_and_d')
+    pdb_inp = iotbx.pdb.input(lines=pdb_str3.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    c = validate_H(model=model, use_neutron_distances=True)
+    assert c.get_hd_state() == "h_and_d"
+
 
 def run():
-  exercise()
-  exercise1()
-  exercise2()
-  exercise3()
-  exercise4()
-  exercise5()
-  exercise6()
-  exercise7()
-  exercise8()
-  exercise9()
-  exercise10()
-  exercise11()
-  exercise12()
-  exercise_hd_state()
+    exercise()
+    exercise1()
+    exercise2()
+    exercise3()
+    exercise4()
+    exercise5()
+    exercise6()
+    exercise7()
+    exercise8()
+    exercise9()
+    exercise10()
+    exercise11()
+    exercise12()
+    exercise_hd_state()
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time: %8.3f" % (time.time() - t0))

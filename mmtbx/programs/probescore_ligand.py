@@ -9,9 +9,10 @@ from libtbx.utils import Sorry
 from mmtbx.validation.molprobity import probescore_ligand
 import os
 
+
 class Program(ProgramTemplate):
 
-  description = '''
+    description = """
 molprobity.probescore_ligand: wrapper for probescore analysis of ligands
   Allows residue selections using Phenix atom selection syntax
     (see https://www.phenix-online.org/documentation/reference/atom_selections.html)
@@ -39,11 +40,11 @@ Usage examples:
     molprobity.probescore_ligand model.pdb "chain A resseq 350" "chain A resseq 352" output=oneline
   Select single multi-residue ligand, like carbohydrate:
     molprobity.probescore_ligand model.pdb "chain A resseq 350:355"
-  '''
+  """
 
-  datatypes = ['model', 'phil']
+    datatypes = ["model", "phil"]
 
-  master_phil_str = """
+    master_phil_str = """
   probescore {
     output = *digest raw oneline
       .type = choice
@@ -63,31 +64,39 @@ Usage examples:
   }
 """
 
-  # ---------------------------------------------------------------------------
-  def validate(self):
-    print('Validating inputs', file=self.logger)
-    self.data_manager.has_models(raise_sorry=True)
-    if (self.params.atom_selection_program.inselection is None or
-        len(self.params.atom_selection_program.inselection) == 0):
-      raise Sorry("Need selections")
+    # ---------------------------------------------------------------------------
+    def validate(self):
+        print("Validating inputs", file=self.logger)
+        self.data_manager.has_models(raise_sorry=True)
+        if (
+            self.params.atom_selection_program.inselection is None
+            or len(self.params.atom_selection_program.inselection) == 0
+        ):
+            raise Sorry("Need selections")
 
-  # ---------------------------------------------------------------------------
-  def run(self):
-    filename = os.path.basename(self.data_manager.get_model_names()[0])
-    model = self.data_manager.get_model()
-    atoms = model.get_atoms()
-    all_bsel = flex.bool(atoms.size(), False)
-    selection_string_list = []
-    for selection_string in self.params.atom_selection_program.inselection:
-      selection_string_list.append(selection_string)
-    probescore = probescore_ligand.probescore(model, selection_string_list, self.params.probescore.has_h, nuclear=False, out=self.logger)
-    if self.params.probescore.output == "digest":
-      probescore.print_as_digest()
-    elif self.params.probescore.output == "raw":
-      probescore.print_as_raw()
-    elif self.params.probescore.output == "oneline":
-      probescore.print_as_oneline(filename=filename)
+    # ---------------------------------------------------------------------------
+    def run(self):
+        filename = os.path.basename(self.data_manager.get_model_names()[0])
+        model = self.data_manager.get_model()
+        atoms = model.get_atoms()
+        all_bsel = flex.bool(atoms.size(), False)
+        selection_string_list = []
+        for selection_string in self.params.atom_selection_program.inselection:
+            selection_string_list.append(selection_string)
+        probescore = probescore_ligand.probescore(
+            model,
+            selection_string_list,
+            self.params.probescore.has_h,
+            nuclear=False,
+            out=self.logger,
+        )
+        if self.params.probescore.output == "digest":
+            probescore.print_as_digest()
+        elif self.params.probescore.output == "raw":
+            probescore.print_as_raw()
+        elif self.params.probescore.output == "oneline":
+            probescore.print_as_oneline(filename=filename)
 
-  # ---------------------------------------------------------------------------
-  def get_results(self):
-    return None
+    # ---------------------------------------------------------------------------
+    def get_results(self):
+        return None

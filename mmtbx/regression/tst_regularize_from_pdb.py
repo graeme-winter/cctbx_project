@@ -2,13 +2,14 @@ from __future__ import absolute_import, division, print_function
 
 from libtbx.utils import null_out
 from six.moves import cStringIO as StringIO
-from mmtbx.secondary_structure.regularize_from_pdb import \
-   replace_with_segments_from_pdb
+from mmtbx.secondary_structure.regularize_from_pdb import replace_with_segments_from_pdb
+
 
 def remove_blank(text):
-  return text.replace(" ","").replace("\n","")
+    return text.replace(" ", "").replace("\n", "")
 
-text="""
+
+text = """
 ATOM      1  CA  GLY U 111       6.802  13.378  -2.270  1.00 52.86           C
 ATOM      2  CA  GLY U 112       4.244  15.964  -0.444  1.00 52.86           C
 ATOM      3  CA  GLY U 113       1.213  15.704  -1.022  1.00 52.86           C
@@ -37,58 +38,64 @@ ATOM     25  CA  GLY U 135     -10.306  12.656  -3.983  1.00 52.86           C
 TER
 END
 """
-def tst_01():
-  print("Regularizing allowing insertions...", end=' ')
-  import iotbx.pdb
-  from cctbx.array_family import flex
-  hierarchy=iotbx.pdb.input(source_info='text',
-       lines=flex.split_lines(text)).construct_hierarchy()
-  r=replace_with_segments_from_pdb(args=[],pdb_hierarchy=hierarchy,
-    out=null_out())
 
-  expected_text="""
+
+def tst_01():
+    print("Regularizing allowing insertions...", end=" ")
+    import iotbx.pdb
+    from cctbx.array_family import flex
+
+    hierarchy = iotbx.pdb.input(
+        source_info="text", lines=flex.split_lines(text)
+    ).construct_hierarchy()
+    r = replace_with_segments_from_pdb(args=[], pdb_hierarchy=hierarchy, out=null_out())
+
+    expected_text = """
 ID: 1 ChainID: 'U'  RMSD:  1.31 A  (n=22) Junction RMSD:  0.68 A (n=7)
 Complete: True  Insertions/deletions: True
 Input model start: 111  end: 135  length: 25
 Replacement start: 111  end: 136  length: 26
 """
-  f=StringIO()
-  for rss in r.model_replacement_segment_summaries:
-    rss.show_summary(out=f)
+    f = StringIO()
+    for rss in r.model_replacement_segment_summaries:
+        rss.show_summary(out=f)
 
-  found_text=f.getvalue()
-  if remove_blank(found_text)!=remove_blank(expected_text):
-    print("Expected: \n%s \nFound: \n%s" %(expected_text,found_text))
-    raise AssertionError("FAILED")
-  print("OK")
+    found_text = f.getvalue()
+    if remove_blank(found_text) != remove_blank(expected_text):
+        print("Expected: \n%s \nFound: \n%s" % (expected_text, found_text))
+        raise AssertionError("FAILED")
+    print("OK")
+
 
 def tst_02():
-  print("Regularizing not allowing insertions...", end=' ')
-  import iotbx.pdb
-  from cctbx.array_family import flex
-  hierarchy=iotbx.pdb.input(source_info='text',
-       lines=flex.split_lines(text)).construct_hierarchy()
-  r=replace_with_segments_from_pdb(args=['alpha.allow_insertions=false'],
-   pdb_hierarchy=hierarchy,
-    out=null_out())
+    print("Regularizing not allowing insertions...", end=" ")
+    import iotbx.pdb
+    from cctbx.array_family import flex
 
-  expected_text="""
+    hierarchy = iotbx.pdb.input(
+        source_info="text", lines=flex.split_lines(text)
+    ).construct_hierarchy()
+    r = replace_with_segments_from_pdb(
+        args=["alpha.allow_insertions=false"], pdb_hierarchy=hierarchy, out=null_out()
+    )
+
+    expected_text = """
 ID: 1 ChainID: 'U'  RMSD:  1.28 A  (n=25) Junction RMSD:  0.68 A (n=8)
 Complete: True  Insertions/deletions: False
 Input model start: 111  end: 135  length: 25
 Replacement start: 111  end: 135  length: 25
 """
-  f=StringIO()
-  for rss in r.model_replacement_segment_summaries:
-    rss.show_summary(out=f)
+    f = StringIO()
+    for rss in r.model_replacement_segment_summaries:
+        rss.show_summary(out=f)
 
-  found_text=f.getvalue()
-  if remove_blank(found_text)!=remove_blank(expected_text):
-    print("Expected: \n%s \nFound: \n%s" %(expected_text,found_text))
-    raise AssertionError("FAILED")
-  print("OK")
+    found_text = f.getvalue()
+    if remove_blank(found_text) != remove_blank(expected_text):
+        print("Expected: \n%s \nFound: \n%s" % (expected_text, found_text))
+        raise AssertionError("FAILED")
+    print("OK")
 
 
-if __name__=="__main__":
-  tst_01()
-  tst_02()
+if __name__ == "__main__":
+    tst_01()
+    tst_02()

@@ -3,7 +3,7 @@ import iotbx.ncs
 import iotbx.ncs as ncs
 from iotbx import pdb
 
-pdb_str_1="""\
+pdb_str_1 = """\
 CRYST1  421.520  421.520  421.520  90.00  90.00  90.00 P 1
 SCALE1      0.002372  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.002372  0.000000        0.00000
@@ -130,19 +130,21 @@ TER
 END
 """
 
-def exercise_00():
-  """ Verify that ligand is properly included by default """
-  pdb_inp = iotbx.pdb.input(lines=pdb_str_1,source_info=None)
-  hierarchy = pdb_inp.construct_hierarchy()
-  asc = hierarchy.atom_selection_cache()
-  ncs_inp = iotbx.ncs.input(hierarchy = hierarchy)
-  ncs_groups = ncs_inp.get_ncs_restraints_group_list()
-  assert len(ncs_groups) == 1
-  assert len(ncs_groups[0].copies) == 1, len(ncs_groups[0].copies)
-  # print list(ncs_groups[0].master_iselection)
-  assert ncs_groups[0].master_iselection.size() == 58 # all chain
-  # print hierarchy.select(asc.selection("chain A")).atoms_size()
-  assert ncs_groups[0].copies[0].iselection.size() == 58 # all chain
 
-if(__name__=='__main__'):
-  exercise_00()
+def exercise_00():
+    """Verify that ligand is properly included by default"""
+    pdb_inp = iotbx.pdb.input(lines=pdb_str_1, source_info=None)
+    hierarchy = pdb_inp.construct_hierarchy()
+    asc = hierarchy.atom_selection_cache()
+    ncs_inp = iotbx.ncs.input(hierarchy=hierarchy)
+    ncs_groups = ncs_inp.get_ncs_restraints_group_list()
+    assert len(ncs_groups) == 1
+    assert len(ncs_groups[0].copies) == 1, len(ncs_groups[0].copies)
+    # print list(ncs_groups[0].master_iselection)
+    assert ncs_groups[0].master_iselection.size() == 58  # all chain
+    # print hierarchy.select(asc.selection("chain A")).atoms_size()
+    assert ncs_groups[0].copies[0].iselection.size() == 58  # all chain
+
+
+if __name__ == "__main__":
+    exercise_00()

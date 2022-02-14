@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from libtbx.test_utils import approx_equal, show_diff
 import libtbx.load_env
@@ -6,35 +5,49 @@ from libtbx.easy_pickle import loads, dumps
 from six.moves import cStringIO as StringIO
 import os.path
 
+
 def exercise_cbetadev():
-  regression_pdb = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/pdb1jxt.ent",
-    test=os.path.isfile)
-  if (regression_pdb is None):
-    print("Skipping exercise_cbetadev(): input pdb (pdb1jxt.ent) not available")
-    return
-  from mmtbx.validation import cbetadev
-  from iotbx import file_reader
-  pdb_in = file_reader.any_file(file_name=regression_pdb)
-  hierarchy = pdb_in.file_object.hierarchy
-  validation = cbetadev.cbetadev(
-    pdb_hierarchy=hierarchy,
-    outliers_only=True)
-  assert approx_equal(validation.get_weighted_outlier_percent(), 4.40420846587)
-  for unpickle in [False, True] :
-    if unpickle :
-      validation = loads(dumps(validation))
-    assert (validation.n_outliers == len(validation.results) == 6)
-    assert ([ cb.id_str() for cb in validation.results ] ==
-      [' A   7 AILE', ' A   8 BVAL', ' A   8 CVAL', ' A  30 BTHR',
-       ' A  39 BTHR', ' A  43 BASP'])
-    assert approx_equal([ cb.deviation for cb in validation.results ],
-      [0.25977096732623106, 0.2577218834868609, 0.6405578498280606,
-       0.81238828498566, 0.9239566035292618, 0.5001892640352836])
-    out = StringIO()
-    validation.show_old_output(out=out, verbose=True)
-    assert not show_diff(out.getvalue(),
-"""\
+    regression_pdb = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/pdb1jxt.ent", test=os.path.isfile
+    )
+    if regression_pdb is None:
+        print("Skipping exercise_cbetadev(): input pdb (pdb1jxt.ent) not available")
+        return
+    from mmtbx.validation import cbetadev
+    from iotbx import file_reader
+
+    pdb_in = file_reader.any_file(file_name=regression_pdb)
+    hierarchy = pdb_in.file_object.hierarchy
+    validation = cbetadev.cbetadev(pdb_hierarchy=hierarchy, outliers_only=True)
+    assert approx_equal(validation.get_weighted_outlier_percent(), 4.40420846587)
+    for unpickle in [False, True]:
+        if unpickle:
+            validation = loads(dumps(validation))
+        assert validation.n_outliers == len(validation.results) == 6
+        assert [cb.id_str() for cb in validation.results] == [
+            " A   7 AILE",
+            " A   8 BVAL",
+            " A   8 CVAL",
+            " A  30 BTHR",
+            " A  39 BTHR",
+            " A  43 BASP",
+        ]
+        assert approx_equal(
+            [cb.deviation for cb in validation.results],
+            [
+                0.25977096732623106,
+                0.2577218834868609,
+                0.6405578498280606,
+                0.81238828498566,
+                0.9239566035292618,
+                0.5001892640352836,
+            ],
+        )
+        out = StringIO()
+        validation.show_old_output(out=out, verbose=True)
+        assert not show_diff(
+            out.getvalue(),
+            """\
 pdb:alt:res:chainID:resnum:dev:dihedralNABB:Occ:ALT:
 pdb :A:ile: A:   7 :  0.260: -46.47:   0.45:A:
 pdb :B:val: A:   8 :  0.258:  80.92:   0.30:B:
@@ -43,22 +56,23 @@ pdb :B:thr: A:  30 :  0.812: -76.98:   0.30:B:
 pdb :B:thr: A:  39 :  0.924:  56.41:   0.30:B:
 pdb :B:asp: A:  43 :  0.500:   7.56:   0.25:B:
 SUMMARY: 6 C-beta deviations >= 0.25 Angstrom (Goal: 0)
-""")
+""",
+        )
 
-  # Now with all residues
-  validation = cbetadev.cbetadev(
-    pdb_hierarchy=hierarchy,
-    outliers_only=False)
-  for unpickle in [False, True] :
-    if unpickle :
-      validation = loads(dumps(validation))
-    for outlier in validation.results :
-      assert (len(outlier.xyz) == 3)
-    assert (validation.n_outliers == 6)
-    assert (len(validation.results) == 51)
-    out = StringIO()
-    validation.show_old_output(out=out, verbose=True)
-    assert not show_diff(out.getvalue(), """\
+    # Now with all residues
+    validation = cbetadev.cbetadev(pdb_hierarchy=hierarchy, outliers_only=False)
+    for unpickle in [False, True]:
+        if unpickle:
+            validation = loads(dumps(validation))
+        for outlier in validation.results:
+            assert len(outlier.xyz) == 3
+        assert validation.n_outliers == 6
+        assert len(validation.results) == 51
+        out = StringIO()
+        validation.show_old_output(out=out, verbose=True)
+        assert not show_diff(
+            out.getvalue(),
+            """\
 pdb:alt:res:chainID:resnum:dev:dihedralNABB:Occ:ALT:
 pdb : :thr: A:   1 :  0.102:  11.27:   1.00: :
 pdb :A:thr: A:   2 :  0.022: -49.31:   0.67:A:
@@ -112,12 +126,16 @@ pdb : :tyr: A:  44 :  0.085:-143.63:   1.00: :
 pdb : :ala: A:  45 :  0.055:  33.32:   1.00: :
 pdb : :asn: A:  46 :  0.066: -50.46:   1.00: :
 SUMMARY: 6 C-beta deviations >= 0.25 Angstrom (Goal: 0)
-""")
+""",
+        )
 
-  # Auxilary function: extract_atoms_from_residue_group
-  from mmtbx.validation.cbetadev import extract_atoms_from_residue_group
-  from iotbx import pdb
-  pdb_1 = pdb.input(source_info=None, lines="""\
+    # Auxilary function: extract_atoms_from_residue_group
+    from mmtbx.validation.cbetadev import extract_atoms_from_residue_group
+    from iotbx import pdb
+
+    pdb_1 = pdb.input(
+        source_info=None,
+        lines="""\
 ATOM   1185  N  ASER A 146      24.734  37.097  16.303  0.50 16.64           N
 ATOM   1186  N  BSER A 146      24.758  37.100  16.337  0.50 16.79           N
 ATOM   1187  CA ASER A 146      24.173  37.500  17.591  0.50 16.63           C
@@ -129,8 +147,11 @@ ATOM   1192  O  BSER A 146      22.091  36.741  16.779  0.50 15.17           O
 ATOM   1193  CB ASER A 146      24.118  39.035  17.649  0.50 16.93           C
 ATOM   1194  CB BSER A 146      24.321  38.940  17.904  0.50 17.48           C
 ATOM   1195  OG ASER A 146      23.183  39.485  18.611  0.50 17.56           O
-ATOM   1196  OG BSER A 146      23.468  39.645  17.028  0.50 18.32           O  """).construct_hierarchy()
-  pdb_2 = pdb.input(source_info=None, lines="""\
+ATOM   1196  OG BSER A 146      23.468  39.645  17.028  0.50 18.32           O  """,
+    ).construct_hierarchy()
+    pdb_2 = pdb.input(
+        source_info=None,
+        lines="""\
 ATOM   1185  N   SER A 146      24.734  37.097  16.303  0.50 16.64           N
 ATOM   1187  CA  SER A 146      24.173  37.500  17.591  0.50 16.63           C
 ATOM   1189  C   SER A 146      22.765  36.938  17.768  0.50 15.77           C
@@ -138,28 +159,39 @@ ATOM   1191  O   SER A 146      22.052  36.688  16.781  0.50 14.91           O
 ATOM   1193  CB ASER A 146      24.118  39.035  17.649  0.50 16.93           C
 ATOM   1194  CB BSER A 146      24.321  38.940  17.904  0.50 17.48           C
 ATOM   1195  OG ASER A 146      23.183  39.485  18.611  0.50 17.56           O
-ATOM   1196  OG BSER A 146      23.468  39.645  17.028  0.50 18.32           O  """).construct_hierarchy()
-  pdb_3 = pdb.input(source_info=None, lines="""\
+ATOM   1196  OG BSER A 146      23.468  39.645  17.028  0.50 18.32           O  """,
+    ).construct_hierarchy()
+    pdb_3 = pdb.input(
+        source_info=None,
+        lines="""\
 ATOM   1185  N   SER A 146      24.734  37.097  16.303  0.50 16.64           N
 ATOM   1187  CA  SER A 146      24.173  37.500  17.591  0.50 16.63           C
 ATOM   1189  C   SER A 146      22.765  36.938  17.768  0.50 15.77           C
 ATOM   1191  O   SER A 146      22.052  36.688  16.781  0.50 14.91           O
 ATOM   1193  CB  SER A 146      24.118  39.035  17.649  0.50 16.93           C
 ATOM   1195  OG ASER A 146      23.183  39.485  18.611  0.50 17.56           O
-ATOM   1196  OG BSER A 146      23.468  39.645  17.028  0.50 18.32           O  """).construct_hierarchy()
-  rg1 = pdb_1.only_model().only_chain().only_residue_group()
-  rg2 = pdb_2.only_model().only_chain().only_residue_group()
-  rg3 = pdb_3.only_model().only_chain().only_residue_group()
-  all_relevant_atoms_1 = extract_atoms_from_residue_group(rg1)
-  all_relevant_atoms_2 = extract_atoms_from_residue_group(rg2)
-  all_relevant_atoms_3 = extract_atoms_from_residue_group(rg3)
-  keys_1 = [ sorted([ k for k in a.keys() ]) for a in all_relevant_atoms_1 ]
-  keys_2 = [ sorted([ k for k in a.keys() ]) for a in all_relevant_atoms_2 ]
-  keys_3 = [ sorted([ k for k in a.keys() ]) for a in all_relevant_atoms_3 ]
-  assert keys_1 == [[' C  ',' CA ',' CB ',' N  '],[' C  ',' CA ',' CB ',' N  ']]
-  assert keys_2 == [[' C  ',' CA ',' CB ',' N  '],[' C  ',' CA ',' CB ',' N  ']]
-  assert keys_3 == [[' C  ', ' CA ', ' CB ', ' N  ']]
-  print("OK")
+ATOM   1196  OG BSER A 146      23.468  39.645  17.028  0.50 18.32           O  """,
+    ).construct_hierarchy()
+    rg1 = pdb_1.only_model().only_chain().only_residue_group()
+    rg2 = pdb_2.only_model().only_chain().only_residue_group()
+    rg3 = pdb_3.only_model().only_chain().only_residue_group()
+    all_relevant_atoms_1 = extract_atoms_from_residue_group(rg1)
+    all_relevant_atoms_2 = extract_atoms_from_residue_group(rg2)
+    all_relevant_atoms_3 = extract_atoms_from_residue_group(rg3)
+    keys_1 = [sorted([k for k in a.keys()]) for a in all_relevant_atoms_1]
+    keys_2 = [sorted([k for k in a.keys()]) for a in all_relevant_atoms_2]
+    keys_3 = [sorted([k for k in a.keys()]) for a in all_relevant_atoms_3]
+    assert keys_1 == [
+        [" C  ", " CA ", " CB ", " N  "],
+        [" C  ", " CA ", " CB ", " N  "],
+    ]
+    assert keys_2 == [
+        [" C  ", " CA ", " CB ", " N  "],
+        [" C  ", " CA ", " CB ", " N  "],
+    ]
+    assert keys_3 == [[" C  ", " CA ", " CB ", " N  "]]
+    print("OK")
 
-if (__name__ == "__main__"):
-  exercise_cbetadev()
+
+if __name__ == "__main__":
+    exercise_cbetadev()

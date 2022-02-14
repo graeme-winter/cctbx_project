@@ -231,133 +231,156 @@ HETATM   64  O   HOH A  11      11.808   4.179   9.970  1.00 23.99           O
 HETATM   65  O   HOH A  12      13.605   1.327   9.198  1.00 26.17           O
 """
 
+
 def exercise_adopting_coord_restraints():
-  inp_1 = iotbx.pdb.input(lines=pdb_str_h, source_info=None)
-  h_model = mmtbx.model.manager(model_input = inp_1)
-  h_model.process(make_restraints=True)
+    inp_1 = iotbx.pdb.input(lines=pdb_str_h, source_info=None)
+    h_model = mmtbx.model.manager(model_input=inp_1)
+    h_model.process(make_restraints=True)
 
-  inp_2 = iotbx.pdb.input(lines=pdb_str, source_info=None)
-  model = mmtbx.model.manager(model_input = inp_2)
-  model.process(make_restraints=True)
+    inp_2 = iotbx.pdb.input(lines=pdb_str, source_info=None)
+    model = mmtbx.model.manager(model_input=inp_2)
+    model.process(make_restraints=True)
 
-  # case 1: big model adopting small model.
-  h_model.set_reference_coordinate_restraints(ref_model = model)
-  # print h_model.restraints_as_geo()
-  rcp = h_model.get_restraints_manager().geometry.reference_coordinate_proxies
-  assert len(rcp) == 59
-  # Note iseqs, hydrogens are skipped
-  answer = [ [(0,) , (-9.009, 4.612, 6.102), 25.0],
-             [(1,) , (-9.052, 4.207, 4.651), 25.0],
-             [(2,) , (-8.015, 3.14,  4.419), 25.0],
-             [(3,) , (-7.523, 2.521, 5.381), 25.0],
-             [(9,) , (-7.656, 2.923, 3.155), 25.0],
-             [(10,), (-6.522, 2.038, 2.831), 25.0]]
-  # for p in rcp:
-  #   print p.i_seqs, p.ref_sites, p.weight
+    # case 1: big model adopting small model.
+    h_model.set_reference_coordinate_restraints(ref_model=model)
+    # print h_model.restraints_as_geo()
+    rcp = h_model.get_restraints_manager().geometry.reference_coordinate_proxies
+    assert len(rcp) == 59
+    # Note iseqs, hydrogens are skipped
+    answer = [
+        [(0,), (-9.009, 4.612, 6.102), 25.0],
+        [(1,), (-9.052, 4.207, 4.651), 25.0],
+        [(2,), (-8.015, 3.14, 4.419), 25.0],
+        [(3,), (-7.523, 2.521, 5.381), 25.0],
+        [(9,), (-7.656, 2.923, 3.155), 25.0],
+        [(10,), (-6.522, 2.038, 2.831), 25.0],
+    ]
+    # for p in rcp:
+    #   print p.i_seqs, p.ref_sites, p.weight
 
-  for i in range(6):
-    assert rcp[i].i_seqs == answer[i][0], "%s %s" % (rcp[i].i_seqs, answer[i][0])
-    assert approx_equal(rcp[i].ref_sites, answer[i][1])
-    assert approx_equal(rcp[i].weight, answer[i][2]), "%s, %s" % (rcp[i].weight, answer[i][2])
+    for i in range(6):
+        assert rcp[i].i_seqs == answer[i][0], "%s %s" % (rcp[i].i_seqs, answer[i][0])
+        assert approx_equal(rcp[i].ref_sites, answer[i][1])
+        assert approx_equal(rcp[i].weight, answer[i][2]), "%s, %s" % (
+            rcp[i].weight,
+            answer[i][2],
+        )
 
-  # case 2: small model adopting big model.
-  model.set_reference_coordinate_restraints(ref_model=h_model)
-  rcp = model.get_restraints_manager().geometry.reference_coordinate_proxies
-  assert len(rcp) == 59
-  # Note iseqs, hydrogens are skipped
-  answer = [ [(0,), (-9.009, 4.612, 6.102), 25.0],
-             [(1,), (-9.052, 4.207, 4.651), 25.0],
-             [(2,), (-8.015, 3.14,  4.419), 25.0],
-             [(3,), (-7.523, 2.521, 5.381), 25.0],
-             [(4,), (-7.656, 2.923, 3.155), 25.0],
-             [(5,),  (-6.522, 2.038, 2.831), 25.0]]
-  for i in range(6):
-    assert rcp[i].i_seqs == answer[i][0]
-    assert approx_equal(rcp[i].ref_sites, answer[i][1])
-    assert approx_equal(rcp[i].weight, answer[i][2]), "%s, %s" % (rcp[i].weight, answer[i][2])
+    # case 2: small model adopting big model.
+    model.set_reference_coordinate_restraints(ref_model=h_model)
+    rcp = model.get_restraints_manager().geometry.reference_coordinate_proxies
+    assert len(rcp) == 59
+    # Note iseqs, hydrogens are skipped
+    answer = [
+        [(0,), (-9.009, 4.612, 6.102), 25.0],
+        [(1,), (-9.052, 4.207, 4.651), 25.0],
+        [(2,), (-8.015, 3.14, 4.419), 25.0],
+        [(3,), (-7.523, 2.521, 5.381), 25.0],
+        [(4,), (-7.656, 2.923, 3.155), 25.0],
+        [(5,), (-6.522, 2.038, 2.831), 25.0],
+    ]
+    for i in range(6):
+        assert rcp[i].i_seqs == answer[i][0]
+        assert approx_equal(rcp[i].ref_sites, answer[i][1])
+        assert approx_equal(rcp[i].weight, answer[i][2]), "%s, %s" % (
+            rcp[i].weight,
+            answer[i][2],
+        )
+
 
 def exercise_adopting_coord_restraints_water():
-  inp_1 = iotbx.pdb.input(lines=pdb_str_base, source_info=None)
-  nowat_model = mmtbx.model.manager(model_input = inp_1)
-  nowat_model.process(make_restraints=True)
-  # Changing coordinates a little to make sure right ones are used for
-  # reference restraints
-  for a in nowat_model.get_hierarchy().atoms():
-    a.xyz = (a.xyz[0]+1, a.xyz[1], a.xyz[2])
-  nowat_model.set_sites_cart_from_hierarchy()
+    inp_1 = iotbx.pdb.input(lines=pdb_str_base, source_info=None)
+    nowat_model = mmtbx.model.manager(model_input=inp_1)
+    nowat_model.process(make_restraints=True)
+    # Changing coordinates a little to make sure right ones are used for
+    # reference restraints
+    for a in nowat_model.get_hierarchy().atoms():
+        a.xyz = (a.xyz[0] + 1, a.xyz[1], a.xyz[2])
+    nowat_model.set_sites_cart_from_hierarchy()
 
-  inp_2 = iotbx.pdb.input(lines=pdb_str_base+pdb_str_water, source_info=None)
-  wat_model = mmtbx.model.manager(model_input = inp_2)
-  wat_model.process(make_restraints=True)
-  nowat_model.set_reference_coordinate_restraints(
-      ref_model = wat_model)
-  rcp = nowat_model.get_restraints_manager().geometry.reference_coordinate_proxies
-  assert len(rcp) == 20, len(rcp)
-  answer = [[(0,) , (-9.009, 4.612, 6.102), 25.0],
-            [(1,) , (-9.052, 4.207, 4.651), 25.0],
-            [(2,) , (-8.015, 3.14,  4.419), 25.0],
-            [(3,) , (-7.523, 2.521, 5.381), 25.0],
-            [(4,) , (-7.656, 2.923, 3.155), 25.0],
-            [(5,) , (-6.522, 2.038, 2.831), 25.0],
-            [(6,) , (-5.241, 2.537, 3.427), 25.0],
-            [(7,) , (-4.978, 3.742, 3.426), 25.0],
-            [(8,) , (-6.346, 1.881, 1.341), 25.0],
-            [(9,) , (-7.584, 1.342, 0.692), 25.0],
-            [(10,), (-8.025, 0.227, 1.016), 25.0],
-            [(11,), (-8.204, 2.155, -0.169), 25.0],
-            [(12,), (-4.438, 1.59,  3.905), 25.0],
-            [(13,), (-3.193, 1.904, 4.589), 25.0],
-            [(14,), (-1.955, 1.332, 3.895), 25.0],
-            [(15,), (-1.872, 0.119, 3.648), 25.0],
-            [(16,), (-3.259, 1.378, 6.042), 25.0],
-            [(17,), (-2.006, 1.739, 6.861), 25.0],
-            [(18,), (-1.702, 2.925, 7.072), 25.0],
-            [(19,), (-1.271, 0.715, 7.306), 25.0]]
-  for i in range(20):
-    assert rcp[i].i_seqs == answer[i][0]
-    assert approx_equal(rcp[i].ref_sites, answer[i][1])
-    assert approx_equal(rcp[i].weight, answer[i][2]), "%s, %s" % (rcp[i].weight, answer[i][2])
+    inp_2 = iotbx.pdb.input(lines=pdb_str_base + pdb_str_water, source_info=None)
+    wat_model = mmtbx.model.manager(model_input=inp_2)
+    wat_model.process(make_restraints=True)
+    nowat_model.set_reference_coordinate_restraints(ref_model=wat_model)
+    rcp = nowat_model.get_restraints_manager().geometry.reference_coordinate_proxies
+    assert len(rcp) == 20, len(rcp)
+    answer = [
+        [(0,), (-9.009, 4.612, 6.102), 25.0],
+        [(1,), (-9.052, 4.207, 4.651), 25.0],
+        [(2,), (-8.015, 3.14, 4.419), 25.0],
+        [(3,), (-7.523, 2.521, 5.381), 25.0],
+        [(4,), (-7.656, 2.923, 3.155), 25.0],
+        [(5,), (-6.522, 2.038, 2.831), 25.0],
+        [(6,), (-5.241, 2.537, 3.427), 25.0],
+        [(7,), (-4.978, 3.742, 3.426), 25.0],
+        [(8,), (-6.346, 1.881, 1.341), 25.0],
+        [(9,), (-7.584, 1.342, 0.692), 25.0],
+        [(10,), (-8.025, 0.227, 1.016), 25.0],
+        [(11,), (-8.204, 2.155, -0.169), 25.0],
+        [(12,), (-4.438, 1.59, 3.905), 25.0],
+        [(13,), (-3.193, 1.904, 4.589), 25.0],
+        [(14,), (-1.955, 1.332, 3.895), 25.0],
+        [(15,), (-1.872, 0.119, 3.648), 25.0],
+        [(16,), (-3.259, 1.378, 6.042), 25.0],
+        [(17,), (-2.006, 1.739, 6.861), 25.0],
+        [(18,), (-1.702, 2.925, 7.072), 25.0],
+        [(19,), (-1.271, 0.715, 7.306), 25.0],
+    ]
+    for i in range(20):
+        assert rcp[i].i_seqs == answer[i][0]
+        assert approx_equal(rcp[i].ref_sites, answer[i][1])
+        assert approx_equal(rcp[i].weight, answer[i][2]), "%s, %s" % (
+            rcp[i].weight,
+            answer[i][2],
+        )
 
-  # print nowat_model.model_as_pdb()
-  wat_model.set_reference_coordinate_restraints(ref_model=nowat_model)
-  rcp = wat_model.get_restraints_manager().geometry.reference_coordinate_proxies
-  assert len(rcp) == 20, len(rcp)
-  # Note different x coord here
-  answer = [[(0,) , (-8.009, 4.612, 6.102), 25.0],
-            [(1,) , (-8.052, 4.207, 4.651), 25.0],
-            [(2,) , (-7.015, 3.14,  4.419), 25.0],
-            [(3,) , (-6.523, 2.521, 5.381), 25.0],
-            [(4,) , (-6.656, 2.923, 3.155), 25.0],
-            [(5,) , (-5.522, 2.038, 2.831), 25.0],
-            [(6,) , (-4.241, 2.537, 3.427), 25.0],
-            [(7,) , (-3.978, 3.742, 3.426), 25.0],
-            [(8,) , (-5.346, 1.881, 1.341), 25.0],
-            [(9,) , (-6.584, 1.342, 0.692), 25.0],
-            [(10,), (-7.025, 0.227, 1.016), 25.0],
-            [(11,), (-7.204, 2.155, -0.169), 25.0],
-            [(12,), (-3.438, 1.59,  3.905), 25.0],
-            [(13,), (-2.193, 1.904, 4.589), 25.0],
-            [(14,), (-0.955, 1.332, 3.895), 25.0],
-            [(15,), (-0.872, 0.119, 3.648), 25.0],
-            [(16,), (-2.259, 1.378, 6.042), 25.0],
-            [(17,), (-1.006, 1.739, 6.861), 25.0],
-            [(18,), (-0.702, 2.925, 7.072), 25.0],
-            [(19,), (-0.271, 0.715, 7.306), 25.0]]
-  for i in range(20):
-    assert rcp[i].i_seqs == answer[i][0]
-    assert approx_equal(rcp[i].ref_sites, answer[i][1])
-    assert approx_equal(rcp[i].weight, answer[i][2]), "%s, %s" % (rcp[i].weight, answer[i][2])
-  # for p in rcp:
-  #   print p.i_seqs, p.ref_sites, p.weight
+    # print nowat_model.model_as_pdb()
+    wat_model.set_reference_coordinate_restraints(ref_model=nowat_model)
+    rcp = wat_model.get_restraints_manager().geometry.reference_coordinate_proxies
+    assert len(rcp) == 20, len(rcp)
+    # Note different x coord here
+    answer = [
+        [(0,), (-8.009, 4.612, 6.102), 25.0],
+        [(1,), (-8.052, 4.207, 4.651), 25.0],
+        [(2,), (-7.015, 3.14, 4.419), 25.0],
+        [(3,), (-6.523, 2.521, 5.381), 25.0],
+        [(4,), (-6.656, 2.923, 3.155), 25.0],
+        [(5,), (-5.522, 2.038, 2.831), 25.0],
+        [(6,), (-4.241, 2.537, 3.427), 25.0],
+        [(7,), (-3.978, 3.742, 3.426), 25.0],
+        [(8,), (-5.346, 1.881, 1.341), 25.0],
+        [(9,), (-6.584, 1.342, 0.692), 25.0],
+        [(10,), (-7.025, 0.227, 1.016), 25.0],
+        [(11,), (-7.204, 2.155, -0.169), 25.0],
+        [(12,), (-3.438, 1.59, 3.905), 25.0],
+        [(13,), (-2.193, 1.904, 4.589), 25.0],
+        [(14,), (-0.955, 1.332, 3.895), 25.0],
+        [(15,), (-0.872, 0.119, 3.648), 25.0],
+        [(16,), (-2.259, 1.378, 6.042), 25.0],
+        [(17,), (-1.006, 1.739, 6.861), 25.0],
+        [(18,), (-0.702, 2.925, 7.072), 25.0],
+        [(19,), (-0.271, 0.715, 7.306), 25.0],
+    ]
+    for i in range(20):
+        assert rcp[i].i_seqs == answer[i][0]
+        assert approx_equal(rcp[i].ref_sites, answer[i][1])
+        assert approx_equal(rcp[i].weight, answer[i][2]), "%s, %s" % (
+            rcp[i].weight,
+            answer[i][2],
+        )
+    # for p in rcp:
+    #   print p.i_seqs, p.ref_sites, p.weight
+
 
 def run():
-  if (not libtbx.env.has_module("reduce")):
-    print("Reduce not installed.")
-    return
-  exercise_adopting_coord_restraints()
-  exercise_adopting_coord_restraints_water()
+    if not libtbx.env.has_module("reduce"):
+        print("Reduce not installed.")
+        return
+    exercise_adopting_coord_restraints()
+    exercise_adopting_coord_restraints_water()
 
-  print(format_cpu_times())
+    print(format_cpu_times())
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

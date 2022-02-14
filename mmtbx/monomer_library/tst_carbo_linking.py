@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 from libtbx import easy_run
 
-input_model = '''
+input_model = """
 CRYST1  130.690  260.300  281.800  90.00  90.00  90.00 P 21 21 21
 SCALE1      0.007652  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.003842  0.000000        0.00000
@@ -127,7 +127,7 @@ ATOM    297  H62 BMA A2003      31.526 143.704 100.092  1.00120.00           H
 ATOM    298  HO2 BMA A2003      32.067 146.963 104.365  1.00120.00           H
 ATOM    299  HO3 BMA A2003      33.846 144.320 105.588  1.00120.00           H
 ATOM    300  HO4 BMA A2003      33.053 141.845 103.282  1.00120.00           H
-'''
+"""
 
 result = '''Links applied
     BETA1-4
@@ -136,15 +136,17 @@ result = '''Links applied
     NAG-ASN
       " NAG A2001 " - " ASN A  55 "'''
 
-def main():
-  input_model_filename = 'carbo_linking_output.pdb'
-  with open(input_model_filename, 'w') as f:
-    f.write(input_model)
-  cmd = 'phenix.pdb_interpretation %s' % input_model_filename
-  rc = easy_run.go(cmd)
-  lines = '\n'.join(rc.stdout_lines)
-  assert lines.find(result)>-1
-  print('OK')
 
-if __name__ == '__main__':
-  main()
+def main():
+    input_model_filename = "carbo_linking_output.pdb"
+    with open(input_model_filename, "w") as f:
+        f.write(input_model)
+    cmd = "phenix.pdb_interpretation %s" % input_model_filename
+    rc = easy_run.go(cmd)
+    lines = "\n".join(rc.stdout_lines)
+    assert lines.find(result) > -1
+    print("OK")
+
+
+if __name__ == "__main__":
+    main()

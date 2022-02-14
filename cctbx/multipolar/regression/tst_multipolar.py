@@ -2,14 +2,15 @@ from __future__ import absolute_import, division, print_function
 from cctbx.array_family import flex
 import os, sys
 import libtbx
-#import libtbx.load_env
-#from libtbx.test_utils import approx_equal
+
+# import libtbx.load_env
+# from libtbx.test_utils import approx_equal
 from cctbx import multipolar
 from six.moves import range
 from six.moves import zip
 
 pdbs = [
-  """\
+    """\
 CRYST1   16.372   15.451   19.829  90.00  90.00  90.00 P 1
 HETATM    1  N   ALA A   1       5.669   9.679  12.421  1.00 20.00      A    N+1
 HETATM    2  H   ALA A   1       5.000   9.066  12.578  1.00 20.00      A    H
@@ -56,123 +57,139 @@ END
 """,
 ]
 
+
 def should_have_imported_proper_methods():
-  assert hasattr(multipolar, 'multipolar_test' ) == True, 'multipolar has no method multipolar_test'
-  assert hasattr(multipolar, 'assign_atom_types' ) == True, 'multipolar has no method assign_atom_types'
+    assert (
+        hasattr(multipolar, "multipolar_test") == True
+    ), "multipolar has no method multipolar_test"
+    assert (
+        hasattr(multipolar, "assign_atom_types") == True
+    ), "multipolar has no method assign_atom_types"
+
 
 def should_return_atom_types():
-  atom_number = flex.int()
-  coordinates = flex.vec3_double()
-  for i in range (3):
-    atom_number.append(i)
-    coordinates.append( (i,i,i) )
-  atom_types = multipolar.assign_atom_types( atom_number, coordinates )
-  #print atom_types
-  for atom_type in atom_types:
-    print(atom_type)
+    atom_number = flex.int()
+    coordinates = flex.vec3_double()
+    for i in range(3):
+        atom_number.append(i)
+        coordinates.append((i, i, i))
+    atom_types = multipolar.assign_atom_types(atom_number, coordinates)
+    # print atom_types
+    for atom_type in atom_types:
+        print(atom_type)
+
 
 def exercise(file_name=None):
-  import libtbx.load_env
-  if (not libtbx.env.has_module(name="mmtbx")):
-    print("Skipping exercise():", \
-      "mmtbx.monomer_library.pdb_interpretation not available")
-    return
-  if (libtbx.env.find_in_repositories(relative_path="chem_data") is None):
-    print("Skipping exercise(): chem_data directory not available")
-    return
-  from mmtbx import monomer_library
-  import mmtbx.monomer_library.server
-  import mmtbx.monomer_library.pdb_interpretation
-  import mmtbx.restraints
-  mon_lib_srv = monomer_library.server.server()
-  ener_lib = monomer_library.server.ener_lib()
-  #pdb_file = libtbx.env.find_in_repositories(
-  #                 relative_path="phenix_regression/pdb/enk.pdb",
-  #                test=os.path.isfile)
-  if file_name is None:
-    pdb_file = "tst_multipoloar.pdb"
-    f=open(pdb_file, "w")
-    f.write(pdbs[0])
-    f.close()
+    import libtbx.load_env
 
-  from iotbx import pdb
-  pdb_inp = pdb.input(pdb_file)
-  hierarchy = pdb_inp.construct_hierarchy()
+    if not libtbx.env.has_module(name="mmtbx"):
+        print(
+            "Skipping exercise():",
+            "mmtbx.monomer_library.pdb_interpretation not available",
+        )
+        return
+    if libtbx.env.find_in_repositories(relative_path="chem_data") is None:
+        print("Skipping exercise(): chem_data directory not available")
+        return
+    from mmtbx import monomer_library
+    import mmtbx.monomer_library.server
+    import mmtbx.monomer_library.pdb_interpretation
+    import mmtbx.restraints
 
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-                                       mon_lib_srv               = mon_lib_srv,
-                                       ener_lib                  = ener_lib,
-                                       file_name                 = pdb_file,
-                                       raw_records               = None,
-                                       force_symmetry            = True)
-  geometry = processed_pdb_file.geometry_restraints_manager(
-                                                    show_energies      = False,
-                                                    plain_pairs_radius = 5.0)
-  restraints_manager = mmtbx.restraints.manager(geometry      = geometry,
-                                                normalization = False)
+    mon_lib_srv = monomer_library.server.server()
+    ener_lib = monomer_library.server.ener_lib()
+    # pdb_file = libtbx.env.find_in_repositories(
+    #                 relative_path="phenix_regression/pdb/enk.pdb",
+    #                test=os.path.isfile)
+    if file_name is None:
+        pdb_file = "tst_multipoloar.pdb"
+        f = open(pdb_file, "w")
+        f.write(pdbs[0])
+        f.close()
 
-  pdb_hierarchy = processed_pdb_file.all_chain_proxies.pdb_hierarchy
-  atoms = pdb_hierarchy.atoms()
-  atom_altlocs = flex.std_string()
-  for atom in atoms:
-    atom_altlocs.append(atom.parent().altloc)
+    from iotbx import pdb
 
-  xrs = processed_pdb_file.xray_structure()
+    pdb_inp = pdb.input(pdb_file)
+    hierarchy = pdb_inp.construct_hierarchy()
 
-  atom_numbers = flex.int()
-  atom_symbols = flex.std_string()
-  atom_charges = flex.std_string()
-  for scatterer in xrs.scatterers():
-    e,c = scatterer.element_and_charge_symbols()
-    atom_numbers.append(scatterer.electron_count())
-    atom_symbols.append(e)
-    atom_charges.append(c)
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        file_name=pdb_file,
+        raw_records=None,
+        force_symmetry=True,
+    )
+    geometry = processed_pdb_file.geometry_restraints_manager(
+        show_energies=False, plain_pairs_radius=5.0
+    )
+    restraints_manager = mmtbx.restraints.manager(
+        geometry=geometry, normalization=False
+    )
 
-  for i, (n, e, c, a) in enumerate(zip(atom_numbers,
-                                       atom_symbols,
-                                       atom_charges,
-                                       atom_altlocs)):
-    print(' "%2d" "%2s" "%-2s" "%1s" %s' % (n, e, c, a, atoms[i].charge))
-  print()
+    pdb_hierarchy = processed_pdb_file.all_chain_proxies.pdb_hierarchy
+    atoms = pdb_hierarchy.atoms()
+    atom_altlocs = flex.std_string()
+    for atom in atoms:
+        atom_altlocs.append(atom.parent().altloc)
 
-  bond_proxies_simple, asu = geometry.get_covalent_bond_proxies(sites_cart =
-    xrs.sites_cart())
+    xrs = processed_pdb_file.xray_structure()
 
-  sites_cart = xrs.sites_cart()
+    atom_numbers = flex.int()
+    atom_symbols = flex.std_string()
+    atom_charges = flex.std_string()
+    for scatterer in xrs.scatterers():
+        e, c = scatterer.element_and_charge_symbols()
+        atom_numbers.append(scatterer.electron_count())
+        atom_symbols.append(e)
+        atom_charges.append(c)
 
-  #bond_deltas = flex.double()
+    for i, (n, e, c, a) in enumerate(
+        zip(atom_numbers, atom_symbols, atom_charges, atom_altlocs)
+    ):
+        print(' "%2d" "%2s" "%-2s" "%1s" %s' % (n, e, c, a, atoms[i].charge))
+    print()
 
-  #loop over bonds
-  i_seqs = flex.int()
-  j_seqs = flex.int()
-  for proxy in bond_proxies_simple:
-    #print proxy.i_seqs, proxy.distance_ideal
-    i,j = proxy.i_seqs
-    i_seqs.append(i)
-    j_seqs.append(j)
+    bond_proxies_simple, asu = geometry.get_covalent_bond_proxies(
+        sites_cart=xrs.sites_cart()
+    )
 
-    #site_1 = sites_cart[i]
-    #site_2 = sites_cart[j]
-    #atom1 = atoms[i]
-    #atom2 = atoms[j]
-    #print i,j,atom1.quote(), atom2.quote(),
-    #print dir(atom1)
-    #print " '%s' '%s' " % (atom1.parent().altloc, atom2.parent().altloc)
-    #assert 0
-    #dist_model = math.sqrt((site_1[0]-site_2[0])**2+(site_1[1]-site_2[1])**2+(site_1[2]-site_2[2])**2)
-    #bond_deltas.append(proxy.distance_ideal-dist_model)
-  #print list(flex.abs(bond_deltas))
-  print('Bond i_seqs j_seqs')
-  for i,j in zip(i_seqs, j_seqs):
-    print(i,j)
+    sites_cart = xrs.sites_cart()
+
+    # bond_deltas = flex.double()
+
+    # loop over bonds
+    i_seqs = flex.int()
+    j_seqs = flex.int()
+    for proxy in bond_proxies_simple:
+        # print proxy.i_seqs, proxy.distance_ideal
+        i, j = proxy.i_seqs
+        i_seqs.append(i)
+        j_seqs.append(j)
+
+        # site_1 = sites_cart[i]
+        # site_2 = sites_cart[j]
+        # atom1 = atoms[i]
+        # atom2 = atoms[j]
+        # print i,j,atom1.quote(), atom2.quote(),
+        # print dir(atom1)
+        # print " '%s' '%s' " % (atom1.parent().altloc, atom2.parent().altloc)
+        # assert 0
+        # dist_model = math.sqrt((site_1[0]-site_2[0])**2+(site_1[1]-site_2[1])**2+(site_1[2]-site_2[2])**2)
+        # bond_deltas.append(proxy.distance_ideal-dist_model)
+    # print list(flex.abs(bond_deltas))
+    print("Bond i_seqs j_seqs")
+    for i, j in zip(i_seqs, j_seqs):
+        print(i, j)
+
 
 def run(filename=None):
-  should_have_imported_proper_methods()
-  print("OK")
-  should_return_atom_types()
-  print("OK")
-  exercise(filename)
-  print("OK")
+    should_have_imported_proper_methods()
+    print("OK")
+    should_return_atom_types()
+    print("OK")
+    exercise(filename)
+    print("OK")
 
-if (__name__ == "__main__"):
-  run(*tuple(sys.argv[1:]))
+
+if __name__ == "__main__":
+    run(*tuple(sys.argv[1:]))

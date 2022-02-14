@@ -58,39 +58,42 @@ TER
 END
 """
 
-def exercise(d_min = 1.0, resolution_factor = 0.1):
-  """
-  Fit one residue having weak side chain density. There is a blob nearby that
-  overlaps with a plausible rotamer.
-  """
- #
-  t = mmtbx.refinement.real_space.setup_test(
-    pdb_answer        = pdb_answer,
-    pdb_poor          = pdb_poor,
-    i_pdb             = 0,
-    d_min             = d_min,
-    resolution_factor = resolution_factor,
-    residues          = ["ARG"],
-    pdb_for_map       = pdb_poor_for_map)
-  #
-  result = mmtbx.refinement.real_space.fit_residues.run(
-    pdb_hierarchy     = t.ph_poor,
-    vdw_radii         = t.vdw,
-    crystal_symmetry  = t.crystal_symmetry,
-    map_data          = t.target_map,
-    backbone_sample   = True,
-    rotatable_hd      = t.rotatable_hd,
-    rotamer_manager   = t.rotamer_manager,
-    sin_cos_table     = t.sin_cos_table,
-    mon_lib_srv       = t.mon_lib_srv)
-  result.pdb_hierarchy.write_pdb_file(file_name = "refined_%s.pdb"%str(0))
-  #
-  mmtbx.refinement.real_space.check_sites_match(
-    ph_answer  = t.ph_answer,
-    ph_refined = result.pdb_hierarchy,
-    tol        = 0.15)
 
-if(__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("Time: %6.4f"%(time.time()-t0))
+def exercise(d_min=1.0, resolution_factor=0.1):
+    """
+    Fit one residue having weak side chain density. There is a blob nearby that
+    overlaps with a plausible rotamer.
+    """
+    #
+    t = mmtbx.refinement.real_space.setup_test(
+        pdb_answer=pdb_answer,
+        pdb_poor=pdb_poor,
+        i_pdb=0,
+        d_min=d_min,
+        resolution_factor=resolution_factor,
+        residues=["ARG"],
+        pdb_for_map=pdb_poor_for_map,
+    )
+    #
+    result = mmtbx.refinement.real_space.fit_residues.run(
+        pdb_hierarchy=t.ph_poor,
+        vdw_radii=t.vdw,
+        crystal_symmetry=t.crystal_symmetry,
+        map_data=t.target_map,
+        backbone_sample=True,
+        rotatable_hd=t.rotatable_hd,
+        rotamer_manager=t.rotamer_manager,
+        sin_cos_table=t.sin_cos_table,
+        mon_lib_srv=t.mon_lib_srv,
+    )
+    result.pdb_hierarchy.write_pdb_file(file_name="refined_%s.pdb" % str(0))
+    #
+    mmtbx.refinement.real_space.check_sites_match(
+        ph_answer=t.ph_answer, ph_refined=result.pdb_hierarchy, tol=0.15
+    )
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("Time: %6.4f" % (time.time() - t0))

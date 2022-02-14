@@ -1,7 +1,11 @@
 from __future__ import absolute_import, division, print_function
 from gltbx.images import img_data
 
-inspector_img = img_data(width=32, height=32, mask=-1, encoded_data = """\
+inspector_img = img_data(
+    width=32,
+    height=32,
+    mask=-1,
+    encoded_data="""\
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\
 ffffffffffffffffffffffffffffffffffffecececd4d4d4d9d9d9d9d9d9d9d9d9d9d9d9d9d9d9\
@@ -81,4 +85,5 @@ d5d5ded5d5dfd9d9dedededde2e2dce2e1dcdededddddddddddddddddddddddddddddddddddddd\
 dddddddddddddadadaecececffffffffffffffffffffffffffffffffffffffffffffffffffffff\
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\
-""")
+""",
+)

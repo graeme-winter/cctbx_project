@@ -12,7 +12,9 @@ import iotbx.phil
 import sys
 
 from xfel.merging.database.merging_database import mysql_master_phil
-master_phil="""
+
+master_phil = (
+    """
 run_numbers = None
   .type = ints
   .help = List of run numbers to be aggregated together to make the plots.
@@ -29,32 +31,41 @@ show_plots = False
 colormap = False
   .type = bool
   .help = Show colormap correction vector plots
-""" + mysql_master_phil
+"""
+    + mysql_master_phil
+)
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 def run(args):
-  phil = iotbx.phil.process_command_line(args=args, master_string=master_phil).show()
-  work_params = phil.work.extract()
-  if ("--help" in args) :
-    libtbx.phil.parse(master_phil.show())
-    return
+    phil = iotbx.phil.process_command_line(args=args, master_string=master_phil).show()
+    work_params = phil.work.extract()
+    if "--help" in args:
+        libtbx.phil.parse(master_phil.show())
+        return
 
-  if ((work_params.run_numbers is None and work_params.outdir_template is None) or
-      (work_params.outdir_template is None) or
-      (work_params.bravais_setting_id is None)) :
-    from libtbx.utils import Usage
-    raise Usage("cxi.plotcv "
-                "run_numbers=16,17,18,19,20,21,22,23,24,25,26,27,71,72,73 "
-                "outdir_template=/reg/data/ana11/cxi/cxi49812/scratch/april_2012/r%%04d/042/stdout "
-                "bravais_setting_id=5")
-  if work_params.show_plots is True:
-    from matplotlib import pyplot as plt # special import
+    if (
+        (work_params.run_numbers is None and work_params.outdir_template is None)
+        or (work_params.outdir_template is None)
+        or (work_params.bravais_setting_id is None)
+    ):
+        from libtbx.utils import Usage
 
-  from xfel.cxi.correction_vector_plot import run_correction_vector_plot
-  run_correction_vector_plot(work_params)
+        raise Usage(
+            "cxi.plotcv "
+            "run_numbers=16,17,18,19,20,21,22,23,24,25,26,27,71,72,73 "
+            "outdir_template=/reg/data/ana11/cxi/cxi49812/scratch/april_2012/r%%04d/042/stdout "
+            "bravais_setting_id=5"
+        )
+    if work_params.show_plots is True:
+        from matplotlib import pyplot as plt  # special import
 
-  return None
+    from xfel.cxi.correction_vector_plot import run_correction_vector_plot
 
-if (__name__ == "__main__"):
+    run_correction_vector_plot(work_params)
 
-  result = run(args=sys.argv[1:])
+    return None
+
+
+if __name__ == "__main__":
+
+    result = run(args=sys.argv[1:])

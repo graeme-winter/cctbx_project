@@ -1,14 +1,17 @@
 from __future__ import absolute_import, division, print_function
+
 # LIBTBX_SET_DISPATCHER_NAME phenix.fab_elbow_angle
 from mmtbx.utils.fab_elbow_angle import fab_elbow_angle
 import iotbx.pdb
 import sys
 import iotbx.phil
 
+
 def get_master_phil():
-  import libtbx.phil
-  return libtbx.phil.parse(
-    input_string="""
+    import libtbx.phil
+
+    return libtbx.phil.parse(
+        input_string="""
       model_file_name = None
         .type = path
         .multiple = True
@@ -27,10 +30,12 @@ def get_master_phil():
         .type = int
         .help = the number of the residue separating between variable \
             and constant domains in the heavy chain, by default 113
-""")
+"""
+    )
+
 
 def usage():
-  return """
+    return """
   Calculating Fragment Antigen-Binding (Fab) elbow angle
 
   Each FAB is made of two chains, Heavy (H) and Light (L), and two domains,
@@ -58,25 +63,27 @@ def usage():
   >>>126.34
   """
 
-def run(args, log=sys.stdout):
-  master_phil = get_master_phil()
-  input_objects = iotbx.phil.process_command_line_with_files(
-    args=args,
-    master_phil=master_phil,
-    pdb_file_def="model_file_name")
-  work_params = input_objects.work.extract()
-  if len(work_params.model_file_name) != 1:
-    print(usage(), file=log)
-    return
 
-  ph = iotbx.pdb.input(file_name=work_params.model_file_name[0]).construct_hierarchy()
-  elbow_angle = fab_elbow_angle(
-      pdb_hierarchy=ph,
-      chain_id_light=work_params.light,
-      chain_id_heavy=work_params.heavy,
-      limit_light=work_params.limit_l,
-      limit_heavy=work_params.limit_h).fab_elbow_angle
-  print('fab elbow angle (deg): {0:.2f}'.format(elbow_angle), file=log)
+def run(args, log=sys.stdout):
+    master_phil = get_master_phil()
+    input_objects = iotbx.phil.process_command_line_with_files(
+        args=args, master_phil=master_phil, pdb_file_def="model_file_name"
+    )
+    work_params = input_objects.work.extract()
+    if len(work_params.model_file_name) != 1:
+        print(usage(), file=log)
+        return
+
+    ph = iotbx.pdb.input(file_name=work_params.model_file_name[0]).construct_hierarchy()
+    elbow_angle = fab_elbow_angle(
+        pdb_hierarchy=ph,
+        chain_id_light=work_params.light,
+        chain_id_heavy=work_params.heavy,
+        limit_light=work_params.limit_l,
+        limit_heavy=work_params.limit_h,
+    ).fab_elbow_angle
+    print("fab elbow angle (deg): {0:.2f}".format(elbow_angle), file=log)
+
 
 if __name__ == "__main__":
-  run(args=sys.argv[1:])
+    run(args=sys.argv[1:])

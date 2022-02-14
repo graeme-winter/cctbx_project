@@ -54,7 +54,7 @@ def testCore(id, index, min):
         n = 0
     basic[n].angle[m] = min - 1.0
     r1 = Residue(" :{}: : : : Z:".format(id), "Z", basic[0].angle)
-    r2 = Residue(" :{}: : : : Z:",format(id), "Z", basic[1].angle)
+    r2 = Residue(" :{}: : : : Z:", format(id), "Z", basic[1].angle)
     printResidue(r1)
     printResidue(r2)
 

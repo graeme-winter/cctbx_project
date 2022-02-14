@@ -64,50 +64,58 @@ TER      25      ASN A  10
 END
 """
 
-def exercise(pdb_poor_str, i_pdb = 0, d_min = 1.0, resolution_factor = 0.25):
-  # Fit one residue in many-residues model
-  #
-  t = mmtbx.refinement.real_space.setup_test(
-    pdb_answer        = pdb_answer,
-    pdb_poor          = pdb_poor_str,
-    i_pdb             = i_pdb,
-    d_min             = d_min,
-    residues          = ["GLY","TYR","ASN"],
-    resolution_factor = resolution_factor)
-  #
-  get_class = iotbx.pdb.common_residue_names_get_class
-  cmv = mmtbx.refinement.real_space.common_map_values(
-    pdb_hierarchy = t.ph_poor,
-    unit_cell     = t.xrs_poor.crystal_symmetry().unit_cell(),
-    map_data      = t.target_map)
-  for model in t.ph_poor.models():
-    for chain in model.chains():
-      for residue in chain.only_conformer().residues():
-        if(get_class(residue.resname) == "common_amino_acid" and
-           int(residue.resseq)==9): # take TYR9
-          t0 = time.time()
-          grm = t.model_poor.get_restraints_manager().geometry
-          ro = mmtbx.refinement.real_space.fit_residue.run_with_minimization(
-            target_map      = t.target_map,
-            vdw_radii       = t.vdw,
-            residue         = residue,
-            xray_structure  = t.xrs_poor,
-            mon_lib_srv     = t.mon_lib_srv,
-            rotamer_manager = t.rotamer_manager,
-            real_space_gradients_delta  = d_min*resolution_factor,
-            cmv = cmv,
-            geometry_restraints_manager = grm)
-          sites_final = residue.atoms().extract_xyz()
-          t1 = time.time()-t0
-  #
-  t.ph_poor.adopt_xray_structure(ro.xray_structure)
-  t.ph_poor.write_pdb_file(file_name = "refined.pdb")
-  #
-  mmtbx.refinement.real_space.check_sites_match(
-    ph_answer          = t.ph_answer,
-    ph_refined         = t.ph_poor,
-    exclude_atom_names = ["CD1","CD2","CE1","CE2"],
-    tol                = 0.4)
 
-if(__name__ == "__main__"):
-  exercise(pdb_poor_str = pdb_poor, resolution_factor=0.2)
+def exercise(pdb_poor_str, i_pdb=0, d_min=1.0, resolution_factor=0.25):
+    # Fit one residue in many-residues model
+    #
+    t = mmtbx.refinement.real_space.setup_test(
+        pdb_answer=pdb_answer,
+        pdb_poor=pdb_poor_str,
+        i_pdb=i_pdb,
+        d_min=d_min,
+        residues=["GLY", "TYR", "ASN"],
+        resolution_factor=resolution_factor,
+    )
+    #
+    get_class = iotbx.pdb.common_residue_names_get_class
+    cmv = mmtbx.refinement.real_space.common_map_values(
+        pdb_hierarchy=t.ph_poor,
+        unit_cell=t.xrs_poor.crystal_symmetry().unit_cell(),
+        map_data=t.target_map,
+    )
+    for model in t.ph_poor.models():
+        for chain in model.chains():
+            for residue in chain.only_conformer().residues():
+                if (
+                    get_class(residue.resname) == "common_amino_acid"
+                    and int(residue.resseq) == 9
+                ):  # take TYR9
+                    t0 = time.time()
+                    grm = t.model_poor.get_restraints_manager().geometry
+                    ro = mmtbx.refinement.real_space.fit_residue.run_with_minimization(
+                        target_map=t.target_map,
+                        vdw_radii=t.vdw,
+                        residue=residue,
+                        xray_structure=t.xrs_poor,
+                        mon_lib_srv=t.mon_lib_srv,
+                        rotamer_manager=t.rotamer_manager,
+                        real_space_gradients_delta=d_min * resolution_factor,
+                        cmv=cmv,
+                        geometry_restraints_manager=grm,
+                    )
+                    sites_final = residue.atoms().extract_xyz()
+                    t1 = time.time() - t0
+    #
+    t.ph_poor.adopt_xray_structure(ro.xray_structure)
+    t.ph_poor.write_pdb_file(file_name="refined.pdb")
+    #
+    mmtbx.refinement.real_space.check_sites_match(
+        ph_answer=t.ph_answer,
+        ph_refined=t.ph_poor,
+        exclude_atom_names=["CD1", "CD2", "CE1", "CE2"],
+        tol=0.4,
+    )
+
+
+if __name__ == "__main__":
+    exercise(pdb_poor_str=pdb_poor, resolution_factor=0.2)

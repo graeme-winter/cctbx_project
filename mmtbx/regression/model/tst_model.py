@@ -10,7 +10,7 @@ import iotbx.pdb
 from mmtbx.refinement import geometry_minimization
 from six.moves import range
 
-pdb_str_00="""
+pdb_str_00 = """
 CRYST1  107.161  107.161   93.144  90.00  90.00 120.00 H 3           9
 ATOM      1  O5'  DG A 101      30.353  -5.691  -5.826  1.00 80.00           O
 ATOM      2  C5'  DG A 101      30.297  -7.106  -5.681  1.00 80.00           C
@@ -873,224 +873,251 @@ ATOM    858  C6   DT D 108      -7.900  15.710  13.471  1.00 80.00           C
 END
 """
 
+
 def exercise_00():
-  def get_ab(params):
-    pdb_inp = iotbx.pdb.input(lines=pdb_str_00.split('\n'), source_info=None)
-    m = mmtbx.model.manager(model_input=pdb_inp)
-    m.process(make_restraints=True)
-    xray_structure = m.get_xray_structure()
-    assert xray_structure is not None
-    s = flex.bool(xray_structure.scatterers().size(),flex.size_t(range(40,504)))
-    geometry = m.get_restraints_manager().geometry
-    geometry = geometry.select(s)
-    es = geometry.energies_sites(
-      sites_cart = xray_structure.sites_cart().select(s))
-    a = es.angle_deviations()[2]
-    b = es.bond_deviations()[2]
-    return a, b
-  # default
-  a1,b1 = get_ab(params=None)
-  # using custom bonds
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.automatic_linking.link_all=True
-  params.pdb_interpretation.secondary_structure.enabled=True
-  params.pdb_interpretation.secondary_structure.nucleic_acid.base_pair[0].restrain_hbonds=True
-  params.pdb_interpretation.secondary_structure.nucleic_acid.base_pair[0].restrain_hb_angles=True
-  a2,b2 = get_ab(params=params)
-  #
-  assert approx_equal(a1,a2)
-  assert approx_equal(b1,b2)
+    def get_ab(params):
+        pdb_inp = iotbx.pdb.input(lines=pdb_str_00.split("\n"), source_info=None)
+        m = mmtbx.model.manager(model_input=pdb_inp)
+        m.process(make_restraints=True)
+        xray_structure = m.get_xray_structure()
+        assert xray_structure is not None
+        s = flex.bool(xray_structure.scatterers().size(), flex.size_t(range(40, 504)))
+        geometry = m.get_restraints_manager().geometry
+        geometry = geometry.select(s)
+        es = geometry.energies_sites(sites_cart=xray_structure.sites_cart().select(s))
+        a = es.angle_deviations()[2]
+        b = es.bond_deviations()[2]
+        return a, b
+
+    # default
+    a1, b1 = get_ab(params=None)
+    # using custom bonds
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.automatic_linking.link_all = True
+    params.pdb_interpretation.secondary_structure.enabled = True
+    params.pdb_interpretation.secondary_structure.nucleic_acid.base_pair[
+        0
+    ].restrain_hbonds = True
+    params.pdb_interpretation.secondary_structure.nucleic_acid.base_pair[
+        0
+    ].restrain_hb_angles = True
+    a2, b2 = get_ab(params=params)
+    #
+    assert approx_equal(a1, a2)
+    assert approx_equal(b1, b2)
+
 
 def exercise():
-  pdb_file = libtbx.env.find_in_repositories(
-                   relative_path="phenix_regression/pdb/enk.pdb", test=os.path.isfile)
-  mol = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(file_name=pdb_file))
-  mol.process(make_restraints=True)
-  mol.setup_scattering_dictionaries(scattering_table = "wk1995")
-################
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/enk.pdb", test=os.path.isfile
+    )
+    mol = mmtbx.model.manager(model_input=iotbx.pdb.input(file_name=pdb_file))
+    mol.process(make_restraints=True)
+    mol.setup_scattering_dictionaries(scattering_table="wk1995")
+    ################
 
+    # Not clear why one needed 2 identical files...
+    mol_copy = mol.deep_copy()
+    assert mol.number_of_ordered_solvent_molecules() == 9
+    f1 = open("test_model_out.pdb", "w")
+    f2 = open("test_model_out_nohydrogens.pdb", "w")
+    pdb_str = mol.model_as_pdb()
+    f1.write(pdb_str)
+    pdb_str = mol.model_as_pdb()
+    f2.write(pdb_str)
+    f1.close()
+    f2.close()
+    mol = mol.remove_solvent()
+    assert mol.number_of_ordered_solvent_molecules() == 0
+    f1 = open("test_model_out_nosolvent.pdb", "w")
+    f2 = open("test_model_out_noO.pdb", "w")
+    pdb_str = mol.model_as_pdb()
+    f1.write(pdb_str)
+    pdb_str = mol.model_as_pdb()
+    f2.write(pdb_str)
+    f1.close()
+    f2.close()
+    mol.geometry_statistics().show()
+    mol.geometry_statistics().show()
 
-  # Not clear why one needed 2 identical files...
-  mol_copy = mol.deep_copy()
-  assert mol.number_of_ordered_solvent_molecules() == 9
-  f1 = open("test_model_out.pdb","w")
-  f2 = open("test_model_out_nohydrogens.pdb","w")
-  pdb_str = mol.model_as_pdb()
-  f1.write(pdb_str)
-  pdb_str = mol.model_as_pdb()
-  f2.write(pdb_str)
-  f1.close()
-  f2.close()
-  mol = mol.remove_solvent()
-  assert mol.number_of_ordered_solvent_molecules() == 0
-  f1 = open("test_model_out_nosolvent.pdb","w")
-  f2 = open("test_model_out_noO.pdb","w")
-  pdb_str = mol.model_as_pdb()
-  f1.write(pdb_str)
-  pdb_str = mol.model_as_pdb()
-  f2.write(pdb_str)
-  f1.close()
-  f2.close()
-  mol.geometry_statistics().show()
-  mol.geometry_statistics().show()
+    ################
+    selection = flex.bool(mol.get_number_of_atoms(), True)
+    mol_other = mol.select(selection)
+    mol_other.setup_scattering_dictionaries(scattering_table="wk1995")
+    ################
 
-################
-  selection = flex.bool(mol.get_number_of_atoms(), True)
-  mol_other = mol.select(selection)
-  mol_other.setup_scattering_dictionaries(scattering_table = "wk1995")
-################
+    mol_other.geometry_statistics()
+    print()
+    mol.geometry_statistics()
 
-  mol_other.geometry_statistics()
-  print()
-  mol.geometry_statistics()
+    #####
+    class iso:
+        pass
 
-#####
-  class iso: pass
-  iso.sphere_radius = 5.0
-  iso.distance_power = 1.57
-  iso.average_power = 0.58
-  iso.wilson_b_weight_auto = False
-  iso.wilson_b_weight = None
-  iso.plain_pairs_radius = 5.0
-  iso.refine_ap_and_dp = False
-  iso.use_u_local_only = False
-#####
-  import sys
-  mol.show_adp_statistics(out=sys.stdout)
-  print()
-  mol.show_adp_statistics(out=sys.stdout)
+    iso.sphere_radius = 5.0
+    iso.distance_power = 1.57
+    iso.average_power = 0.58
+    iso.wilson_b_weight_auto = False
+    iso.wilson_b_weight = None
+    iso.plain_pairs_radius = 5.0
+    iso.refine_ap_and_dp = False
+    iso.use_u_local_only = False
+    #####
+    import sys
 
-  rm = mol.restraints_manager
+    mol.show_adp_statistics(out=sys.stdout)
+    print()
+    mol.show_adp_statistics(out=sys.stdout)
 
-  # Not clear why one needed 2 identical files...
-  f1 = open("XXX.pdb","w")
-  f2 = open("XXXr.pdb","w")
-  pdb_str = mol_copy.model_as_pdb()
-  f1.write(pdb_str)
-  pdb_str = mol_copy.model_as_pdb()
-  f2.write(pdb_str)
-  f1.close()
-  f2.close()
+    rm = mol.restraints_manager
+
+    # Not clear why one needed 2 identical files...
+    f1 = open("XXX.pdb", "w")
+    f2 = open("XXXr.pdb", "w")
+    pdb_str = mol_copy.model_as_pdb()
+    f1.write(pdb_str)
+    pdb_str = mol_copy.model_as_pdb()
+    f2.write(pdb_str)
+    f1.close()
+    f2.close()
+
 
 def exercise_2():
-  pdb_file = libtbx.env.find_in_repositories(
-                   relative_path="phenix_regression/pdb/adp_out_stat.pdb", test=os.path.isfile)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.nonbonded_weight = 16
-  params.pdb_interpretation.clash_guard.nonbonded_distance_threshold = None # disable clash_guard
-  mol = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(file_name=pdb_file))
-  mol.process(pdb_interpretation_params=params, make_restraints=True)
-  mol.setup_scattering_dictionaries(scattering_table = "wk1995")
-  out = StringIO()
-  adp_stat = mol.show_adp_statistics(out = out)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/adp_out_stat.pdb", test=os.path.isfile
+    )
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.nonbonded_weight = 16
+    params.pdb_interpretation.clash_guard.nonbonded_distance_threshold = (
+        None  # disable clash_guard
+    )
+    mol = mmtbx.model.manager(model_input=iotbx.pdb.input(file_name=pdb_file))
+    mol.process(pdb_interpretation_params=params, make_restraints=True)
+    mol.setup_scattering_dictionaries(scattering_table="wk1995")
+    out = StringIO()
+    adp_stat = mol.show_adp_statistics(out=out)
+
 
 def exercise_3():
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/arg_h_hohh1_sh.pdb",
-    test=os.path.isfile)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.nonbonded_weight = 16
-  mol = mmtbx.model.manager(
-    model_input               = iotbx.pdb.input(file_name=pdb_file))
-  mol.process(pdb_interpretation_params=params, make_restraints=True)
-  mol.setup_scattering_dictionaries(scattering_table = "wk1995")
-  out = StringIO()
-  mol.set_log(out)
-  mol.idealize_h_minimization()
-  assert out.getvalue().splitlines()[0] == \
-  "X-H deviation from ideal before regularization (bond): mean= 0.201 max= 0.636", \
-  out.getvalue().splitlines()[0]
-  assert out.getvalue().splitlines()[1] == \
-  "X-H deviation from ideal after  regularization (bond): mean= 0.000 max= 0.000"
-  #diffs = flex.double()
-  #for it in mol.xh_connectivity_table():
-  #  diffs.append(abs(it[3]-it[4]))
-  #mmm = diffs.min_max_mean()
-  #print mmm.as_tuple()
-  #assert mmm.max <0.01 , mmm.max
-  #assert mmm.mean<0.001, mmm.mean
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/arg_h_hohh1_sh.pdb", test=os.path.isfile
+    )
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.nonbonded_weight = 16
+    mol = mmtbx.model.manager(model_input=iotbx.pdb.input(file_name=pdb_file))
+    mol.process(pdb_interpretation_params=params, make_restraints=True)
+    mol.setup_scattering_dictionaries(scattering_table="wk1995")
+    out = StringIO()
+    mol.set_log(out)
+    mol.idealize_h_minimization()
+    assert (
+        out.getvalue().splitlines()[0]
+        == "X-H deviation from ideal before regularization (bond): mean= 0.201 max= 0.636"
+    ), out.getvalue().splitlines()[0]
+    assert (
+        out.getvalue().splitlines()[1]
+        == "X-H deviation from ideal after  regularization (bond): mean= 0.000 max= 0.000"
+    )
+    # diffs = flex.double()
+    # for it in mol.xh_connectivity_table():
+    #  diffs.append(abs(it[3]-it[4]))
+    # mmm = diffs.min_max_mean()
+    # print mmm.as_tuple()
+    # assert mmm.max <0.01 , mmm.max
+    # assert mmm.mean<0.001, mmm.mean
+
 
 def exercise_4():
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/lysozyme_noH.pdb",
-    test=os.path.isfile)
-  mol = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(file_name=pdb_file))
-  mol.process(make_restraints=True)
-  result = mol.isolated_atoms_selection()
-  solvent_sel = mol.solvent_selection()
-  assert solvent_sel.count(True)+1 == result.count(True)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/lysozyme_noH.pdb", test=os.path.isfile
+    )
+    mol = mmtbx.model.manager(model_input=iotbx.pdb.input(file_name=pdb_file))
+    mol.process(make_restraints=True)
+    result = mol.isolated_atoms_selection()
+    solvent_sel = mol.solvent_selection()
+    assert solvent_sel.count(True) + 1 == result.count(True)
+
 
 def exercise_convert_atom():
-  from iotbx.pdb import hierarchy
-  from cctbx import crystal
-  from cctbx.xray import anomalous_scatterer_group
-  coords = [ (2.12, 0., 0.), (0., 2.12, 0.), (0, 0, 2.12), (0,0,0),
-             (-2.12, 0, 0), (0, -2.12, 0), (0, 0, -2.12) ]
-  root = hierarchy.root()
-  model = hierarchy.model()
-  chain = hierarchy.chain(id="S")
-  root.append_model(model)
-  model.append_chain(chain)
-  for k, xyz in enumerate(coords):
-    rg = hierarchy.residue_group(resseq=str(k+1))
-    ag = hierarchy.atom_group(resname="HOH")
-    atom = hierarchy.atom()
-    atom.serial = str(k+1)
-    atom.name = " O  "
-    atom.occ = 1.0
-    atom.b = 20.0
-    atom.xyz=  xyz
-    atom.element = " O"
-    ag.append_atom(atom)
-    rg.append_atom_group(ag)
-    chain.append_residue_group(rg)
-  symm = crystal.symmetry(
-    space_group_symbol="P1",
-    unit_cell=(10,10,10,90,90,90))
-  open("tmp_tst_model_5.pdb", "w").write(root.as_pdb_string(symm))
-  mol = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(file_name="tmp_tst_model_5.pdb"))
-  mol.process(make_restraints=True)
-  mol.convert_atom(
-    i_seq=4,
-    scattering_type="Mg2+",
-    atom_name="MG",
-    element="MG",
-    charge=2,
-    residue_name="MG",
-    initial_occupancy=0.99,
-    chain_id='X')
-  mol.set_anomalous_scatterer_groups(
-      [anomalous_scatterer_group(
-          iselection=flex.size_t([4]),
-          f_prime=0,
-          f_double_prime=0,
-          refine=["f_prime","f_double_prime"],
-          selection_string="element MG",
-          update_from_selection=True),]
-      )
-  geometry_minimization.run2(
-      restraints_manager = mol.get_restraints_manager(),
-      pdb_hierarchy = mol.get_hierarchy(),
-      correct_special_position_tolerance = 1.,
-      nonbonded = True,
-      )
-  mol.set_sites_cart_from_hierarchy()
-  # if the nonbonded type is set correctly, the nonbonded restraints should
-  # not push the
-  for atom in mol.get_hierarchy().atoms():
-    xyz_max = max([ abs(n) for n in atom.xyz])
-    assert (xyz_max < 2.6), 'max %s is larger than 2.6' % xyz_max
-  mol = mol.select(flex.size_t([1,2,3,4,5,6]))
-  assert mol.have_anomalous_scatterer_groups()
-  # assert mol.update_anomalous_groups(out=null_out()) # not needed because select() processed groups correctly
-  isel = mol.get_anomalous_scatterer_groups()[0].iselection
-  assert list(isel) == [3]
+    from iotbx.pdb import hierarchy
+    from cctbx import crystal
+    from cctbx.xray import anomalous_scatterer_group
 
-pdb_file_exercise_h_counts="""
+    coords = [
+        (2.12, 0.0, 0.0),
+        (0.0, 2.12, 0.0),
+        (0, 0, 2.12),
+        (0, 0, 0),
+        (-2.12, 0, 0),
+        (0, -2.12, 0),
+        (0, 0, -2.12),
+    ]
+    root = hierarchy.root()
+    model = hierarchy.model()
+    chain = hierarchy.chain(id="S")
+    root.append_model(model)
+    model.append_chain(chain)
+    for k, xyz in enumerate(coords):
+        rg = hierarchy.residue_group(resseq=str(k + 1))
+        ag = hierarchy.atom_group(resname="HOH")
+        atom = hierarchy.atom()
+        atom.serial = str(k + 1)
+        atom.name = " O  "
+        atom.occ = 1.0
+        atom.b = 20.0
+        atom.xyz = xyz
+        atom.element = " O"
+        ag.append_atom(atom)
+        rg.append_atom_group(ag)
+        chain.append_residue_group(rg)
+    symm = crystal.symmetry(space_group_symbol="P1", unit_cell=(10, 10, 10, 90, 90, 90))
+    open("tmp_tst_model_5.pdb", "w").write(root.as_pdb_string(symm))
+    mol = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(file_name="tmp_tst_model_5.pdb")
+    )
+    mol.process(make_restraints=True)
+    mol.convert_atom(
+        i_seq=4,
+        scattering_type="Mg2+",
+        atom_name="MG",
+        element="MG",
+        charge=2,
+        residue_name="MG",
+        initial_occupancy=0.99,
+        chain_id="X",
+    )
+    mol.set_anomalous_scatterer_groups(
+        [
+            anomalous_scatterer_group(
+                iselection=flex.size_t([4]),
+                f_prime=0,
+                f_double_prime=0,
+                refine=["f_prime", "f_double_prime"],
+                selection_string="element MG",
+                update_from_selection=True,
+            ),
+        ]
+    )
+    geometry_minimization.run2(
+        restraints_manager=mol.get_restraints_manager(),
+        pdb_hierarchy=mol.get_hierarchy(),
+        correct_special_position_tolerance=1.0,
+        nonbonded=True,
+    )
+    mol.set_sites_cart_from_hierarchy()
+    # if the nonbonded type is set correctly, the nonbonded restraints should
+    # not push the
+    for atom in mol.get_hierarchy().atoms():
+        xyz_max = max([abs(n) for n in atom.xyz])
+        assert xyz_max < 2.6, "max %s is larger than 2.6" % xyz_max
+    mol = mol.select(flex.size_t([1, 2, 3, 4, 5, 6]))
+    assert mol.have_anomalous_scatterer_groups()
+    # assert mol.update_anomalous_groups(out=null_out()) # not needed because select() processed groups correctly
+    isel = mol.get_anomalous_scatterer_groups()[0].iselection
+    assert list(isel) == [3]
+
+
+pdb_file_exercise_h_counts = """
 CRYST1    8.228   11.366   10.991  90.00  90.00  90.00 P 1
 ATOM      1  N  AGLY B   1       3.102   3.878   3.794  0.70  7.85           N
 ATOM      2  CA AGLY B   1       3.985   4.960   4.314  0.70  6.79           C
@@ -1146,100 +1173,111 @@ TER
 END
 """
 
+
 def exercise_h_counts():
-  of = open("exercise_h_counts.pdb", "w")
-  print(pdb_file_exercise_h_counts, file=of)
-  of.close()
-  pdb_inp = iotbx.pdb.input(file_name = "exercise_h_counts.pdb")
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.setup_scattering_dictionaries(scattering_table="n_gaussian")
-  hc = model.h_counts()
-  assert approx_equal(hc.h_count                , 26   , 0.01)
-  assert approx_equal(hc.h_occ_sum              , 19.4 , 0.01)
-  assert approx_equal(hc.h_fraction_of_total    , 50.52, 0.01)
-  assert approx_equal(hc.hrot_count             , 8    , 0.01)
-  assert approx_equal(hc.hrot_occ_sum           , 5    , 0.01)
-  assert approx_equal(hc.hrot_fraction_of_total , 13.02, 0.01)
-  model.show_h_counts()
+    of = open("exercise_h_counts.pdb", "w")
+    print(pdb_file_exercise_h_counts, file=of)
+    of.close()
+    pdb_inp = iotbx.pdb.input(file_name="exercise_h_counts.pdb")
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.setup_scattering_dictionaries(scattering_table="n_gaussian")
+    hc = model.h_counts()
+    assert approx_equal(hc.h_count, 26, 0.01)
+    assert approx_equal(hc.h_occ_sum, 19.4, 0.01)
+    assert approx_equal(hc.h_fraction_of_total, 50.52, 0.01)
+    assert approx_equal(hc.hrot_count, 8, 0.01)
+    assert approx_equal(hc.hrot_occ_sum, 5, 0.01)
+    assert approx_equal(hc.hrot_fraction_of_total, 13.02, 0.01)
+    model.show_h_counts()
+
 
 def exercise_5():
-  pdb_str = """
+    pdb_str = """
 CRYST1   98.237   98.237   87.605  90.00  90.00 120.00 P 31 2 1     18
 HETATM 2731  O  AHOH A 380      19.567  26.060  41.021  0.50 32.01           O
 ANISOU 2731  O  AHOH A 380     4916   4203   3042    782    151  -1380       O
 HETATM 2732  O  BHOH A 380      19.179  25.528  38.229  0.50 20.88           O
 ANISOU 2732  O  BHOH A 380     3169   2234   2532   1183    675   -168       O
 """
-  of = open("exercise_5.pdb", "w")
-  print(pdb_str, file=of)
-  of.close()
-  pdb_inp = iotbx.pdb.input(file_name = "exercise_5.pdb")
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.setup_scattering_dictionaries(scattering_table="n_gaussian")
-  result = model.extract_water_residue_groups()
-  assert len(result)==1
+    of = open("exercise_5.pdb", "w")
+    print(pdb_str, file=of)
+    of.close()
+    pdb_inp = iotbx.pdb.input(file_name="exercise_5.pdb")
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.setup_scattering_dictionaries(scattering_table="n_gaussian")
+    result = model.extract_water_residue_groups()
+    assert len(result) == 1
+
 
 def exercise_6():
-  pdb_inp = iotbx.pdb.input(lines=pdb_str_00.split('\n'), source_info=None)
-  m = mmtbx.model.manager(model_input=pdb_inp)
-  m.process(make_restraints=True)
-  ms = m.geometry_statistics()
-  ms.show()
-  #
-  # IF you are about to change this - STOP! Likely you're doing something wrong!
-  # Essentially, this test is to prevent inserting parameters into
-  # mmtbx.model.statistics without much thinking. Most of parameters should
-  # go elsewhere.
-  #
-  import inspect
-  r = inspect.getargspec(mmtbx.model.statistics.geometry.__init__)
-  assert r.args == ['self', 'model', 'fast_clash', 'condensed_probe',
-    'use_hydrogens'], r.args
+    pdb_inp = iotbx.pdb.input(lines=pdb_str_00.split("\n"), source_info=None)
+    m = mmtbx.model.manager(model_input=pdb_inp)
+    m.process(make_restraints=True)
+    ms = m.geometry_statistics()
+    ms.show()
+    #
+    # IF you are about to change this - STOP! Likely you're doing something wrong!
+    # Essentially, this test is to prevent inserting parameters into
+    # mmtbx.model.statistics without much thinking. Most of parameters should
+    # go elsewhere.
+    #
+    import inspect
+
+    r = inspect.getargspec(mmtbx.model.statistics.geometry.__init__)
+    assert r.args == [
+        "self",
+        "model",
+        "fast_clash",
+        "condensed_probe",
+        "use_hydrogens",
+    ], r.args
+
 
 def exercise_from_hierarchy():
-  def check_consistency(m1, m2):
-    assert approx_equal(m1.get_sites_cart(), m2.get_sites_cart())
-    assert approx_equal(m1.get_xray_structure().sites_cart(),
-                        m2.get_xray_structure().sites_cart())
-    assert m1.crystal_symmetry().is_similar_symmetry(m2.crystal_symmetry())
-    assert not show_diff(m1.model_as_pdb(), m2.model_as_pdb())
-    assert not show_diff(m1.model_as_mmcif(), m2.model_as_mmcif())
-    grm1 = m1.get_restraints_manager()
-    grm2 = m2.get_restraints_manager()
-    geo1 = m1.restraints_as_geo()
-    geo2 = m2.restraints_as_geo()
-    # mixed order in nonbonded. It is fine since everything else below
-    # matches perfectly
-    # assert not show_diff(geo1, geo2)
-    es1 = grm1.energies_sites(m1.get_sites_cart(), compute_gradients=True)
-    es2 = grm2.energies_sites(m2.get_sites_cart(), compute_gradients=True)
-    print(es1.residual_sum)
-    print(es1.target)
-    assert approx_equal(es1.residual_sum, es2.residual_sum)
-    assert approx_equal(es1.target, es2.target)
-    assert approx_equal(es1.gradients, es2.gradients)
+    def check_consistency(m1, m2):
+        assert approx_equal(m1.get_sites_cart(), m2.get_sites_cart())
+        assert approx_equal(
+            m1.get_xray_structure().sites_cart(), m2.get_xray_structure().sites_cart()
+        )
+        assert m1.crystal_symmetry().is_similar_symmetry(m2.crystal_symmetry())
+        assert not show_diff(m1.model_as_pdb(), m2.model_as_pdb())
+        assert not show_diff(m1.model_as_mmcif(), m2.model_as_mmcif())
+        grm1 = m1.get_restraints_manager()
+        grm2 = m2.get_restraints_manager()
+        geo1 = m1.restraints_as_geo()
+        geo2 = m2.restraints_as_geo()
+        # mixed order in nonbonded. It is fine since everything else below
+        # matches perfectly
+        # assert not show_diff(geo1, geo2)
+        es1 = grm1.energies_sites(m1.get_sites_cart(), compute_gradients=True)
+        es2 = grm2.energies_sites(m2.get_sites_cart(), compute_gradients=True)
+        print(es1.residual_sum)
+        print(es1.target)
+        assert approx_equal(es1.residual_sum, es2.residual_sum)
+        assert approx_equal(es1.target, es2.target)
+        assert approx_equal(es1.gradients, es2.gradients)
 
-  pdb_inp1 = iotbx.pdb.input(lines=pdb_str_00.split('\n'), source_info=None)
-  pdb_inp2 = iotbx.pdb.input(lines=pdb_str_00.split('\n'), source_info=None)
-  m1 = mmtbx.model.manager(model_input = pdb_inp1)
-  m1.process(make_restraints=True)
-  m2 = mmtbx.model.manager(
-      model_input = None,
-      crystal_symmetry = pdb_inp2.crystal_symmetry(),
-      pdb_hierarchy=pdb_inp2.construct_hierarchy())
-  m2.process(make_restraints=True)
-  check_consistency(m1, m2)
-  sel = m1.selection("chain A")
-  m11 = m1.select(sel)
-  m22 = m2.select(sel)
-  check_consistency(m11, m22)
+    pdb_inp1 = iotbx.pdb.input(lines=pdb_str_00.split("\n"), source_info=None)
+    pdb_inp2 = iotbx.pdb.input(lines=pdb_str_00.split("\n"), source_info=None)
+    m1 = mmtbx.model.manager(model_input=pdb_inp1)
+    m1.process(make_restraints=True)
+    m2 = mmtbx.model.manager(
+        model_input=None,
+        crystal_symmetry=pdb_inp2.crystal_symmetry(),
+        pdb_hierarchy=pdb_inp2.construct_hierarchy(),
+    )
+    m2.process(make_restraints=True)
+    check_consistency(m1, m2)
+    sel = m1.selection("chain A")
+    m11 = m1.select(sel)
+    m22 = m2.select(sel)
+    check_consistency(m11, m22)
+
 
 def exercise_7():
-  lines = """
+    lines = """
 CRYST1   43.974   32.795   33.672  90.00  90.00  90.00 P 1
 ATOM     56  N   ARG A  10      27.185  16.460  17.483  1.00  2.08           N
 ATOM     57  CA  ARG A  10      26.022  16.782  18.294  1.00  2.02           C
@@ -1268,36 +1306,40 @@ ATOM     79 HH22 ARG A  10      24.970  13.064  23.672  1.00  5.58           H
 TER
 END
 """
-  for use_neutron_distances in [True, False]:
-    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-    params.pdb_interpretation.use_neutron_distances=use_neutron_distances
-    model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(source_info=None, lines=lines),
-      log = null_out())
-    model.process(pdb_interpretation_params=params, make_restraints=True)
-    gs = model.geometry_statistics(use_hydrogens = True).result()
-    if(use_neutron_distances):
-      assert approx_equal(gs.bond.mean, 0.0068, 0.0001)
-    else:
-      assert approx_equal(gs.bond.mean, 0.1054, 0.0001)
-    bps, asu = model.get_restraints_manager().geometry.get_all_bond_proxies(
-      sites_cart = model.get_sites_cart())
-    elems = model.get_hierarchy().atoms().extract_element()
-    cntr=0
-    for p in bps:
-      i, j = p.i_seqs
-      if([elems[i], elems[j]].count("H")):
-        if(use_neutron_distances): assert p.distance_ideal > 1.0
-        else:                      assert p.distance_ideal < 1.0
-        cntr+=1
-    assert cntr==13
+    for use_neutron_distances in [True, False]:
+        params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+        params.pdb_interpretation.use_neutron_distances = use_neutron_distances
+        model = mmtbx.model.manager(
+            model_input=iotbx.pdb.input(source_info=None, lines=lines), log=null_out()
+        )
+        model.process(pdb_interpretation_params=params, make_restraints=True)
+        gs = model.geometry_statistics(use_hydrogens=True).result()
+        if use_neutron_distances:
+            assert approx_equal(gs.bond.mean, 0.0068, 0.0001)
+        else:
+            assert approx_equal(gs.bond.mean, 0.1054, 0.0001)
+        bps, asu = model.get_restraints_manager().geometry.get_all_bond_proxies(
+            sites_cart=model.get_sites_cart()
+        )
+        elems = model.get_hierarchy().atoms().extract_element()
+        cntr = 0
+        for p in bps:
+            i, j = p.i_seqs
+            if [elems[i], elems[j]].count("H"):
+                if use_neutron_distances:
+                    assert p.distance_ideal > 1.0
+                else:
+                    assert p.distance_ideal < 1.0
+                cntr += 1
+        assert cntr == 13
+
 
 def exercise_8():
-  """
-  Indirectly make sure new model from model.selection() does not inherit
-  pdb_interpretation object as it becomes obsolete as result of selection.
-  """
-  pdb_str = """
+    """
+    Indirectly make sure new model from model.selection() does not inherit
+    pdb_interpretation object as it becomes obsolete as result of selection.
+    """
+    pdb_str = """
 CRYST1   17.862   33.032   12.451  90.00  90.00  90.00 P 21 21 21    0
 HETATM    1  O   MPR A   5      -3.288   3.784  12.142  1.00  0.05           O
 HETATM    2  C1  MPR A   5      -2.721   3.156  13.026  1.00  0.04           C
@@ -1318,21 +1360,20 @@ ATOM      0  HA  CYS A   6      -1.159   2.690  10.998  1.00  0.04           H
 ATOM      0  HB2 CYS A   6      -0.716  -0.007  11.804  1.00  0.05           H
 ATOM      0  HB3 CYS A   6      -0.371   0.442  10.351  1.00  0.05           H
   """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  sel = model.selection(string = "element H and not protein")
-  model = model.select(~sel)
-  sel = model.selection(string="protein")
-  assert model.size() == sel.size(), [model.size(), sel.size()]
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    sel = model.selection(string="element H and not protein")
+    model = model.select(~sel)
+    sel = model.selection(string="protein")
+    assert model.size() == sel.size(), [model.size(), sel.size()]
+
 
 def exercise_9():
-  """
-  Exercise rotamer_outlier_selection.
-  """
-  pdb_str = """
+    """
+    Exercise rotamer_outlier_selection.
+    """
+    pdb_str = """
 CRYST1   82.497   82.497  134.586  90.00  90.00 120.00 P 32 2 1
 ATOM      0  N   LYS A 228      16.753  49.364  44.427  1.00 29.71           N
 ATOM      1  CA  LYS A 228      17.316  50.225  45.462  1.00 30.97           C
@@ -1366,19 +1407,18 @@ ATOM     28  CB  ALA A 230      19.790  55.649  42.683  1.00 32.78           C
 TER
 END
   """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  sel = model.rotamer_outlier_selection().iselection()
-  assert list(sel) == [9, 10, 11, 12, 13, 14, 15, 16, 17]
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    sel = model.rotamer_outlier_selection().iselection()
+    assert list(sel) == [9, 10, 11, 12, 13, 14, 15, 16, 17]
+
 
 def exercise_10():
-  """
-  Exercise macromolecule_plus_hetatms_by_chain_selections() method.
-  """
-  psb_str1 = """
+    """
+    Exercise macromolecule_plus_hetatms_by_chain_selections() method.
+    """
+    psb_str1 = """
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      0  CG  ASN A   2      -7.584   1.342   0.692  1.00 14.08           C
 ATOM      1  OD1 ASN A   2      -8.025   0.227   1.016  1.00 17.46           O
@@ -1394,7 +1434,7 @@ HETATM    8  O   HOH C  11      11.808   4.179   9.970  1.00 23.99           O
 HETATM    9  O   HOH C  12      13.605   1.327   9.198  1.00 26.17           O
 END
   """
-  psb_str2 = """
+    psb_str2 = """
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      0  CG  ASN A   2      -7.584   1.342   0.692  1.00 14.08           C
 ATOM      1  OD1 ASN A   2      -8.025   0.227   1.016  1.00 17.46           O
@@ -1408,7 +1448,7 @@ HETATM    8  O   HOH C  11      11.808   4.179   9.970  1.00 23.99           O
 HETATM    9  O   HOH C  12      13.605   1.327   9.198  1.00 26.17           O
 END
   """
-  psb_str3 = """
+    psb_str3 = """
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      0  CG  ASN A   2      -7.584   1.342   0.692  1.00 14.08           C
 ATOM      1  OD1 ASN A   2      -8.025   0.227   1.016  1.00 17.46           O
@@ -1422,7 +1462,7 @@ HETATM    8  O   HOH A  11      11.808   4.179   9.970  1.00 23.99           O
 HETATM    9  O   HOH A  12      13.605   1.327   9.198  1.00 26.17           O
 END
   """
-  psb_str4 = """
+    psb_str4 = """
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      0  CG  ASN A   2      -7.584   1.342   0.692  1.00 14.08           C
 ATOM      1  OD1 ASN A   2      -8.025   0.227   1.016  1.00 17.46           O
@@ -1436,7 +1476,7 @@ HETATM    8  O   HOH B  11      11.808   4.179   9.970  1.00 23.99           O
 HETATM    9  O   HOH B  12      13.605   1.327   9.198  1.00 26.17           O
 END
   """
-  psb_str5 = """
+    psb_str5 = """
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      0  CG  ASN A   2      -7.584   1.342   0.692  1.00 14.08           C
 ATOM      1  OD1 ASN A   2      -8.025   0.227   1.016  1.00 17.46           O
@@ -1451,17 +1491,22 @@ HETATM    8  O   HOH A  11      11.808   4.179   9.970  1.00 23.99           O
 HETATM    9  O   HOH A  12      13.605   1.327   9.198  1.00 26.17           O
 END
   """
-  for i, pdb_str in enumerate([psb_str1, psb_str2, psb_str3, psb_str4, psb_str5]):
-    pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
-    m = mmtbx.model.manager(model_input = pi)
-    sels = m.macromolecule_plus_hetatms_by_chain_selections()
-    sels = [list(s.iselection()) for s in sels]
-    assert sels == [[0, 1, 2, 7], [3, 4, 5, 6, 8, 9]]
+    for i, pdb_str in enumerate([psb_str1, psb_str2, psb_str3, psb_str4, psb_str5]):
+        pi = iotbx.pdb.input(source_info=None, lines=pdb_str)
+        m = mmtbx.model.manager(model_input=pi)
+        sels = m.macromolecule_plus_hetatms_by_chain_selections()
+        sels = [list(s.iselection()) for s in sels]
+        assert sels == [[0, 1, 2, 7], [3, 4, 5, 6, 8, 9]]
+
 
 def exercise_11_ss_annotations():
-  good_h_str = 'HELIX    1   1 THR A   18  ILE A   20  5                                   3'
-  bad_h_str = 'HELIX    1   1 THR A   18  ILE A   20 11                                   3'
-  pdb_str = """
+    good_h_str = (
+        "HELIX    1   1 THR A   18  ILE A   20  5                                   3"
+    )
+    bad_h_str = (
+        "HELIX    1   1 THR A   18  ILE A   20 11                                   3"
+    )
+    pdb_str = """
 CRYST1   32.501   39.502   44.640  90.00  90.00  90.00 P 21 21 21    4
 ATOM    265  N   THR A  18      13.114   7.968   6.956  1.00  4.57           N
 ATOM    266  CA  THR A  18      13.581   6.907   6.105  1.00  4.76           C
@@ -1487,34 +1532,36 @@ ATOM    303  CG1 ILE A  20      21.031   5.545   6.877  1.00  9.33           C
 ATOM    304  CG2 ILE A  20      19.057   7.034   6.234  1.00  7.06           C
 ATOM    305  CD1 ILE A  20      21.947   6.045   5.765  1.00 12.70           C
   """
-  good_inp = iotbx.pdb.input(source_info=None, lines=good_h_str+pdb_str)
-  bad_inp = iotbx.pdb.input(source_info=None, lines=bad_h_str+pdb_str)
-  m1 = mmtbx.model.manager(model_input = good_inp)
-  m2 = mmtbx.model.manager(model_input = bad_inp, skip_ss_annotations=True)
-  try:
-    m2 = mmtbx.model.manager(model_input = bad_inp)
-  except IndexError as e:
-    assert str(e) == 'list index out of range', e
-  else:
-    assert 0
+    good_inp = iotbx.pdb.input(source_info=None, lines=good_h_str + pdb_str)
+    bad_inp = iotbx.pdb.input(source_info=None, lines=bad_h_str + pdb_str)
+    m1 = mmtbx.model.manager(model_input=good_inp)
+    m2 = mmtbx.model.manager(model_input=bad_inp, skip_ss_annotations=True)
+    try:
+        m2 = mmtbx.model.manager(model_input=bad_inp)
+    except IndexError as e:
+        assert str(e) == "list index out of range", e
+    else:
+        assert 0
+
 
 def run():
-  exercise_00()
-  exercise()
-  exercise_2()
-  exercise_3()
-  exercise_4()
-  exercise_convert_atom()
-  exercise_h_counts()
-  exercise_5()
-  exercise_6()
-  exercise_7()
-  exercise_8()
-  exercise_from_hierarchy()
-  exercise_9()
-  exercise_10()
-  exercise_11_ss_annotations()
-  print(format_cpu_times())
+    exercise_00()
+    exercise()
+    exercise_2()
+    exercise_3()
+    exercise_4()
+    exercise_convert_atom()
+    exercise_h_counts()
+    exercise_5()
+    exercise_6()
+    exercise_7()
+    exercise_8()
+    exercise_from_hierarchy()
+    exercise_9()
+    exercise_10()
+    exercise_11_ss_annotations()
+    print(format_cpu_times())
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

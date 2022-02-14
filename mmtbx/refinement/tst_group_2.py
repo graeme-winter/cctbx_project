@@ -133,74 +133,77 @@ END
 """
 
 
-def run(refine, target, residues_per_window = 1, d_min=2):
-  """
-  Makes sure this actually work:
-  'real-space' ADP refinement by converting the map into 'Fobs' and
-  then actually doing usual reciprocal-space refinement. Surprisingly this
-  converges to R=0 exactly regardless the resolution. ML does not work perhaps
-  becase starting point is too far.
-  """
-  pdb_inp_poor = iotbx.pdb.input(source_info=None, lines=pdb_poor_adp_str)
-  pdb_inp_poor.write_pdb_file(file_name="poor.pdb")
-  ph = pdb_inp_poor.construct_hierarchy()
-  ph.atoms().reset_i_seq()
-  xrs_poor = pdb_inp_poor.xray_structure_simple()
-  xrs_answer = iotbx.pdb.input(source_info=None,
-    lines=pdb_answer_str).xray_structure_simple()
-  ####
-  f_obs = xrs_answer.structure_factors(d_min=d_min,algorithm="direct").f_calc()
-  mtz_dataset = f_obs.as_mtz_dataset(column_root_label="F-calc")
-  fc = abs(f_obs)
-  fft_map = f_obs.fft_map(resolution_factor=0.25)
-  fft_map.apply_volume_scaling()
-  map_data = fft_map.real_map_unpadded()
-  complete_set = miller.build_set(
-    crystal_symmetry = xrs_answer.crystal_symmetry(),
-    anomalous_flag   = False,
-    d_min            = d_min)
-  f_obs = complete_set.structure_factors_from_map(
-    map            = map_data,
-    use_scale      = True,
-    anomalous_flag = False,
-    use_sg         = True)
-  f_obs = abs(f_obs)
-  ###
-  mtz_dataset.add_miller_array(
-    miller_array=f_obs,
-    column_root_label="F-obs")
-  mtz_dataset.add_miller_array(
-    miller_array=f_obs.generate_r_free_flags(),
-    column_root_label="R-free-flags")
-  mtz_object = mtz_dataset.mtz_object()
-  mtz_object.write(file_name = "data.mtz")
-  ###
-  sfp=mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
-  sfp.algorithm="direct"
-  fmodel = mmtbx.f_model.manager(
-    sf_and_grads_accuracy_params = sfp,
-    xray_structure               = xrs_poor,
-    f_obs                        = f_obs)
-  fmodel.show()
-  fmodel.update(target_name=target)
-  print("Initial r_work=%6.4f r_free=%6.4f"%(fmodel.r_work(), fmodel.r_free()))
-  selections = ph.chunk_selections(residues_per_chunk=residues_per_window)
-  rr = mmtbx.refinement.group.manager(
-    fmodel                      = fmodel,
-    selections                  = selections,
-    max_number_of_iterations    = 50,
-    number_of_macro_cycles      = 25,
-    convergence_test            = True,
-    run_finite_differences_test = False,
-    refine_adp                  = True,
-    use_restraints              = True)
-  print("After refinement r_work=%6.4f r_free=%6.4f"%(
-    fmodel.r_work(), fmodel.r_free()))
-  ph.adopt_xray_structure(fmodel.xray_structure)
-  ph.write_pdb_file(file_name="reciprocal_space_refined_group_adp.pdb",
-    crystal_symmetry = f_obs.crystal_symmetry())
-  r_work = fmodel.r_work()*100
-  assert r_work < 0.1, [r_work, target]
+def run(refine, target, residues_per_window=1, d_min=2):
+    """
+    Makes sure this actually work:
+    'real-space' ADP refinement by converting the map into 'Fobs' and
+    then actually doing usual reciprocal-space refinement. Surprisingly this
+    converges to R=0 exactly regardless the resolution. ML does not work perhaps
+    becase starting point is too far.
+    """
+    pdb_inp_poor = iotbx.pdb.input(source_info=None, lines=pdb_poor_adp_str)
+    pdb_inp_poor.write_pdb_file(file_name="poor.pdb")
+    ph = pdb_inp_poor.construct_hierarchy()
+    ph.atoms().reset_i_seq()
+    xrs_poor = pdb_inp_poor.xray_structure_simple()
+    xrs_answer = iotbx.pdb.input(
+        source_info=None, lines=pdb_answer_str
+    ).xray_structure_simple()
+    ####
+    f_obs = xrs_answer.structure_factors(d_min=d_min, algorithm="direct").f_calc()
+    mtz_dataset = f_obs.as_mtz_dataset(column_root_label="F-calc")
+    fc = abs(f_obs)
+    fft_map = f_obs.fft_map(resolution_factor=0.25)
+    fft_map.apply_volume_scaling()
+    map_data = fft_map.real_map_unpadded()
+    complete_set = miller.build_set(
+        crystal_symmetry=xrs_answer.crystal_symmetry(),
+        anomalous_flag=False,
+        d_min=d_min,
+    )
+    f_obs = complete_set.structure_factors_from_map(
+        map=map_data, use_scale=True, anomalous_flag=False, use_sg=True
+    )
+    f_obs = abs(f_obs)
+    ###
+    mtz_dataset.add_miller_array(miller_array=f_obs, column_root_label="F-obs")
+    mtz_dataset.add_miller_array(
+        miller_array=f_obs.generate_r_free_flags(), column_root_label="R-free-flags"
+    )
+    mtz_object = mtz_dataset.mtz_object()
+    mtz_object.write(file_name="data.mtz")
+    ###
+    sfp = mmtbx.f_model.sf_and_grads_accuracy_master_params.extract()
+    sfp.algorithm = "direct"
+    fmodel = mmtbx.f_model.manager(
+        sf_and_grads_accuracy_params=sfp, xray_structure=xrs_poor, f_obs=f_obs
+    )
+    fmodel.show()
+    fmodel.update(target_name=target)
+    print("Initial r_work=%6.4f r_free=%6.4f" % (fmodel.r_work(), fmodel.r_free()))
+    selections = ph.chunk_selections(residues_per_chunk=residues_per_window)
+    rr = mmtbx.refinement.group.manager(
+        fmodel=fmodel,
+        selections=selections,
+        max_number_of_iterations=50,
+        number_of_macro_cycles=25,
+        convergence_test=True,
+        run_finite_differences_test=False,
+        refine_adp=True,
+        use_restraints=True,
+    )
+    print(
+        "After refinement r_work=%6.4f r_free=%6.4f"
+        % (fmodel.r_work(), fmodel.r_free())
+    )
+    ph.adopt_xray_structure(fmodel.xray_structure)
+    ph.write_pdb_file(
+        file_name="reciprocal_space_refined_group_adp.pdb",
+        crystal_symmetry=f_obs.crystal_symmetry(),
+    )
+    r_work = fmodel.r_work() * 100
+    assert r_work < 0.1, [r_work, target]
 
-if (__name__ == "__main__"):
-  run(refine="refine_adp", target="ls_wunit_k1")
+
+if __name__ == "__main__":
+    run(refine="refine_adp", target="ls_wunit_k1")

@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 from six.moves import range
+
 # -*- Mode: Python; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 8 -*-
 #
 # The average_spots jiffy calculates average pickled images of either
@@ -11,20 +12,22 @@ from six.moves import range
 import numpy, os, sys
 
 from libtbx import easy_pickle
-from iotbx               import detectors
+from iotbx import detectors
 from iotbx.detectors.npy import NpyImage
 
 
 def ImageFactory(path):
-  if os.path.isfile(path):
-    I = NpyImage(path)
-    I.readHeader()
-    return (I)
+    if os.path.isfile(path):
+        I = NpyImage(path)
+        I.readHeader()
+        return I
+
 
 detectors.ImageFactory = ImageFactory
 
 
 from spotfinder.diffraction.imagefiles import FileName
+
 FileName.exts.append("pickle")
 
 
@@ -32,20 +35,20 @@ FileName.exts.append("pickle")
 # from the pickled file whose name is the string pointed to by path,
 # and adds them to img_sum, dist_sum, and nrg_sum.
 def img_add(path, img_sum, dist_sum, nrg_sum, nmemb):
-  img_cspad = easy_pickle.load(path)
+    img_cspad = easy_pickle.load(path)
 
-  if (img_sum is None):
-    img_sum    = img_cspad["image"].astype(numpy.uint32)
-    dist_sum   = img_cspad["distance"]
-    nrg_sum    = img_cspad["beamEnrg"]
-    nmemb      = 1
-  else:
-    img_sum   += img_cspad["image"].astype(numpy.uint32)
-    dist_sum  += img_cspad["distance"]
-    nrg_sum   += img_cspad["beamEnrg"]
-    nmemb     += 1
+    if img_sum is None:
+        img_sum = img_cspad["image"].astype(numpy.uint32)
+        dist_sum = img_cspad["distance"]
+        nrg_sum = img_cspad["beamEnrg"]
+        nmemb = 1
+    else:
+        img_sum += img_cspad["image"].astype(numpy.uint32)
+        dist_sum += img_cspad["distance"]
+        nrg_sum += img_cspad["beamEnrg"]
+        nmemb += 1
 
-  return (img_sum, dist_sum, nrg_sum, nmemb)
+    return (img_sum, dist_sum, nrg_sum, nmemb)
 
 
 # The spot_add() function reads the image, distance, and beam energy
@@ -53,7 +56,7 @@ def img_add(path, img_sum, dist_sum, nrg_sum, nmemb):
 # The spots found in the image are added to spot_sum, while the
 # distance and energy are added to dist_sum and nrg_sum respectively.
 def spot_add(path, spot_sum, dist_sum, nrg_sum, nmemb):
-  limits="""1479, 1515, 1672, 1699
+    limits = """1479, 1515, 1672, 1699
             1281, 1515, 1474, 1699
             1092, 1506, 1249, 1699
             1065, 1506, 1090, 1699
@@ -114,74 +117,85 @@ def spot_add(path, spot_sum, dist_sum, nrg_sum, nmemb):
              231,  213,  424,  397
               33,  213,  226,  397"""
 
-  args = [path,
-          "distl.bins.verbose=True",
-          "distl.minimum_spot_area=3",
-          "distl.detector_tiling=%s" % limits.replace(" ", "").replace("\n", ","), # XXX should not need to reproduce the tiling on every single use
-          "distl.peripheral_margin=1",
-          "distl.res.outer=2.1"
-          ]
-  from spotfinder.command_line.signal_strength import run
-  try:
-    info = run(args)
-  except e:
+    args = [
+        path,
+        "distl.bins.verbose=True",
+        "distl.minimum_spot_area=3",
+        "distl.detector_tiling=%s"
+        % limits.replace(" ", "").replace(
+            "\n", ","
+        ),  # XXX should not need to reproduce the tiling on every single use
+        "distl.peripheral_margin=1",
+        "distl.res.outer=2.1",
+    ]
+    from spotfinder.command_line.signal_strength import run
+
+    try:
+        info = run(args)
+    except e:
+        return (spot_sum, dist_sum, nrg_sum, nmemb)
+
+    img_cspad = easy_pickle.load(path)
+
+    if spot_sum is None:
+        spot_sum = numpy.zeros(
+            (img_cspad["image"].shape[0], img_cspad["image"].shape[1]), dtype="float"
+        )
+        dist_sum = img_cspad["distance"]
+        nrg_sum = img_cspad["beamEnrg"]
+        nmemb = 0
+    else:
+        dist_sum += img_cspad["distance"]
+        nrg_sum += img_cspad["beamEnrg"]
+        nmemb += 1
+
+    # XXX Note that x and y are flipped in the summation.
+    for spot in info.S.images[info.frames[0]]["spots_inlier"]:
+        for i in range(len(spot.bodypixels)):
+            spot_sum[spot.bodypixels[i].x, spot.bodypixels[i].y] += spot.wts[i]
+
     return (spot_sum, dist_sum, nrg_sum, nmemb)
-
-  img_cspad = easy_pickle.load(path)
-
-  if (spot_sum is None):
-    spot_sum   = numpy.zeros((img_cspad["image"].shape[0],
-                              img_cspad["image"].shape[1]), dtype="float")
-    dist_sum   = img_cspad["distance"]
-    nrg_sum    = img_cspad["beamEnrg"]
-    nmemb      = 0
-  else:
-    dist_sum  += img_cspad["distance"]
-    nrg_sum   += img_cspad["beamEnrg"]
-    nmemb     += 1
-
-  # XXX Note that x and y are flipped in the summation.
-  for spot in info.S.images[info.frames[0]]["spots_inlier"]:
-    for i in range(len(spot.bodypixels)):
-      spot_sum[spot.bodypixels[i].x, spot.bodypixels[i].y] += spot.wts[i]
-
-  return (spot_sum, dist_sum, nrg_sum, nmemb)
 
 
 # http://www.artima.com/weblogs/viewpost.jsp?thread=4829
-def main(argv = None):
-  if (argv is None):
-    argv = sys.argv
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
 
-  outpath = "average_prutt_00001.pickle" # XXX Should be argument!
+    outpath = "average_prutt_00001.pickle"  # XXX Should be argument!
 
-  img_sum  = None
-  dist_sum = 0
-  nrg_sum  = 0
-  nmemb    = 0
-  for arg in argv[1:]: # XXX ugly hack!
-    if (False): # XXX Should be argument?
-      img_sum, dist_sum, nrg_sum, nmemb = img_add(
-        arg, img_sum, dist_sum, nrg_sum, nmemb)
-    else:
-      img_sum, dist_sum, nrg_sum, nmemb = spot_add(
-        arg, img_sum, dist_sum, nrg_sum, nmemb)
-  if (nmemb == 0):
-    return (0)
+    img_sum = None
+    dist_sum = 0
+    nrg_sum = 0
+    nmemb = 0
+    for arg in argv[1:]:  # XXX ugly hack!
+        if False:  # XXX Should be argument?
+            img_sum, dist_sum, nrg_sum, nmemb = img_add(
+                arg, img_sum, dist_sum, nrg_sum, nmemb
+            )
+        else:
+            img_sum, dist_sum, nrg_sum, nmemb = spot_add(
+                arg, img_sum, dist_sum, nrg_sum, nmemb
+            )
+    if nmemb == 0:
+        return 0
 
-  # XXX Post-mortem--avoid overflows!  But breaks distance and energy!
-  #nmemb = 1.0 * img_sum.max() / (2**14 - 16)
+    # XXX Post-mortem--avoid overflows!  But breaks distance and energy!
+    # nmemb = 1.0 * img_sum.max() / (2**14 - 16)
 
-  easy_pickle.dump(outpath,
-                   dict(beamEnrg = 1.0 / nmemb * nrg_sum,
-                        distance = 1.0 / nmemb * dist_sum,
-                        image    = 1.0 / nmemb * img_sum), # XXX implicit cast?
-                   )
-  print("Wrote average of %d images to '%s'" % (nmemb, outpath))
-  return (0)
+    easy_pickle.dump(
+        outpath,
+        dict(
+            beamEnrg=1.0 / nmemb * nrg_sum,
+            distance=1.0 / nmemb * dist_sum,
+            image=1.0 / nmemb * img_sum,
+        ),  # XXX implicit cast?
+    )
+    print("Wrote average of %d images to '%s'" % (nmemb, outpath))
+    return 0
 
 
 # Run with "phenix.python average_spots.py `awk '{print $2;}'
 # section01.out`".
-if (__name__ == "__main__"):
-  sys.exit(main())
+if __name__ == "__main__":
+    sys.exit(main())

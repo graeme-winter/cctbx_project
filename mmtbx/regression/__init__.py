@@ -70,7 +70,9 @@ ATOM     58  OH  TYR A   7       3.766   0.589  10.291  1.00 14.39           O
 ATOM     59  OXT TYR A   7      11.358   2.999   7.612  1.00 17.49           O
 END
 """
-model_1yjp_with_waters = model_1yjp.replace('END', '''TER
+model_1yjp_with_waters = model_1yjp.replace(
+    "END",
+    """TER
 HETATM   61  O   HOH A   8      -6.471   5.227   7.124  1.00 22.62           O
 HETATM   62  O   HOH A   9      10.431   1.858   3.216  1.00 19.71           O
 HETATM   63  O   HOH A  10     -11.286   1.756  -1.468  1.00 17.08           O
@@ -79,9 +81,10 @@ HETATM   65  O   HOH A  12      13.605   1.327   9.198  1.00 26.17           O
 HETATM   66  O   HOH A  13      -2.749   3.429  10.024  1.00 39.15           O
 HETATM   67  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 END
-''')
+""",
+)
 # smallest PDB with a "ligand"
-model_1aL1 = '''
+model_1aL1 = """
 CRYST1   62.350   62.350   62.350  90.00  90.00  90.00 I 41 3 2     48
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
@@ -191,4 +194,4 @@ HETATM   99  O2  SO4 A  13      30.616  40.133  15.527  0.50 25.00           O
 HETATM  100  O3  SO4 A  13      31.158  37.816  14.905  0.50 25.00           O
 HETATM  101  O4  SO4 A  13      32.916  39.343  15.640  0.50 25.00           O
 END
-'''
+"""

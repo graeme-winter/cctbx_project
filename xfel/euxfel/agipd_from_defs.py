@@ -48,7 +48,7 @@ with open(path_to_phil) as phil:
 
 
 class NxType(Enum):
-    """ Enumeration for elements withing NeXus schema """
+    """Enumeration for elements withing NeXus schema"""
 
     group = auto()
     field = auto()
@@ -56,7 +56,7 @@ class NxType(Enum):
 
 
 class LazyFunc:
-    """ Very primitive version of lazy executor """
+    """Very primitive version of lazy executor"""
 
     def __init__(self, *args):
         self.func, self.loc_src, self.loc_dest = args
@@ -85,7 +85,7 @@ class NexusElement:
         self.attrs = attrs
 
     def push(self, h5file):
-        """ Write an element to the file """
+        """Write an element to the file"""
         if self.full_path:
             h5file.create_dataset(self.full_path, data=self.value, dtype=self.dtype)
             if self.attrs:
@@ -138,7 +138,7 @@ class Agipd2nexus:
         return local_path
 
     def get_root_path(self, tree_elem: etree) -> List[str]:
-        """ return a NeXus path (e.g. `entry/instrument/detector_group`) from an lxml tree element
+        """return a NeXus path (e.g. `entry/instrument/detector_group`) from an lxml tree element
 
         The trickery is that we compare the path's elements with the group names which we want to rename
         and substitute those path's elements accordingly.

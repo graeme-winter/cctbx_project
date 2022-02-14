@@ -2,10 +2,12 @@ from __future__ import absolute_import, division, print_function
 from libtbx.utils import write_this_is_auto_generated
 import sys, os
 
+
 def as_string(module_name):
-  mn = module_name
-  mn_upper = mn.upper()
-  return r"""/*! \file
+    mn = module_name
+    mn_upper = mn.upper()
+    return (
+        r"""/*! \file
     Declarations and macros for exception handling.
  */
 
@@ -74,15 +76,19 @@ namespace %(mn)s {
   SCITBX_ERROR_UTILS_ASSERT(%(mn)s::error, %(mn_upper)s_ASSERT, assertion)
 
 #endif // %(mn_upper)s_ERROR_H
-""" % vars()
+"""
+        % vars()
+    )
+
 
 def run(args):
-  this_command = os.environ["LIBTBX_DISPATCHER_NAME"]
-  if (len(args) != 1):
-    print("usage: %s module_name > error.h" % this_command)
-    return
-  write_this_is_auto_generated(f=sys.stdout, file_name_generator=this_command)
-  sys.stdout.write(as_string(module_name=args[0]))
+    this_command = os.environ["LIBTBX_DISPATCHER_NAME"]
+    if len(args) != 1:
+        print("usage: %s module_name > error.h" % this_command)
+        return
+    write_this_is_auto_generated(f=sys.stdout, file_name_generator=this_command)
+    sys.stdout.write(as_string(module_name=args[0]))
 
-if (__name__ == "__main__"):
-  run(sys.argv[1:])
+
+if __name__ == "__main__":
+    run(sys.argv[1:])

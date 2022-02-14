@@ -19,6 +19,7 @@ def print_cycles(objects, outstream=sys.stdout, show_progress=False):
     show_progress: If True, print the number of objects reached as they are
                    found.
     """
+
     def print_path(path):
         for i, step in enumerate(path):
             # next "wraps around"
@@ -67,38 +68,38 @@ def print_cycles(objects, outstream=sys.stdout, show_progress=False):
 
     for obj in objects:
         outstream.write("Examining: %r\n" % obj)
-        recurse(obj, obj, { }, [])
+        recurse(obj, obj, {}, [])
+
 
 # =============================================================================
 # test for print_cycles
 # -----------------------------------------------------------------------------
 def exercise():
+    class bad_class(object):
+        def __init__(self):
+            self.a = self.b
 
-  class bad_class(object):
+        def b():
+            return 1 + 2
 
-    def __init__(self):
-      self.a = self.b
+    t = bad_class()
+    sio = StringIO()
+    print_cycles([t], outstream=sio)
+    lines = sio.getvalue().splitlines()
 
-    def b():
-      return 1+2
+    # 'Examining: <__main__.bad_class object at 0xb7eb5d2c>'
+    # "   <class '__main__.bad_class'> -- <__main__.bad_class object at 0xb7eb5d2c> ->"
+    # "   <type 'dict'> --  ->"
+    # ''
+    assert len(lines) == 4
+    assert lines[0].startswith("Examining: <")
+    assert lines[0].count("bad_class") == 1
+    assert lines[1].count("bad_class") == 2
+    assert lines[2].count("dict") == 1
 
-  t = bad_class()
-  sio = StringIO()
-  print_cycles([t],outstream=sio)
-  lines = sio.getvalue().splitlines()
+    print("OK")
 
-  # 'Examining: <__main__.bad_class object at 0xb7eb5d2c>'
-  # "   <class '__main__.bad_class'> -- <__main__.bad_class object at 0xb7eb5d2c> ->"
-  # "   <type 'dict'> --  ->"
-  # ''
-  assert len(lines) == 4
-  assert lines[0].startswith("Examining: <")
-  assert lines[0].count("bad_class") == 1
-  assert lines[1].count("bad_class") == 2
-  assert lines[2].count("dict") == 1
-
-  print("OK")
 
 # =============================================================================
-if (__name__ == "__main__"):
-  exercise()
+if __name__ == "__main__":
+    exercise()

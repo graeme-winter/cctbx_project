@@ -1,7 +1,7 @@
 from __future__ import division
 from libtbx import easy_run
 
-pdb = '''
+pdb = """
 ATOM      1  P     C A   1       0.226 -10.894   0.425  1.00 76.88           P
 ATOM      2  OP1   C A   1       0.482 -11.761   1.602  1.00 78.59           O
 ATOM      3  OP2   C A   1      -0.746  -9.788   0.472  1.00 75.20           O
@@ -152,101 +152,110 @@ ATOM    147  N3    G B   4       4.142  -0.670  -4.364  1.00 20.00           N
 ATOM    148  C6    G B   4       1.437  -1.461  -3.676  1.00 20.00           C
 ATOM    149  O6    G B   4       0.325  -1.922  -3.370  1.00 20.00           O
 ATOM    150  N2    G B   4       4.760  -2.849  -4.030  1.00 20.00           N
-'''
+"""
 
 std_asserts = [
-  [
-  'cdl_nucleotides = 0',
-  'cdl_nucleotides_esd = *phenix csd',
-  ],
-  [
-  'cdl_nucleotides = 0',
-  'cdl_nucleotides_esd = phenix *csd',
-  ],
-  [
-  'cdl_nucleotides = 1',
-  'cdl_nucleotides_esd = *phenix csd',
-  ],
-  [
-  'cdl_nucleotides = 1',
-  'cdl_nucleotides_esd = phenix *csd',
-  ],
+    [
+        "cdl_nucleotides = 0",
+        "cdl_nucleotides_esd = *phenix csd",
+    ],
+    [
+        "cdl_nucleotides = 0",
+        "cdl_nucleotides_esd = phenix *csd",
+    ],
+    [
+        "cdl_nucleotides = 1",
+        "cdl_nucleotides_esd = *phenix csd",
+    ],
+    [
+        "cdl_nucleotides = 1",
+        "cdl_nucleotides_esd = phenix *csd",
+    ],
 ]
 geo_asserts = []
 geo_asserts.append(
-  ['''bond pdb=" P     G A   2 "
+    [
+        """bond pdb=" P     G A   2 "
      pdb=" OP1   G A   2 "
   ideal  model  delta    sigma   weight residual
-  1.485  1.484  0.001 2.00e-02 2.50e+03 2.16e-03''',
-  '''angle pdb=" O3'   C B   3 "
+  1.485  1.484  0.001 2.00e-02 2.50e+03 2.16e-03""",
+        """angle pdb=" O3'   C B   3 "
       pdb=" P     G B   4 "
       pdb=" O5'   G B   4 "
     ideal   model   delta    sigma   weight residual
-   104.00   91.11   12.89 1.50e+00 4.44e-01 7.38e+01''',
-  ])
+   104.00   91.11   12.89 1.50e+00 4.44e-01 7.38e+01""",
+    ]
+)
 geo_asserts.append(geo_asserts[0])
 geo_asserts.append(
-  ['''bond pdb=" P     G A   2 "
+    [
+        """bond pdb=" P     G A   2 "
      pdb=" OP1   G A   2 "
   ideal  model  delta    sigma   weight residual
-  1.484  1.484 -0.000 2.00e-02 2.50e+03 1.25e-05''',
-  '''angle pdb=" O3'   C B   3 "
+  1.484  1.484 -0.000 2.00e-02 2.50e+03 1.25e-05""",
+        """angle pdb=" O3'   C B   3 "
       pdb=" P     G B   4 "
       pdb=" O5'   G B   4 "
     ideal   model   delta    sigma   weight residual
-   104.20   91.11   13.09 1.50e+00 4.44e-01 7.61e+01''',
-  ])
+   104.20   91.11   13.09 1.50e+00 4.44e-01 7.61e+01""",
+    ]
+)
 geo_asserts.append(
-  ['''bond pdb=" P     G A   2 "
+    [
+        """bond pdb=" P     G A   2 "
      pdb=" OP1   G A   2 "
   ideal  model  delta    sigma   weight residual
-  1.484  1.484 -0.000 1.20e-02 6.94e+03 3.48e-05''',
-  '''angle pdb=" O3'   C B   3 "
+  1.484  1.484 -0.000 1.20e-02 6.94e+03 3.48e-05""",
+        """angle pdb=" O3'   C B   3 "
       pdb=" P     G B   4 "
       pdb=" O5'   G B   4 "
     ideal   model   delta    sigma   weight residual
-   104.20   91.11   13.09 1.50e+00 4.44e-01 7.61e+01''',
-  ])
+   104.20   91.11   13.09 1.50e+00 4.44e-01 7.61e+01""",
+    ]
+)
 
-restraintlib_installed=True
+restraintlib_installed = True
 try:
-  from restraintlib import launcher  # special import
-  from restraintlib.printer import TuplePrinter  # special import
-  from restraintlib.restraints import analyze_pdb_hierarhy  # special import
+    from restraintlib import launcher  # special import
+    from restraintlib.printer import TuplePrinter  # special import
+    from restraintlib.restraints import analyze_pdb_hierarhy  # special import
 except ImportError as e:
-  restraintlib_installed = False
+    restraintlib_installed = False
+
 
 def main():
-  i=0
-  filename = 'cdl_nucleotide.pdb'
-  f=open(filename, 'w')
-  f.write(pdb)
-  del f
-  for param1 in range(2):
-    if param1 and not restraintlib_installed: break
-    for param2 in ['phenix', 'csd']:
-      cmd = 'phenix.pdb_interpretation %s write_geo=True cdl_nucleotides=%s cdl_nucleotides_esd=%s' % (
-        filename,
-        param1,
-        param2,
-        )
-      print(i, param1, param2, cmd)
-      rc = easy_run.go(cmd)
-      lines=[]
-      for line in rc.stdout_lines:
-        lines.append(line.strip())
-      for line in std_asserts[i]:
-        assert line in lines, 'missing %s' % line
+    i = 0
+    filename = "cdl_nucleotide.pdb"
+    f = open(filename, "w")
+    f.write(pdb)
+    del f
+    for param1 in range(2):
+        if param1 and not restraintlib_installed:
+            break
+        for param2 in ["phenix", "csd"]:
+            cmd = "phenix.pdb_interpretation %s write_geo=True cdl_nucleotides=%s cdl_nucleotides_esd=%s" % (
+                filename,
+                param1,
+                param2,
+            )
+            print(i, param1, param2, cmd)
+            rc = easy_run.go(cmd)
+            lines = []
+            for line in rc.stdout_lines:
+                lines.append(line.strip())
+            for line in std_asserts[i]:
+                assert line in lines, "missing %s" % line
 
-      f=open('%s.geo' % filename, 'r')
-      lines=f.read()
-      del f
-      for line in geo_asserts[i]:
-        assert lines.find(line)>-1, 'missing %s' % line
+            f = open("%s.geo" % filename, "r")
+            lines = f.read()
+            del f
+            for line in geo_asserts[i]:
+                assert lines.find(line) > -1, "missing %s" % line
 
-      i+=1
-    print('OK')
-  print('OK')
+            i += 1
+        print("OK")
+    print("OK")
 
-if __name__ == '__main__':
-  main()
+
+if __name__ == "__main__":
+    main()

@@ -4,6 +4,7 @@ import wx.glcanvas
 from gltbx.gl import *
 from gltbx.glu import *
 
+
 class MyCanvasBase(wx.glcanvas.GLCanvas):
     def __init__(self, parent):
         wx.glcanvas.GLCanvas.__init__(self, parent, -1)
@@ -18,24 +19,22 @@ class MyCanvasBase(wx.glcanvas.GLCanvas):
         self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
 
-
     def OnEraseBackground(self, event):
-        pass # Do nothing, to avoid flashing on MSW.
-
+        pass  # Do nothing, to avoid flashing on MSW.
 
     def OnSize(self, event):
         size = self.GetClientSize()
         if self.GetContext():
-          self.SetCurrent()
-          glViewport(0, 0, size.width, size.height)
+            self.SetCurrent()
+            glViewport(0, 0, size.width, size.height)
         event.Skip()
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
         self.SetCurrent()
         if not self.init:
-          self.InitGL()
-          self.init = True
+            self.InitGL()
+            self.init = True
         self.OnDraw()
 
     def OnMouseDown(self, evt):
@@ -53,7 +52,7 @@ class MyCanvasBase(wx.glcanvas.GLCanvas):
 
 class CubeCanvas(MyCanvasBase):
     def InitGL(self):
-        #print "cube InitCL"
+        # print "cube InitCL"
         # set viewing projection
         glMatrixMode(GL_PROJECTION)
         glOrtho(-9.5, 9.5, -9.5, 9.5, 1.0, 3.0)
@@ -74,53 +73,53 @@ class CubeCanvas(MyCanvasBase):
         glFlush()
 
     def OnDraw(self):
-        #print "cube OnDraw"
+        # print "cube OnDraw"
         # clear color and depth buffers
         glClear(GL_COLOR_BUFFER_BIT)
         glClear(GL_DEPTH_BUFFER_BIT)
 
         # draw six faces of a cube
-        if (1):
-          glBegin(GL_QUADS)
-          glNormal3f( 0.0, 0.0, 1.0)
-          glVertex3f( 0.5, 0.5, 0.5)
-          glVertex3f(-0.5, 0.5, 0.5)
-          glVertex3f(-0.5,-0.5, 0.5)
-          glVertex3f( 0.5,-0.5, 0.5)
+        if 1:
+            glBegin(GL_QUADS)
+            glNormal3f(0.0, 0.0, 1.0)
+            glVertex3f(0.5, 0.5, 0.5)
+            glVertex3f(-0.5, 0.5, 0.5)
+            glVertex3f(-0.5, -0.5, 0.5)
+            glVertex3f(0.5, -0.5, 0.5)
 
-          glNormal3f( 0.0, 0.0,-1.0)
-          glVertex3f(-0.5,-0.5,-0.5)
-          glVertex3f(-0.5, 0.5,-0.5)
-          glVertex3f( 0.5, 0.5,-0.5)
-          glVertex3f( 0.5,-0.5,-0.5)
+            glNormal3f(0.0, 0.0, -1.0)
+            glVertex3f(-0.5, -0.5, -0.5)
+            glVertex3f(-0.5, 0.5, -0.5)
+            glVertex3f(0.5, 0.5, -0.5)
+            glVertex3f(0.5, -0.5, -0.5)
 
-          glNormal3f( 0.0, 1.0, 0.0)
-          glVertex3f( 0.5, 0.5, 0.5)
-          glVertex3f( 0.5, 0.5,-0.5)
-          glVertex3f(-0.5, 0.5,-0.5)
-          glVertex3f(-0.5, 0.5, 0.5)
+            glNormal3f(0.0, 1.0, 0.0)
+            glVertex3f(0.5, 0.5, 0.5)
+            glVertex3f(0.5, 0.5, -0.5)
+            glVertex3f(-0.5, 0.5, -0.5)
+            glVertex3f(-0.5, 0.5, 0.5)
 
-          glNormal3f( 0.0,-1.0, 0.0)
-          glVertex3f(-0.5,-0.5,-0.5)
-          glVertex3f( 0.5,-0.5,-0.5)
-          glVertex3f( 0.5,-0.5, 0.5)
-          glVertex3f(-0.5,-0.5, 0.5)
+            glNormal3f(0.0, -1.0, 0.0)
+            glVertex3f(-0.5, -0.5, -0.5)
+            glVertex3f(0.5, -0.5, -0.5)
+            glVertex3f(0.5, -0.5, 0.5)
+            glVertex3f(-0.5, -0.5, 0.5)
 
-          glNormal3f( 1.0, 0.0, 0.0)
-          glVertex3f( 0.5, 0.5, 0.5)
-          glVertex3f( 0.5,-0.5, 0.5)
-          glVertex3f( 0.5,-0.5,-0.5)
-          glVertex3f( 0.5, 0.5,-0.5)
+            glNormal3f(1.0, 0.0, 0.0)
+            glVertex3f(0.5, 0.5, 0.5)
+            glVertex3f(0.5, -0.5, 0.5)
+            glVertex3f(0.5, -0.5, -0.5)
+            glVertex3f(0.5, 0.5, -0.5)
 
-          glNormal3f(-1.0, 0.0, 0.0)
-          glVertex3f(-0.5,-0.5,-0.5)
-          glVertex3f(-0.5,-0.5, 0.5)
-          glVertex3f(-0.5, 0.5, 0.5)
-          glVertex3f(-0.5, 0.5,-0.5)
-          glEnd()
+            glNormal3f(-1.0, 0.0, 0.0)
+            glVertex3f(-0.5, -0.5, -0.5)
+            glVertex3f(-0.5, -0.5, 0.5)
+            glVertex3f(-0.5, 0.5, 0.5)
+            glVertex3f(-0.5, 0.5, -0.5)
+            glEnd()
 
-        glRotatef((self.x - self.lastx)/1., 1.0, 0.0, 0.0)
-        glRotatef((self.y - self.lasty)/1., 0.0, 1.0, 0.0)
+        glRotatef((self.x - self.lastx) / 1.0, 1.0, 0.0, 0.0)
+        glRotatef((self.y - self.lasty) / 1.0, 0.0, 1.0, 0.0)
         glFlush()
 
         self.SwapBuffers()
@@ -135,10 +134,13 @@ class RunDemoApp(wx.App):
         wx.Log_SetActiveTarget(wx.LogStderr())
         self.SetAssertMode(wx.PYAPP_ASSERT_DIALOG)
         frame = wx.Frame(
-          None, -1, self.name,
-          pos=(50,50),
-          size=(640,480),
-          style=wx.DEFAULT_FRAME_STYLE)
+            None,
+            -1,
+            self.name,
+            pos=(50, 50),
+            size=(640, 480),
+            style=wx.DEFAULT_FRAME_STYLE,
+        )
         frame.CreateStatusBar()
         menuBar = wx.MenuBar()
         menu = wx.Menu()
@@ -157,5 +159,6 @@ class RunDemoApp(wx.App):
     def OnExitApp(self, evt):
         self.frame.Close(True)
 
-if __name__ == '__main__':
-  RunDemoApp().MainLoop()
+
+if __name__ == "__main__":
+    RunDemoApp().MainLoop()

@@ -31,94 +31,96 @@ TER
 END
 """
 
-#----------------------------------------------------
+# ----------------------------------------------------
 # This test checks for residue Tyr (pdb_str above):
 # - if all bonds involving H atoms are recognized
 # - if all angles involving H atoms are recognized
 # - if 3rd neighbors of HH atom are correctly found
-#----------------------------------------------------
+# ----------------------------------------------------
+
 
 def exercise():
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  restraints_manager = model.get_restraints_manager()
-  angle_proxies = restraints_manager.geometry.get_all_angle_proxies()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    restraints_manager = model.get_restraints_manager()
+    angle_proxies = restraints_manager.geometry.get_all_angle_proxies()
 
-  connectivity_manager = connectivity.determine_connectivity(
-    pdb_hierarchy       = model.get_hierarchy(),
-    geometry_restraints = restraints_manager.geometry)
-  h_connectivity = connectivity_manager.h_connectivity
+    connectivity_manager = connectivity.determine_connectivity(
+        pdb_hierarchy=model.get_hierarchy(),
+        geometry_restraints=restraints_manager.geometry,
+    )
+    h_connectivity = connectivity_manager.h_connectivity
 
-# get bonds stored in connectivity
-  bond_list = {}
-  angle_list = {}
-  for neighbors in h_connectivity:
-    if (neighbors is None): continue
-    ih = neighbors.ih
-    a0 = neighbors.a0
-    i_a0 = a0['iseq']
-    a1 = neighbors.a1
-    i_a1 = a1['iseq']
-    bond_list[ih] = [i_a0, a0['dist_ideal']]
-    selected_atoms = tuple(sorted([ih, i_a0, i_a1]))
-    angle_list[selected_atoms] = a1['angle_ideal']
-    if neighbors.a2:
-      a2 = neighbors.a2
-      selected_atoms2 = tuple(sorted([ih, i_a0, a2['iseq']]))
-      angle_list[selected_atoms2] = a2['angle_ideal']
-    if neighbors.a3:
-      a3 = neighbors.a3
-      selected_atoms3 = tuple(sorted([ih, i_a0, a3['iseq']]))
-      angle_list[selected_atoms3] = a3['angle_ideal']
-    if neighbors.h1:
-      h1 = neighbors.h1
-      selected_atoms4 = tuple(sorted([ih, i_a0, h1['iseq']]))
-      angle_list[selected_atoms4] =h1['angle_ideal']
-    if neighbors.b1:
-      i_b1 = neighbors.b1['iseq']
-      third_nb_dict = {ih: i_b1}
+    # get bonds stored in connectivity
+    bond_list = {}
+    angle_list = {}
+    for neighbors in h_connectivity:
+        if neighbors is None:
+            continue
+        ih = neighbors.ih
+        a0 = neighbors.a0
+        i_a0 = a0["iseq"]
+        a1 = neighbors.a1
+        i_a1 = a1["iseq"]
+        bond_list[ih] = [i_a0, a0["dist_ideal"]]
+        selected_atoms = tuple(sorted([ih, i_a0, i_a1]))
+        angle_list[selected_atoms] = a1["angle_ideal"]
+        if neighbors.a2:
+            a2 = neighbors.a2
+            selected_atoms2 = tuple(sorted([ih, i_a0, a2["iseq"]]))
+            angle_list[selected_atoms2] = a2["angle_ideal"]
+        if neighbors.a3:
+            a3 = neighbors.a3
+            selected_atoms3 = tuple(sorted([ih, i_a0, a3["iseq"]]))
+            angle_list[selected_atoms3] = a3["angle_ideal"]
+        if neighbors.h1:
+            h1 = neighbors.h1
+            selected_atoms4 = tuple(sorted([ih, i_a0, h1["iseq"]]))
+            angle_list[selected_atoms4] = h1["angle_ideal"]
+        if neighbors.b1:
+            i_b1 = neighbors.b1["iseq"]
+            third_nb_dict = {ih: i_b1}
 
-  bond_ctrl = {}
-  for i in model.xh_connectivity_table():
-    bond_ctrl[i[1]]=[i[0],i[3]]
+    bond_ctrl = {}
+    for i in model.xh_connectivity_table():
+        bond_ctrl[i[1]] = [i[0], i[3]]
 
-# List of angle restraints
-  angles = [
-    (4, 1, 12),
+    # List of angle restraints
+    angles = [
+        (4, 1, 12),
+        (0, 1, 12),
+        (2, 1, 12),
+        (13, 4, 14),
+        (5, 4, 14),
+        (5, 4, 13),
+        (1, 4, 13),
+        (1, 4, 14),
+        (8, 6, 15),
+        (5, 6, 15),
+        (9, 7, 16),
+        (5, 7, 16),
+        (10, 8, 17),
+        (6, 8, 17),
+        (10, 11, 19),
+        (7, 9, 18),
+        (10, 9, 18),
+    ]
 
-    (0, 1, 12),
-    (2, 1, 12),
-    (13, 4, 14),
-    (5, 4, 14),
-    (5, 4, 13),
-    (1, 4, 13),
-    (1, 4, 14),
-    (8, 6, 15),
-    (5, 6, 15),
-    (9, 7, 16),
-    (5, 7, 16),
-    (10, 8, 17),
-    (6, 8, 17),
-    (10, 11, 19),
-    (7, 9, 18),
-    (10, 9, 18)]
+    angle_ctrl = {}
+    for ap in angle_proxies:
+        if ap.i_seqs in angles:
+            angle_ctrl[tuple(sorted(list(ap.i_seqs)))] = ap.angle_ideal
 
-  angle_ctrl = {}
-  for ap in angle_proxies:
-    if(ap.i_seqs in angles):
-      angle_ctrl[tuple(sorted(list(ap.i_seqs)))] = ap.angle_ideal
+    # HH needs also third neighbors:
+    third_nb_ctrl = {19: 8}
 
-# HH needs also third neighbors:
-  third_nb_ctrl = {19: 8}
+    assert bond_list == bond_ctrl, "1-2 neighbors and distance_ideal are wrong"
+    assert angle_list == angle_ctrl, "1-3 neighbors and angle_ideal are wrong"
+    assert third_nb_dict == third_nb_ctrl, "1-4 neighbors are wrong"
 
-  assert (bond_list == bond_ctrl), '1-2 neighbors and distance_ideal are wrong'
-  assert (angle_list == angle_ctrl), '1-3 neighbors and angle_ideal are wrong'
-  assert (third_nb_dict == third_nb_ctrl), '1-4 neighbors are wrong'
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("OK. Time: %8.3f" % (time.time() - t0))

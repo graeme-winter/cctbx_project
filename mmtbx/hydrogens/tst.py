@@ -562,7 +562,7 @@ TER     226      ILE C  13
 END
 """
 
-m15_str="""
+m15_str = """
 CRYST1   94.040   99.520  102.470  90.00  90.00  90.00 I 2 2 2       8
 ATOM   1132  N   ARG A  74     -19.326 -37.600 -34.577  1.00 26.20           N
 ATOM   1133  CA  ARG A  74     -18.130 -37.395 -33.759  1.00 25.89           C
@@ -591,7 +591,7 @@ ATOM   1155 DH22 ARG A  74     -12.148 -38.635 -33.057  0.77 39.36           D
 END
 """
 
-m16_str="""
+m16_str = """
 CRYST1   94.040   99.520  102.470  90.00  90.00  90.00 I 2 2 2       8
 ATOM   1110  N   ALA A  73     -21.444 -37.009 -36.391  1.00 28.60           N
 ATOM   1111  CA  ALA A  73     -21.705 -37.562 -35.064  1.00 30.00           C
@@ -628,7 +628,7 @@ ATOM   1159  O   PHE A  75     -18.978 -32.496 -32.021  1.00 21.77           O
 END
 """
 
-m17_str="""
+m17_str = """
 CRYST1   94.040   99.520  102.470  90.00  90.00  90.00 I 2 2 2       8
 ATOM   1132  N   ARG A  74     -19.326 -37.600 -34.577  1.00 26.20           N
 ATOM   1133  CA  ARG A  74     -18.130 -37.395 -33.759  1.00 25.89           C
@@ -661,7 +661,7 @@ ATOM   1159  O   ALA A  75     -18.978 -32.496 -32.021  1.00 21.77           O
 END
 """
 
-m18_str="""
+m18_str = """
 CRYST1   94.040   99.520  102.470  90.00  90.00  90.00 I 2 2 2       8
 ATOM   1110  N   LYS A  73     -21.444 -37.009 -36.391  1.00 28.60           N
 ATOM   1111  CA  LYS A  73     -21.705 -37.562 -35.064  1.00 30.00           C
@@ -1066,7 +1066,7 @@ TER
 END
 """
 
-all_aa_all_d="""
+all_aa_all_d = """
 ATOM      1  N   GLY A   1      -5.398  -1.491 -11.512  1.00  0.00           N
 ATOM      2  CA  GLY A   1      -4.707  -0.522 -12.342  1.00  0.00           C
 ATOM      3  C   GLY A   1      -4.028  -1.140 -13.548  1.00  0.00           C
@@ -1415,148 +1415,188 @@ END
 """
 
 loop = [
-  (m1_str, 1, [[[4,5], [9]]]),
-  (m2_str, 2, [[[4,5], [9]], [[4,5], [10]]]),
-  (m3_str, 2, [[[4,6], [7]], [[4,8], [9]]]),
-  (m4_str, 6, [[[4, 6], [7, 8, 9]], [[1, 0], [10, 11, 12]]]),
-  (m5_str, 5, [[[4,6], [7]], [[4,8], [9]], [[14,16], [17,18,19]]]),
-  (m6_str, 4, [[[1,0], [11,12,13]], [[23,22],[34]]]),
-  (m7_str, 4, [[[0, 1], [5]], [[1, 0], [2, 3, 4]]]), #[[[0, 1], [2, 3, 4]], [[1, 0], [5]]]),
-  (m8_str, 1, [[[1, 0], [12]]]),
-  (m9_str, 4, [[[4, 6], [10, 11, 12]], [[4, 5], [9]]]),
-  (m10_str,7, [[[4, 6], [13, 14, 15]], [[5, 7], [16, 17, 18]], [[1, 0], [8]]]),
-  (m11_str,10,[[[4, 6], [10, 11, 12]], [[4, 5], [9]], [[17, 19], [26, 27, 28]], [[18, 20], [29, 30, 31]]]),
-  (m12_str,1, [[[4, 5], [9]]]),
-  (m13_str,5, [[[4, 6], [7]], [[4, 8], [9]], [[14, 16], [17, 18, 19]]]),
-  (m14_str,7, [[[1, 2], [8, 9, 10]], [[1, 3], [11]], [[1, 0], [5, 6, 7]]]),
-  (m15_str,1, [[[1, 0], [11]]]),
-  (m16_str,0, []),
-  (m17_str,1, [[[1, 0], [11]]]), # no shortcut: (m17_str,1, [[[1, 0], [11]]])
-  (m18_str,0, []),
-  (m19_str,3, [[[6, 7], [15, 16, 17]]])
-  ]
+    (m1_str, 1, [[[4, 5], [9]]]),
+    (m2_str, 2, [[[4, 5], [9]], [[4, 5], [10]]]),
+    (m3_str, 2, [[[4, 6], [7]], [[4, 8], [9]]]),
+    (m4_str, 6, [[[4, 6], [7, 8, 9]], [[1, 0], [10, 11, 12]]]),
+    (m5_str, 5, [[[4, 6], [7]], [[4, 8], [9]], [[14, 16], [17, 18, 19]]]),
+    (m6_str, 4, [[[1, 0], [11, 12, 13]], [[23, 22], [34]]]),
+    (
+        m7_str,
+        4,
+        [[[0, 1], [5]], [[1, 0], [2, 3, 4]]],
+    ),  # [[[0, 1], [2, 3, 4]], [[1, 0], [5]]]),
+    (m8_str, 1, [[[1, 0], [12]]]),
+    (m9_str, 4, [[[4, 6], [10, 11, 12]], [[4, 5], [9]]]),
+    (m10_str, 7, [[[4, 6], [13, 14, 15]], [[5, 7], [16, 17, 18]], [[1, 0], [8]]]),
+    (
+        m11_str,
+        10,
+        [
+            [[4, 6], [10, 11, 12]],
+            [[4, 5], [9]],
+            [[17, 19], [26, 27, 28]],
+            [[18, 20], [29, 30, 31]],
+        ],
+    ),
+    (m12_str, 1, [[[4, 5], [9]]]),
+    (m13_str, 5, [[[4, 6], [7]], [[4, 8], [9]], [[14, 16], [17, 18, 19]]]),
+    (m14_str, 7, [[[1, 2], [8, 9, 10]], [[1, 3], [11]], [[1, 0], [5, 6, 7]]]),
+    (m15_str, 1, [[[1, 0], [11]]]),
+    (m16_str, 0, []),
+    (m17_str, 1, [[[1, 0], [11]]]),  # no shortcut: (m17_str,1, [[[1, 0], [11]]])
+    (m18_str, 0, []),
+    (m19_str, 3, [[[6, 7], [15, 16, 17]]]),
+]
+
 
 def exercise_00(debug=True):
-  mon_lib_srv = monomer_library.server.server()
-  ener_lib = monomer_library.server.ener_lib()
-  for i, l in enumerate(loop):
-    #print(i,"*"*10)
-    ppf = monomer_library.pdb_interpretation.process(
-      mon_lib_srv    = mon_lib_srv,
-      ener_lib       = ener_lib,
-      raw_records    = flex.std_string(l[0].splitlines()),
-      force_symmetry = True)
-    geometry = ppf.geometry_restraints_manager(
-      show_energies      = False,
-      plain_pairs_radius = 5.0)
-    restraints_manager = mmtbx.restraints.manager(
-      geometry = geometry, normalization = False)
-    ph = ppf.all_chain_proxies.pdb_hierarchy
-    atoms = ph.atoms()
-    ppf.all_chain_proxies.pdb_inp.write_pdb_file(file_name = "m%s.pdb"%str(i))
-    sel = hydrogens.rotatable(pdb_hierarchy=ph, mon_lib_srv=mon_lib_srv,
-      restraints_manager = restraints_manager, log=None, use_shortcut=False)
-    #for it in sel:
-    #  print(atoms[it[0][0]].i_seq,atoms[it[0][1]].i_seq, "<>", [atoms[j].i_seq for j in it[1]])
-    #  print(atoms[it[0][0]].name,atoms[it[0][1]].name, "<>", [atoms[j].name for j in it[1]])
-    #  print()
-    assert sel == l[2], "%s != %s" % (sel, l[2])
-    assert hydrogens.count_rotatable(sel) == l[1]
+    mon_lib_srv = monomer_library.server.server()
+    ener_lib = monomer_library.server.ener_lib()
+    for i, l in enumerate(loop):
+        # print(i,"*"*10)
+        ppf = monomer_library.pdb_interpretation.process(
+            mon_lib_srv=mon_lib_srv,
+            ener_lib=ener_lib,
+            raw_records=flex.std_string(l[0].splitlines()),
+            force_symmetry=True,
+        )
+        geometry = ppf.geometry_restraints_manager(
+            show_energies=False, plain_pairs_radius=5.0
+        )
+        restraints_manager = mmtbx.restraints.manager(
+            geometry=geometry, normalization=False
+        )
+        ph = ppf.all_chain_proxies.pdb_hierarchy
+        atoms = ph.atoms()
+        ppf.all_chain_proxies.pdb_inp.write_pdb_file(file_name="m%s.pdb" % str(i))
+        sel = hydrogens.rotatable(
+            pdb_hierarchy=ph,
+            mon_lib_srv=mon_lib_srv,
+            restraints_manager=restraints_manager,
+            log=None,
+            use_shortcut=False,
+        )
+        # for it in sel:
+        #  print(atoms[it[0][0]].i_seq,atoms[it[0][1]].i_seq, "<>", [atoms[j].i_seq for j in it[1]])
+        #  print(atoms[it[0][0]].name,atoms[it[0][1]].name, "<>", [atoms[j].name for j in it[1]])
+        #  print()
+        assert sel == l[2], "%s != %s" % (sel, l[2])
+        assert hydrogens.count_rotatable(sel) == l[1]
+
 
 def exercise_01():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=m5_str)
-  ph = pdb_inp.construct_hierarchy()
-  xrs_answer = pdb_inp.xray_structure_simple()
-  xrs_answer.switch_to_neutron_scattering_dictionary()
-  ph.write_pdb_file(file_name = "answer.pdb")
-  f_calc = xrs_answer.structure_factors(d_min=1).f_calc()
-  fft_map = f_calc.fft_map(resolution_factor=0.1)
-  fft_map.apply_sigma_scaling()
-  map_data = fft_map.real_map_unpadded()
-  #
-  mon_lib_srv = monomer_library.server.server()
-  ener_lib = monomer_library.server.ener_lib()
-  ppf = monomer_library.pdb_interpretation.process(
-    mon_lib_srv    = mon_lib_srv,
-    ener_lib       = ener_lib,
-    raw_records    = flex.std_string(m5_str_HD_rotated.splitlines()),
-    force_symmetry = True)
-  geometry = ppf.geometry_restraints_manager(
-    show_energies      = False,
-    plain_pairs_radius = 5.0)
-  restraints_manager = mmtbx.restraints.manager(
-    geometry = geometry, normalization = False)
-  xrs = ppf.all_chain_proxies.pdb_inp.xray_structure_simple()
-  ph = ppf.all_chain_proxies.pdb_hierarchy
-  ph.write_pdb_file(file_name = "poor.pdb")
-  xrs.switch_to_neutron_scattering_dictionary()
-  f_calc_poor = f_calc.structure_factors_from_scatterers(
-    xray_structure = xrs).f_calc()
-  #
-  rotatable_h_selection = hydrogens.rotatable(
-    pdb_hierarchy      = ph,
-    mon_lib_srv        = mon_lib_srv,
-    restraints_manager = restraints_manager,
-    log                = None)
-  hydrogens.fit_rotatable(pdb_hierarchy=ph, xray_structure=xrs,
-    map_data=map_data,rotatable_h_selection=rotatable_h_selection)
-  ph.write_pdb_file(file_name = "result.pdb")
-  #
-  f_calc_fixed = f_calc.structure_factors_from_scatterers(
-    xray_structure = xrs).f_calc()
-  def r_factor(x,y):
-    n = flex.sum( flex.abs( abs(x).data() - abs(y).data() ) )
-    d = flex.sum( flex.abs( abs(x).data() + abs(y).data() ) )/2
-    return n/d
-  assert r_factor(f_calc, f_calc_poor) > 0.2
-  assert r_factor(f_calc, f_calc_fixed) < 0.015
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=m5_str)
+    ph = pdb_inp.construct_hierarchy()
+    xrs_answer = pdb_inp.xray_structure_simple()
+    xrs_answer.switch_to_neutron_scattering_dictionary()
+    ph.write_pdb_file(file_name="answer.pdb")
+    f_calc = xrs_answer.structure_factors(d_min=1).f_calc()
+    fft_map = f_calc.fft_map(resolution_factor=0.1)
+    fft_map.apply_sigma_scaling()
+    map_data = fft_map.real_map_unpadded()
+    #
+    mon_lib_srv = monomer_library.server.server()
+    ener_lib = monomer_library.server.ener_lib()
+    ppf = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        raw_records=flex.std_string(m5_str_HD_rotated.splitlines()),
+        force_symmetry=True,
+    )
+    geometry = ppf.geometry_restraints_manager(
+        show_energies=False, plain_pairs_radius=5.0
+    )
+    restraints_manager = mmtbx.restraints.manager(
+        geometry=geometry, normalization=False
+    )
+    xrs = ppf.all_chain_proxies.pdb_inp.xray_structure_simple()
+    ph = ppf.all_chain_proxies.pdb_hierarchy
+    ph.write_pdb_file(file_name="poor.pdb")
+    xrs.switch_to_neutron_scattering_dictionary()
+    f_calc_poor = f_calc.structure_factors_from_scatterers(xray_structure=xrs).f_calc()
+    #
+    rotatable_h_selection = hydrogens.rotatable(
+        pdb_hierarchy=ph,
+        mon_lib_srv=mon_lib_srv,
+        restraints_manager=restraints_manager,
+        log=None,
+    )
+    hydrogens.fit_rotatable(
+        pdb_hierarchy=ph,
+        xray_structure=xrs,
+        map_data=map_data,
+        rotatable_h_selection=rotatable_h_selection,
+    )
+    ph.write_pdb_file(file_name="result.pdb")
+    #
+    f_calc_fixed = f_calc.structure_factors_from_scatterers(xray_structure=xrs).f_calc()
+
+    def r_factor(x, y):
+        n = flex.sum(flex.abs(abs(x).data() - abs(y).data()))
+        d = flex.sum(flex.abs(abs(x).data() + abs(y).data())) / 2
+        return n / d
+
+    assert r_factor(f_calc, f_calc_poor) > 0.2
+    assert r_factor(f_calc, f_calc_fixed) < 0.015
+
 
 def exercise_02(debug=False):
-  mon_lib_srv = monomer_library.server.server()
-  ener_lib = monomer_library.server.ener_lib()
-  ppf = monomer_library.pdb_interpretation.process(
-    mon_lib_srv    = mon_lib_srv,
-    ener_lib       = ener_lib,
-    raw_records    = flex.std_string(exercise_02_str.splitlines()),
-    force_symmetry = True)
-  geometry = ppf.geometry_restraints_manager(
-    show_energies      = False,
-    plain_pairs_radius = 5.0)
-  restraints_manager = mmtbx.restraints.manager(
-    geometry = geometry, normalization = False)
-  ph = ppf.all_chain_proxies.pdb_hierarchy
-  sel = hydrogens.rotatable(pdb_hierarchy=ph, mon_lib_srv=mon_lib_srv,
-    restraints_manager = restraints_manager, log = None)
-  n_rot_h = hydrogens.count_rotatable(sel)
-  assert n_rot_h == 43, n_rot_h
+    mon_lib_srv = monomer_library.server.server()
+    ener_lib = monomer_library.server.ener_lib()
+    ppf = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        raw_records=flex.std_string(exercise_02_str.splitlines()),
+        force_symmetry=True,
+    )
+    geometry = ppf.geometry_restraints_manager(
+        show_energies=False, plain_pairs_radius=5.0
+    )
+    restraints_manager = mmtbx.restraints.manager(
+        geometry=geometry, normalization=False
+    )
+    ph = ppf.all_chain_proxies.pdb_hierarchy
+    sel = hydrogens.rotatable(
+        pdb_hierarchy=ph,
+        mon_lib_srv=mon_lib_srv,
+        restraints_manager=restraints_manager,
+        log=None,
+    )
+    n_rot_h = hydrogens.count_rotatable(sel)
+    assert n_rot_h == 43, n_rot_h
+
 
 def exercise_03():
-  for pdb_str in [all_aa_all_h, all_aa_all_d]:
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=all_aa_all_d)
-    m = mmtbx.model.manager(model_input = pdb_inp, log=null_out())
-    m.process(make_restraints=True)
-    r1 = mmtbx.hydrogens.rotatable(
-      pdb_hierarchy      = m.get_hierarchy(),
-      mon_lib_srv        = m.get_mon_lib_srv(),
-      restraints_manager = m.get_restraints_manager(),
-      log                = null_out(),
-      use_shortcut       = True)
-    r2 = mmtbx.hydrogens.rotatable(
-      pdb_hierarchy      = m.get_hierarchy(),
-      mon_lib_srv        = m.get_mon_lib_srv(),
-      restraints_manager = m.get_restraints_manager(),
-      log                = null_out(),
-      use_shortcut       = False)
-  # Ideally this is what it should be. But dynamic modifications, adding planes
-  # etc make it hard to achieve. According to Nigel: H in ASP, plane is added
-  # only if HD2/DD2 is present.
-  #assert r1 == r2
+    for pdb_str in [all_aa_all_h, all_aa_all_d]:
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=all_aa_all_d)
+        m = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+        m.process(make_restraints=True)
+        r1 = mmtbx.hydrogens.rotatable(
+            pdb_hierarchy=m.get_hierarchy(),
+            mon_lib_srv=m.get_mon_lib_srv(),
+            restraints_manager=m.get_restraints_manager(),
+            log=null_out(),
+            use_shortcut=True,
+        )
+        r2 = mmtbx.hydrogens.rotatable(
+            pdb_hierarchy=m.get_hierarchy(),
+            mon_lib_srv=m.get_mon_lib_srv(),
+            restraints_manager=m.get_restraints_manager(),
+            log=null_out(),
+            use_shortcut=False,
+        )
+    # Ideally this is what it should be. But dynamic modifications, adding planes
+    # etc make it hard to achieve. According to Nigel: H in ASP, plane is added
+    # only if HD2/DD2 is present.
+    # assert r1 == r2
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise_00()
-  exercise_01()
-  exercise_02()
-  exercise_03()
-  print("Total time: %-8.4f"%(time.time()-t0))
-  print("OK")
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise_00()
+    exercise_01()
+    exercise_02()
+    exercise_03()
+    print("Total time: %-8.4f" % (time.time() - t0))
+    print("OK")

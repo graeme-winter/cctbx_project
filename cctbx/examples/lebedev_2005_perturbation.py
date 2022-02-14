@@ -180,44 +180,49 @@ Score:
   0.08193190
 """
 
-def run():
-  lines = iter(matrices_from_email.splitlines())
-  while True:
-    for line in lines:
-      if (line.rstrip() == "S:"): break
-    else:
-      break
-    s = []
-    for i in range(3):
-      s.extend([float(v) for v in next(lines).split()])
-    for line in lines:
-      if (line.rstrip() == "M:"): break
-    else:
-      raise RuntimeError("S: found but not M:")
-    m = []
-    for i in range(3):
-      m.extend([int(v) for v in next(lines).split()])
-    for line in lines:
-      if (line.rstrip() == "Score:"): break
-    else:
-      raise RuntimeError("S: and M: found but not Score:")
-    score = float(next(lines).strip())
-    s = matrix.sqr(s)
-    m = matrix.sqr(m)
-    print(s.mathematica_form(label="s", one_row_per_line=True))
-    print(m.mathematica_form(label="m", one_row_per_line=True))
-    r = sgtbx.rot_mx(m, 1)
-    print("rotation type:", r.info().type())
-    print("axis direction:", r.info().ev())
-    u = uctbx.unit_cell(metrical_matrix=s.as_sym_mat3())
-    p = r.lebedev_2005_perturbation(reduced_cell=u)
-    print("score given:     ", score)
-    print("score reproduced:", p)
-    assert abs(p-score) < 1.e-6
-    delta = r.le_page_1982_delta(reduced_cell=u)
-    print("Le Page delta:   ", delta)
-    print()
-  print("OK")
 
-if (__name__ == "__main__"):
-  run()
+def run():
+    lines = iter(matrices_from_email.splitlines())
+    while True:
+        for line in lines:
+            if line.rstrip() == "S:":
+                break
+        else:
+            break
+        s = []
+        for i in range(3):
+            s.extend([float(v) for v in next(lines).split()])
+        for line in lines:
+            if line.rstrip() == "M:":
+                break
+        else:
+            raise RuntimeError("S: found but not M:")
+        m = []
+        for i in range(3):
+            m.extend([int(v) for v in next(lines).split()])
+        for line in lines:
+            if line.rstrip() == "Score:":
+                break
+        else:
+            raise RuntimeError("S: and M: found but not Score:")
+        score = float(next(lines).strip())
+        s = matrix.sqr(s)
+        m = matrix.sqr(m)
+        print(s.mathematica_form(label="s", one_row_per_line=True))
+        print(m.mathematica_form(label="m", one_row_per_line=True))
+        r = sgtbx.rot_mx(m, 1)
+        print("rotation type:", r.info().type())
+        print("axis direction:", r.info().ev())
+        u = uctbx.unit_cell(metrical_matrix=s.as_sym_mat3())
+        p = r.lebedev_2005_perturbation(reduced_cell=u)
+        print("score given:     ", score)
+        print("score reproduced:", p)
+        assert abs(p - score) < 1.0e-6
+        delta = r.le_page_1982_delta(reduced_cell=u)
+        print("Le Page delta:   ", delta)
+        print()
+    print("OK")
+
+
+if __name__ == "__main__":
+    run()

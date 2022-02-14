@@ -1,9 +1,11 @@
 from __future__ import absolute_import, division, print_function
 from iotbx import pdb
-from mmtbx.conformation_dependent_library.testing_utils import get_geometry_restraints_manager
+from mmtbx.conformation_dependent_library.testing_utils import (
+    get_geometry_restraints_manager,
+)
 from six.moves import range
 
-pdb_1ehz = '''HEADER    RIBONUCLEIC ACID                        23-FEB-00   1EHZ
+pdb_1ehz = """HEADER    RIBONUCLEIC ACID                        23-FEB-00   1EHZ
 TITLE     THE CRYSTAL STRUCTURE OF YEAST PHENYLALANINE TRNA AT 1.93 A
 ATOM     68  P     G A   4      65.295  47.868  51.793  1.00 79.34           P
 ATOM     69  O1P   G A   4      66.538  48.562  52.246  1.00 80.87           O
@@ -132,24 +134,29 @@ ATOM    191  N1    A A   9      70.817  51.794  20.072  1.00 28.29           N
 ATOM    192  C2    A A   9      69.701  52.547  19.932  1.00 32.68           C
 ATOM    193  N3    A A   9      68.469  52.287  20.369  1.00 25.13           N
 ATOM    194  C4    A A   9      68.446  51.117  21.026  1.00 26.68           C
-'''
+"""
+
 
 def main():
-  pdb_inp = pdb.input(lines=pdb_1ehz, source_info='model_1ehz')
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  geometry_restraints_manager = get_geometry_restraints_manager(raw_records=pdb_1ehz)
-  pdb_hierarchy.reset_i_seq_if_necessary()
-  from mmtbx.conformation_dependent_library import generate_dna_rna_fragments
-  for k in range(2,3):
-    for j, threes in enumerate(generate_dna_rna_fragments(
-      pdb_hierarchy,
-      geometry_restraints_manager,
-      length=k,
-      #verbose=True,
-      )):
-      print(k,j,threes)
-      print(threes.get_base_types())
-      print(threes.get_ntc_angles())
+    pdb_inp = pdb.input(lines=pdb_1ehz, source_info="model_1ehz")
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    geometry_restraints_manager = get_geometry_restraints_manager(raw_records=pdb_1ehz)
+    pdb_hierarchy.reset_i_seq_if_necessary()
+    from mmtbx.conformation_dependent_library import generate_dna_rna_fragments
 
-if __name__ == '__main__':
-  main()
+    for k in range(2, 3):
+        for j, threes in enumerate(
+            generate_dna_rna_fragments(
+                pdb_hierarchy,
+                geometry_restraints_manager,
+                length=k,
+                # verbose=True,
+            )
+        ):
+            print(k, j, threes)
+            print(threes.get_base_types())
+            print(threes.get_ntc_angles())
+
+
+if __name__ == "__main__":
+    main()

@@ -236,45 +236,43 @@ ATOM      5  CB  ALA B  21      10.799  11.332  12.178  1.00 50.00           C
 TER
 """
 
+
 def get_difference_chainsAB(strings):
-  pdb_h = iotbx.pdb.input(source_info=None, lines=strings).construct_hierarchy()
-  cache = pdb_h.atom_selection_cache()
-  ref_sites = pdb_h.select(cache.selection("chain A")).atoms().extract_xyz()
-  other_sites = pdb_h.select(cache.selection("chain B")).atoms().extract_xyz()
-  lsq_obj = superpose.least_squares_fit(ref_sites, other_sites)
-  bf = lsq_obj.other_sites_best_fit()
-  dif = ref_sites - bf
-  return dif
+    pdb_h = iotbx.pdb.input(source_info=None, lines=strings).construct_hierarchy()
+    cache = pdb_h.atom_selection_cache()
+    ref_sites = pdb_h.select(cache.selection("chain A")).atoms().extract_xyz()
+    other_sites = pdb_h.select(cache.selection("chain B")).atoms().extract_xyz()
+    lsq_obj = superpose.least_squares_fit(ref_sites, other_sites)
+    bf = lsq_obj.other_sites_best_fit()
+    dif = ref_sites - bf
+    return dif
+
 
 def exercise():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  ann = pdb_inp.extract_secondary_structure()
-  pdb_int_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  pdb_int_params.pdb_interpretation.ncs_search.enabled=True
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  model.process(pdb_interpretation_params=pdb_int_params,
-    make_restraints=True)
-  model.setup_ncs_constraints_groups()
-  log = StringIO()
-  rm = ssb.substitute_ss(
-      model,
-      log=log)
-  rm.run()
-  # with open("res.pdb", 'w') as f:
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ann = pdb_inp.extract_secondary_structure()
+    pdb_int_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    pdb_int_params.pdb_interpretation.ncs_search.enabled = True
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(pdb_interpretation_params=pdb_int_params, make_restraints=True)
+    model.setup_ncs_constraints_groups()
+    log = StringIO()
+    rm = ssb.substitute_ss(model, log=log)
+    rm.run()
+    # with open("res.pdb", 'w') as f:
     # f.write(model.model_as_pdb())
 
-  # check that strict NCS was implemented throughout
-  dif = get_difference_chainsAB(strings=model.model_as_pdb())
-  for d in dif:
-    assert approx_equal(d, (0,0,0), eps=0.005)
-  log_cont = log.getvalue()
-  # print("===========================")
-  # print (log_cont)
-  # print("===========================")
-  assert log_cont.find("1 element(s) were skipped because they are in NCS copies") > 0
-  print("OK")
+    # check that strict NCS was implemented throughout
+    dif = get_difference_chainsAB(strings=model.model_as_pdb())
+    for d in dif:
+        assert approx_equal(d, (0, 0, 0), eps=0.005)
+    log_cont = log.getvalue()
+    # print("===========================")
+    # print (log_cont)
+    # print("===========================")
+    assert log_cont.find("1 element(s) were skipped because they are in NCS copies") > 0
+    print("OK")
 
 
-if (__name__ == "__main__"):
-  exercise()
+if __name__ == "__main__":
+    exercise()

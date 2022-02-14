@@ -5,9 +5,10 @@ from mmtbx import monomer_library
 import mmtbx.model
 import iotbx.pdb
 
+
 def exercise_reference_model_restraints(mon_lib_srv, ener_lib):
-  # 1yjp
-  pdb_str = """\
+    # 1yjp
+    pdb_str = """\
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1      2
 ATOM      1  N   GLY A   1      -9.009   4.612   6.102  1.00 16.77           N
 ATOM      2  CA  GLY A   1      -9.052   4.207   4.651  1.00 16.57           C
@@ -79,58 +80,62 @@ HETATM   67  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 MASTER      234    0    0    0    0    0    0    6   66    1    0    1
 END """
 
-  work_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  work_params.reference_model.enabled=True
-  work_params.reference_model.use_starting_model_as_reference=True
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(source_info=None, lines=pdb_str.split('\n')),
-      log=null_out())
-  model.process(pdb_interpretation_params=work_params,
-    make_restraints=True)
-  n_ref_dih_prox = model.get_restraints_manager().geometry.get_n_reference_dihedral_proxies()
-  assert n_ref_dih_prox == 34, "expected 34, got %d" % n_ref_dih_prox
+    work_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    work_params.reference_model.enabled = True
+    work_params.reference_model.use_starting_model_as_reference = True
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(source_info=None, lines=pdb_str.split("\n")),
+        log=null_out(),
+    )
+    model.process(pdb_interpretation_params=work_params, make_restraints=True)
+    n_ref_dih_prox = (
+        model.get_restraints_manager().geometry.get_n_reference_dihedral_proxies()
+    )
+    assert n_ref_dih_prox == 34, "expected 34, got %d" % n_ref_dih_prox
 
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(source_info=None, lines=pdb_str.split('\n')),
-      log=null_out())
-  model.process(pdb_interpretation_params=work_params,
-    make_restraints=False)
-  work_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  work_params.reference_model.enabled=True
-  work_params.reference_model.use_starting_model_as_reference=True
-  work_params.reference_model.main_chain=False
-  model.process(make_restraints=True,
-    pdb_interpretation_params=work_params)
-  n_ref_dih_prox = model.get_restraints_manager().geometry.get_n_reference_dihedral_proxies()
-  assert n_ref_dih_prox == 16, "expected 16, got %d" % n_ref_dih_prox
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(source_info=None, lines=pdb_str.split("\n")),
+        log=null_out(),
+    )
+    model.process(pdb_interpretation_params=work_params, make_restraints=False)
+    work_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    work_params.reference_model.enabled = True
+    work_params.reference_model.use_starting_model_as_reference = True
+    work_params.reference_model.main_chain = False
+    model.process(make_restraints=True, pdb_interpretation_params=work_params)
+    n_ref_dih_prox = (
+        model.get_restraints_manager().geometry.get_n_reference_dihedral_proxies()
+    )
+    assert n_ref_dih_prox == 16, "expected 16, got %d" % n_ref_dih_prox
 
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(source_info=None, lines=pdb_str.split('\n')),
-      log=null_out())
-  model.process(pdb_interpretation_params=work_params,
-    make_restraints=False)
-  work_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  work_params.reference_model.enabled=True
-  work_params.reference_model.use_starting_model_as_reference=True
-  work_params.reference_model.side_chain=False
-  model.process(make_restraints=True,
-    pdb_interpretation_params=work_params)
-  n_ref_dih_prox = model.get_restraints_manager().geometry.get_n_reference_dihedral_proxies()
-  assert n_ref_dih_prox == 18, "expected 18, got %d" % n_ref_dih_prox
-
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(source_info=None, lines=pdb_str.split("\n")),
+        log=null_out(),
+    )
+    model.process(pdb_interpretation_params=work_params, make_restraints=False)
+    work_params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    work_params.reference_model.enabled = True
+    work_params.reference_model.use_starting_model_as_reference = True
+    work_params.reference_model.side_chain = False
+    model.process(make_restraints=True, pdb_interpretation_params=work_params)
+    n_ref_dih_prox = (
+        model.get_restraints_manager().geometry.get_n_reference_dihedral_proxies()
+    )
+    assert n_ref_dih_prox == 18, "expected 18, got %d" % n_ref_dih_prox
 
 
 def exercise():
-  mon_lib_srv = None
-  ener_lib = None
-  try:
-    mon_lib_srv = monomer_library.server.server()
-    ener_lib = monomer_library.server.ener_lib()
-  except: # intentional
-    print("Can not initialize monomer_library, skipping test.")
-  if mon_lib_srv is not None and ener_lib is not None:
-    exercise_reference_model_restraints(mon_lib_srv, ener_lib)
+    mon_lib_srv = None
+    ener_lib = None
+    try:
+        mon_lib_srv = monomer_library.server.server()
+        ener_lib = monomer_library.server.ener_lib()
+    except:  # intentional
+        print("Can not initialize monomer_library, skipping test.")
+    if mon_lib_srv is not None and ener_lib is not None:
+        exercise_reference_model_restraints(mon_lib_srv, ener_lib)
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

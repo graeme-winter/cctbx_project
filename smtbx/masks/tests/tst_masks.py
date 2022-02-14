@@ -13,37 +13,43 @@ import smtbx.utils
 from six.moves import cStringIO as StringIO
 from six.moves import range
 
+
 def exercise_masks():
-  mt = flex.mersenne_twister(seed=0)
-  xs_ref = structure.from_shelx(
-    file=StringIO(YAKRUY_ins))
-  mi = xs_ref.crystal_symmetry().build_miller_set(
-    d_min=0.5, anomalous_flag=False)
-  fo = mi.structure_factors_from_scatterers(
-    xs_ref, algorithm="direct").f_calc().as_amplitude_array()
-  k = 0.05 + 10 * mt.random_double()
-  fo = fo.customized_copy(data=fo.data()*k)
-  fo2 = fo.f_as_f_sq()
-  acetonitrile_sel = xs_ref.label_selection(
-    'N4', 'C20', 'C21', 'H211', 'H212', 'H213')
-  xs_no_sol = xs_ref.deep_copy_scatterers().select(
-    acetonitrile_sel, negate=True)
-  # check what happens when no voids are found
-  mask = masks.mask(xs_ref, fo2)
-  mask.compute(solvent_radius=1.2,
-               shrink_truncation_radius=1.2,
-               resolution_factor=1/2,
-               atom_radii_table={'C':1.70, 'B':1.63, 'N':1.55, 'O':1.52})
-  assert mask.structure_factors() is None
-  assert mask.n_voids() == 0
-  assert mask.n_solvent_grid_points() == 0
-  assert mask.f_mask() is None
-  assert mask.f_model() is None
-  assert mask.modified_intensities() is None
-  assert mask.f_000 is None
-  s = StringIO()
-  mask.show_summary(log=s)
-  assert not show_diff(s.getvalue(), """\
+    mt = flex.mersenne_twister(seed=0)
+    xs_ref = structure.from_shelx(file=StringIO(YAKRUY_ins))
+    mi = xs_ref.crystal_symmetry().build_miller_set(d_min=0.5, anomalous_flag=False)
+    fo = (
+        mi.structure_factors_from_scatterers(xs_ref, algorithm="direct")
+        .f_calc()
+        .as_amplitude_array()
+    )
+    k = 0.05 + 10 * mt.random_double()
+    fo = fo.customized_copy(data=fo.data() * k)
+    fo2 = fo.f_as_f_sq()
+    acetonitrile_sel = xs_ref.label_selection(
+        "N4", "C20", "C21", "H211", "H212", "H213"
+    )
+    xs_no_sol = xs_ref.deep_copy_scatterers().select(acetonitrile_sel, negate=True)
+    # check what happens when no voids are found
+    mask = masks.mask(xs_ref, fo2)
+    mask.compute(
+        solvent_radius=1.2,
+        shrink_truncation_radius=1.2,
+        resolution_factor=1 / 2,
+        atom_radii_table={"C": 1.70, "B": 1.63, "N": 1.55, "O": 1.52},
+    )
+    assert mask.structure_factors() is None
+    assert mask.n_voids() == 0
+    assert mask.n_solvent_grid_points() == 0
+    assert mask.f_mask() is None
+    assert mask.f_model() is None
+    assert mask.modified_intensities() is None
+    assert mask.f_000 is None
+    s = StringIO()
+    mask.show_summary(log=s)
+    assert not show_diff(
+        s.getvalue(),
+        """\
 use_set_completion: False
 solvent_radius: 1.20
 shrink_truncation_radius: 1.20
@@ -54,47 +60,63 @@ van der Waals radii:
 Total solvent accessible volume / cell = 0.0 Ang^3 [0.0%]
 
 gridding: (30,45,54)
-""")
-  # and now with some voids
-  fo2_complete = fo2.sort()
-  fo2_missing_1 = fo2.select_indices(flex.miller_index([(0,0,1),
-                                                        ]), negate=True)
-  mt = flex.mersenne_twister(seed=0)
-  fo2_incomplete = fo2.select(mt.random_bool(fo2.size(), 0.95))
+""",
+    )
+    # and now with some voids
+    fo2_complete = fo2.sort()
+    fo2_missing_1 = fo2.select_indices(
+        flex.miller_index(
+            [
+                (0, 0, 1),
+            ]
+        ),
+        negate=True,
+    )
+    mt = flex.mersenne_twister(seed=0)
+    fo2_incomplete = fo2.select(mt.random_bool(fo2.size(), 0.95))
 
-  for fo2, use_space_group_symmetry in zip(
-    (fo2_complete, fo2_complete, fo2_missing_1, fo2_incomplete),
-    (True, False, True, True)):
-    if fo2 is fo2_complete: use_set_completion=False
-    else: use_set_completion=True
-    mask = masks.mask(xs_no_sol, fo2, use_set_completion=use_set_completion)
-    mask.compute(solvent_radius=1.2,
-                 shrink_truncation_radius=1.2,
-                 resolution_factor=1/3,
-                 #atom_radii_table={'C':1.70, 'B':1.63, 'N':1.55, 'O':1.52},
-                 use_space_group_symmetry=use_space_group_symmetry)
-    n_voids = flex.max(mask.mask.data) - 1
-    f_mask = mask.structure_factors()
-    f_model = mask.f_model()
-    modified_fo = mask.modified_intensities().as_amplitude_array()
-    f_obs_minus_f_model = fo.common_set(f_model).f_obs_minus_f_calc(f_obs_factor=1/k, f_calc=f_model)
-    diff_map = miller.fft_map(mask.crystal_gridding, f_obs_minus_f_model)
-    diff_map.apply_volume_scaling()
-    stats = diff_map.statistics()
-    assert n_voids == 2
-    assert approx_equal(n_voids, mask.n_voids())
-    assert mask.n_solvent_grid_points() == 42148
-    if fo2 is fo2_complete:
-      # check the difference map has no large peaks/holes
-      assert max(stats.max(), abs(stats.min())) < 0.11
-    # expected electron count: 44
-    assert approx_equal(mask.f_000_s, 44, eps=1)
-    assert modified_fo.r1_factor(mask.f_calc.common_set(modified_fo), k) < 0.006
-    assert fo.common_set(fo2).r1_factor(f_model.common_set(fo2), k) < 0.006
+    for fo2, use_space_group_symmetry in zip(
+        (fo2_complete, fo2_complete, fo2_missing_1, fo2_incomplete),
+        (True, False, True, True),
+    ):
+        if fo2 is fo2_complete:
+            use_set_completion = False
+        else:
+            use_set_completion = True
+        mask = masks.mask(xs_no_sol, fo2, use_set_completion=use_set_completion)
+        mask.compute(
+            solvent_radius=1.2,
+            shrink_truncation_radius=1.2,
+            resolution_factor=1 / 3,
+            # atom_radii_table={'C':1.70, 'B':1.63, 'N':1.55, 'O':1.52},
+            use_space_group_symmetry=use_space_group_symmetry,
+        )
+        n_voids = flex.max(mask.mask.data) - 1
+        f_mask = mask.structure_factors()
+        f_model = mask.f_model()
+        modified_fo = mask.modified_intensities().as_amplitude_array()
+        f_obs_minus_f_model = fo.common_set(f_model).f_obs_minus_f_calc(
+            f_obs_factor=1 / k, f_calc=f_model
+        )
+        diff_map = miller.fft_map(mask.crystal_gridding, f_obs_minus_f_model)
+        diff_map.apply_volume_scaling()
+        stats = diff_map.statistics()
+        assert n_voids == 2
+        assert approx_equal(n_voids, mask.n_voids())
+        assert mask.n_solvent_grid_points() == 42148
+        if fo2 is fo2_complete:
+            # check the difference map has no large peaks/holes
+            assert max(stats.max(), abs(stats.min())) < 0.11
+        # expected electron count: 44
+        assert approx_equal(mask.f_000_s, 44, eps=1)
+        assert modified_fo.r1_factor(mask.f_calc.common_set(modified_fo), k) < 0.006
+        assert fo.common_set(fo2).r1_factor(f_model.common_set(fo2), k) < 0.006
 
-  s = StringIO()
-  mask.show_summary(log=s)
-  assert not show_diff(s.getvalue(), """\
+    s = StringIO()
+    mask.show_summary(log=s)
+    assert not show_diff(
+        s.getvalue(),
+        """\
 use_set_completion: True
 solvent_radius: 1.20
 shrink_truncation_radius: 1.20
@@ -117,61 +139,64 @@ Void #Grid points Vol/A^3 Vol/%  Centre of mass (frac)   Eigenvectors (frac)
 Void  Vol/Ang^3  #Electrons
    1       73.3         21.6
    2       73.3         21.6
-""")
-  cif_block = mask.as_cif_block()
+""",
+    )
+    cif_block = mask.as_cif_block()
 
-  fo2 = fo.f_as_f_sq()
-  # this bit is necessary until we have constraints, as
-  # otherwise the hydrogens just disappear into the ether.
-  xs = xs_no_sol.deep_copy_scatterers()
-  h_selection = xs.element_selection('H')
-  orig_flags = xs.scatterer_flags()
-  flags = orig_flags.deep_copy()
-  for flag, is_h in zip(flags, h_selection):
-    if is_h:
-      flag.set_grads(False)
-  xs.set_scatterer_flags(flags)
+    fo2 = fo.f_as_f_sq()
+    # this bit is necessary until we have constraints, as
+    # otherwise the hydrogens just disappear into the ether.
+    xs = xs_no_sol.deep_copy_scatterers()
+    h_selection = xs.element_selection("H")
+    orig_flags = xs.scatterer_flags()
+    flags = orig_flags.deep_copy()
+    for flag, is_h in zip(flags, h_selection):
+        if is_h:
+            flag.set_grads(False)
+    xs.set_scatterer_flags(flags)
 
-  # first refine with no mask
-  xs = exercise_least_squares(xs, fo2, mask=None)
-  xs.set_scatterer_flags(orig_flags)
-  for i in range(1):
-    # compute improved mask/f_mask
-    mask = masks.mask(xs, fo2)
-    mask.compute(solvent_radius=1.2,
-                 shrink_truncation_radius=1.2,
-                 atom_radii_table={'C':1.70, 'B':1.63, 'N':1.55, 'O':1.52},
-                 resolution_factor=1/3)
-    mask.structure_factors()
-    xs = exercise_least_squares(xs, fo2, mask)
-  # again exclude hydrogens from tests because of lack of constraints
-  emma_ref = xs_no_sol.select(h_selection, negate=True).as_emma_model()
-  match = emma.model_matches(emma_ref, xs.select(
-    h_selection, negate=True).as_emma_model()).refined_matches[0]
-  assert approx_equal(match.rms, 0, eps=1e-3)
+    # first refine with no mask
+    xs = exercise_least_squares(xs, fo2, mask=None)
+    xs.set_scatterer_flags(orig_flags)
+    for i in range(1):
+        # compute improved mask/f_mask
+        mask = masks.mask(xs, fo2)
+        mask.compute(
+            solvent_radius=1.2,
+            shrink_truncation_radius=1.2,
+            atom_radii_table={"C": 1.70, "B": 1.63, "N": 1.55, "O": 1.52},
+            resolution_factor=1 / 3,
+        )
+        mask.structure_factors()
+        xs = exercise_least_squares(xs, fo2, mask)
+    # again exclude hydrogens from tests because of lack of constraints
+    emma_ref = xs_no_sol.select(h_selection, negate=True).as_emma_model()
+    match = emma.model_matches(
+        emma_ref, xs.select(h_selection, negate=True).as_emma_model()
+    ).refined_matches[0]
+    assert approx_equal(match.rms, 0, eps=1e-3)
+
 
 def exercise_least_squares(xray_structure, fo_sq, mask=None):
-  from smtbx.refinement import least_squares
-  fo_sq = fo_sq.customized_copy(sigmas=flex.double(fo_sq.size(),1.))
-  xs = xray_structure.deep_copy_scatterers()
-  if mask is not None:
-    f_mask = mask.f_mask()
-  else:
-    f_mask = None
-  connectivity_table = smtbx.utils.connectivity_table(xs)
-  reparametrisation = constraints.reparametrisation(
-    structure=xs,
-    constraints=[],
-    connectivity_table=connectivity_table)
-  obs = fo_sq.as_xray_observations()
-  ls = least_squares.crystallographic_ls(
-    obs,
-    reparametrisation,
-    f_mask=f_mask,
-    weighting_scheme="default")
-  cycles = normal_eqns_solving.naive_iterations(ls,
-                                                n_max_iterations=3)
-  return xs
+    from smtbx.refinement import least_squares
+
+    fo_sq = fo_sq.customized_copy(sigmas=flex.double(fo_sq.size(), 1.0))
+    xs = xray_structure.deep_copy_scatterers()
+    if mask is not None:
+        f_mask = mask.f_mask()
+    else:
+        f_mask = None
+    connectivity_table = smtbx.utils.connectivity_table(xs)
+    reparametrisation = constraints.reparametrisation(
+        structure=xs, constraints=[], connectivity_table=connectivity_table
+    )
+    obs = fo_sq.as_xray_observations()
+    ls = least_squares.crystallographic_ls(
+        obs, reparametrisation, f_mask=f_mask, weighting_scheme="default"
+    )
+    cycles = normal_eqns_solving.naive_iterations(ls, n_max_iterations=3)
+    return xs
+
 
 # durham structure 99srv215, CSD code YAKRUY
 YAKRUY_ins = """
@@ -258,9 +283,11 @@ HKLF 4
 END
 """
 
-def run():
-  libtbx.utils.show_times_at_exit()
-  exercise_masks()
 
-if __name__ == '__main__':
-  run()
+def run():
+    libtbx.utils.show_times_at_exit()
+    exercise_masks()
+
+
+if __name__ == "__main__":
+    run()

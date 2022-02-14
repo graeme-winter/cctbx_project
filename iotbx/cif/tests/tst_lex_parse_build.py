@@ -6,116 +6,157 @@ from iotbx.cif import CifParserError
 from iotbx.cif.builders import CifBuilderError
 from iotbx import crystal_symmetry_from_any
 from iotbx.reflection_file_reader import any_reflection_file
-from libtbx.test_utils import \
-     approx_equal, show_diff, Exception_expected, open_tmp_file
+from libtbx.test_utils import approx_equal, show_diff, Exception_expected, open_tmp_file
 from six.moves import cStringIO as StringIO
 import sys
 from six.moves import zip
 
 
 def exercise_miller_arrays_as_cif_block():
-  from iotbx.cif import reader
-  cif_model = reader(input_string=cif_miller_array,
-                     builder=cif.builders.cif_model_builder()).model()
-  ma_builder = cif.builders.miller_array_builder(cif_model['global'])
-  ma1 = ma_builder.arrays()['_refln_F_squared_meas']
-  mas_as_cif_block = cif.miller_arrays_as_cif_block(
-    ma1, array_type='meas', format="corecif")
-  mas_as_cif_block.add_miller_array(
-    ma1.array(data=flex.complex_double([1-1j]*ma1.size())), array_type='calc')
-  mas_as_cif_block.add_miller_array(
-    ma1.array(data=flex.complex_double([1-2j]*ma1.size())), column_names=[
-      '_refln_A_calc', '_refln_B_calc'])
-  for key in ('_refln_F_squared_meas', '_refln_F_squared_sigma',
-              '_refln_F_calc', '_refln_phase_calc',
-              '_refln_A_calc', '_refln_A_calc'):
-    assert (key in mas_as_cif_block.cif_block.keys()), key
-  #
-  mas_as_cif_block = cif.miller_arrays_as_cif_block(
-    ma1, array_type='meas', format="mmcif")
-  mas_as_cif_block.add_miller_array(
-    ma1.array(data=flex.complex_double([1-1j]*ma1.size())), array_type='calc')
-  for key in ('_refln.F_squared_meas', '_refln.F_squared_sigma',
-              '_refln.F_calc', '_refln.phase_calc',
-              '_space_group_symop.operation_xyz',
-              '_cell.length_a', '_refln.index_h'):
-    assert key in mas_as_cif_block.cif_block.keys()
-  #
-  mas_as_cif_block = cif.miller_arrays_as_cif_block(
-    ma1, column_names=['_diffrn_refln_intensity_net',
-                       '_diffrn_refln_intensity_sigma'],
-         miller_index_prefix='_diffrn_refln')
-  mas_as_cif_block.add_miller_array(
-    ma1.array(data=flex.std_string(ma1.size(), 'om')),
-    column_name='_diffrn_refln_intensity_u')
-  for key in ('_diffrn_refln_intensity_net', '_diffrn_refln_intensity_sigma',
-              '_diffrn_refln_intensity_u'):
-    assert key in list(mas_as_cif_block.cif_block.keys())
-  #
-  try: reader(input_string=cif_global)
-  except CifParserError as e: pass
-  else: raise Exception_expected
-  cif_model = reader(input_string=cif_global, strict=False).model()
-  assert not show_diff(str(cif_model), """\
+    from iotbx.cif import reader
+
+    cif_model = reader(
+        input_string=cif_miller_array, builder=cif.builders.cif_model_builder()
+    ).model()
+    ma_builder = cif.builders.miller_array_builder(cif_model["global"])
+    ma1 = ma_builder.arrays()["_refln_F_squared_meas"]
+    mas_as_cif_block = cif.miller_arrays_as_cif_block(
+        ma1, array_type="meas", format="corecif"
+    )
+    mas_as_cif_block.add_miller_array(
+        ma1.array(data=flex.complex_double([1 - 1j] * ma1.size())), array_type="calc"
+    )
+    mas_as_cif_block.add_miller_array(
+        ma1.array(data=flex.complex_double([1 - 2j] * ma1.size())),
+        column_names=["_refln_A_calc", "_refln_B_calc"],
+    )
+    for key in (
+        "_refln_F_squared_meas",
+        "_refln_F_squared_sigma",
+        "_refln_F_calc",
+        "_refln_phase_calc",
+        "_refln_A_calc",
+        "_refln_A_calc",
+    ):
+        assert key in mas_as_cif_block.cif_block.keys(), key
+    #
+    mas_as_cif_block = cif.miller_arrays_as_cif_block(
+        ma1, array_type="meas", format="mmcif"
+    )
+    mas_as_cif_block.add_miller_array(
+        ma1.array(data=flex.complex_double([1 - 1j] * ma1.size())), array_type="calc"
+    )
+    for key in (
+        "_refln.F_squared_meas",
+        "_refln.F_squared_sigma",
+        "_refln.F_calc",
+        "_refln.phase_calc",
+        "_space_group_symop.operation_xyz",
+        "_cell.length_a",
+        "_refln.index_h",
+    ):
+        assert key in mas_as_cif_block.cif_block.keys()
+    #
+    mas_as_cif_block = cif.miller_arrays_as_cif_block(
+        ma1,
+        column_names=["_diffrn_refln_intensity_net", "_diffrn_refln_intensity_sigma"],
+        miller_index_prefix="_diffrn_refln",
+    )
+    mas_as_cif_block.add_miller_array(
+        ma1.array(data=flex.std_string(ma1.size(), "om")),
+        column_name="_diffrn_refln_intensity_u",
+    )
+    for key in (
+        "_diffrn_refln_intensity_net",
+        "_diffrn_refln_intensity_sigma",
+        "_diffrn_refln_intensity_u",
+    ):
+        assert key in list(mas_as_cif_block.cif_block.keys())
+    #
+    try:
+        reader(input_string=cif_global)
+    except CifParserError as e:
+        pass
+    else:
+        raise Exception_expected
+    cif_model = reader(input_string=cif_global, strict=False).model()
+    assert not show_diff(
+        str(cif_model),
+        """\
 data_1
 _c                                3
 _d                                4
-""")
-  # exercise adding miller arrays with non-matching indices
-  cs = crystal.symmetry(unit_cell=uctbx.unit_cell((10, 10, 10, 90, 90, 90)),
-                        space_group_info=sgtbx.space_group_info(symbol="P1"))
-  mi = flex.miller_index(((1,0,0), (1,2,3), (2,3,4)))
-  ms1 = miller.set(cs, mi)
-  ma1 = miller.array(ms1, data=flex.double((1,2,3)))
-  mas_as_cif_block = cif.miller_arrays_as_cif_block(
-    ma1, column_name="_refln.F_meas_au")
-  ms2 = miller.set(cs, mi[:2])
-  ma2 = miller.array(ms2, data=flex.complex_double([1-2j]*ms2.size()))
-  mas_as_cif_block.add_miller_array(
-    ma2, column_names=("_refln.F_calc_au", "_refln.phase_calc")),
-  ms3 = miller.set(cs, flex.miller_index(((1,0,0), (5,6,7), (2,3,4))))
-  ma3 = miller.array(ms3, data=flex.double((4,5,6)))
-  mas_as_cif_block.add_miller_array(ma3, column_name="_refln.F_squared_meas")
-  ms4 = miller.set(cs, flex.miller_index(((1,2,3), (5,6,7), (1,1,1), (1,0,0), (2,3,4))))
-  ma4 = ms4.d_spacings()
-  mas_as_cif_block.add_miller_array(ma4, column_name="_refln.d_spacing")
-  # extract arrays from cif block and make sure we get back what we started with
-  arrays = cif.builders.miller_array_builder(mas_as_cif_block.cif_block).arrays()
-  recycled_arrays = (arrays['_refln.F_meas_au'],
-                     arrays['_refln.F_calc_au'],
-                     arrays['_refln.F_squared_meas'],
-                     arrays['_refln.d_spacing'])
-  for orig, recycled in zip((ma1, ma2, ma3, ma4), recycled_arrays):
-    assert orig.size() == recycled.size()
-    recycled = recycled.customized_copy(anomalous_flag=orig.anomalous_flag())
-    orig, recycled = orig.common_sets(recycled)
-    assert orig.indices().all_eq(recycled.indices())
-    assert approx_equal(orig.data(), recycled.data(), eps=1e-5)
-  #
-  cif_model = reader(input_string=r3adrsf,
-                     builder=cif.builders.cif_model_builder()).model()
-  cs = cif.builders.crystal_symmetry_builder(cif_model["r3adrsf"]).crystal_symmetry
-
-  ma_builder = cif.builders.miller_array_builder(
-    cif_model['r3adrAsf'],
-    base_array_info=miller.array_info(crystal_symmetry_from_file=cs))
-  miller_arrays = list(ma_builder.arrays().values())
-  assert len(miller_arrays) == 4
-  mas_as_cif_block = cif.miller_arrays_as_cif_block(
-      miller_arrays[0].map_to_asu(),
-      column_names=miller_arrays[0].info().labels,
-      format="corecif")
-  for array in miller_arrays[1:]:
-    labels = array.info().labels
-    if len(labels) > 1 :
-      for label in labels :
-        if label.startswith("wavelength_id"):
-          labels.remove(label)
+""",
+    )
+    # exercise adding miller arrays with non-matching indices
+    cs = crystal.symmetry(
+        unit_cell=uctbx.unit_cell((10, 10, 10, 90, 90, 90)),
+        space_group_info=sgtbx.space_group_info(symbol="P1"),
+    )
+    mi = flex.miller_index(((1, 0, 0), (1, 2, 3), (2, 3, 4)))
+    ms1 = miller.set(cs, mi)
+    ma1 = miller.array(ms1, data=flex.double((1, 2, 3)))
+    mas_as_cif_block = cif.miller_arrays_as_cif_block(
+        ma1, column_name="_refln.F_meas_au"
+    )
+    ms2 = miller.set(cs, mi[:2])
+    ma2 = miller.array(ms2, data=flex.complex_double([1 - 2j] * ms2.size()))
     mas_as_cif_block.add_miller_array(
-      array=array.map_to_asu(), column_names=array.info().labels)
-  s = StringIO()
-  print(mas_as_cif_block.refln_loop, file=s)
-  assert not show_diff(s.getvalue(), """\
+        ma2, column_names=("_refln.F_calc_au", "_refln.phase_calc")
+    ),
+    ms3 = miller.set(cs, flex.miller_index(((1, 0, 0), (5, 6, 7), (2, 3, 4))))
+    ma3 = miller.array(ms3, data=flex.double((4, 5, 6)))
+    mas_as_cif_block.add_miller_array(ma3, column_name="_refln.F_squared_meas")
+    ms4 = miller.set(
+        cs, flex.miller_index(((1, 2, 3), (5, 6, 7), (1, 1, 1), (1, 0, 0), (2, 3, 4)))
+    )
+    ma4 = ms4.d_spacings()
+    mas_as_cif_block.add_miller_array(ma4, column_name="_refln.d_spacing")
+    # extract arrays from cif block and make sure we get back what we started with
+    arrays = cif.builders.miller_array_builder(mas_as_cif_block.cif_block).arrays()
+    recycled_arrays = (
+        arrays["_refln.F_meas_au"],
+        arrays["_refln.F_calc_au"],
+        arrays["_refln.F_squared_meas"],
+        arrays["_refln.d_spacing"],
+    )
+    for orig, recycled in zip((ma1, ma2, ma3, ma4), recycled_arrays):
+        assert orig.size() == recycled.size()
+        recycled = recycled.customized_copy(anomalous_flag=orig.anomalous_flag())
+        orig, recycled = orig.common_sets(recycled)
+        assert orig.indices().all_eq(recycled.indices())
+        assert approx_equal(orig.data(), recycled.data(), eps=1e-5)
+    #
+    cif_model = reader(
+        input_string=r3adrsf, builder=cif.builders.cif_model_builder()
+    ).model()
+    cs = cif.builders.crystal_symmetry_builder(cif_model["r3adrsf"]).crystal_symmetry
+
+    ma_builder = cif.builders.miller_array_builder(
+        cif_model["r3adrAsf"],
+        base_array_info=miller.array_info(crystal_symmetry_from_file=cs),
+    )
+    miller_arrays = list(ma_builder.arrays().values())
+    assert len(miller_arrays) == 4
+    mas_as_cif_block = cif.miller_arrays_as_cif_block(
+        miller_arrays[0].map_to_asu(),
+        column_names=miller_arrays[0].info().labels,
+        format="corecif",
+    )
+    for array in miller_arrays[1:]:
+        labels = array.info().labels
+        if len(labels) > 1:
+            for label in labels:
+                if label.startswith("wavelength_id"):
+                    labels.remove(label)
+        mas_as_cif_block.add_miller_array(
+            array=array.map_to_asu(), column_names=array.info().labels
+        )
+    s = StringIO()
+    print(mas_as_cif_block.refln_loop, file=s)
+    assert not show_diff(
+        s.getvalue(),
+        """\
 loop_
   _refln_index_h
   _refln_index_k
@@ -140,163 +181,202 @@ loop_
   -88  4  44  1  3  1  -19.8  49.2    0.3  34.7
   -88  6  44  1  3  1   -1.8  34.8      ?     ?
 
-""")
-
-
+""",
+    )
 
 
 def exercise_lex_parse_build():
-  exercise_parser(cif.reader, cif.builders.cif_model_builder)
-  cm = cif.reader(input_string=cif_quoted_string).model()
-  assert cm['global']['_a'] == 'a"b'
-  assert cm['global']['_b'] == "a dog's life"
-  stdout = sys.stdout
-  s = StringIO()
-  sys.stdout = s
-  try: cif.reader(input_string=cif_invalid_missing_value)
-  except CifParserError: pass
-  else: raise Exception_expected
-  r = cif.reader(
-    input_string=cif_invalid_missing_value, raise_if_errors=False)
-  assert r.error_count() == 1
-  try: cif.reader(input_string=cif_invalid_string)
-  except CifParserError: pass
-  else: raise Exception_expected
-  a = cif.reader(input_string=cif_cod)
-  assert a.error_count() == 0
-  try: cif.reader(input_string=cif_invalid_semicolon_text_field)
-  except CifParserError: pass
-  else: raise Exception_expected
-  d = cif.reader(input_string=cif_valid_semicolon_text_field)
-  assert d.error_count() == 0
-  assert d.model()['1']['_a'] == '\n1\n'
-  e = cif.reader(input_string=cif_unquoted_string_semicolon)
-  assert not show_diff(str(e.model()), """\
+    exercise_parser(cif.reader, cif.builders.cif_model_builder)
+    cm = cif.reader(input_string=cif_quoted_string).model()
+    assert cm["global"]["_a"] == 'a"b'
+    assert cm["global"]["_b"] == "a dog's life"
+    stdout = sys.stdout
+    s = StringIO()
+    sys.stdout = s
+    try:
+        cif.reader(input_string=cif_invalid_missing_value)
+    except CifParserError:
+        pass
+    else:
+        raise Exception_expected
+    r = cif.reader(input_string=cif_invalid_missing_value, raise_if_errors=False)
+    assert r.error_count() == 1
+    try:
+        cif.reader(input_string=cif_invalid_string)
+    except CifParserError:
+        pass
+    else:
+        raise Exception_expected
+    a = cif.reader(input_string=cif_cod)
+    assert a.error_count() == 0
+    try:
+        cif.reader(input_string=cif_invalid_semicolon_text_field)
+    except CifParserError:
+        pass
+    else:
+        raise Exception_expected
+    d = cif.reader(input_string=cif_valid_semicolon_text_field)
+    assert d.error_count() == 0
+    assert d.model()["1"]["_a"] == "\n1\n"
+    e = cif.reader(input_string=cif_unquoted_string_semicolon)
+    assert not show_diff(
+        str(e.model()),
+        """\
 data_1
 _a                                ;1
 _b                                ;
 _c                                2
-""")
-  cif_str_1 = """\
+""",
+    )
+    cif_str_1 = """\
 data_1
 _a 1
 """
-  cif_str_2 = """\
+    cif_str_2 = """\
 data_2
 _b 2
 """
-  cm = cif.reader(input_string=cif_str_1).model()
-  assert list(cm.keys()) == ['1']
-  cif.reader(input_string=cif_str_2, cif_object=cm).model()
-  assert list(cm.keys()) == ['1', '2']
-  try: cm = cif.reader(input_string=cif_invalid_loop).model()
-  except CifParserError: pass
-  else: raise Exception_expected
-  try: cm = cif.reader(input_string=cif_invalid_loop_2).model()
-  except CifParserError: pass
-  else: raise Exception_expected
+    cm = cif.reader(input_string=cif_str_1).model()
+    assert list(cm.keys()) == ["1"]
+    cif.reader(input_string=cif_str_2, cif_object=cm).model()
+    assert list(cm.keys()) == ["1", "2"]
+    try:
+        cm = cif.reader(input_string=cif_invalid_loop).model()
+    except CifParserError:
+        pass
+    else:
+        raise Exception_expected
+    try:
+        cm = cif.reader(input_string=cif_invalid_loop_2).model()
+    except CifParserError:
+        pass
+    else:
+        raise Exception_expected
 
-  sys.stdout = stdout
+    sys.stdout = stdout
 
-  arrays = miller.array.from_cif(file_object=StringIO(
-    cif_miller_array_template %(
-      '_refln_F_calc', '_refln_F_meas', '_refln_F_sigma')),
-                                 data_block_name='global')
-  assert sorted(arrays.keys()) == ['_refln_F_calc', '_refln_F_meas']
-  assert arrays['_refln_F_calc'].sigmas() is None
-  assert isinstance(arrays['_refln_F_meas'].sigmas(), flex.double)
-  arrays = miller.array.from_cif(file_object=StringIO(
-    cif_miller_array_template %(
-      '_refln_A_calc', '_refln_B_calc', '_refln_F_meas')),
-                                 data_block_name='global')
-  assert sorted(arrays.keys()) == ['_refln_A_calc', '_refln_F_meas']
-  assert arrays['_refln_A_calc'].is_complex_array()
-  arrays = miller.array.from_cif(file_object=StringIO(
-    cif_miller_array_template %(
-      '_refln_A_meas', '_refln_B_meas', '_refln_F_meas')),
-                                 data_block_name='global')
-  assert sorted(arrays.keys()) == ['_refln_A_meas', '_refln_F_meas']
-  assert arrays['_refln_A_meas'].is_complex_array()
-  arrays = miller.array.from_cif(file_object=StringIO(
-    cif_miller_array_template %(
-      '_refln_intensity_calc', '_refln_intensity_meas',
-      '_refln_intensity_sigma')),
-                                 data_block_name='global')
-  assert sorted(arrays.keys()) == [
-    '_refln_intensity_calc', '_refln_intensity_meas']
-  arrays = miller.array.from_cif(file_object=StringIO(
-    cif_miller_array_template %(
-      '_refln_F_calc', '_refln_phase_calc', '_refln_F_sigma')),
-                                 data_block_name='global')
-  assert arrays['_refln_F_calc'].is_complex_array()
+    arrays = miller.array.from_cif(
+        file_object=StringIO(
+            cif_miller_array_template
+            % ("_refln_F_calc", "_refln_F_meas", "_refln_F_sigma")
+        ),
+        data_block_name="global",
+    )
+    assert sorted(arrays.keys()) == ["_refln_F_calc", "_refln_F_meas"]
+    assert arrays["_refln_F_calc"].sigmas() is None
+    assert isinstance(arrays["_refln_F_meas"].sigmas(), flex.double)
+    arrays = miller.array.from_cif(
+        file_object=StringIO(
+            cif_miller_array_template
+            % ("_refln_A_calc", "_refln_B_calc", "_refln_F_meas")
+        ),
+        data_block_name="global",
+    )
+    assert sorted(arrays.keys()) == ["_refln_A_calc", "_refln_F_meas"]
+    assert arrays["_refln_A_calc"].is_complex_array()
+    arrays = miller.array.from_cif(
+        file_object=StringIO(
+            cif_miller_array_template
+            % ("_refln_A_meas", "_refln_B_meas", "_refln_F_meas")
+        ),
+        data_block_name="global",
+    )
+    assert sorted(arrays.keys()) == ["_refln_A_meas", "_refln_F_meas"]
+    assert arrays["_refln_A_meas"].is_complex_array()
+    arrays = miller.array.from_cif(
+        file_object=StringIO(
+            cif_miller_array_template
+            % (
+                "_refln_intensity_calc",
+                "_refln_intensity_meas",
+                "_refln_intensity_sigma",
+            )
+        ),
+        data_block_name="global",
+    )
+    assert sorted(arrays.keys()) == ["_refln_intensity_calc", "_refln_intensity_meas"]
+    arrays = miller.array.from_cif(
+        file_object=StringIO(
+            cif_miller_array_template
+            % ("_refln_F_calc", "_refln_phase_calc", "_refln_F_sigma")
+        ),
+        data_block_name="global",
+    )
+    assert arrays["_refln_F_calc"].is_complex_array()
 
-  for data_block_name in (None, "global"):
-    miller_arrays = cif.reader(file_object=StringIO(
-      cif_miller_array_template %(
-        '_refln_F_calc',
-        '_refln_F_meas',
-        '_refln_F_sigma'))).as_miller_arrays(data_block_name=data_block_name)
-    assert " ".join(sorted([str(ma.info()) for ma in miller_arrays])) \
-      == "cif:global,_refln_F_calc cif:global,_refln_F_meas,_refln_F_sigma"
-  f = open_tmp_file(suffix="cif")
-  f.write(cif_miller_array_template %(
-        '_refln_F_calc',
-        '_refln_F_meas',
-        '_refln_F_sigma'))
-  f.close()
-  miller_arrays = any_reflection_file(file_name=f.name).as_miller_arrays()
-  assert len(miller_arrays) == 2
-  cs = crystal.symmetry(
-    space_group_info=sgtbx.space_group_info("P1")
-  )
-  miller_arrays = any_reflection_file(file_name=f.name).as_miller_arrays(
-    crystal_symmetry=cs, force_symmetry=True, anomalous=True)
-  assert miller_arrays[0].anomalous_flag() is True
-  assert miller_arrays[0].crystal_symmetry().space_group() == cs.space_group()
+    for data_block_name in (None, "global"):
+        miller_arrays = cif.reader(
+            file_object=StringIO(
+                cif_miller_array_template
+                % ("_refln_F_calc", "_refln_F_meas", "_refln_F_sigma")
+            )
+        ).as_miller_arrays(data_block_name=data_block_name)
+        assert (
+            " ".join(sorted([str(ma.info()) for ma in miller_arrays]))
+            == "cif:global,_refln_F_calc cif:global,_refln_F_meas,_refln_F_sigma"
+        )
+    f = open_tmp_file(suffix="cif")
+    f.write(
+        cif_miller_array_template % ("_refln_F_calc", "_refln_F_meas", "_refln_F_sigma")
+    )
+    f.close()
+    miller_arrays = any_reflection_file(file_name=f.name).as_miller_arrays()
+    assert len(miller_arrays) == 2
+    cs = crystal.symmetry(space_group_info=sgtbx.space_group_info("P1"))
+    miller_arrays = any_reflection_file(file_name=f.name).as_miller_arrays(
+        crystal_symmetry=cs, force_symmetry=True, anomalous=True
+    )
+    assert miller_arrays[0].anomalous_flag() is True
+    assert miller_arrays[0].crystal_symmetry().space_group() == cs.space_group()
+
 
 def exercise_parser(reader, builder):
-  cif_model = reader(
-    input_string=cif_xray_structure, builder=builder()).model()
-  xs_builder = cif.builders.crystal_structure_builder(cif_model['global'])
-  xs1 = xs_builder.structure
-  # also test construction of cif model from xray structure
-  xs_cif_block = xs1.as_cif_block()
-  xs2 = cif.builders.crystal_structure_builder(xs_cif_block).structure
-  sio = StringIO()
-  xs1.as_cif_simple(out=sio)
-  xs3 = reader(input_string=sio.getvalue()).build_crystal_structures(
-    data_block_name='global')
-  xs_iso = xs1.deep_copy_scatterers()
-  xs_iso.convert_to_isotropic()
-  xs4 = cif.builders.crystal_structure_builder(xs_iso.as_cif_block()).structure
-
-  for xs in (xs1, xs2, xs3):
-    sc = xs.scatterers()
-    assert list(sc.extract_labels()) == ['o','c']
-    assert list(sc.extract_scattering_types()) == ['O','C']
-    assert approx_equal(sc.extract_occupancies(), (0.8, 1))
-    assert approx_equal(sc.extract_sites(), ((0.5,0,0),(0,0,0)))
-    assert approx_equal(sc.extract_u_star(),
-      [(-1, -1, -1, -1, -1, -1), (1e-3, 5e-4, (1e-3)/3, 0, 0, 0)])
-    assert approx_equal(sc.extract_u_iso(), (0.1, -1))
-    assert approx_equal(xs.unit_cell().parameters(),
-                        (10,20,30,90,90,90))
-    assert str(xs.space_group_info()) == 'C 1 2/m 1'
-  #
-  cif_model = reader(
-    input_string=cif_miller_array, builder=builder()).model()
-  ma_builder = cif.builders.miller_array_builder(cif_model['global'])
-  ma1 = ma_builder.arrays()['_refln_F_squared_meas']
-  if isinstance(cif_model, cif.model.cif):
-    assert (ma_builder.arrays()['_refln_observed_status'].data() ==
-            flex.std_string(['o'] * ma1.size()))
-  # also test construction of cif model from miller array
-  ma2 = cif.builders.miller_array_builder(
-    ma1.as_cif_block(array_type='meas')).arrays()['_refln.F_squared_meas']
-  for ma in (ma1, ma2):
+    cif_model = reader(input_string=cif_xray_structure, builder=builder()).model()
+    xs_builder = cif.builders.crystal_structure_builder(cif_model["global"])
+    xs1 = xs_builder.structure
+    # also test construction of cif model from xray structure
+    xs_cif_block = xs1.as_cif_block()
+    xs2 = cif.builders.crystal_structure_builder(xs_cif_block).structure
     sio = StringIO()
-    ma.show_array(sio)
-    assert not show_diff(sio.getvalue(), """\
+    xs1.as_cif_simple(out=sio)
+    xs3 = reader(input_string=sio.getvalue()).build_crystal_structures(
+        data_block_name="global"
+    )
+    xs_iso = xs1.deep_copy_scatterers()
+    xs_iso.convert_to_isotropic()
+    xs4 = cif.builders.crystal_structure_builder(xs_iso.as_cif_block()).structure
+
+    for xs in (xs1, xs2, xs3):
+        sc = xs.scatterers()
+        assert list(sc.extract_labels()) == ["o", "c"]
+        assert list(sc.extract_scattering_types()) == ["O", "C"]
+        assert approx_equal(sc.extract_occupancies(), (0.8, 1))
+        assert approx_equal(sc.extract_sites(), ((0.5, 0, 0), (0, 0, 0)))
+        assert approx_equal(
+            sc.extract_u_star(),
+            [(-1, -1, -1, -1, -1, -1), (1e-3, 5e-4, (1e-3) / 3, 0, 0, 0)],
+        )
+        assert approx_equal(sc.extract_u_iso(), (0.1, -1))
+        assert approx_equal(xs.unit_cell().parameters(), (10, 20, 30, 90, 90, 90))
+        assert str(xs.space_group_info()) == "C 1 2/m 1"
+    #
+    cif_model = reader(input_string=cif_miller_array, builder=builder()).model()
+    ma_builder = cif.builders.miller_array_builder(cif_model["global"])
+    ma1 = ma_builder.arrays()["_refln_F_squared_meas"]
+    if isinstance(cif_model, cif.model.cif):
+        assert ma_builder.arrays()["_refln_observed_status"].data() == flex.std_string(
+            ["o"] * ma1.size()
+        )
+    # also test construction of cif model from miller array
+    ma2 = cif.builders.miller_array_builder(
+        ma1.as_cif_block(array_type="meas")
+    ).arrays()["_refln.F_squared_meas"]
+    for ma in (ma1, ma2):
+        sio = StringIO()
+        ma.show_array(sio)
+        assert not show_diff(
+            sio.getvalue(),
+            """\
 (1, 0, 0) 748.71 13.87
 (2, 0, 0) 1318.51 24.29
 (3, 0, 0) 1333.51 33.75
@@ -308,11 +388,14 @@ def exercise_parser(reader, builder):
 (9, 0, 0) 189.09 20.3
 (10, 0, 0) 564.68 35.61
 (-10, 1, 0) 170.23 22.26
-""")
-  sio = StringIO()
-  ma1.show_summary(sio)
-  # Miller array info: cif:_refln.F_squared_meas,_refln.F_squared_sigma
-  assert not show_diff(sio.getvalue(), """\
+""",
+        )
+    sio = StringIO()
+    ma1.show_summary(sio)
+    # Miller array info: cif:_refln.F_squared_meas,_refln.F_squared_sigma
+    assert not show_diff(
+        sio.getvalue(),
+        """\
 Miller array info: cif:_refln_F_squared_meas,_refln_F_squared_sigma
 Observation type: xray.intensity
 Type of data: double, size=11
@@ -321,11 +404,14 @@ Number of Miller indices: 11
 Anomalous flag: False
 Unit cell: (7.999, 9.372, 14.736, 82.625, 81.527, 81.726)
 Space group: P -1 (No. 2)
-""")
-  sio = StringIO()
-  ma2.show_summary(sio)
-  # Miller array info: cif:_refln.F_squared_meas,_refln.F_squared_sigma
-  assert not show_diff(sio.getvalue(), """\
+""",
+    )
+    sio = StringIO()
+    ma2.show_summary(sio)
+    # Miller array info: cif:_refln.F_squared_meas,_refln.F_squared_sigma
+    assert not show_diff(
+        sio.getvalue(),
+        """\
 Miller array info: cif:_refln.F_squared_meas,_refln.F_squared_sigma
 Observation type: xray.intensity
 Type of data: double, size=11
@@ -334,7 +420,9 @@ Number of Miller indices: 11
 Anomalous flag: False
 Unit cell: (7.999, 9.372, 14.736, 82.625, 81.527, 81.726)
 Space group: P -1 (No. 2)
-""")
+""",
+    )
+
 
 cif_xray_structure = """\
 data_global
@@ -520,16 +608,19 @@ _c 3
 _d 4
 """
 
+
 def exercise_atom_type_loop():
-  from cctbx import xray
-  cif_model = cif.reader(input_string=cif_xray_structure).model()
-  xs = cif.builders.crystal_structure_builder(cif_model['global']).structure
-  xs.set_inelastic_form_factors(photon=0.71073, table="henke")
-  loop = cif.atom_type_cif_loop(xray_structure=xs, format="mmcif")
-  s = StringIO()
-  print(loop, file=s)
-  assert not show_diff(
-    "\n".join([li.rstrip() for li in s.getvalue().splitlines()]), """\
+    from cctbx import xray
+
+    cif_model = cif.reader(input_string=cif_xray_structure).model()
+    xs = cif.builders.crystal_structure_builder(cif_model["global"]).structure
+    xs.set_inelastic_form_factors(photon=0.71073, table="henke")
+    loop = cif.atom_type_cif_loop(xray_structure=xs, format="mmcif")
+    s = StringIO()
+    print(loop, file=s)
+    assert not show_diff(
+        "\n".join([li.rstrip() for li in s.getvalue().splitlines()]),
+        """\
 loop_
   _atom_type.symbol
   _atom_type.scat_dispersion_real
@@ -561,132 +652,189 @@ Newsletter of the IUCr Commission on Crystallographic Computing 2004, 3, 22-31.
 Newsletter of the IUCr Commission on Crystallographic Computing 2004, 3, 22-31.
 ;
   'Henke, Gullikson and Davis, At. Data and Nucl. Data Tables, 1993, 54, 2'
-""")
+""",
+    )
+
 
 def exercise_partial_crystal_symmetry():
-  def get_inp(u, s):
-    result = ["data_test"]
-    if (u):
-      result.append("_cell_length_a 12.605(3)")
-    if (s):
-      result.append("_symmetry_space_group_name_Hall  '-P 2yn'")
-    return "\n".join(result)
-  def get_cs(input_string):
-    cif_model = cif.reader(input_string=input_string).model()
-    return cif.builders.crystal_symmetry_builder(
-      cif_block=cif_model["test"]).crystal_symmetry
-  cs = get_cs(get_inp(False, False))
-  assert cs.unit_cell() is None
-  assert cs.space_group_info() is None
-  cs = get_cs(get_inp(False, True))
-  assert cs.unit_cell() is None
-  assert str(cs.space_group_info()) == "P 1 21/n 1"
-  try:
-    get_cs(get_inp(True, False))
-  except CifBuilderError as e:
-    assert str(e) == "Not all unit cell parameters are given in the cif file"
-  else: raise Exception_expected
+    def get_inp(u, s):
+        result = ["data_test"]
+        if u:
+            result.append("_cell_length_a 12.605(3)")
+        if s:
+            result.append("_symmetry_space_group_name_Hall  '-P 2yn'")
+        return "\n".join(result)
+
+    def get_cs(input_string):
+        cif_model = cif.reader(input_string=input_string).model()
+        return cif.builders.crystal_symmetry_builder(
+            cif_block=cif_model["test"]
+        ).crystal_symmetry
+
+    cs = get_cs(get_inp(False, False))
+    assert cs.unit_cell() is None
+    assert cs.space_group_info() is None
+    cs = get_cs(get_inp(False, True))
+    assert cs.unit_cell() is None
+    assert str(cs.space_group_info()) == "P 1 21/n 1"
+    try:
+        get_cs(get_inp(True, False))
+    except CifBuilderError as e:
+        assert str(e) == "Not all unit cell parameters are given in the cif file"
+    else:
+        raise Exception_expected
+
 
 def exercise_crystal_symmetry():
-  cm = cif.reader(input_string=p1_sym_ops).model()
-  cs_builder = cif.builders.crystal_symmetry_builder(cm["r1e5xsf"])
-  assert cs_builder.crystal_symmetry.space_group_info().symbol_and_number() \
-         == 'P 1 (No. 1)'
-  file_object = open_tmp_file(suffix=".cif")
-  file_object.write(p1_sym_ops)
-  file_object.close()
-  cs = crystal_symmetry_from_any.extract_from(file_name=file_object.name)
-  assert cs.space_group_info().symbol_and_number() == 'P 1 (No. 1)'
+    cm = cif.reader(input_string=p1_sym_ops).model()
+    cs_builder = cif.builders.crystal_symmetry_builder(cm["r1e5xsf"])
+    assert (
+        cs_builder.crystal_symmetry.space_group_info().symbol_and_number()
+        == "P 1 (No. 1)"
+    )
+    file_object = open_tmp_file(suffix=".cif")
+    file_object.write(p1_sym_ops)
+    file_object.close()
+    cs = crystal_symmetry_from_any.extract_from(file_name=file_object.name)
+    assert cs.space_group_info().symbol_and_number() == "P 1 (No. 1)"
 
 
 def exercise_mmcif_structure_factors():
-  miller_arrays = cif.reader(input_string=r3adrsf).as_miller_arrays()
-  assert len(miller_arrays) == 16
-  hl_coeffs = find_miller_array_from_labels(
-    miller_arrays, [
-      '_refln.pdbx_HL_A_iso', '_refln.pdbx_HL_B_iso',
-      '_refln.pdbx_HL_C_iso', '_refln.pdbx_HL_D_iso',
-      'scale_group_code=1', 'crystal_id=2', 'wavelength_id=3'
-      ])
-  assert hl_coeffs.is_hendrickson_lattman_array()
-  assert hl_coeffs.size() == 2
-  mas_as_cif_block = cif.miller_arrays_as_cif_block(
-    hl_coeffs, column_names=('_refln.pdbx_HL_A_iso', '_refln.pdbx_HL_B_iso',
-                             '_refln.pdbx_HL_C_iso', '_refln.pdbx_HL_D_iso'))
-  abcd = []
-  for key in ('_refln.pdbx_HL_A_iso', '_refln.pdbx_HL_B_iso',
-              '_refln.pdbx_HL_C_iso', '_refln.pdbx_HL_D_iso'):
-    assert key in list(mas_as_cif_block.cif_block.keys())
-    abcd.append(flex.double(mas_as_cif_block.cif_block[key]))
-  hl_coeffs_from_cif_block = flex.hendrickson_lattman(*abcd)
-  assert approx_equal(hl_coeffs.data(), hl_coeffs_from_cif_block)
-  f_meas_au = find_miller_array_from_labels(
-    miller_arrays, [
-      '_refln.F_meas_au', '_refln.F_meas_sigma_au',
-      'scale_group_code=1', 'crystal_id=1', 'wavelength_id=1'])
-  assert f_meas_au.is_xray_amplitude_array()
-  assert f_meas_au.size() == 5
-  assert f_meas_au.sigmas() is not None
-  assert f_meas_au.space_group_info().symbol_and_number() == 'C 1 2 1 (No. 5)'
-  assert approx_equal(f_meas_au.unit_cell().parameters(),
-                      (163.97, 45.23, 110.89, 90.0, 131.64, 90.0))
-  pdbx_I_plus_minus = find_miller_array_from_labels(
-    miller_arrays, ['_refln.pdbx_I_plus', '_refln.pdbx_I_plus_sigma',
-       '_refln.pdbx_I_minus', '_refln.pdbx_I_minus_sigma'])
-  assert pdbx_I_plus_minus.is_xray_intensity_array()
-  assert pdbx_I_plus_minus.anomalous_flag()
-  assert pdbx_I_plus_minus.size() == 21
-  assert pdbx_I_plus_minus.unit_cell() is None     # no symmetry information in
-  assert pdbx_I_plus_minus.space_group() is None   # this CIF block
-  #
-  miller_arrays = cif.reader(input_string=r3ad7sf).as_miller_arrays()
-  assert len(miller_arrays) == 11
-  f_calc = find_miller_array_from_labels(
-    miller_arrays, ['r3ad7sf', '_refln.F_calc', '_refln.phase_calc', 'crystal_id=2']) #, 'wavelength_id=1']))
-  assert f_calc.is_complex_array()
-  assert f_calc.size() == 4
-  #
-  miller_arrays = cif.reader(input_string=integer_observations).as_miller_arrays()
-  assert len(miller_arrays) == 2
-  fmeas_sigmeas = find_miller_array_from_labels( miller_arrays, [ '_refln.F_meas_au'])
-  assert isinstance(fmeas_sigmeas.data(), flex.double)
-  assert isinstance(fmeas_sigmeas.sigmas(), flex.double)
-  #
-  miller_arrays = cif.reader(input_string=r3v56sf).as_miller_arrays()
-  assert len(miller_arrays) == 2
-  for ma in miller_arrays: assert ma.is_complex_array()
-  find_miller_array_from_labels(miller_arrays, ['r3v56sf', '_refln.pdbx_DELFWT', '_refln.pdbx_DELPHWT'])
-  find_miller_array_from_labels(miller_arrays, ['r3v56sf', '_refln.pdbx_FWT', '_refln.pdbx_PHWT'])
-  # verify _refln.pdbx_FWT', '_refln.pdbx_PHWT' are parsed as complex arrays in the presence of other columns
-  miller_arrays = cif.reader(input_string= r6cxosf).as_miller_arrays()
-  assert len(miller_arrays) == 11
-  ma = find_miller_array_from_labels(miller_arrays, ['r6cxosf', '_refln.pdbx_FWT', '_refln.pdbx_PHWT'])
-  assert ma.is_complex_array()
-  ma = find_miller_array_from_labels(miller_arrays, ['r6cxosf', '_refln.pdbx_DELFWT', '_refln.pdbx_DELPHWT'])
-  assert ma.is_complex_array()
-  # accept unconventional cif column labels resembling mtz column labels
-  miller_arrays = cif.reader(input_string= r6c5f_phases).as_miller_arrays()
-  assert len(miller_arrays) == 8
-  ma = find_miller_array_from_labels(miller_arrays, ['6c5f_phases', '_refln.FP', '_refln.SIGFP'])
-  assert ma.is_xray_amplitude_array()
-  ma = find_miller_array_from_labels(miller_arrays, ['6c5f_phases', '_refln.FC', '_refln.PHIC'])
-  assert ma.is_complex_array()
-  ma = find_miller_array_from_labels(miller_arrays, ['6c5f_phases', '_refln.FC_ALL', '_refln.PHIC_ALL'])
-  assert ma.is_complex_array()
-  ma = find_miller_array_from_labels(miller_arrays, ['6c5f_phases', '_refln.DELFWT', '_refln.PHDELWT'])
-  assert ma.is_complex_array()
+    miller_arrays = cif.reader(input_string=r3adrsf).as_miller_arrays()
+    assert len(miller_arrays) == 16
+    hl_coeffs = find_miller_array_from_labels(
+        miller_arrays,
+        [
+            "_refln.pdbx_HL_A_iso",
+            "_refln.pdbx_HL_B_iso",
+            "_refln.pdbx_HL_C_iso",
+            "_refln.pdbx_HL_D_iso",
+            "scale_group_code=1",
+            "crystal_id=2",
+            "wavelength_id=3",
+        ],
+    )
+    assert hl_coeffs.is_hendrickson_lattman_array()
+    assert hl_coeffs.size() == 2
+    mas_as_cif_block = cif.miller_arrays_as_cif_block(
+        hl_coeffs,
+        column_names=(
+            "_refln.pdbx_HL_A_iso",
+            "_refln.pdbx_HL_B_iso",
+            "_refln.pdbx_HL_C_iso",
+            "_refln.pdbx_HL_D_iso",
+        ),
+    )
+    abcd = []
+    for key in (
+        "_refln.pdbx_HL_A_iso",
+        "_refln.pdbx_HL_B_iso",
+        "_refln.pdbx_HL_C_iso",
+        "_refln.pdbx_HL_D_iso",
+    ):
+        assert key in list(mas_as_cif_block.cif_block.keys())
+        abcd.append(flex.double(mas_as_cif_block.cif_block[key]))
+    hl_coeffs_from_cif_block = flex.hendrickson_lattman(*abcd)
+    assert approx_equal(hl_coeffs.data(), hl_coeffs_from_cif_block)
+    f_meas_au = find_miller_array_from_labels(
+        miller_arrays,
+        [
+            "_refln.F_meas_au",
+            "_refln.F_meas_sigma_au",
+            "scale_group_code=1",
+            "crystal_id=1",
+            "wavelength_id=1",
+        ],
+    )
+    assert f_meas_au.is_xray_amplitude_array()
+    assert f_meas_au.size() == 5
+    assert f_meas_au.sigmas() is not None
+    assert f_meas_au.space_group_info().symbol_and_number() == "C 1 2 1 (No. 5)"
+    assert approx_equal(
+        f_meas_au.unit_cell().parameters(), (163.97, 45.23, 110.89, 90.0, 131.64, 90.0)
+    )
+    pdbx_I_plus_minus = find_miller_array_from_labels(
+        miller_arrays,
+        [
+            "_refln.pdbx_I_plus",
+            "_refln.pdbx_I_plus_sigma",
+            "_refln.pdbx_I_minus",
+            "_refln.pdbx_I_minus_sigma",
+        ],
+    )
+    assert pdbx_I_plus_minus.is_xray_intensity_array()
+    assert pdbx_I_plus_minus.anomalous_flag()
+    assert pdbx_I_plus_minus.size() == 21
+    assert pdbx_I_plus_minus.unit_cell() is None  # no symmetry information in
+    assert pdbx_I_plus_minus.space_group() is None  # this CIF block
+    #
+    miller_arrays = cif.reader(input_string=r3ad7sf).as_miller_arrays()
+    assert len(miller_arrays) == 11
+    f_calc = find_miller_array_from_labels(
+        miller_arrays, ["r3ad7sf", "_refln.F_calc", "_refln.phase_calc", "crystal_id=2"]
+    )  # , 'wavelength_id=1']))
+    assert f_calc.is_complex_array()
+    assert f_calc.size() == 4
+    #
+    miller_arrays = cif.reader(input_string=integer_observations).as_miller_arrays()
+    assert len(miller_arrays) == 2
+    fmeas_sigmeas = find_miller_array_from_labels(miller_arrays, ["_refln.F_meas_au"])
+    assert isinstance(fmeas_sigmeas.data(), flex.double)
+    assert isinstance(fmeas_sigmeas.sigmas(), flex.double)
+    #
+    miller_arrays = cif.reader(input_string=r3v56sf).as_miller_arrays()
+    assert len(miller_arrays) == 2
+    for ma in miller_arrays:
+        assert ma.is_complex_array()
+    find_miller_array_from_labels(
+        miller_arrays, ["r3v56sf", "_refln.pdbx_DELFWT", "_refln.pdbx_DELPHWT"]
+    )
+    find_miller_array_from_labels(
+        miller_arrays, ["r3v56sf", "_refln.pdbx_FWT", "_refln.pdbx_PHWT"]
+    )
+    # verify _refln.pdbx_FWT', '_refln.pdbx_PHWT' are parsed as complex arrays in the presence of other columns
+    miller_arrays = cif.reader(input_string=r6cxosf).as_miller_arrays()
+    assert len(miller_arrays) == 11
+    ma = find_miller_array_from_labels(
+        miller_arrays, ["r6cxosf", "_refln.pdbx_FWT", "_refln.pdbx_PHWT"]
+    )
+    assert ma.is_complex_array()
+    ma = find_miller_array_from_labels(
+        miller_arrays, ["r6cxosf", "_refln.pdbx_DELFWT", "_refln.pdbx_DELPHWT"]
+    )
+    assert ma.is_complex_array()
+    # accept unconventional cif column labels resembling mtz column labels
+    miller_arrays = cif.reader(input_string=r6c5f_phases).as_miller_arrays()
+    assert len(miller_arrays) == 8
+    ma = find_miller_array_from_labels(
+        miller_arrays, ["6c5f_phases", "_refln.FP", "_refln.SIGFP"]
+    )
+    assert ma.is_xray_amplitude_array()
+    ma = find_miller_array_from_labels(
+        miller_arrays, ["6c5f_phases", "_refln.FC", "_refln.PHIC"]
+    )
+    assert ma.is_complex_array()
+    ma = find_miller_array_from_labels(
+        miller_arrays, ["6c5f_phases", "_refln.FC_ALL", "_refln.PHIC_ALL"]
+    )
+    assert ma.is_complex_array()
+    ma = find_miller_array_from_labels(
+        miller_arrays, ["6c5f_phases", "_refln.DELFWT", "_refln.PHDELWT"]
+    )
+    assert ma.is_complex_array()
 
 
 def find_miller_array_from_labels(miller_arrays, labels):
-  for ma in miller_arrays:
-    found = True
-    for label in labels:
-      if label not in ma.info().labels:
-        found = False
-        break
-    if found:
-      return ma
-  raise RuntimeError("Could not find miller array with labels %s" %labels)
+    for ma in miller_arrays:
+        found = True
+        for label in labels:
+            if label not in ma.info().labels:
+                found = False
+                break
+        if found:
+            return ma
+    raise RuntimeError("Could not find miller array with labels %s" % labels)
+
 
 r3adrsf = """
 data_r3adrsf
@@ -846,7 +994,7 @@ _refln.pdbx_DELPHWT
 0    1    9  81.428  68.620  89.690 248.620
 """
 
-r6cxosf ="""
+r6cxosf = """
 data_r6cxosf
 #
 _audit.revision_id     1_0
@@ -907,7 +1055,7 @@ _refln.fom
 1 1 1 0  1  13 o 4  56.14   9.21  53.87   90.00  0.00    0.02    0.00 0.00 52.30   270.00 106.18  270.00 0.02
 """
 
-r6c5f_phases ="""
+r6c5f_phases = """
 data_6c5f_phases
 #
 loop_
@@ -960,7 +1108,6 @@ loop_
    0   0   10  1  183.754   1.99406   195.673       33.4295   219.826        58.527     87.9439        58.527      131.882      -121.473   0.837452   210.823      50.7412
 
 """
-
 
 
 integer_observations = """
@@ -1020,15 +1167,21 @@ _symmetry_equiv.id           1
 _symmetry_equiv.pos_as_xyz   X,Y,Z
 """
 
+
 def exercise_detect_binary():
-  binary_string = '\xff\xf8\x00\x00\x00\x00\x00\x00'
-  from iotbx.cif import reader
-  try: reader(input_string=binary_string)
-  except CifParserError as e: pass
-  else: raise Exception_expected
+    binary_string = "\xff\xf8\x00\x00\x00\x00\x00\x00"
+    from iotbx.cif import reader
+
+    try:
+        reader(input_string=binary_string)
+    except CifParserError as e:
+        pass
+    else:
+        raise Exception_expected
+
 
 def exercise_syntax_errors():
-  empty_loop_str = """\
+    empty_loop_str = """\
 data_fred
 loop_
 loop_
@@ -1037,10 +1190,13 @@ _b
 1 2
 3 4
 """
-  try: cif.reader(input_string=empty_loop_str)
-  except CifParserError as e: pass
-  else: raise Exception_expected
-  bad_semicolon_text_field = """\
+    try:
+        cif.reader(input_string=empty_loop_str)
+    except CifParserError as e:
+        pass
+    else:
+        raise Exception_expected
+    bad_semicolon_text_field = """\
 data_sucrose
 _a 1
 _exptl_absorpt_process_details
@@ -1048,19 +1204,24 @@ _exptl_absorpt_process_details
 Final HKLF 4 output contains 64446 reflections, Rint = 0.0650
  (47528 with I > 3sig(I), Rint = 0.0624);
 """
-  try: cif.reader(input_string=bad_semicolon_text_field)
-  except CifParserError as e: pass
-  else: raise Exception_expected
+    try:
+        cif.reader(input_string=bad_semicolon_text_field)
+    except CifParserError as e:
+        pass
+    else:
+        raise Exception_expected
+
 
 def exercise_missing_atom_site_type_symbol():
-  m = cif.reader(input_string=cif_with_atom_site_type_symbol).model()
-  xs = cif.builders.crystal_structure_builder(m['9000000']).structure
-  sc = xs.scatterers()
-  assert len(sc) == 18
-  assert sc[0].label == 'Fe1'
-  assert sc[0].scattering_type == 'Fe'
-  assert sc[-1].label == 'O7'
-  assert sc[-1].scattering_type == 'O'
+    m = cif.reader(input_string=cif_with_atom_site_type_symbol).model()
+    xs = cif.builders.crystal_structure_builder(m["9000000"]).structure
+    sc = xs.scatterers()
+    assert len(sc) == 18
+    assert sc[0].label == "Fe1"
+    assert sc[0].scattering_type == "Fe"
+    assert sc[-1].label == "O7"
+    assert sc[-1].scattering_type == "O"
+
 
 cif_with_atom_site_type_symbol = """\
 #------------------------------------------------------------------------------
@@ -1171,15 +1332,18 @@ O6 0.34780 0.11820 0.55300 1.00000 0.01089
 O7 0.33760 0.00000 0.27000 1.00000 0.00937
 """
 
+
 def exercise_build_with_wavelength():
-  m = cif.reader(input_string=cif_xray_structure_with_wavelength).model()
-  xs = cif.builders.crystal_structure_builder(m['global']).structure
-  assert approx_equal(xs.wavelength, 1.54184)
-  cif_xray_structure_missing_wavelength = \
-      cif_xray_structure_with_wavelength.replace('1.54184', '?')
-  m = cif.reader(input_string=cif_xray_structure_missing_wavelength).model()
-  xs = cif.builders.crystal_structure_builder(m['global']).structure
-  assert xs.wavelength == None
+    m = cif.reader(input_string=cif_xray_structure_with_wavelength).model()
+    xs = cif.builders.crystal_structure_builder(m["global"]).structure
+    assert approx_equal(xs.wavelength, 1.54184)
+    cif_xray_structure_missing_wavelength = cif_xray_structure_with_wavelength.replace(
+        "1.54184", "?"
+    )
+    m = cif.reader(input_string=cif_xray_structure_missing_wavelength).model()
+    xs = cif.builders.crystal_structure_builder(m["global"]).structure
+    assert xs.wavelength == None
+
 
 cif_xray_structure_with_wavelength = """\
 data_global
@@ -1221,18 +1385,20 @@ loop_
     'c' 0.1 0.2 0.3 0 0 0
 """
 
-def exercise():
-  exercise_missing_atom_site_type_symbol()
-  exercise_syntax_errors()
-  exercise_detect_binary()
-  exercise_crystal_symmetry()
-  exercise_miller_arrays_as_cif_block()
-  exercise_lex_parse_build()
-  exercise_partial_crystal_symmetry()
-  exercise_mmcif_structure_factors()
-  exercise_atom_type_loop()
-  exercise_build_with_wavelength()
 
-if __name__ == '__main__':
-  exercise()
-  print("OK")
+def exercise():
+    exercise_missing_atom_site_type_symbol()
+    exercise_syntax_errors()
+    exercise_detect_binary()
+    exercise_crystal_symmetry()
+    exercise_miller_arrays_as_cif_block()
+    exercise_lex_parse_build()
+    exercise_partial_crystal_symmetry()
+    exercise_mmcif_structure_factors()
+    exercise_atom_type_loop()
+    exercise_build_with_wavelength()
+
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

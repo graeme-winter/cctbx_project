@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
-set_lower = set("""\
+
+set_lower = set(
+    """\
 abs
 acos
 aimag
@@ -81,24 +83,29 @@ system
 tan
 tanh
 transfer
-""".splitlines())
+""".splitlines()
+)
 
-extra_set_lower = set("""\
+extra_set_lower = set(
+    """\
 cpu_time
 date
 getarg
 getenv
 time
-""".splitlines())
+""".splitlines()
+)
 
-io_set_lower = set("""\
+io_set_lower = set(
+    """\
 flush
-""".splitlines())
+""".splitlines()
+)
 
 is_modified_info_by_name = {
-  "cpu_time": (0,),
-  "date": (0,),
-  "getarg": (1,),
-  "getenv": (1,),
-  "time": (0,)
+    "cpu_time": (0,),
+    "date": (0,),
+    "getarg": (1,),
+    "getenv": (1,),
+    "time": (0,),
 }

@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 from scitbx.array_family import flex
 from scitbx.matrix import sqr
 from rstbx.diffraction.fastbragg import foo
-from rstbx.diffraction.fastbragg import detector,camera,crystal
+from rstbx.diffraction.fastbragg import detector, camera, crystal
 from rstbx.diffraction.fastbragg import fast_bragg_simulation
 import libtbx.load_env
 
@@ -261,99 +261,122 @@ HETATM25000  C12 LMT B 535     -16.566  32.829  12.754  1.00 71.46           C
 HETATM25100  C11 LMT B 536     -11.459  65.368  27.690  1.00 83.60           C
 """
 
-def amplitudes_from_pdb(resolution,algorithm=None,anomalous=False):
-  from iotbx import pdb
-  pdb_inp = pdb.input(source_info=None,lines = pdb_lines)
-  xray_structure = pdb_inp.xray_structure_simple()
-  primitive_xray_structure = xray_structure.primitive_setting()
-  P1_primitive_xray_structure = primitive_xray_structure.expand_to_p1()
-  fcalc = P1_primitive_xray_structure.structure_factors(
-    d_min=resolution, anomalous_flag=anomalous, algorithm=algorithm).f_calc()
-  return fcalc.amplitudes()
+
+def amplitudes_from_pdb(resolution, algorithm=None, anomalous=False):
+    from iotbx import pdb
+
+    pdb_inp = pdb.input(source_info=None, lines=pdb_lines)
+    xray_structure = pdb_inp.xray_structure_simple()
+    primitive_xray_structure = xray_structure.primitive_setting()
+    P1_primitive_xray_structure = primitive_xray_structure.expand_to_p1()
+    fcalc = P1_primitive_xray_structure.structure_factors(
+        d_min=resolution, anomalous_flag=anomalous, algorithm=algorithm
+    ).f_calc()
+    return fcalc.amplitudes()
+
 
 def tst_all():
-  F = foo()
-  assert F == (1,2,3,4)
+    F = foo()
+    assert F == (1, 2, 3, 4)
 
-  size=1516
-  D = detector(slowpixels=1516,fastpixels=1516,pixel_size=0.00011)
-  D.set_region_of_interest(0,int(0.6*size),int(0.4*size),int(0.6*size))
-  D.set_oversampling(1)
+    size = 1516
+    D = detector(slowpixels=1516, fastpixels=1516, pixel_size=0.00011)
+    D.set_region_of_interest(0, int(0.6 * size), int(0.4 * size), int(0.6 * size))
+    D.set_oversampling(1)
 
-  C = camera()
-  C.distance = 0.18166
-  C.Ybeam = 0.08338
-  C.Zbeam = 0.08338
-  C.lambda0 = 6.2E-10
-  C.dispersion = 0.002
-  C.dispsteps = 4
-  C.hdivrange = 0
-  C.vdivrange = 0
-  C.hdivstep = 1
-  C.vdivstep = 1
-  C.source_distance = 10.
-  C.fluence = 1.E24
+    C = camera()
+    C.distance = 0.18166
+    C.Ybeam = 0.08338
+    C.Zbeam = 0.08338
+    C.lambda0 = 6.2e-10
+    C.dispersion = 0.002
+    C.dispsteps = 4
+    C.hdivrange = 0
+    C.vdivrange = 0
+    C.hdivstep = 1
+    C.vdivstep = 1
+    C.source_distance = 10.0
+    C.fluence = 1.0e24
 
-  Amat = sqr((127.6895065259495, 0.6512077339887,-0.4403031342553,
-               -1.1449112128916,225.3922539826207,1.8393136632579,
-               1.0680694468752,-2.4923062985132,306.0953037195841))
+    Amat = sqr(
+        (
+            127.6895065259495,
+            0.6512077339887,
+            -0.4403031342553,
+            -1.1449112128916,
+            225.3922539826207,
+            1.8393136632579,
+            1.0680694468752,
+            -2.4923062985132,
+            306.0953037195841,
+        )
+    )
 
-  PSII = amplitudes_from_pdb(8.,"fft",True)
+    PSII = amplitudes_from_pdb(8.0, "fft", True)
 
-  from cctbx import crystal_orientation
-  X = crystal()
-  X.orientation = crystal_orientation.crystal_orientation(
-                  Amat,crystal_orientation.basis_type.direct)
-  X.miller = PSII.indices()
-  X.amplitudes = PSII.data()
-  X.Na = 6; X.Nb = 6; X.Nc = 6
+    from cctbx import crystal_orientation
 
-  SIM = fast_bragg_simulation()
-  SIM.set_detector(D)
-  SIM.set_camera(C)
-  SIM.set_crystal(X)
-  SIM.sweep_over_detector()
-  data = D.raw
-  scale_factor = 55000./flex.max(data)
-  #print "scale_factor",scale_factor
-  fileout="intimage_001.img"
-  SIM.to_smv_format(fileout=fileout,
-                    intfile_scale = scale_factor, saturation=40000)
-  import os
-  assert os.path.isfile(fileout)
-  os.remove(fileout)
+    X = crystal()
+    X.orientation = crystal_orientation.crystal_orientation(
+        Amat, crystal_orientation.basis_type.direct
+    )
+    X.miller = PSII.indices()
+    X.amplitudes = PSII.data()
+    X.Na = 6
+    X.Nb = 6
+    X.Nc = 6
 
-  #simulation is complete, now we'll autoindex the image fragment and verify
-  # that the indexed cell is similar to the input cell.
+    SIM = fast_bragg_simulation()
+    SIM.set_detector(D)
+    SIM.set_camera(C)
+    SIM.set_crystal(X)
+    SIM.sweep_over_detector()
+    data = D.raw
+    scale_factor = 55000.0 / flex.max(data)
+    # print "scale_factor",scale_factor
+    fileout = "intimage_001.img"
+    SIM.to_smv_format(fileout=fileout, intfile_scale=scale_factor, saturation=40000)
+    import os
 
-  if (not libtbx.env.has_module("annlib")):
-    print("Skipping some tests: annlib not available.")
-    return
-  # 1. Analysis of the image to identify the Bragg peak centers.
-  #    This step uses an inefficient algorithm and implementation and
-  #    is most time consuming; but the code is only for testing, not production
-  from rstbx.diffraction.fastbragg.tst_utils_clustering import specific_libann_cluster
-  M=specific_libann_cluster(scale_factor*data,intensity_cutoff = 25,distance_cutoff=17)
-  # M is a dictionary of peak intensities indexed by pixel coordinates
+    assert os.path.isfile(fileout)
+    os.remove(fileout)
 
-  # 2. Now autoindex the pattern
-  from rstbx.diffraction.fastbragg.tst_utils_clustering import index_wrapper
-  SIM.C = C
-  SIM.D = D
-  ai,ref_uc = index_wrapper(M.keys(), SIM, PSII)
-  tst_uc = ai.getOrientation().unit_cell()
-  #print ref_uc  # (127.692, 225.403, 306.106, 90, 90, 90)
-  #print tst_uc  # (106.432, 223.983, 303.102, 90.3185, 91.5998, 90.5231)
+    # simulation is complete, now we'll autoindex the image fragment and verify
+    # that the indexed cell is similar to the input cell.
 
-  # 3. Final assertion.  In the given orientation,
-  #  the unit cell A vector is into the beam and is not well sampled,
-  #  so tolerances have to be fairly relaxed, 5%.
-  #  Labelit does better with the target_cell restraint, but this improved
-  #  algorithm is not used here for the test
-  assert ref_uc.is_similar_to(tst_uc, relative_length_tolerance=0.20,
-                                     absolute_angle_tolerance= 2.0)
+    if not libtbx.env.has_module("annlib"):
+        print("Skipping some tests: annlib not available.")
+        return
+    # 1. Analysis of the image to identify the Bragg peak centers.
+    #    This step uses an inefficient algorithm and implementation and
+    #    is most time consuming; but the code is only for testing, not production
+    from rstbx.diffraction.fastbragg.tst_utils_clustering import specific_libann_cluster
+
+    M = specific_libann_cluster(
+        scale_factor * data, intensity_cutoff=25, distance_cutoff=17
+    )
+    # M is a dictionary of peak intensities indexed by pixel coordinates
+
+    # 2. Now autoindex the pattern
+    from rstbx.diffraction.fastbragg.tst_utils_clustering import index_wrapper
+
+    SIM.C = C
+    SIM.D = D
+    ai, ref_uc = index_wrapper(M.keys(), SIM, PSII)
+    tst_uc = ai.getOrientation().unit_cell()
+    # print ref_uc  # (127.692, 225.403, 306.106, 90, 90, 90)
+    # print tst_uc  # (106.432, 223.983, 303.102, 90.3185, 91.5998, 90.5231)
+
+    # 3. Final assertion.  In the given orientation,
+    #  the unit cell A vector is into the beam and is not well sampled,
+    #  so tolerances have to be fairly relaxed, 5%.
+    #  Labelit does better with the target_cell restraint, but this improved
+    #  algorithm is not used here for the test
+    assert ref_uc.is_similar_to(
+        tst_uc, relative_length_tolerance=0.20, absolute_angle_tolerance=2.0
+    )
 
 
-if __name__=="__main__":
-  tst_all()
-  print("OK")
+if __name__ == "__main__":
+    tst_all()
+    print("OK")

@@ -1,95 +1,93 @@
 from __future__ import absolute_import, division, print_function
 
+
 class success(object):
-  """
-  Valid result
-  """
+    """
+    Valid result
+    """
 
-  def __init__(self, value):
+    def __init__(self, value):
 
-    self.value = value
+        self.value = value
 
+    def __call__(self):
 
-  def __call__(self):
+        return self.value
 
-    return self.value
+    def __str__(self):
 
+        return "success( value = %s )" % self.value
 
-  def __str__(self):
-
-    return "success( value = %s )" % self.value
 
 # Exception handling classes
 class regular_exception(object):
-  """
-  Unexpected result
-  """
+    """
+    Unexpected result
+    """
 
-  def __init__(self, exception):
+    def __init__(self, exception):
 
-    self.exception = exception
+        self.exception = exception
 
+    def __call__(self):
 
-  def __call__(self):
+        return self.exception
 
-    return self.exception
+    def __str__(self):
 
-
-  def __str__(self):
-
-    return "%s( message = '%s' )" % ( self.exception.__class__.__name__, self.exception )
+        return "%s( message = '%s' )" % (
+            self.exception.__class__.__name__,
+            self.exception,
+        )
 
 
 class sorry_exception(object):
-  """
-  Special handling for Sorry
-  """
+    """
+    Special handling for Sorry
+    """
 
-  def __init__(self, exception):
+    def __init__(self, exception):
 
-    self.args = exception.args
+        self.args = exception.args
 
+    def __call__(self):
 
-  def __call__(self):
+        return self.exception_class()(*self.args)
 
-    return self.exception_class()( *self.args )
+    def __str__(self):
 
+        return "Sorry( message = '%s' )" % self.exception_class()(*self.args)
 
-  def __str__(self):
+    @classmethod
+    def exception_class(self):
 
-    return "Sorry( message = '%s' )" % self.exception_class()( *self.args )
+        from libtbx.utils import Sorry
 
+        return Sorry
 
-  @classmethod
-  def exception_class(self):
-
-    from libtbx.utils import Sorry
-    return Sorry
 
 # Extendable exception handling registry
 class exception_to_result_registry(object):
-  """
-  Translates unpickleable exceptions
-  """
+    """
+    Translates unpickleable exceptions
+    """
 
-  def __init__(self):
+    def __init__(self):
 
-    self.handlers = []
+        self.handlers = []
 
+    def add_handler(self, handler_class):
 
-  def add_handler(self, handler_class):
+        self.handlers.append(handler_class)
 
-    self.handlers.append( handler_class )
+    def convert(self, exception):
 
+        for handler_class in self.handlers:
+            if isinstance(exception, handler_class.exception_class()):
+                return handler_class(exception=exception)
 
-  def convert(self, exception):
-
-    for handler_class in self.handlers:
-      if isinstance( exception, handler_class.exception_class() ):
-        return handler_class( exception = exception )
-
-    else:
-      return regular_exception( exception = exception )
+        else:
+            return regular_exception(exception=exception)
 
 
 TRANSLATOR = exception_to_result_registry()
@@ -97,64 +95,66 @@ TRANSLATOR = exception_to_result_registry()
 
 def register_unpickleable_exception(handler):
 
-  TRANSLATOR.add_handler( handler_class = handler )
+    TRANSLATOR.add_handler(handler_class=handler)
+
 
 # Register Sorry
-register_unpickleable_exception( handler = sorry_exception )
+register_unpickleable_exception(handler=sorry_exception)
 
 
 class failure(object):
-  """
-  Exception and stacktrace propagation
-  """
+    """
+    Exception and stacktrace propagation
+    """
 
-  def __init__(self, exception, traceback):
+    def __init__(self, exception, traceback):
 
-    self.exception = exception
-    self.traceback = traceback
+        self.exception = exception
+        self.traceback = traceback
 
+    def __call__(self):
 
-  def __call__(self):
+        self.traceback(exception=self.exception())
 
-    self.traceback( exception = self.exception() )
+    def __str__(self):
 
-
-  def __str__(self):
-
-    return str( self.exception )
+        return str(self.exception)
 
 
 def get_exception(process, exit_code):
 
-  return getattr( process, "err", RuntimeError( "exit code = %s" % exit_code ) )
+    return getattr(process, "err", RuntimeError("exit code = %s" % exit_code))
 
 
 def get_crash_info(process):
 
-  from libtbx.scheduling import stacktrace
-  printout = getattr( process, "stacktrace", None )
+    from libtbx.scheduling import stacktrace
 
-  if printout is None:
-    return stacktrace.no_crash_info
+    printout = getattr(process, "stacktrace", None)
 
-  else:
-    return stacktrace.stacktrace_info.from_stderr( message = printout )
+    if printout is None:
+        return stacktrace.no_crash_info
+
+    else:
+        return stacktrace.stacktrace_info.from_stderr(message=printout)
 
 
 def get_traceback_info():
 
-  from libtbx.scheduling import stacktrace
-  import sys
-  return stacktrace.traceback_info( traceback = sys.exc_info()[2] )
-
-
-def error(exception, traceback = None):
-
-  if traceback is None:
     from libtbx.scheduling import stacktrace
-    traceback = stacktrace.no_crash_info
+    import sys
 
-  return failure(
-    exception = TRANSLATOR.convert( exception = exception ),
-    traceback = traceback,
+    return stacktrace.traceback_info(traceback=sys.exc_info()[2])
+
+
+def error(exception, traceback=None):
+
+    if traceback is None:
+        from libtbx.scheduling import stacktrace
+
+        traceback = stacktrace.no_crash_info
+
+    return failure(
+        exception=TRANSLATOR.convert(exception=exception),
+        traceback=traceback,
     )

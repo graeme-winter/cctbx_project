@@ -101,45 +101,51 @@ raw_type_conditions = """
 28:a<b<c:b+p-m*q,a+p-q,a
 """
 
+
 def get_mk2_sets():
-  sets = {}
-  k = 0
-  set = []
-  for line in raw_mk2.split():
-    if (line == "N"):
-      if (k): sets[k] = set
-      k += 1
-      set = []
-      continue
-    assert line[3] == "/"
-    assert line[7] == "/"
-    m = []
-    for e in line.replace("/",""):
-      if   (e == "0"): m.append(0)
-      elif (e == "1"): m.append(1)
-      elif (e == "m"): m.append(-1)
-      else:
-        raise RuntimeError("Corrupt internal table.")
-    m = matrix.sqr(m)
-    assert abs(m.determinant()) == 1, (line, m.elems, m.determinant())
-    set.append(m)
-  assert k == 28
-  sets[k] = set
-  return sets
+    sets = {}
+    k = 0
+    set = []
+    for line in raw_mk2.split():
+        if line == "N":
+            if k:
+                sets[k] = set
+            k += 1
+            set = []
+            continue
+        assert line[3] == "/"
+        assert line[7] == "/"
+        m = []
+        for e in line.replace("/", ""):
+            if e == "0":
+                m.append(0)
+            elif e == "1":
+                m.append(1)
+            elif e == "m":
+                m.append(-1)
+            else:
+                raise RuntimeError("Corrupt internal table.")
+        m = matrix.sqr(m)
+        assert abs(m.determinant()) == 1, (line, m.elems, m.determinant())
+        set.append(m)
+    assert k == 28
+    sets[k] = set
+    return sets
+
 
 class type_conditions(object):
+    def __init__(self, ck_types, defks):
+        self.ck_types = ck_types
+        self.defks = defks
 
-  def __init__(self, ck_types, defks):
-    self.ck_types = ck_types
-    self.defks = defks
 
 def get_type_conditions():
-  result = {}
-  k = 0
-  for line in raw_type_conditions.split():
-    k += 1
-    k_ctrl,cks,defks = line.split(":")
-    assert int(k_ctrl) == k
-    result[k] = type_conditions(cks.split("|"), defks)
-  assert k == 28
-  return result
+    result = {}
+    k = 0
+    for line in raw_type_conditions.split():
+        k += 1
+        k_ctrl, cks, defks = line.split(":")
+        assert int(k_ctrl) == k
+        result[k] = type_conditions(cks.split("|"), defks)
+    assert k == 28
+    return result

@@ -65,48 +65,48 @@ ENDMDL
 END
 """
 
-def r(x,y):
-  x = abs(x.deep_copy()).data()
-  y = abs(y.deep_copy()).data()
-  n = flex.sum(flex.abs(x-y))
-  d = flex.sum(flex.abs(x+y))
-  return n/d
+
+def r(x, y):
+    x = abs(x.deep_copy()).data()
+    y = abs(y.deep_copy()).data()
+    n = flex.sum(flex.abs(x - y))
+    d = flex.sum(flex.abs(x + y))
+    return n / d
+
 
 def exercise(prefix="tst_models_to_from_chains"):
-  # inputs
-  expected_n = 5
-  xrs = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
-  input_file_name = "%s.pdb"%prefix
-  of = open(input_file_name,"w")
-  print(pdb_str, file=of)
-  of.close()
-  mi = flex.miller_index(((0,0,1), ))
-  ms = miller.set(xrs.crystal_symmetry(), mi,  anomalous_flag=False)
-  complete_set = ms.complete_set(d_min=3)
-  fc = complete_set.structure_factors_from_scatterers(
-    xray_structure=xrs).f_calc()
-  # models -> chains
-  easy_run.call("phenix.models_as_chains %s"%input_file_name)
-  pdb_inp = iotbx.pdb.input(file_name="chains_"+input_file_name)
-  h = pdb_inp.construct_hierarchy()
-  assert len(list(h.chains()))==expected_n
-  assert len(list(h.models()))==1
-  xrs_c = pdb_inp.xray_structure_simple()
-  fc_c = complete_set.structure_factors_from_scatterers(
-    xray_structure=xrs_c).f_calc()
-  #
-  easy_run.call("phenix.chains_as_models chains_%s"%input_file_name)
-  pdb_inp = iotbx.pdb.input(file_name="models_chains_"+input_file_name)
-  h = pdb_inp.construct_hierarchy()
-  assert len(list(h.chains()))==expected_n
-  assert len(list(h.models()))==expected_n
-  xrs_m = pdb_inp.xray_structure_simple()
-  fc_m = complete_set.structure_factors_from_scatterers(
-    xray_structure=xrs_m).f_calc()
-  #
-  assert approx_equal(0, r(fc, fc_c)  )
-  assert approx_equal(0, r(fc, fc_m)  )
-  assert approx_equal(0, r(fc_c, fc_m))
+    # inputs
+    expected_n = 5
+    xrs = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
+    input_file_name = "%s.pdb" % prefix
+    of = open(input_file_name, "w")
+    print(pdb_str, file=of)
+    of.close()
+    mi = flex.miller_index(((0, 0, 1),))
+    ms = miller.set(xrs.crystal_symmetry(), mi, anomalous_flag=False)
+    complete_set = ms.complete_set(d_min=3)
+    fc = complete_set.structure_factors_from_scatterers(xray_structure=xrs).f_calc()
+    # models -> chains
+    easy_run.call("phenix.models_as_chains %s" % input_file_name)
+    pdb_inp = iotbx.pdb.input(file_name="chains_" + input_file_name)
+    h = pdb_inp.construct_hierarchy()
+    assert len(list(h.chains())) == expected_n
+    assert len(list(h.models())) == 1
+    xrs_c = pdb_inp.xray_structure_simple()
+    fc_c = complete_set.structure_factors_from_scatterers(xray_structure=xrs_c).f_calc()
+    #
+    easy_run.call("phenix.chains_as_models chains_%s" % input_file_name)
+    pdb_inp = iotbx.pdb.input(file_name="models_chains_" + input_file_name)
+    h = pdb_inp.construct_hierarchy()
+    assert len(list(h.chains())) == expected_n
+    assert len(list(h.models())) == expected_n
+    xrs_m = pdb_inp.xray_structure_simple()
+    fc_m = complete_set.structure_factors_from_scatterers(xray_structure=xrs_m).f_calc()
+    #
+    assert approx_equal(0, r(fc, fc_c))
+    assert approx_equal(0, r(fc, fc_m))
+    assert approx_equal(0, r(fc_c, fc_m))
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

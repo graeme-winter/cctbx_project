@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from cctbx.array_family import flex
 import iotbx.pdb
@@ -9,7 +8,7 @@ from cctbx import maptbx
 import mmtbx.maps.composite_omit_map
 import sys
 
-pdb_str="""\n
+pdb_str = """\n
 REMARK iotbx.pdb.box_around_molecule --buffer-layer=2 "m.pdb"
 REMARK Date 2013-12-16 Time 13:47:17 PST -0800 (1387230437.01 s)
 CRYST1   12.380   14.615   11.502  90.00  90.00  90.00 P 1
@@ -35,91 +34,100 @@ TER
 END
 """
 
+
 def get_cc(mc1, mc2, xrs):
-  crystal_gridding = mc1.crystal_gridding(
-    d_min             = mc1.d_min(),
-    symmetry_flags    = maptbx.use_space_group_symmetry,
-    resolution_factor = 0.25)
-  fft_map = miller.fft_map(
-    crystal_gridding     = crystal_gridding,
-    fourier_coefficients = mc1)
-  fft_map.apply_sigma_scaling()
-  m1 = fft_map.real_map_unpadded()
-  fft_map = miller.fft_map(
-    crystal_gridding     = crystal_gridding,
-    fourier_coefficients = mc2)
-  fft_map.apply_sigma_scaling()
-  m2 = fft_map.real_map_unpadded()
-  assert m1.focus()==m2.focus()
-  assert m1.all()==m2.all()
-  sel = maptbx.grid_indices_around_sites(
-    unit_cell  = mc1.unit_cell(),
-    fft_n_real = m1.focus(),
-    fft_m_real = m1.all(),
-    sites_cart = flex.vec3_double(xrs.sites_cart()),
-    site_radii = flex.double([1.5]*xrs.scatterers().size()))
-  cc = flex.linear_correlation(x=m1.select(sel), y=m2.select(sel)).coefficient()
-  def md(m, xrs):
-    r = flex.double()
-    for sf in xrs.sites_frac():
-      r.append(m.eight_point_interpolation(sf))
-    return flex.mean(r)
-  return cc, md(m=m1, xrs=xrs), md(m=m2, xrs=xrs)
+    crystal_gridding = mc1.crystal_gridding(
+        d_min=mc1.d_min(),
+        symmetry_flags=maptbx.use_space_group_symmetry,
+        resolution_factor=0.25,
+    )
+    fft_map = miller.fft_map(
+        crystal_gridding=crystal_gridding, fourier_coefficients=mc1
+    )
+    fft_map.apply_sigma_scaling()
+    m1 = fft_map.real_map_unpadded()
+    fft_map = miller.fft_map(
+        crystal_gridding=crystal_gridding, fourier_coefficients=mc2
+    )
+    fft_map.apply_sigma_scaling()
+    m2 = fft_map.real_map_unpadded()
+    assert m1.focus() == m2.focus()
+    assert m1.all() == m2.all()
+    sel = maptbx.grid_indices_around_sites(
+        unit_cell=mc1.unit_cell(),
+        fft_n_real=m1.focus(),
+        fft_m_real=m1.all(),
+        sites_cart=flex.vec3_double(xrs.sites_cart()),
+        site_radii=flex.double([1.5] * xrs.scatterers().size()),
+    )
+    cc = flex.linear_correlation(x=m1.select(sel), y=m2.select(sel)).coefficient()
+
+    def md(m, xrs):
+        r = flex.double()
+        for sf in xrs.sites_frac():
+            r.append(m.eight_point_interpolation(sf))
+        return flex.mean(r)
+
+    return cc, md(m=m1, xrs=xrs), md(m=m2, xrs=xrs)
+
 
 def run(args):
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  ph = pdb_inp.construct_hierarchy()
-  ph.write_pdb_file(file_name="m.pdb")
-  xrs = pdb_inp.xray_structure_simple()
-  sel = ph.atom_selection_cache().selection("resseq 1")
-  xrs1 = xrs.select( sel)
-  xrs2 = xrs.select(~sel)
-  #
-  F  =  xrs.structure_factors(d_min=1.5).f_calc()
-  FB = xrs1.structure_factors(d_min=1.5).f_calc()
-  FC =   FB.phase_transfer(phase_source=F)
-  #
-  mtz_dataset = abs(FB).as_mtz_dataset(column_root_label="F-obs")
-  mtz_dataset.add_miller_array(miller_array=FB.generate_r_free_flags(),
-    column_root_label="R-free-flags")
-  mtz_object = mtz_dataset.mtz_object()
-  mtz_object.write(file_name = "data.mtz")
-  #
-  mtz_dataset = F.as_mtz_dataset(column_root_label="f")
-  mtz_dataset.add_miller_array(miller_array=FB, column_root_label="FB")
-  mtz_dataset.add_miller_array(miller_array=FC, column_root_label="FC")
-  mtz_dataset.add_miller_array(miller_array=abs(FB), column_root_label="FOBS")
-  #
-  fmodel = mmtbx.f_model.manager(f_obs = abs(FB), xray_structure = xrs)
-  # mc is model biased: one should not see any density for resseq 2
-  mc = fmodel.electron_density_map().map_coefficients(
-    map_type     = "Fo",
-    isotropize   = False,
-    fill_missing = False)
-  #
-  print(get_cc(mc1=mc, mc2=F,  xrs=xrs1), get_cc(mc1=mc, mc2=F,  xrs=xrs2))
-  print(get_cc(mc1=mc, mc2=FB, xrs=xrs1), get_cc(mc1=mc, mc2=FB, xrs=xrs2))
-  print(get_cc(mc1=mc, mc2=FC, xrs=xrs1), get_cc(mc1=mc, mc2=FC, xrs=xrs2))
-  print()
-  #
-  crystal_gridding = fmodel.f_obs().crystal_gridding(
-    d_min             = fmodel.f_obs().d_min(),
-    symmetry_flags    = maptbx.use_space_group_symmetry,
-    resolution_factor = 0.25)
-  #
-  oo = mmtbx.maps.composite_omit_map.run(
-    crystal_gridding     = crystal_gridding,
-    full_resolution_map  = False,
-    fmodel               = fmodel.deep_copy(),
-    box_size_as_fraction = 0.2)
-  mco = oo.map_coefficients(filter_noise=False)
-  print(get_cc(mc1=mco, mc2=F, xrs=xrs1), get_cc(mc1=mco, mc2=F, xrs=xrs2))
-  #
-  mtz_dataset.add_miller_array(miller_array=mco, column_root_label="O")
-  mtz_dataset.add_miller_array(miller_array=mc, column_root_label="mc")
-  #
-  mtz_object = mtz_dataset.mtz_object()
-  mtz_object.write(file_name = "m.mtz")
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    ph = pdb_inp.construct_hierarchy()
+    ph.write_pdb_file(file_name="m.pdb")
+    xrs = pdb_inp.xray_structure_simple()
+    sel = ph.atom_selection_cache().selection("resseq 1")
+    xrs1 = xrs.select(sel)
+    xrs2 = xrs.select(~sel)
+    #
+    F = xrs.structure_factors(d_min=1.5).f_calc()
+    FB = xrs1.structure_factors(d_min=1.5).f_calc()
+    FC = FB.phase_transfer(phase_source=F)
+    #
+    mtz_dataset = abs(FB).as_mtz_dataset(column_root_label="F-obs")
+    mtz_dataset.add_miller_array(
+        miller_array=FB.generate_r_free_flags(), column_root_label="R-free-flags"
+    )
+    mtz_object = mtz_dataset.mtz_object()
+    mtz_object.write(file_name="data.mtz")
+    #
+    mtz_dataset = F.as_mtz_dataset(column_root_label="f")
+    mtz_dataset.add_miller_array(miller_array=FB, column_root_label="FB")
+    mtz_dataset.add_miller_array(miller_array=FC, column_root_label="FC")
+    mtz_dataset.add_miller_array(miller_array=abs(FB), column_root_label="FOBS")
+    #
+    fmodel = mmtbx.f_model.manager(f_obs=abs(FB), xray_structure=xrs)
+    # mc is model biased: one should not see any density for resseq 2
+    mc = fmodel.electron_density_map().map_coefficients(
+        map_type="Fo", isotropize=False, fill_missing=False
+    )
+    #
+    print(get_cc(mc1=mc, mc2=F, xrs=xrs1), get_cc(mc1=mc, mc2=F, xrs=xrs2))
+    print(get_cc(mc1=mc, mc2=FB, xrs=xrs1), get_cc(mc1=mc, mc2=FB, xrs=xrs2))
+    print(get_cc(mc1=mc, mc2=FC, xrs=xrs1), get_cc(mc1=mc, mc2=FC, xrs=xrs2))
+    print()
+    #
+    crystal_gridding = fmodel.f_obs().crystal_gridding(
+        d_min=fmodel.f_obs().d_min(),
+        symmetry_flags=maptbx.use_space_group_symmetry,
+        resolution_factor=0.25,
+    )
+    #
+    oo = mmtbx.maps.composite_omit_map.run(
+        crystal_gridding=crystal_gridding,
+        full_resolution_map=False,
+        fmodel=fmodel.deep_copy(),
+        box_size_as_fraction=0.2,
+    )
+    mco = oo.map_coefficients(filter_noise=False)
+    print(get_cc(mc1=mco, mc2=F, xrs=xrs1), get_cc(mc1=mco, mc2=F, xrs=xrs2))
+    #
+    mtz_dataset.add_miller_array(miller_array=mco, column_root_label="O")
+    mtz_dataset.add_miller_array(miller_array=mc, column_root_label="mc")
+    #
+    mtz_object = mtz_dataset.mtz_object()
+    mtz_object.write(file_name="m.mtz")
 
-if (__name__ == "__main__"):
-  run(sys.argv[1:])
+
+if __name__ == "__main__":
+    run(sys.argv[1:])

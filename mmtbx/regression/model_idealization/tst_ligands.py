@@ -157,46 +157,52 @@ MLI plan-2  O8     0.020
 MLI plan-2  O9     0.020
 """
 
-def exercise_01(prefix="tst_mi_ligands_test_01"):
-  """
-  Simple run to a completion with reference map. no SS annotations.
-  """
-  pdb_file = open("%s_start.pdb" % prefix, "w")
-  pdb_file.write(pdb_lines)
-  pdb_file.close()
-  cif_file = open("%s_start.cif" % prefix, "w")
-  cif_file.write(cif_lines)
-  cif_file.close()
-  cmd = " ".join([
-      "phenix.model_idealization",
-      "%s_start.pdb" % prefix,
-      "%s_start.cif" % prefix,
-      "use_map_for_reference=True",
-      "number_of_refinement_cycles=1",
-      "run_minimization_first=False",
-      "loop_idealization.number_of_ccd_trials=1",
-      "n_macro=1",
-      "debug=True",
-      ">%s.log" % prefix])
-  print(cmd)
-  assert not easy_run.call(cmd)
-  res_log = open("%s.log" % prefix, "r")
-  log_lines = res_log.readlines()
-  for l in [
-      # "Secondary structure substitution step will be skipped\n",
-      "  Minimizing...\n",
-      "Using map as reference\n",
-      # "Ramachandran outliers:      0.00      0.00      0.00      0.00      0.00\n",
-      "All done.\n"]:
-    assert l in log_lines, "'%s' not in log file." % l
-  res_log.close()
-  # assert os.path.isfile("%s_start.pdb_idealized.pdb" % prefix)
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  if (not libtbx.env.has_module(name="probe")):
-    print("Skipping: probe not configured")
-  else:
-    exercise_01()
-  print("Time: %.2f" % (time.time() - t0))
-  print("OK")
+def exercise_01(prefix="tst_mi_ligands_test_01"):
+    """
+    Simple run to a completion with reference map. no SS annotations.
+    """
+    pdb_file = open("%s_start.pdb" % prefix, "w")
+    pdb_file.write(pdb_lines)
+    pdb_file.close()
+    cif_file = open("%s_start.cif" % prefix, "w")
+    cif_file.write(cif_lines)
+    cif_file.close()
+    cmd = " ".join(
+        [
+            "phenix.model_idealization",
+            "%s_start.pdb" % prefix,
+            "%s_start.cif" % prefix,
+            "use_map_for_reference=True",
+            "number_of_refinement_cycles=1",
+            "run_minimization_first=False",
+            "loop_idealization.number_of_ccd_trials=1",
+            "n_macro=1",
+            "debug=True",
+            ">%s.log" % prefix,
+        ]
+    )
+    print(cmd)
+    assert not easy_run.call(cmd)
+    res_log = open("%s.log" % prefix, "r")
+    log_lines = res_log.readlines()
+    for l in [
+        # "Secondary structure substitution step will be skipped\n",
+        "  Minimizing...\n",
+        "Using map as reference\n",
+        # "Ramachandran outliers:      0.00      0.00      0.00      0.00      0.00\n",
+        "All done.\n",
+    ]:
+        assert l in log_lines, "'%s' not in log file." % l
+    res_log.close()
+    # assert os.path.isfile("%s_start.pdb_idealized.pdb" % prefix)
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    if not libtbx.env.has_module(name="probe"):
+        print("Skipping: probe not configured")
+    else:
+        exercise_01()
+    print("Time: %.2f" % (time.time() - t0))
+    print("OK")

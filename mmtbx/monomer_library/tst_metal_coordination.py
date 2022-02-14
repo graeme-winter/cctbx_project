@@ -4,7 +4,7 @@ from libtbx import easy_run
 from six.moves import range
 
 pdbs = {
-  'linking_test_F3S.pdb' : '''
+    "linking_test_F3S.pdb": """
 ATOM      1 HG11 VAL S 187     -40.693  -9.791   9.764  0.83  6.10           H
 ATOM      2 HG21 VAL S 187     -40.266 -10.791  11.945  1.00  7.89           H
 ATOM      3 HG21 THR S 227     -39.621 -13.489  13.393  0.98  4.82           H
@@ -60,8 +60,8 @@ HETATM   48  O   HOH L 974     -31.298 -10.022  11.614  1.00  5.46           O
 HETATM   49  H1  HOH L 974     -31.498 -10.034  10.798  1.00 12.35           H
 HETATM   50  H2  HOH L 974     -32.009 -10.160  12.036  1.00 11.06           H
 END
-''',
-  'linking_test_SF4.pdb' : '''
+""",
+    "linking_test_SF4.pdb": """
 ATOM      1  CB  CYS A  43       3.194   5.758   4.327  1.00  3.39           C
 ATOM      2  SG  CYS A  43       1.682   6.600   4.910  1.00  3.32           S
 ATOM      3  CB  CYS A  46       6.976   9.042   5.345  1.00  3.45           C
@@ -81,8 +81,8 @@ HETATM   15 FE1  SF4 A  84       2.436   8.034   6.473  1.00  3.03          Fe
 HETATM   16 FE2  SF4 A  84       4.585   9.549   7.307  1.00  3.10          Fe
 HETATM   17 FE3  SF4 A  84       3.040   8.257   9.103  1.00  3.11          Fe
 HETATM   18 FE4  SF4 A  84       2.046  10.381   7.746  1.00  3.04          Fe
-''',
-  'linking_test_SF4_FE.pdb' : '''
+""",
+    "linking_test_SF4_FE.pdb": """
 CRYST1  366.325   97.352  133.276  90.00 108.37  90.00 C 1 2 1
 SCALE1      0.002730  0.000000  0.000907        0.00000
 SCALE2      0.000000  0.010272  0.000000        0.00000
@@ -115,128 +115,144 @@ HETATM   57 FE1  SF4 G 706      18.287  20.136  36.841  1.00 22.20          Fe
 HETATM   58 FE2  SF4 G 706      21.110  20.098  36.275  1.00 26.08          Fe
 HETATM   59 FE3  SF4 G 706      20.045  21.717  38.135  1.00 23.49          Fe
 HETATM   60 FE4  SF4 G 706      19.481  22.300  35.554  1.00 23.79          Fe
-''',
-        }
+""",
+}
 
 links = {
-  'linking_test_F3S.pdb' : [0,3], # 3 bonds from F3S to SGs
-  'linking_test_SF4.pdb' : [0,4],
-  'linking_test_SF4_FE.pdb' : [0,5],
-  }
+    "linking_test_F3S.pdb": [0, 3],  # 3 bonds from F3S to SGs
+    "linking_test_SF4.pdb": [0, 4],
+    "linking_test_SF4_FE.pdb": [0, 5],
+}
+
 
 def run_and_test(cmd, pdb, i):
-  result = easy_run.fully_buffered(cmd).raise_if_errors()
-  assert (result.return_code == 0)
-  for line in result.stdout_lines :
-    if ("Write PDB file" in line):
-      break
-  else :
-    raise RuntimeError("Missing expected log output")
-  print("OK")
-  # test .geo
-  f=open(pdb.replace(".pdb", "_minimized.geo"), "r")
-  lines = f.readlines()
-  f.close()
-  for line in lines:
-    if line.find("Metal coordination restraints:")>-1:
-      bonds = int(line.split()[-1])
-      break
-  else:
-    bonds = 0
-  assert bonds == links[pdb][i], "found %d bonds but expected %s!" % (
-    bonds,
-    links[pdb][i],
+    result = easy_run.fully_buffered(cmd).raise_if_errors()
+    assert result.return_code == 0
+    for line in result.stdout_lines:
+        if "Write PDB file" in line:
+            break
+    else:
+        raise RuntimeError("Missing expected log output")
+    print("OK")
+    # test .geo
+    f = open(pdb.replace(".pdb", "_minimized.geo"), "r")
+    lines = f.readlines()
+    f.close()
+    for line in lines:
+        if line.find("Metal coordination restraints:") > -1:
+            bonds = int(line.split()[-1])
+            break
+    else:
+        bonds = 0
+    assert bonds == links[pdb][i], "found %d bonds but expected %s!" % (
+        bonds,
+        links[pdb][i],
     )
-  new_geo = pdb.replace(".pdb", "_minimized_%d.geo" % i)
-  if (os.path.isfile(new_geo)):
-    os.remove(new_geo)
-  os.rename(pdb.replace(".pdb", "_minimized.geo"), new_geo)
-  print("OK")
-  # test links
-  if pdb in ["linking_test_LEU-CSY-VAL.pdb",
-             ]:
-    return
-  number_of_links=0
-  f=open(pdb.replace(".pdb", "_minimized.pdb"), "r")
-  lines = f.readlines()
-  f.close()
-  for line in lines:
-    if line.find("LINK")>-1:
-      number_of_links+=1
-  if i==0:
-    expected = 0
-  else:
-    expected = links[pdb][i]-links[pdb][0]
-    if pdb in ["linking_test_Mg_EDT.pdb",
-               "linking_test_Mg_HOH.pdb",
-              ]:
-      expected += 6
-    elif pdb in ["linking_test_CD_GHE_A_B.pdb",
-                ]:
-      expected += 4
-  if pdb in ["linking_test_HEM_TYR.pdb"]:
-    expected += 1
-  assert number_of_links == expected, "found %d LINK but expected %s!" % (
-    number_of_links,
-    expected,
+    new_geo = pdb.replace(".pdb", "_minimized_%d.geo" % i)
+    if os.path.isfile(new_geo):
+        os.remove(new_geo)
+    os.rename(pdb.replace(".pdb", "_minimized.geo"), new_geo)
+    print("OK")
+    # test links
+    if pdb in [
+        "linking_test_LEU-CSY-VAL.pdb",
+    ]:
+        return
+    number_of_links = 0
+    f = open(pdb.replace(".pdb", "_minimized.pdb"), "r")
+    lines = f.readlines()
+    f.close()
+    for line in lines:
+        if line.find("LINK") > -1:
+            number_of_links += 1
+    if i == 0:
+        expected = 0
+    else:
+        expected = links[pdb][i] - links[pdb][0]
+        if pdb in [
+            "linking_test_Mg_EDT.pdb",
+            "linking_test_Mg_HOH.pdb",
+        ]:
+            expected += 6
+        elif pdb in [
+            "linking_test_CD_GHE_A_B.pdb",
+        ]:
+            expected += 4
+    if pdb in ["linking_test_HEM_TYR.pdb"]:
+        expected += 1
+    assert number_of_links == expected, "found %d LINK but expected %s!" % (
+        number_of_links,
+        expected,
     )
-  if 0:
-    cmd = "phenix.start_coot --no-guano --pdb %s" % pdb.replace(".pdb",
-                                                                "_minimized.pdb"
-                                                                )
-    os.system(cmd)
+    if 0:
+        cmd = "phenix.start_coot --no-guano --pdb %s" % pdb.replace(
+            ".pdb", "_minimized.pdb"
+        )
+        os.system(cmd)
+
 
 def ideal_and_test(cmd, pdb, i):
-  result = easy_run.fully_buffered(cmd).raise_if_errors()
-  assert (result.return_code == 0)
-  for line in result.stdout_lines :
-    if ("Write PDB file" in line):
-      break
-  else :
-    raise RuntimeError("Missing expected log output")
-  print("OK")
-  for line in result.stdout_lines :
-    if line.find('SF4 Regularisation')>-1: break
-    if line.find('F3S Regularisation')>-1: break
-  else:
-    assert 0
-  print('OK')
+    result = easy_run.fully_buffered(cmd).raise_if_errors()
+    assert result.return_code == 0
+    for line in result.stdout_lines:
+        if "Write PDB file" in line:
+            break
+    else:
+        raise RuntimeError("Missing expected log output")
+    print("OK")
+    for line in result.stdout_lines:
+        if line.find("SF4 Regularisation") > -1:
+            break
+        if line.find("F3S Regularisation") > -1:
+            break
+    else:
+        assert 0
+    print("OK")
+
 
 def run(only_i=None):
-  try: only_i=int(only_i)
-  except ValueError: only_i=None
-  except TypeError: only_i=None
-  cifs = ""
-  for pdb in pdbs:
-    f=open(pdb, "w")
-    f.write(pdbs[pdb])
-    f.close()
-    if pdb.endswith(".cif"): cifs += " %s" % pdb
-  j=0
-  for pdb in sorted(pdbs):
-    #break
-    if pdb.endswith(".cif"): continue
-    if pdb.endswith(".params"): continue
-    #if pdb.find('F3S')==-1: continue
-    print('pdb',pdb)
-    j+=1
-    if only_i is not None and only_i!=j: continue
-    for i in range(2):
-      log_filename = "%s_%d.log" % (pdb, i)
-      cmd = "phenix.geometry_minimization %s write_geo_file=True" % pdb
-      cmd += " link_all=%d link_carbohydrate=%d %s" % (i, i, cifs)
-      cmd += " link_metal=%d" % i
-      if pdb.replace(".pdb", ".params") in pdbs:
-        cmd += " %s" % pdb.replace(".pdb", ".params")
-      print("test number:", j)
-      print(cmd)
-      run_and_test(cmd, pdb, i)
+    try:
+        only_i = int(only_i)
+    except ValueError:
+        only_i = None
+    except TypeError:
+        only_i = None
+    cifs = ""
+    for pdb in pdbs:
+        f = open(pdb, "w")
+        f.write(pdbs[pdb])
+        f.close()
+        if pdb.endswith(".cif"):
+            cifs += " %s" % pdb
+    j = 0
+    for pdb in sorted(pdbs):
+        # break
+        if pdb.endswith(".cif"):
+            continue
+        if pdb.endswith(".params"):
+            continue
+        # if pdb.find('F3S')==-1: continue
+        print("pdb", pdb)
+        j += 1
+        if only_i is not None and only_i != j:
+            continue
+        for i in range(2):
+            log_filename = "%s_%d.log" % (pdb, i)
+            cmd = "phenix.geometry_minimization %s write_geo_file=True" % pdb
+            cmd += " link_all=%d link_carbohydrate=%d %s" % (i, i, cifs)
+            cmd += " link_metal=%d" % i
+            if pdb.replace(".pdb", ".params") in pdbs:
+                cmd += " %s" % pdb.replace(".pdb", ".params")
+            print("test number:", j)
+            print(cmd)
+            run_and_test(cmd, pdb, i)
 
-      cmd = "phenix.geometry_minimization %s write_geo_file=True" % pdb
-      cmd += ' superpose_ideal_ligand=all'
-      ideal_and_test(cmd, pdb, i)
+            cmd = "phenix.geometry_minimization %s write_geo_file=True" % pdb
+            cmd += " superpose_ideal_ligand=all"
+            ideal_and_test(cmd, pdb, i)
 
 
-if __name__=="__main__":
-  import sys
-  run(*tuple(sys.argv[1:]))
+if __name__ == "__main__":
+    import sys
+
+    run(*tuple(sys.argv[1:]))

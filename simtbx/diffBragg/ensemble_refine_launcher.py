@@ -3,9 +3,11 @@ from simtbx.diffBragg.stage_two_utils import PAR_from_params
 import os
 import sys
 from libtbx.mpi4py import MPI
+
 COMM = MPI.COMM_WORLD
 from dials.array_family import flex
 import numpy as np
+
 try:
     import pandas
 except ImportError:
@@ -35,7 +37,6 @@ def global_refiner_from_parameters(params):
 
 
 class RefineLauncher:
-
     def __init__(self, params):
         self.params = self.check_parameter_integrity(params)
         self.n_shots_on_rank = None
@@ -46,14 +47,13 @@ class RefineLauncher:
         self.symbol = None
         self.DEVICE_ID = 0
 
-
     @property
     def NPIX_TO_ALLOC(self):
         return self._NPIX_TO_ALLOC
 
     @NPIX_TO_ALLOC.setter
     def NPIX_TO_ALLOC(self, val):
-        assert val> 0 or val == -1
+        assert val > 0 or val == -1
         self._NPIX_TO_ALLOC = int(val)
 
     @staticmethod
@@ -75,10 +75,14 @@ class RefineLauncher:
         self.panel_group_from_id = {pid: 0 for pid in range(len(detector))}
         # if specified in a file, then overwrite:
         if self.params.refiner.panel_group_file is not None:
-            self.panel_group_from_id = utils.load_panel_group_file(self.params.refiner.panel_group_file)
+            self.panel_group_from_id = utils.load_panel_group_file(
+                self.params.refiner.panel_group_file
+            )
             if not self.panel_group_from_id:
-                raise ValueError("Loading panel group file %s  produced an panel group dict!"
-                                 % self.params.refiner.panel_group_file)
+                raise ValueError(
+                    "Loading panel group file %s  produced an panel group dict!"
+                    % self.params.refiner.panel_group_file
+                )
 
         # how many unique panel groups :
         panel_groups = set(self.panel_group_from_id.values())
@@ -122,7 +126,7 @@ class RefineLauncher:
         self._launch()
         return self.RUC
 
-    def load_inputs(self, pandas_table, miller_data=None, refls_key='predictions'):
+    def load_inputs(self, pandas_table, miller_data=None, refls_key="predictions"):
         """
 
         :param pandas_table: contains path to the experiments (pandas column exp_name) to be loaded
@@ -147,25 +151,37 @@ class RefineLauncher:
         COMM.Barrier()
         num_exp = len(pandas_table)
         first_exper_file = pandas_table.exp_name.values[0]
-        detector = ExperimentListFactory.from_json_file(first_exper_file, check_format=False)[0].detector
+        detector = ExperimentListFactory.from_json_file(
+            first_exper_file, check_format=False
+        )[0].detector
         if detector is None and self.params.refiner.reference_geom is None:
-            raise RuntimeError("No detector in experiment, must provide a reference geom.")
+            raise RuntimeError(
+                "No detector in experiment, must provide a reference geom."
+            )
         # TODO verify all shots have the same detector ?
         if self.params.refiner.reference_geom is not None:
-            detector = ExperimentListFactory.from_json_file(self.params.refiner.reference_geom, check_format=False)[0].detector
-            print("Using reference geom from expt %s" % self.params.refiner.reference_geom)
+            detector = ExperimentListFactory.from_json_file(
+                self.params.refiner.reference_geom, check_format=False
+            )[0].detector
+            print(
+                "Using reference geom from expt %s" % self.params.refiner.reference_geom
+            )
 
         if COMM.size > num_exp:
-            raise ValueError("Requested %d MPI ranks to process %d shots. Reduce number of ranks to %d"
-                             % (COMM.size, num_exp, num_exp))
+            raise ValueError(
+                "Requested %d MPI ranks to process %d shots. Reduce number of ranks to %d"
+                % (COMM.size, num_exp, num_exp)
+            )
         self._init_panel_group_information(detector)
 
         self.verbose = False
         if COMM.rank == 0:
             self.verbose = self.params.refiner.verbose > 0
-            if self.params.refiner.gather_dir is not None and not os.path.exists(self.params.refiner.gather_dir):
-              os.makedirs(self.params.refiner.gather_dir)
-              LOGGER.info("MADE GATHER DIR %s" % self.params.refiner.gather_dir)
+            if self.params.refiner.gather_dir is not None and not os.path.exists(
+                self.params.refiner.gather_dir
+            ):
+                os.makedirs(self.params.refiner.gather_dir)
+                LOGGER.info("MADE GATHER DIR %s" % self.params.refiner.gather_dir)
         COMM.barrier()
         shot_idx = 0  # each rank keeps index of the shots local to it
         rank_panel_groups_refined = set()
@@ -177,10 +193,14 @@ class RefineLauncher:
             if i_exp % COMM.size != COMM.rank:
                 continue
             LOGGER.info("EVENT: BEGIN loading experiment list")
-            expt_list = ExperimentListFactory.from_json_file(exper_name, check_format=self.params.refiner.check_expt_format)
+            expt_list = ExperimentListFactory.from_json_file(
+                exper_name, check_format=self.params.refiner.check_expt_format
+            )
             LOGGER.info("EVENT: DONE loading experiment list")
             if len(expt_list) != 1:
-                print("Input experiments need to have length 1, %s does not" % exper_name)
+                print(
+                    "Input experiments need to have length 1, %s does not" % exper_name
+                )
             expt = expt_list[0]
             expt.detector = detector  # in case of supplied ref geom
             self._check_experiment_integrity(expt)
@@ -193,8 +213,8 @@ class RefineLauncher:
             good_sel = flex.bool([h != (0, 0, 0) for h in list(refls["miller_index"])])
             refls = refls.select(good_sel)
 
-            #UcellMan = utils.manager_from_crystal(expt.crystal)
-            opt_uc_param = exper_dataframe[["a","b","c","al","be","ga"]].values[0]
+            # UcellMan = utils.manager_from_crystal(expt.crystal)
+            opt_uc_param = exper_dataframe[["a", "b", "c", "al", "be", "ga"]].values[0]
             UcellMan = utils.manager_from_params(opt_uc_param)
 
             if self.symbol is None:
@@ -204,35 +224,52 @@ class RefineLauncher:
                     self.symbol = expt.crystal.get_space_group().type().lookup_symbol()
             else:
                 if self.params.refiner.force_symbol is None:
-                    if expt.crystal.get_space_group().type().lookup_symbol() != self.symbol:
-                        raise ValueError("Crystals should all have the same space group symmetry")
+                    if (
+                        expt.crystal.get_space_group().type().lookup_symbol()
+                        != self.symbol
+                    ):
+                        raise ValueError(
+                            "Crystals should all have the same space group symmetry"
+                        )
 
             if shot_idx == 0:  # each rank initializes a simulator only once
                 if self.params.simulator.init_scale != 1:
-                    print("WARNING: For stage_two , it is assumed that total scale is stored in the pandas dataframe")
+                    print(
+                        "WARNING: For stage_two , it is assumed that total scale is stored in the pandas dataframe"
+                    )
                     print("WARNING: resetting params.simulator.init_scale to 1!")
                     self.params.simulator.init_scale = 1
                 self._init_simulator(expt, miller_data)
                 if self.params.profile:
                     self.SIM.record_timings = True
                 if self.params.refiner.stage_two.Fref_mtzname is not None:
-                    self.Fref = utils.open_mtz(self.params.refiner.stage_two.Fref_mtzname,
-                                               self.params.refiner.stage_two.Fref_mtzcol)
+                    self.Fref = utils.open_mtz(
+                        self.params.refiner.stage_two.Fref_mtzname,
+                        self.params.refiner.stage_two.Fref_mtzcol,
+                    )
 
             LOGGER.info("EVENT: LOADING ROI DATA")
             shot_modeler = hopper_utils.DataModeler(self.params)
             if self.params.refiner.load_data_from_refl:
-                gathered = shot_modeler.GatherFromReflectionTable(expt, refls, sg_symbol=self.symbol)
+                gathered = shot_modeler.GatherFromReflectionTable(
+                    expt, refls, sg_symbol=self.symbol
+                )
             else:
-                gathered = shot_modeler.GatherFromExperiment(expt, refls, sg_symbol=self.symbol)
+                gathered = shot_modeler.GatherFromExperiment(
+                    expt, refls, sg_symbol=self.symbol
+                )
             if not gathered:
                 raise IOError("Failed to gather data from experiment %s", exper_name)
 
             if self.params.refiner.gather_dir is not None:
                 gathered_name = os.path.splitext(os.path.basename(exper_name))[0]
                 gathered_name += "_withData.refl"
-                gathered_name = os.path.join(self.params.refiner.gather_dir, gathered_name )
-                shot_modeler.dump_gathered_to_refl(gathered_name, do_xyobs_sanity_check=False) #True)
+                gathered_name = os.path.join(
+                    self.params.refiner.gather_dir, gathered_name
+                )
+                shot_modeler.dump_gathered_to_refl(
+                    gathered_name, do_xyobs_sanity_check=False
+                )  # True)
                 LOGGER.info("SAVED ROI DATA TO %s" % gathered_name)
                 if self.params.refiner.test_gathered_file:
                     all_data = shot_modeler.all_data.copy()
@@ -242,7 +279,9 @@ class RefineLauncher:
                     all_pids = np.array(shot_modeler.pids)
                     all_rois = np.array(shot_modeler.rois)
                     new_Modeler = hopper_utils.DataModeler(self.params)
-                    assert new_Modeler.GatherFromReflectionTable(exper_name, gathered_name, sg_symbol=self.symbol)
+                    assert new_Modeler.GatherFromReflectionTable(
+                        exper_name, gathered_name, sg_symbol=self.symbol
+                    )
                     assert np.allclose(new_Modeler.all_data, all_data)
                     assert np.allclose(new_Modeler.all_background, all_bg)
                     assert np.allclose(new_Modeler.rois, all_rois)
@@ -251,27 +290,39 @@ class RefineLauncher:
                     assert np.allclose(new_Modeler.roi_id, all_roi_id)
                     LOGGER.info("Gathered file approved!")
 
-
             self.Hi[shot_idx] = shot_modeler.Hi
             self.Hi_asu[shot_idx] = shot_modeler.Hi_asu
 
             LOGGER.info("EVENT: DONE LOADING ROI")
             shot_modeler.ucell_man = UcellMan
-            self.SIM.num_ucell_param = len(shot_modeler.ucell_man.variables)  # for convenience
+            self.SIM.num_ucell_param = len(
+                shot_modeler.ucell_man.variables
+            )  # for convenience
 
             loaded_spectra = False
             if self.params.spectrum_from_imageset:
                 try:
-                    shot_spectra = hopper_utils.downsamp_spec(self.SIM, self.params, expt, return_and_dont_set=True)
+                    shot_spectra = hopper_utils.downsamp_spec(
+                        self.SIM, self.params, expt, return_and_dont_set=True
+                    )
                     loaded_spectra = True
                 except Exception as err:
-                    LOGGER.warning("spectrum_from_imageset is set to True, however failed to load spectra: %s" % err)
+                    LOGGER.warning(
+                        "spectrum_from_imageset is set to True, however failed to load spectra: %s"
+                        % err
+                    )
                     loaded_spectra = False
 
             if not loaded_spectra:
-                if "spectrum_filename" in list(exper_dataframe) and exper_dataframe.spectrum_filename.values[0] is not None:
+                if (
+                    "spectrum_filename" in list(exper_dataframe)
+                    and exper_dataframe.spectrum_filename.values[0] is not None
+                ):
                     shot_spectra = utils.load_spectra_from_dataframe(exper_dataframe)
-                    LOGGER.debug("Loaded specta from %s" % exper_dataframe.spectrum_filename.values[0])
+                    LOGGER.debug(
+                        "Loaded specta from %s"
+                        % exper_dataframe.spectrum_filename.values[0]
+                    )
 
                 else:
                     total_flux = exper_dataframe.total_flux.values[0]
@@ -280,29 +331,43 @@ class RefineLauncher:
                     shot_spectra = [(expt.beam.get_wavelength(), total_flux)]
 
             shot_modeler.spectra = shot_spectra
-            if self.params.refiner.gather_dir is not None and not self.params.refiner.load_data_from_refl:
+            if (
+                self.params.refiner.gather_dir is not None
+                and not self.params.refiner.load_data_from_refl
+            ):
                 spec_wave, spec_weights = map(np.array, zip(*shot_spectra))
                 spec_filename = os.path.splitext(os.path.basename(exper_name))[0]
-                spec_filename = os.path.join(self.params.refiner.gather_dir, spec_filename+".lam")
+                spec_filename = os.path.join(
+                    self.params.refiner.gather_dir, spec_filename + ".lam"
+                )
                 utils.save_spectra_file(spec_filename, spec_wave, spec_weights)
                 LOGGER.info("saved spectra filename %s" % spec_filename)
 
             LOGGER.info("Will simulate %d energy channels" % len(shot_spectra))
 
             if "detz_shift_mm" in list(exper_dataframe):
-                shot_modeler.originZ_init = exper_dataframe.detz_shift_mm.values[0]*1e-3
+                shot_modeler.originZ_init = (
+                    exper_dataframe.detz_shift_mm.values[0] * 1e-3
+                )
             else:
                 shot_modeler.originZ_init = 0
             shot_modeler.exper_name = exper_name
             shot_modeler.refl_name = refl_name
 
-            shot_panel_groups_refined = self.determine_refined_panel_groups(shot_modeler.pids)
-            rank_panel_groups_refined = rank_panel_groups_refined.union(set(shot_panel_groups_refined))
+            shot_panel_groups_refined = self.determine_refined_panel_groups(
+                shot_modeler.pids
+            )
+            rank_panel_groups_refined = rank_panel_groups_refined.union(
+                set(shot_panel_groups_refined)
+            )
 
             shot_idx += 1
             if COMM.rank == 0:
                 self._mem_usage()
-                print("Finished loading image %d / %d" % (i_exp+1, len(exper_names)), flush=True)
+                print(
+                    "Finished loading image %d / %d" % (i_exp + 1, len(exper_names)),
+                    flush=True,
+                )
 
             shot_modeler.PAR = PAR_from_params(self.params, expt, best=exper_dataframe)
             self.Modelers[i_exp] = shot_modeler
@@ -344,12 +409,16 @@ class RefineLauncher:
     def _mem_usage(self):
         memMB = get_memory_usage()
         import socket
+
         host = socket.gethostname()
-        print("Rank 0 reporting memory usage: %f GB on Rank 0 node %s" % (memMB / 1e3, host))
+        print(
+            "Rank 0 reporting memory usage: %f GB on Rank 0 node %s"
+            % (memMB / 1e3, host)
+        )
 
     def determine_refined_panel_groups(self, pids):
         refined_groups = []
-        #assert len(pids) == len(selection_flags)
+        # assert len(pids) == len(selection_flags)
         for i, pid in enumerate(pids):
             if self.panel_group_from_id[pid] not in refined_groups:
                 refined_groups.append(self.panel_group_from_id[pid])
@@ -360,9 +429,9 @@ class RefineLauncher:
         for i_shot in self.Modelers:
             modeler = self.Modelers[i_shot]
             x1, x2, y1, y2 = map(np.array, zip(*modeler.rois))
-            npix = np.sum((x2-x1)*(y2-y1))
+            npix = np.sum((x2 - x1) * (y2 - y1))
             max_npix = max(npix, max_npix)
-            print("Rank %d, shot %d has %d pixels" % (COMM.rank, i_shot+1, npix))
+            print("Rank %d, shot %d has %d pixels" % (COMM.rank, i_shot + 1, npix))
         print("Rank %d, max pix to be modeled: %d" % (COMM.rank, max_npix))
         return max_npix
 
@@ -371,7 +440,9 @@ class RefineLauncher:
         fpath = self.params.simulator.spectrum.filename_list
         if fpath is not None:
             file_list = [l.strip() for l in open(fpath, "r").readlines()]
-            assert all([len(l.split()) == 1 for l in file_list]), "weird spectrum file %s"% fpath
+            assert all([len(l.split()) == 1 for l in file_list]), (
+                "weird spectrum file %s" % fpath
+            )
         return file_list
 
     def _gather_Hi_information(self):
@@ -379,7 +450,7 @@ class RefineLauncher:
         # aggregate all miller indices
         self.Hi_all_ranks, self.Hi_asu_all_ranks = [], []
         # TODO assert list types are stored in Hi and Hi_asu
-        for i_shot in self.Hi: #range(nshots_on_this_rank):
+        for i_shot in self.Hi:  # range(nshots_on_this_rank):
             self.Hi_all_ranks += self.Hi[i_shot]
             self.Hi_asu_all_ranks += self.Hi_asu[i_shot]
         self.Hi_all_ranks = COMM.reduce(self.Hi_all_ranks)
@@ -409,23 +480,37 @@ class RefineLauncher:
 
             ii = list(self.Modelers.keys())[0]
             uc = self.Modelers[ii].ucell_man
-            params = uc.a, uc.b, uc.c, uc.al * 180 / np.pi, uc.be * 180 / np.pi, uc.ga * 180 / np.pi
+            params = (
+                uc.a,
+                uc.b,
+                uc.c,
+                uc.al * 180 / np.pi,
+                uc.be * 180 / np.pi,
+                uc.ga * 180 / np.pi,
+            )
             if self.params.refiner.force_unit_cell is not None:
                 params = self.params.refiner.force_unit_cell
             symm = symmetry(unit_cell=params, space_group_symbol=self.symbol)
             hi_asu_flex = cctbx_flex.miller_index(self.Hi_asu_all_ranks)
             mset = miller.set(symm, hi_asu_flex, anomalous_flag=True)
             marr = miller.array(mset)
-            binner = marr.setup_binner(d_max=self.params.refiner.stage_two.d_max, d_min=self.params.refiner.stage_two.d_min,
-                                       n_bins=self.params.refiner.stage_two.n_bin)
+            binner = marr.setup_binner(
+                d_max=self.params.refiner.stage_two.d_max,
+                d_min=self.params.refiner.stage_two.d_min,
+                n_bins=self.params.refiner.stage_two.n_bin,
+            )
             from collections import Counter
+
             print("Average multiplicities:")
             print("<><><><><><><><><><><><>")
             for i_bin in range(self.params.refiner.stage_two.n_bin - 1):
                 dmax, dmin = binner.bin_d_range(i_bin + 1)
                 F_in_bin = marr.resolution_filter(d_max=dmax, d_min=dmin)
                 multi_in_bin = np.array(list(Counter(F_in_bin.indices()).values()))
-                print("%2.5g-%2.5g : Multiplicity=%.4f" % (dmax, dmin, multi_in_bin.mean()))
+                print(
+                    "%2.5g-%2.5g : Multiplicity=%.4f"
+                    % (dmax, dmin, multi_in_bin.mean())
+                )
                 for ii in range(1, 100, 8):
                     print("\t %d refls with multi %d" % (sum(multi_in_bin == ii), ii))
 
@@ -433,12 +518,17 @@ class RefineLauncher:
             symm = symmetry(unit_cell=params, space_group_symbol=self.symbol)
             hi_flex_unique = cctbx_flex.miller_index(list(set(self.Hi_asu_all_ranks)))
             mset = miller.set(symm, hi_flex_unique, anomalous_flag=True)
-            self.binner = mset.setup_binner(d_min=self.params.refiner.stage_two.d_min,
-                                            d_max=self.params.refiner.stage_two.d_max,
-                                            n_bins=self.params.refiner.stage_two.n_bin)
+            self.binner = mset.setup_binner(
+                d_min=self.params.refiner.stage_two.d_min,
+                d_max=self.params.refiner.stage_two.d_max,
+                n_bins=self.params.refiner.stage_two.n_bin,
+            )
             mset.completeness(use_binning=True).show()
             marr_unique_h = miller.array(mset)
-            print("Rank %d: total miller vars=%d" % (COMM.rank, len(set(self.Hi_asu_all_ranks))))
+            print(
+                "Rank %d: total miller vars=%d"
+                % (COMM.rank, len(set(self.Hi_asu_all_ranks)))
+            )
         else:
             marr_unique_h = None
 
@@ -454,24 +544,30 @@ class RefineLauncher:
         x_init = None
         nmacro = self.params.refiner.num_macro_cycles
         n_trials = len(self.params.refiner.max_calls)
-        for i_trial in range(n_trials*nmacro):
+        for i_trial in range(n_trials * nmacro):
 
             self.RUC = StageTwoRefiner(self.Modelers, self.symbol, self.params)
 
             if self.will_refine(self.params.refiner.refine_spot_scale):
-                self.RUC.refine_crystal_scale = (self.params.refiner.refine_spot_scale*nmacro)[i_trial]
+                self.RUC.refine_crystal_scale = (
+                    self.params.refiner.refine_spot_scale * nmacro
+                )[i_trial]
 
             if self.will_refine(self.params.refiner.refine_Fcell):
-                self.RUC.refine_Fcell = (self.params.refiner.refine_Fcell*nmacro)[i_trial]
+                self.RUC.refine_Fcell = (self.params.refiner.refine_Fcell * nmacro)[
+                    i_trial
+                ]
 
             self.RUC.panel_group_from_id = self.panel_group_from_id
             self.RUC.panel_reference_from_id = self.panel_reference_from_id
             self.RUC.panel_groups_being_refined = self.panel_groups_refined
 
             # TODO verify not refining Fcell in case of local refiner
-            self.RUC.max_calls = (self.params.refiner.max_calls*nmacro)[i_trial]
+            self.RUC.max_calls = (self.params.refiner.max_calls * nmacro)[i_trial]
             self.RUC.x_init = x_init
-            self.RUC.ignore_line_search_failed_step_at_lower_bound = True  # TODO: why was this necessary?
+            self.RUC.ignore_line_search_failed_step_at_lower_bound = (
+                True  # TODO: why was this necessary?
+            )
 
             # plot things
             self.RUC.trial_id = i_trial
@@ -484,21 +580,27 @@ class RefineLauncher:
 
             self.RUC.S = self.SIM
             self.RUC.restart_file = self.params.refiner.io.restart_file
-            self.RUC.S.update_nanoBragg_instance('update_oversample_during_refinement',
-                                                 self.params.refiner.update_oversample_during_refinement)
+            self.RUC.S.update_nanoBragg_instance(
+                "update_oversample_during_refinement",
+                self.params.refiner.update_oversample_during_refinement,
+            )
             self.RUC.S.update_nanoBragg_instance("Npix_to_allocate", self.NPIX_TO_ALLOC)
-            self.RUC.S.update_nanoBragg_instance('device_Id', self.DEVICE_ID)
-            self.RUC.use_curvatures_threshold = self.params.refiner.use_curvatures_threshold
+            self.RUC.S.update_nanoBragg_instance("device_Id", self.DEVICE_ID)
+            self.RUC.use_curvatures_threshold = (
+                self.params.refiner.use_curvatures_threshold
+            )
             if not self.params.refiner.curvatures:
-                self.RUC.S.update_nanoBragg_instance('compute_curvatures', False)
-            if COMM.rank==0:
-                self.RUC.S.update_nanoBragg_instance('verbose', self.params.refiner.verbose)
+                self.RUC.S.update_nanoBragg_instance("compute_curvatures", False)
+            if COMM.rank == 0:
+                self.RUC.S.update_nanoBragg_instance(
+                    "verbose", self.params.refiner.verbose
+                )
 
             LOGGER.info("_launch run setup")
             self.RUC.run(setup_only=True)
             LOGGER.info("_launch done run setup")
             # for debug purposes:
-            #if not self.params.refiner.quiet:
+            # if not self.params.refiner.quiet:
             #    print("\n<><><><><><><><>TRIAL %d refinement status:" % i_trial)
             #    self.RUC.S.D.print_if_refining()
 
@@ -507,8 +609,8 @@ class RefineLauncher:
             self.RUC.hit_break_to_use_curvatures = False
 
             # selection flags set here:
-            #self.RUC.selection_flags = self.shot_selection_flags
-            #if self.params.refiner.res_ranges is not None:
+            # self.RUC.selection_flags = self.shot_selection_flags
+            # if self.params.refiner.res_ranges is not None:
             #    assert self.shot_reso is not None, "cant set reso flags is rlp is not in refl tables"
             #    nshots = len(self.shot_selection_flags)
             #    more_sel_flags = {}
@@ -536,9 +638,11 @@ class RefineLauncher:
                 break
 
             if self.params.refiner.debug_pixel_panelfastslow is not None:
-                utils.show_diffBragg_state(self.RUC.S.D, self.params.refiner.debug_pixel_panelfastslow)
+                utils.show_diffBragg_state(
+                    self.RUC.S.D, self.params.refiner.debug_pixel_panelfastslow
+                )
                 s = self.RUC._get_spot_scale(0)
-                print("refiner spot scale=%f" % (s**2))
+                print("refiner spot scale=%f" % (s ** 2))
 
             x_init = self.RUC.x
 

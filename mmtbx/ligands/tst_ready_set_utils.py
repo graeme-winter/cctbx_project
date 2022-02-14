@@ -7,7 +7,8 @@ from iotbx.pdb import pdb_input
 from mmtbx.hydrogens.specialised_hydrogen_atoms import add_side_chain_acid_hydrogens
 from mmtbx.hydrogens.specialised_hydrogen_atoms import add_disulfur_hydrogen_atoms
 
-pdb_strings = {'ASP' :'''
+pdb_strings = {
+    "ASP": """
 CRYST1  112.354   50.667   75.061  90.00 127.09  90.00 C 1 2 1
 SCALE1      0.008900  0.000000  0.006729        0.00000
 SCALE2      0.000000  0.019737  0.000000        0.00000
@@ -28,8 +29,8 @@ ATOM     13  OD1 ASP A 270      24.170 -12.930  59.713  1.00 37.22           O
 ATOM     14  OD2 ASP A 270      22.211 -12.121  60.434  1.00 33.61           O
 ATOM     15  N   ALA A 271      22.030 -16.956  61.120  1.00 15.85           N
 ATOM     16  CA  ALA A 271      21.096 -17.989  61.489  1.00 16.38           C
-''',
-  'GLU' : '''
+""",
+    "GLU": """
 CRYST1   39.183   52.539  207.533  90.00  90.00  90.00 P 21 21 21
 SCALE1      0.025521  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.019033  0.000000        0.00000
@@ -62,8 +63,8 @@ ATOM     27  CD  PRO A 197     -10.537  11.559  57.405  1.00  5.91           C
 TER
 HETATM   49  O5  CIT A 500     -11.052  16.238  62.773  0.75 26.13           O
 HETATM   52  O   HOH A 512     -14.767  12.104  68.190  1.00 29.69           O
-''',
-  'CYS_1' : '''
+""",
+    "CYS_1": """
 CRYST1   61.314   37.470   44.915  90.00  94.55  90.00 P 1 21 1
 SCALE1      0.016309  0.000000  0.001298        0.00000
 SCALE2      0.000000  0.026688  0.000000        0.00000
@@ -83,8 +84,8 @@ ATOM     19  CA  ASN A  27      17.845  -8.529  33.284  1.00  4.69           C
 ATOM     20  C   ASN A  27      16.993  -8.399  34.537  1.00  5.07           C
 ATOM     28  CB  CYS A  84      20.151  -1.930  30.554  1.00  5.45           C
 ATOM     29  SG  CYS A  84      20.664  -2.084  32.297  1.00  5.40           S
-''',
-  'CYS_2' : '''
+""",
+    "CYS_2": """
 CRYST1   61.314   37.470   44.915  90.00  94.55  90.00 P 1 21 1
 SCALE1      0.016309  0.000000  0.001298        0.00000
 SCALE2      0.000000  0.026688  0.000000        0.00000
@@ -99,128 +100,145 @@ ATOM     14  H   CYS A  26      21.889  -6.315  34.036  1.00  5.05           H
 ATOM     15  HA  CYS A  26      19.806  -4.622  34.173  1.00  5.01           H
 ATOM     16  HB2 CYS A  26      20.927  -5.881  31.852  1.00  5.24           H
 ATOM     17  HB3 CYS A  26      19.782  -4.771  31.752  1.00  5.24           H
-''',
+""",
 }
 for key, item in list(pdb_strings.items()):
-  pdb_strings[key+'_D'] = item
-geo_strings = {'ASP' :
-  {0 : '''nonbonded pdb=" OD2 ASP A 258 "
+    pdb_strings[key + "_D"] = item
+geo_strings = {
+    "ASP": {
+        0: """nonbonded pdb=" OD2 ASP A 258 "
           pdb=" HD2 ASP A 270 "
    model   vdw
-   1.612 1.970''',
-   1 : '''nonbonded pdb=" OD2 ASP A 258 "
+   1.612 1.970""",
+        1: """nonbonded pdb=" OD2 ASP A 258 "
           pdb=" HD2 ASP A 270 "
    model   vdw
-   2.750 1.970''',
-   2 : '''nonbonded pdb=" N   ASP A 270 "
+   2.750 1.970""",
+        2: """nonbonded pdb=" N   ASP A 270 "
           pdb=" HD2 ASP A 270 "
    model   vdw
-   2.262 2.650''',
-   3 : '''nonbonded pdb=" OD1 ASP A 270 "
+   2.262 2.650""",
+        3: """nonbonded pdb=" OD1 ASP A 270 "
           pdb=" HD2 ASP A 270 "
    model   vdw
-   2.475 2.056''',
-  },
-               'ASP_D' :
-  {
-  0 : '''nonbonded pdb=" OD2 ASP A 258 "
+   2.475 2.056""",
+    },
+    "ASP_D": {
+        0: """nonbonded pdb=" OD2 ASP A 258 "
           pdb=" DD2 ASP A 270 "
    model   vdw
-   1.583 1.970''',
-  1 : '''nonbonded pdb=" OD2 ASP A 258 "
+   1.583 1.970""",
+        1: """nonbonded pdb=" OD2 ASP A 258 "
           pdb=" OD2 ASP A 270 "
    model   vdw
-   2.310 3.040''',
-  2 : '''nonbonded pdb=" N   ASP A 270 "
+   2.310 3.040""",
+        2: """nonbonded pdb=" N   ASP A 270 "
           pdb=" DD2 ASP A 270 "
    model   vdw
-   2.228 2.650''',
-  3 : '''nonbonded pdb=" N   ASP A 270 "
+   2.228 2.650""",
+        3: """nonbonded pdb=" N   ASP A 270 "
           pdb=" DD2 ASP A 270 "
    model   vdw
-   3.904 2.650''',
-  },
-               'GLU' :
-  {
-  0 : '''nonbonded pdb=" HE2 GLU A 195 "
+   3.904 2.650""",
+    },
+    "GLU": {
+        0: """nonbonded pdb=" HE2 GLU A 195 "
           pdb=" O   HOH A 512 "
    model   vdw
-   2.511 1.970''',
-  1 : '''nonbonded pdb=" HE2 GLU A 195 "
+   2.511 1.970""",
+        1: """nonbonded pdb=" HE2 GLU A 195 "
           pdb=" O   HOH A 512 "
    model   vdw
-   3.316 1.970''',
-  2 : '''nonbonded pdb=" HE2 GLU A 195 "
+   3.316 1.970""",
+        2: """nonbonded pdb=" HE2 GLU A 195 "
           pdb=" O5  CIT A 500 "
    model   vdw
-   3.338 1.970''',
-  3 : '''nonbonded pdb=" HE2 GLU A 195 "
+   3.338 1.970""",
+        3: """nonbonded pdb=" HE2 GLU A 195 "
           pdb=" O5  CIT A 500 "
    model   vdw
-   4.592 1.970''',
-  },
-               'CYS_2' : '''bond pdb=" SG  CYS A  26 "
+   4.592 1.970""",
+    },
+    "CYS_2": """bond pdb=" SG  CYS A  26 "
      pdb=" HG  CYS A  26 "
   ideal  model  delta    sigma   weight residual
-  1.200  1.200  0.000 2.00e-02 2.50e+03 3.33e-04''',
-               'CYS_2_D' : '''bond pdb=" SG  CYS A  26 "
+  1.200  1.200  0.000 2.00e-02 2.50e+03 3.33e-04""",
+    "CYS_2_D": """bond pdb=" SG  CYS A  26 "
      pdb=" DG  CYS A  26 "
   ideal  model  delta    sigma   weight residual
-  1.200  1.200  0.000 2.00e-02 2.50e+03 3.33e-04''',
+  1.200  1.200  0.000 2.00e-02 2.50e+03 3.33e-04""",
 }
 
+
 def tst_adding_side_chain_acid_hydrogen_atoms(switch):
-  element='H'
-  if switch.endswith('_D'): element='D'
-  for i in range(4):
-    fn = 'tst_ready_hydrogens_%s_%d.pdb' % (switch, i)
-    with open(fn, 'w') as f:
-      f.write(pdb_strings[switch])
-    pdb_inp = pdb_input(fn)
-    hierarchy = pdb_inp.construct_hierarchy()
-    add_side_chain_acid_hydrogens(hierarchy, configuration_index=i, element=element)
-    hierarchy.write_pdb_file(fn.replace('.pdb', '_updated.pdb'))
-    cmd='phenix.pdb_interpretation %s flip_sym=0 write_geo=True' % fn.replace('.pdb', '_updated.pdb')
-    print(cmd)
-    easy_run.go(cmd)
-    assert_lines_in_file(file_name='%s.geo' % fn.replace('.pdb', '_updated.pdb'),
-                         lines = geo_strings[switch][i])
+    element = "H"
+    if switch.endswith("_D"):
+        element = "D"
+    for i in range(4):
+        fn = "tst_ready_hydrogens_%s_%d.pdb" % (switch, i)
+        with open(fn, "w") as f:
+            f.write(pdb_strings[switch])
+        pdb_inp = pdb_input(fn)
+        hierarchy = pdb_inp.construct_hierarchy()
+        add_side_chain_acid_hydrogens(hierarchy, configuration_index=i, element=element)
+        hierarchy.write_pdb_file(fn.replace(".pdb", "_updated.pdb"))
+        cmd = "phenix.pdb_interpretation %s flip_sym=0 write_geo=True" % fn.replace(
+            ".pdb", "_updated.pdb"
+        )
+        print(cmd)
+        easy_run.go(cmd)
+        assert_lines_in_file(
+            file_name="%s.geo" % fn.replace(".pdb", "_updated.pdb"),
+            lines=geo_strings[switch][i],
+        )
+
 
 def tst_adding_disulfur_hydrogen_atoms(switch):
-  element='H'
-  if switch.endswith('_D'): element='D'
-  fn = 'tst_ready_hydrogens_%s.pdb' % (switch)
-  with open(fn, 'w') as f:
-    f.write(pdb_strings[switch])
-  pdb_inp = pdb_input(fn)
-  hierarchy = pdb_inp.construct_hierarchy()
-  from mmtbx.conformation_dependent_library.testing_utils import get_geometry_restraints_manager
-  grm = get_geometry_restraints_manager(pdb_filename=fn)
-  add_disulfur_hydrogen_atoms(grm, hierarchy, element=element)
-  hierarchy.write_pdb_file(fn.replace('.pdb', '_updated.pdb'))
-  if switch=='CYS_1':
-    with open(fn.replace('.pdb', '_updated.pdb'), 'r') as f:
-      lines = f.read()
-    assert lines.find('HG')==-1
-  else:
-    cmd='phenix.pdb_interpretation %s write_geo=True' % fn.replace('.pdb', '_updated.pdb')
-    print(cmd)
-    easy_run.go(cmd)
-    assert_lines_in_file(file_name='%s.geo' % fn.replace('.pdb', '_updated.pdb'),
-                         lines = geo_strings[switch])
+    element = "H"
+    if switch.endswith("_D"):
+        element = "D"
+    fn = "tst_ready_hydrogens_%s.pdb" % (switch)
+    with open(fn, "w") as f:
+        f.write(pdb_strings[switch])
+    pdb_inp = pdb_input(fn)
+    hierarchy = pdb_inp.construct_hierarchy()
+    from mmtbx.conformation_dependent_library.testing_utils import (
+        get_geometry_restraints_manager,
+    )
+
+    grm = get_geometry_restraints_manager(pdb_filename=fn)
+    add_disulfur_hydrogen_atoms(grm, hierarchy, element=element)
+    hierarchy.write_pdb_file(fn.replace(".pdb", "_updated.pdb"))
+    if switch == "CYS_1":
+        with open(fn.replace(".pdb", "_updated.pdb"), "r") as f:
+            lines = f.read()
+        assert lines.find("HG") == -1
+    else:
+        cmd = "phenix.pdb_interpretation %s write_geo=True" % fn.replace(
+            ".pdb", "_updated.pdb"
+        )
+        print(cmd)
+        easy_run.go(cmd)
+        assert_lines_in_file(
+            file_name="%s.geo" % fn.replace(".pdb", "_updated.pdb"),
+            lines=geo_strings[switch],
+        )
+
 
 def switcher(switch):
-  if switch in ['ASP', 'GLU', 'ASP_D']:
-    tst_adding_side_chain_acid_hydrogen_atoms(switch)
-  elif switch in ['CYS_1', 'CYS_2', 'CYS_2_D']:
-    tst_adding_disulfur_hydrogen_atoms(switch)
+    if switch in ["ASP", "GLU", "ASP_D"]:
+        tst_adding_side_chain_acid_hydrogen_atoms(switch)
+    elif switch in ["CYS_1", "CYS_2", "CYS_2_D"]:
+        tst_adding_disulfur_hydrogen_atoms(switch)
+
 
 def main(switch=None):
-  if switch is None:
-    for switch in ['ASP', 'GLU', 'CYS_1', 'CYS_2', 'ASP_D', 'CYS_2_D']:
-      switcher(switch)
-  else:
-    switcher(switch)
+    if switch is None:
+        for switch in ["ASP", "GLU", "CYS_1", "CYS_2", "ASP_D", "CYS_2_D"]:
+            switcher(switch)
+    else:
+        switcher(switch)
 
-if __name__ == '__main__':
-  main(*tuple(sys.argv[1:]))
+
+if __name__ == "__main__":
+    main(*tuple(sys.argv[1:]))

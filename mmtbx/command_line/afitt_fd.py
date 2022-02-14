@@ -119,34 +119,56 @@ LEP     P1      H1 single 1.411 0.020
 LEP     O2      H2 single 0.981 0.020
 """
 
-def run(pdb_file, cif_file, ligand_names,atom,scale,verbose):
-  finite_difference_test(pdb_file, cif_file, ligand_names,atom,scale,verbose)
 
-if (__name__ == "__main__"):
-  import sys
-  if len(sys.argv)==1:
-    f=open("afitt_fd.pdb", "w")
-    f.write(pdb_lines)
-    f.close()
-    f=open("afitt_fd.cif", "w")
-    f.write(cif_lines)
-    f.close()
-    run("afitt_fd.pdb", 'afitt_fd.cif', ["LEP"], 7, 1, True)
+def run(pdb_file, cif_file, ligand_names, atom, scale, verbose):
+    finite_difference_test(pdb_file, cif_file, ligand_names, atom, scale, verbose)
 
-  else:
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("pdb_file", help="pdb file")
-    parser.add_argument("cif_file", help="cif file", default=0)
-    parser.add_argument("ligand_names", help="3-letter ligand names separated by commas")
-    parser.add_argument("atom", help="i_seq of atom whose x-coord will be "
-                                     "modified (to test AFITT this should "
-                                     "be a ligand atom)")
-    parser.add_argument( "-s", "--scale", default=1, help="weight applied" \
-                        "to AFITT gradient/traget", type=float)
-    parser.add_argument('-v', dest='verbose', action='store_true', help="verbose output")
-    parser.epilog='Example: phenix.python afitt_fd.py vAla3.pdb vAla3.cif NME 37'
-    args = parser.parse_args()
-    ligand_names=args.ligand_names.split(',')
-    run(args.pdb_file, args.cif_file, ligand_names, int(args.atom),
-      args.scale, args.verbose)
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) == 1:
+        f = open("afitt_fd.pdb", "w")
+        f.write(pdb_lines)
+        f.close()
+        f = open("afitt_fd.cif", "w")
+        f.write(cif_lines)
+        f.close()
+        run("afitt_fd.pdb", "afitt_fd.cif", ["LEP"], 7, 1, True)
+
+    else:
+        import argparse
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("pdb_file", help="pdb file")
+        parser.add_argument("cif_file", help="cif file", default=0)
+        parser.add_argument(
+            "ligand_names", help="3-letter ligand names separated by commas"
+        )
+        parser.add_argument(
+            "atom",
+            help="i_seq of atom whose x-coord will be "
+            "modified (to test AFITT this should "
+            "be a ligand atom)",
+        )
+        parser.add_argument(
+            "-s",
+            "--scale",
+            default=1,
+            help="weight applied" "to AFITT gradient/traget",
+            type=float,
+        )
+        parser.add_argument(
+            "-v", dest="verbose", action="store_true", help="verbose output"
+        )
+        parser.epilog = "Example: phenix.python afitt_fd.py vAla3.pdb vAla3.cif NME 37"
+        args = parser.parse_args()
+        ligand_names = args.ligand_names.split(",")
+        run(
+            args.pdb_file,
+            args.cif_file,
+            ligand_names,
+            int(args.atom),
+            args.scale,
+            args.verbose,
+        )

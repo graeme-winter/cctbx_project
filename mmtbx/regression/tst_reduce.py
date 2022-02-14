@@ -22,37 +22,39 @@ from mmtbx.reduce import Movers
 from mmtbx.reduce import InteractionGraph
 from mmtbx.reduce import Optimizers
 
+
 def RunReduceTests():
 
-  #========================================================================
-  # Call the test functions for all of our files.
+    # ========================================================================
+    # Call the test functions for all of our files.
 
-  print('Testing Movers objects')
-  ret = Movers.Test()
-  if len(ret) != 0:
-    print("Failure:",ret)
-  assert (len(ret) == 0)
+    print("Testing Movers objects")
+    ret = Movers.Test()
+    if len(ret) != 0:
+        print("Failure:", ret)
+    assert len(ret) == 0
 
-  print('Testing InteractionGraph objects')
-  ret = InteractionGraph.Test()
-  if len(ret) != 0:
-    print("Failure:",ret)
-  assert (len(ret) == 0)
+    print("Testing InteractionGraph objects")
+    ret = InteractionGraph.Test()
+    if len(ret) != 0:
+        print("Failure:", ret)
+    assert len(ret) == 0
 
-  print('Testing Optimizers')
-  ret = Optimizers.Test()
-  if len(ret) != 0:
-    print("Failure:",ret)
-  assert (len(ret) == 0)
+    print("Testing Optimizers")
+    ret = Optimizers.Test()
+    if len(ret) != 0:
+        print("Failure:", ret)
+    assert len(ret) == 0
 
-  return ret
+    return ret
 
-if __name__ == '__main__':
 
-  ret = RunReduceTests()
-  if len(ret) == 0:
-    print('Success!')
-  else:
-    print(ret)
+if __name__ == "__main__":
 
-  assert (len(ret) == 0)
+    ret = RunReduceTests()
+    if len(ret) == 0:
+        print("Success!")
+    else:
+        print(ret)
+
+    assert len(ret) == 0

@@ -2,13 +2,15 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
+
 def exercise():
-  if (os.path.isfile("multi_model_1.pdb")):
-    os.remove("multi_model_1.pdb")
-  if (os.path.isfile("multi_model_2.pdb")):
-    os.remove("multi_model_2.pdb")
-  f = open("multi_model.pdb", "w")
-  f.write("""\
+    if os.path.isfile("multi_model_1.pdb"):
+        os.remove("multi_model_1.pdb")
+    if os.path.isfile("multi_model_2.pdb"):
+        os.remove("multi_model_2.pdb")
+    f = open("multi_model.pdb", "w")
+    f.write(
+        """\
 CRYST1    1.000    1.000    1.000  90.00  90.00  90.00 P 1           1
 ORIGX1      1.000000  0.000000  0.000000        0.00000
 ORIGX2      0.000000  1.000000  0.000000        0.00000
@@ -38,24 +40,26 @@ ATOM      7  H3  GLY P  -1       8.329 -28.551  16.633  1.00  0.00           H
 ATOM      8  HA2 GLY P  -1       8.492 -26.437  15.501  1.00  0.00           H
 ATOM      9  HA3 GLY P  -1       7.112 -26.918  14.499  1.00  0.00           H
 ENDMDL
-END""")
-  f.close()
-  from iotbx import file_reader
-  from libtbx import easy_run
-  from libtbx.test_utils import approx_equal
-  out = easy_run.fully_buffered("iotbx.pdb.split_models multi_model.pdb")
-  assert (len(out.stdout_lines) == 2) and (len(out.stderr_lines) == 0)
-  assert (os.path.isfile("multi_model_1.pdb") and
-          os.path.isfile("multi_model_2.pdb"))
-  sites = []
-  for file in ["multi_model_1.pdb", "multi_model_2.pdb"] :
-    pdb_in = file_reader.any_file(file, force_type="pdb")
-    pdb_in.assert_file_type("pdb")
-    h = pdb_in.file_object.hierarchy
-    assert (len(h.models()) == 1)
-    sites.append(h.atoms().extract_xyz())
-  assert approx_equal(sites[0].rms_difference(sites[1]), 38.9216638)
+END"""
+    )
+    f.close()
+    from iotbx import file_reader
+    from libtbx import easy_run
+    from libtbx.test_utils import approx_equal
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+    out = easy_run.fully_buffered("iotbx.pdb.split_models multi_model.pdb")
+    assert (len(out.stdout_lines) == 2) and (len(out.stderr_lines) == 0)
+    assert os.path.isfile("multi_model_1.pdb") and os.path.isfile("multi_model_2.pdb")
+    sites = []
+    for file in ["multi_model_1.pdb", "multi_model_2.pdb"]:
+        pdb_in = file_reader.any_file(file, force_type="pdb")
+        pdb_in.assert_file_type("pdb")
+        h = pdb_in.file_object.hierarchy
+        assert len(h.models()) == 1
+        sites.append(h.atoms().extract_xyz())
+    assert approx_equal(sites[0].rms_difference(sites[1]), 38.9216638)
+
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.command_line import rna_validate
 import mmtbx.validation.rna_validate
@@ -13,30 +12,33 @@ import sys, os
 # This actually tests expected output - the remaining tests guard against
 # fixed bugs.
 def exercise_1():
-  # derived from 2goz
-  regression_pdb = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/pdb2goz_refmac_tls.ent",
-    test=os.path.isfile)
-  if (regression_pdb is None):
-    print("Skipping exercise: input pdb (pdb2goz_refmac_tls.ent) not available")
-    return
-  rv = rna_validate.run(args=[regression_pdb], out=null_out())
-  assert len(rv.puckers.results) == 2, len(rv.puckers.results)
-  assert len(rv.bonds.results) == 4, len(rv.bonds.results)
-  assert len(rv.angles.results) == 14, len(rv.angles.results)
-  assert len(rv.suites.results) == 4, len(rv.suites.results)
-  assert approx_equal(rv.suites.average_suiteness, 0.55, eps=0.01)
-  pickle_unpickle(rv)
-  pdb_in = file_reader.any_file(regression_pdb)
-  result = mmtbx.validation.rna_validate.rna_validation(
-    pdb_hierarchy=pdb_in.file_object.hierarchy,
-    geometry_restraints_manager=None,
-    params=None)
-  pickle_unpickle(result)
+    # derived from 2goz
+    regression_pdb = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/pdb2goz_refmac_tls.ent",
+        test=os.path.isfile,
+    )
+    if regression_pdb is None:
+        print("Skipping exercise: input pdb (pdb2goz_refmac_tls.ent) not available")
+        return
+    rv = rna_validate.run(args=[regression_pdb], out=null_out())
+    assert len(rv.puckers.results) == 2, len(rv.puckers.results)
+    assert len(rv.bonds.results) == 4, len(rv.bonds.results)
+    assert len(rv.angles.results) == 14, len(rv.angles.results)
+    assert len(rv.suites.results) == 4, len(rv.suites.results)
+    assert approx_equal(rv.suites.average_suiteness, 0.55, eps=0.01)
+    pickle_unpickle(rv)
+    pdb_in = file_reader.any_file(regression_pdb)
+    result = mmtbx.validation.rna_validate.rna_validation(
+        pdb_hierarchy=pdb_in.file_object.hierarchy,
+        geometry_restraints_manager=None,
+        params=None,
+    )
+    pickle_unpickle(result)
+
 
 def exercise_2():
-  # fragment from 3g8t
-  pdb_raw = """\
+    # fragment from 3g8t
+    pdb_raw = """\
 ATOM   7975  P     G Q 140      10.347 137.422  73.792  1.00118.69           P
 ATOM   7976  OP1   G Q 140       9.348 138.439  74.195  1.00118.63           O
 ATOM   7977  OP2   G Q 140      11.208 137.681  72.617  1.00118.60           O
@@ -84,14 +86,15 @@ ATOM   8018  N3    A Q 141      19.364 135.620  82.917  1.00123.84           N
 ATOM   8019  C4    A Q 141      18.953 136.340  83.979  1.00123.84           C
 TER    8020        A Q 141
 """
-  open("tst_rna_validate_1.pdb", "w").write(pdb_raw)
-  rv = rna_validate.run(args=["tst_rna_validate_1.pdb"], out=null_out())
-  assert len(rv.puckers.results) == 1
-  pickle_unpickle(rv)
+    open("tst_rna_validate_1.pdb", "w").write(pdb_raw)
+    rv = rna_validate.run(args=["tst_rna_validate_1.pdb"], out=null_out())
+    assert len(rv.puckers.results) == 1
+    pickle_unpickle(rv)
+
 
 def exercise_3():
-  # derived from 3bbi
-  pdb_raw = """\
+    # derived from 3bbi
+    pdb_raw = """\
 ATOM      1  O5'A  U A   1      39.826  29.792  61.182  0.50 82.88           O
 ATOM      2  O5'B  U A   1      39.852  29.856  60.945  0.50 82.91           O
 ATOM      3  C5'A  U A   1      40.022  30.855  62.130  0.50 80.10           C
@@ -147,24 +150,27 @@ ATOM     52  N4    C A   2      37.659  28.519  55.412  1.00 47.02           N
 ATOM     53  C5    C A   2      36.834  29.060  57.597  1.00 46.21           C
 ATOM     54  C6    C A   2      35.840  29.624  58.297  1.00 47.22           C
 """
-  open("tst_rna_validate_2.pdb", "w").write(pdb_raw)
-  rv = rna_validate.run(args=["tst_rna_validate_2.pdb"], out=null_out())
-  pickle_unpickle(rv)
+    open("tst_rna_validate_2.pdb", "w").write(pdb_raw)
+    rv = rna_validate.run(args=["tst_rna_validate_2.pdb"], out=null_out())
+    pickle_unpickle(rv)
+
 
 def pickle_unpickle(result):
-  result2 = loads(dumps(result))
-  out1 = StringIO()
-  out2 = StringIO()
-  result.show(out=out1)
-  result2.show(out=out2)
-  assert (out1.getvalue() == out2.getvalue())
+    result2 = loads(dumps(result))
+    out1 = StringIO()
+    out2 = StringIO()
+    result.show(out=out1)
+    result2.show(out=out2)
+    assert out1.getvalue() == out2.getvalue()
+
 
 def run():
-  verbose = "--verbose" in sys.argv[1:]
-  exercise_1()
-  exercise_2()
-  exercise_3()
-  print("OK")
+    verbose = "--verbose" in sys.argv[1:]
+    exercise_1()
+    exercise_2()
+    exercise_3()
+    print("OK")
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

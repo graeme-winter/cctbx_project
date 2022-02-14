@@ -69,210 +69,317 @@ master_phil = """
   }
 """
 
+
 def run(args):
-  phil = iotbx.phil.process_command_line(args=args, master_string=master_phil).show()
-  usage = \
-  """ %s input.experiment=experimentname input.run_num=N input.address=address
-  """%libtbx.env.dispatcher_name
+    phil = iotbx.phil.process_command_line(args=args, master_string=master_phil).show()
+    usage = (
+        """ %s input.experiment=experimentname input.run_num=N input.address=address
+  """
+        % libtbx.env.dispatcher_name
+    )
 
-  params = phil.work.extract()
-  if not os.path.exists(params.output.output_dir):
-    raise Sorry("Output path not found:" + params.output.output_dir)
+    params = phil.work.extract()
+    if not os.path.exists(params.output.output_dir):
+        raise Sorry("Output path not found:" + params.output.output_dir)
 
-  if params.input.experiment is None or \
-  params.input.run_num is None or \
-  params.input.address is None:
-    raise Usage(usage)
-  # set up psana
-  if params.dispatch.events_accepted or params.dispatch.events_rejected:
-    assert params.input.cfg is not None
-    setConfigFile(params.input.cfg)
+    if (
+        params.input.experiment is None
+        or params.input.run_num is None
+        or params.input.address is None
+    ):
+        raise Usage(usage)
+    # set up psana
+    if params.dispatch.events_accepted or params.dispatch.events_rejected:
+        assert params.input.cfg is not None
+        setConfigFile(params.input.cfg)
 
-  dataset_name = "exp=%s:run=%s:idx"%(params.input.experiment,params.input.run_num)
-  ds = DataSource(dataset_name)
-  src = Source('DetInfo(%s)'%params.input.address)
-  # set up multiprocessing with MPI
-  from mpi4py import MPI
-  comm = MPI.COMM_WORLD
-  rank = comm.Get_rank() # each process in MPI has a unique id, 0-indexed
-  size = comm.Get_size() # size: number of processes running in this job
+    dataset_name = "exp=%s:run=%s:idx" % (params.input.experiment, params.input.run_num)
+    ds = DataSource(dataset_name)
+    src = Source("DetInfo(%s)" % params.input.address)
+    # set up multiprocessing with MPI
+    from mpi4py import MPI
 
-  if params.dispatch.max_events is None:
-    max_events = sys.maxsize
-  else:
-    max_events = params.dispatch.max_events
-  if params.input.dark is not None:
-    dark = easy_pickle.load('%s'%params.input.dark)
-  for run in ds.runs():
-    times = run.times()
-    if (params.dispatch.events_begin is None and params.dispatch.events_end is None):
-      times = times[:]
-    elif (params.dispatch.events_begin is not None and params.dispatch.events_end is None):
-      times = times[params.dispatch.events_begin:]
-    elif (params.dispatch.events_begin is None and params.dispatch.events_end is not None):
-      times = times[:params.dispatch.events_end]
-    elif (params.dispatch.events_begin is not None and params.dispatch.events_end is not None):
-      times = times[params.dispatch.events_begin:params.dispatch.events_end]
-    nevents = min(len(times),max_events)
-  # chop the list into pieces, depending on rank.  This assigns each process
-  # events such that the get every Nth event where N is the number of processes
-    mytimes = [times[i] for i in range(nevents) if (i+rank)%size == 0]
-    print(len(mytimes))
-    #mytimes = mytimes[len(mytimes)-1000:len(mytimes)]
-    totals = np.array([0.0])
-    print("initial totals", totals)
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()  # each process in MPI has a unique id, 0-indexed
+    size = comm.Get_size()  # size: number of processes running in this job
 
-    for i, t in enumerate(mytimes):
-      print("Event", i, "of", len(mytimes), end=' ')
-      evt = run.event(t)
-      if params.dispatch.events_accepted or params.dispatch.events_all:
-        if evt.get("skip_event")==True:
-          continue
-      elif params.dispatch.events_rejected:
-        if evt.get("skip_event")==False:
-          continue
-      try:
-        data = evt.get(Camera.FrameV1,src)
-      except ValueError as e:
-        src = Source('BldInfo(%s)'%params.input.address)
-        data = evt.get(Bld.BldDataSpectrometerV1, src)
-      if data is None:
-        print("No data")
-        continue
-      #set default to determine FEE data type
-      two_D=False
-      #check attribute of data for type
-      try:
-        data = np.array(data.data16().astype(np.int32))
-        two_D=True
-      except AttributeError as e:
-        data = np.array(data.hproj().astype(np.float64))
+    if params.dispatch.max_events is None:
+        max_events = sys.maxsize
+    else:
+        max_events = params.dispatch.max_events
+    if params.input.dark is not None:
+        dark = easy_pickle.load("%s" % params.input.dark)
+    for run in ds.runs():
+        times = run.times()
+        if params.dispatch.events_begin is None and params.dispatch.events_end is None:
+            times = times[:]
+        elif (
+            params.dispatch.events_begin is not None
+            and params.dispatch.events_end is None
+        ):
+            times = times[params.dispatch.events_begin :]
+        elif (
+            params.dispatch.events_begin is None
+            and params.dispatch.events_end is not None
+        ):
+            times = times[: params.dispatch.events_end]
+        elif (
+            params.dispatch.events_begin is not None
+            and params.dispatch.events_end is not None
+        ):
+            times = times[params.dispatch.events_begin : params.dispatch.events_end]
+        nevents = min(len(times), max_events)
+        # chop the list into pieces, depending on rank.  This assigns each process
+        # events such that the get every Nth event where N is the number of processes
+        mytimes = [times[i] for i in range(nevents) if (i + rank) % size == 0]
+        print(len(mytimes))
+        # mytimes = mytimes[len(mytimes)-1000:len(mytimes)]
+        totals = np.array([0.0])
+        print("initial totals", totals)
 
-      if two_D:
-        if 'dark' in locals():
-          data = data - dark
-        one_D_data = np.sum(data,0)/data.shape[0]
-        two_D_data = np.double(data)
-      else:
-      #used to fix underflow problem that was present in earlier release of psana and pressent for LH80
-        for i in range(len(data)):
-          if data[i]>1000000000:
-            data[i]=data[i]-(2**32)
-        if 'dark' in locals():
-          data = data - dark
-        one_D_data = data
+        for i, t in enumerate(mytimes):
+            print("Event", i, "of", len(mytimes), end=" ")
+            evt = run.event(t)
+            if params.dispatch.events_accepted or params.dispatch.events_all:
+                if evt.get("skip_event") == True:
+                    continue
+            elif params.dispatch.events_rejected:
+                if evt.get("skip_event") == False:
+                    continue
+            try:
+                data = evt.get(Camera.FrameV1, src)
+            except ValueError as e:
+                src = Source("BldInfo(%s)" % params.input.address)
+                data = evt.get(Bld.BldDataSpectrometerV1, src)
+            if data is None:
+                print("No data")
+                continue
+            # set default to determine FEE data type
+            two_D = False
+            # check attribute of data for type
+            try:
+                data = np.array(data.data16().astype(np.int32))
+                two_D = True
+            except AttributeError as e:
+                data = np.array(data.hproj().astype(np.float64))
 
-      totals[0] += 1
-      print("total good:", totals[0])
+            if two_D:
+                if "dark" in locals():
+                    data = data - dark
+                one_D_data = np.sum(data, 0) / data.shape[0]
+                two_D_data = np.double(data)
+            else:
+                # used to fix underflow problem that was present in earlier release of psana and pressent for LH80
+                for i in range(len(data)):
+                    if data[i] > 1000000000:
+                        data[i] = data[i] - (2 ** 32)
+                if "dark" in locals():
+                    data = data - dark
+                one_D_data = data
 
-      if not 'fee_one_D' in locals():
-        fee_one_D = one_D_data
-      else:
-        fee_one_D += one_D_data
-      if ('two_D_data' in locals() and not 'fee_two_D' in locals()):
-        fee_two_D = two_D_data
-      elif 'fee_two_D' in locals():
-        fee_two_D += two_D_data
+            totals[0] += 1
+            print("total good:", totals[0])
 
-    acceptedtotals = np.zeros(totals.shape)
-    acceptedfee1 = np.zeros((fee_one_D.shape))
-    if 'fee_two_D' in locals():
-      acceptedfee2 = np.zeros((fee_two_D.shape))
-    print("Synchronizing rank", rank)
-  comm.Reduce(fee_one_D,acceptedfee1)
-  comm.Reduce(totals,acceptedtotals)
-  if 'acceptedfee2' in locals():
-    comm.Reduce(fee_two_D,acceptedfee2)
-  print("number averaged", acceptedtotals[0])
-  if rank == 0:
-    if acceptedtotals[0] > 0:
-      acceptedfee1 /= acceptedtotals[0]
-      if 'acceptedfee2' in locals():
-        acceptedfee2 /= acceptedtotals[0]
+            if not "fee_one_D" in locals():
+                fee_one_D = one_D_data
+            else:
+                fee_one_D += one_D_data
+            if "two_D_data" in locals() and not "fee_two_D" in locals():
+                fee_two_D = two_D_data
+            elif "fee_two_D" in locals():
+                fee_two_D += two_D_data
 
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    from pylab import savefig,close
-    from matplotlib.backends.backend_pdf import PdfPages
-    import matplotlib.pyplot as plt
-    from matplotlib import cm
+        acceptedtotals = np.zeros(totals.shape)
+        acceptedfee1 = np.zeros((fee_one_D.shape))
+        if "fee_two_D" in locals():
+            acceptedfee2 = np.zeros((fee_two_D.shape))
+        print("Synchronizing rank", rank)
+    comm.Reduce(fee_one_D, acceptedfee1)
+    comm.Reduce(totals, acceptedtotals)
+    if "acceptedfee2" in locals():
+        comm.Reduce(fee_two_D, acceptedfee2)
+    print("number averaged", acceptedtotals[0])
+    if rank == 0:
+        if acceptedtotals[0] > 0:
+            acceptedfee1 /= acceptedtotals[0]
+            if "acceptedfee2" in locals():
+                acceptedfee2 /= acceptedtotals[0]
 
-    if params.dispatch.events_accepted:
-      easy_pickle.dump(os.path.join(params.output.output_dir,"fee_avg_1_D_"+'r%s'%params.input.run_num+"_accepted.pickle"), acceptedfee1)
-      pp1 = PdfPages(os.path.join(params.output.output_dir,"fee_avg_1_D_"+'r%s'%params.input.run_num+"_accepted.pdf"))
-      if 'acceptedfee2' in locals():
-        easy_pickle.dump(os.path.join(params.output.output_dir,"fee_avg_2_D_"+'r%s'%params.input.run_num+"_accepted.pickle"), acceptedfee2)
-        pp2 = PdfPages(os.path.join(params.output.output_dir,"fee_avg_2_D_"+'r%s'%params.input.run_num+"_accepted.pdf"))
-    if params.dispatch.events_all:
-      easy_pickle.dump(os.path.join(params.output.output_dir,"fee_avg_1_D_"+'r%s'%params.input.run_num+"_all.pickle"), acceptedfee1)
-      pp1 = PdfPages(os.path.join(params.output.output_dir,"fee_avg_1_D_"+'r%s'%params.input.run_num+"_all.pdf"))
-      if 'acceptedfee2' in locals():
-        easy_pickle.dump(os.path.join(params.output.output_dir,"fee_avg_2_D_"+'r%s'%params.input.run_num+"_all.pickle"), acceptedfee2)
-        pp2 = PdfPages(os.path.join(params.output.output_dir,"fee_avg_2_D_"+'r%s'%params.input.run_num+"_all.pdf"))
-    if params.dispatch.events_rejected:
-      easy_pickle.dump(os.path.join(params.output.output_dir,"fee_avg_1_D_"+'r%s'%params.input.run_num+"_rejected.pickle"), acceptedfee1)
-      pp1 = PdfPages(os.path.join(params.output.output_dir,"fee_avg_1_D_"+'r%s'%params.input.run_num+"_rejected.pdf"))
-      if 'acceptedfee2' in locals():
-        easy_pickle.dump(os.path.join(params.output.output_dir,"fee_avg_2_D_"+'r%s'%params.input.run_num+"_rejected.pickle"), acceptedfee2)
-        pp2 = PdfPages(os.path.join(params.output.output_dir,"fee_avg_2_D_"+'r%s'%params.input.run_num+"_rejected.pdf"))
-    print("Done")
-   #plotting result
-   # matplotlib needs a different backend when run on the cluster nodes at SLAC
-    # these two lines not needed when working interactively at SLAC, or on mac or on viper
+        import matplotlib
 
-    if params.input.pixel_to_eV.energy_per_px is not None:
-      xvals = (np.array(range(acceptedfee1.shape[0]))-params.input.pixel_to_eV.x_coord_one)*params.input.pixel_to_eV.energy_per_px+params.input.pixel_to_eV.y_coord_one
-      xvals = xvals[::-1]
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from pylab import savefig, close
+        from matplotlib.backends.backend_pdf import PdfPages
+        import matplotlib.pyplot as plt
+        from matplotlib import cm
 
-    if params.input.pixel_to_eV.x_coord_two is not None:
-      eV_per_px = (params.input.pixel_to_eV.y_coord_two-params.input.pixel_to_eV.y_coord_one)/(params.input.pixel_to_eV.x_coord_two-params.input.pixel_to_eV.x_coord_one)
-      xvals = (np.array(range(acceptedfee1.shape[0]))-params.input.pixel_to_eV.x_coord_one)*eV_per_px+params.input.pixel_to_eV.y_coord_one
-      xvals = xvals[::-1]
+        if params.dispatch.events_accepted:
+            easy_pickle.dump(
+                os.path.join(
+                    params.output.output_dir,
+                    "fee_avg_1_D_" + "r%s" % params.input.run_num + "_accepted.pickle",
+                ),
+                acceptedfee1,
+            )
+            pp1 = PdfPages(
+                os.path.join(
+                    params.output.output_dir,
+                    "fee_avg_1_D_" + "r%s" % params.input.run_num + "_accepted.pdf",
+                )
+            )
+            if "acceptedfee2" in locals():
+                easy_pickle.dump(
+                    os.path.join(
+                        params.output.output_dir,
+                        "fee_avg_2_D_"
+                        + "r%s" % params.input.run_num
+                        + "_accepted.pickle",
+                    ),
+                    acceptedfee2,
+                )
+                pp2 = PdfPages(
+                    os.path.join(
+                        params.output.output_dir,
+                        "fee_avg_2_D_" + "r%s" % params.input.run_num + "_accepted.pdf",
+                    )
+                )
+        if params.dispatch.events_all:
+            easy_pickle.dump(
+                os.path.join(
+                    params.output.output_dir,
+                    "fee_avg_1_D_" + "r%s" % params.input.run_num + "_all.pickle",
+                ),
+                acceptedfee1,
+            )
+            pp1 = PdfPages(
+                os.path.join(
+                    params.output.output_dir,
+                    "fee_avg_1_D_" + "r%s" % params.input.run_num + "_all.pdf",
+                )
+            )
+            if "acceptedfee2" in locals():
+                easy_pickle.dump(
+                    os.path.join(
+                        params.output.output_dir,
+                        "fee_avg_2_D_" + "r%s" % params.input.run_num + "_all.pickle",
+                    ),
+                    acceptedfee2,
+                )
+                pp2 = PdfPages(
+                    os.path.join(
+                        params.output.output_dir,
+                        "fee_avg_2_D_" + "r%s" % params.input.run_num + "_all.pdf",
+                    )
+                )
+        if params.dispatch.events_rejected:
+            easy_pickle.dump(
+                os.path.join(
+                    params.output.output_dir,
+                    "fee_avg_1_D_" + "r%s" % params.input.run_num + "_rejected.pickle",
+                ),
+                acceptedfee1,
+            )
+            pp1 = PdfPages(
+                os.path.join(
+                    params.output.output_dir,
+                    "fee_avg_1_D_" + "r%s" % params.input.run_num + "_rejected.pdf",
+                )
+            )
+            if "acceptedfee2" in locals():
+                easy_pickle.dump(
+                    os.path.join(
+                        params.output.output_dir,
+                        "fee_avg_2_D_"
+                        + "r%s" % params.input.run_num
+                        + "_rejected.pickle",
+                    ),
+                    acceptedfee2,
+                )
+                pp2 = PdfPages(
+                    os.path.join(
+                        params.output.output_dir,
+                        "fee_avg_2_D_" + "r%s" % params.input.run_num + "_rejected.pdf",
+                    )
+                )
+        print("Done")
+        # plotting result
+        # matplotlib needs a different backend when run on the cluster nodes at SLAC
+        # these two lines not needed when working interactively at SLAC, or on mac or on viper
 
-    if params.input.pixel_to_eV.x_coord_two is None and params.input.pixel_to_eV.energy_per_px is None:
-      xvals=np.arange(0,len(acceptedfee1),1)
+        if params.input.pixel_to_eV.energy_per_px is not None:
+            xvals = (
+                (
+                    np.array(range(acceptedfee1.shape[0]))
+                    - params.input.pixel_to_eV.x_coord_one
+                )
+                * params.input.pixel_to_eV.energy_per_px
+                + params.input.pixel_to_eV.y_coord_one
+            )
+            xvals = xvals[::-1]
 
-    yvals = acceptedfee1
-    def OneD_plot(X,Y):
-      plt.figure()
-      plt.clf()
-      plt.plot(X,Y)
-      if params.dispatch.events_accepted:
-        plt.title('Accepted Shots FEE Spectrum Run %s'%params.input.run_num)
-      elif params.dispatch.events_all:
-        plt.title('All Shots FEE Spectrum Run %s'%params.input.run_num)
-      elif params.dispatch.events_rejected:
-        plt.title('Rejected Shots FEE Spectrum Run %s'%params.input.run_num)
-      if params.input.pixel_to_eV.x_coord_one is not None:
-        plt.xlabel('eV', fontsize = 13)
-      else:
-        plt.xlabel('pixels', fontsize = 13)
-      plt.ylabel('pixels', fontsize = 13)
-      pp1.savefig()
+        if params.input.pixel_to_eV.x_coord_two is not None:
+            eV_per_px = (
+                params.input.pixel_to_eV.y_coord_two
+                - params.input.pixel_to_eV.y_coord_one
+            ) / (
+                params.input.pixel_to_eV.x_coord_two
+                - params.input.pixel_to_eV.x_coord_one
+            )
+            xvals = (
+                np.array(range(acceptedfee1.shape[0]))
+                - params.input.pixel_to_eV.x_coord_one
+            ) * eV_per_px + params.input.pixel_to_eV.y_coord_one
+            xvals = xvals[::-1]
 
-    def TwoD_plot(data):
-      plt.figure()
-      ax = plt.gca()
-     #  use specified range 0, 50 to plot runs 117 - 201
-     #min=0, vmax=50
-      cax=ax.imshow(data, interpolation='nearest',origin='lower',cmap=cm.coolwarm)
-      plt.colorbar(cax, fraction=0.014, pad=0.04)
-      if params.dispatch.events_accepted:
-        ax.set_title('Accepted 2-D FEE Spectrum Run %s'%params.input.run_num)
-      elif params.dispatch.events_all:
-        ax.set_title('All 2-D FEE Spectrum Run %s'%params.input.run_num)
-      elif params.dispatch.events_rejected:
-        ax.set_title('Rejected 2-D FEE Spectrum Run %s'%params.input.run_num)
-        pp2.savefig()
+        if (
+            params.input.pixel_to_eV.x_coord_two is None
+            and params.input.pixel_to_eV.energy_per_px is None
+        ):
+            xvals = np.arange(0, len(acceptedfee1), 1)
 
-    OneD_plot(xvals,yvals)
-    pp1.close()
-    if 'acceptedfee2' in locals():
-      TwoD_plot(acceptedfee2)
-      pp2.close()
+        yvals = acceptedfee1
 
+        def OneD_plot(X, Y):
+            plt.figure()
+            plt.clf()
+            plt.plot(X, Y)
+            if params.dispatch.events_accepted:
+                plt.title("Accepted Shots FEE Spectrum Run %s" % params.input.run_num)
+            elif params.dispatch.events_all:
+                plt.title("All Shots FEE Spectrum Run %s" % params.input.run_num)
+            elif params.dispatch.events_rejected:
+                plt.title("Rejected Shots FEE Spectrum Run %s" % params.input.run_num)
+            if params.input.pixel_to_eV.x_coord_one is not None:
+                plt.xlabel("eV", fontsize=13)
+            else:
+                plt.xlabel("pixels", fontsize=13)
+            plt.ylabel("pixels", fontsize=13)
+            pp1.savefig()
+
+        def TwoD_plot(data):
+            plt.figure()
+            ax = plt.gca()
+            #  use specified range 0, 50 to plot runs 117 - 201
+            # min=0, vmax=50
+            cax = ax.imshow(
+                data, interpolation="nearest", origin="lower", cmap=cm.coolwarm
+            )
+            plt.colorbar(cax, fraction=0.014, pad=0.04)
+            if params.dispatch.events_accepted:
+                ax.set_title("Accepted 2-D FEE Spectrum Run %s" % params.input.run_num)
+            elif params.dispatch.events_all:
+                ax.set_title("All 2-D FEE Spectrum Run %s" % params.input.run_num)
+            elif params.dispatch.events_rejected:
+                ax.set_title("Rejected 2-D FEE Spectrum Run %s" % params.input.run_num)
+                pp2.savefig()
+
+        OneD_plot(xvals, yvals)
+        pp1.close()
+        if "acceptedfee2" in locals():
+            TwoD_plot(acceptedfee2)
+            pp2.close()
 
 
 if __name__ == "__main__":
-  run(sys.argv[1:])
+    run(sys.argv[1:])

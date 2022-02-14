@@ -3,103 +3,98 @@ from __future__ import absolute_import, division, print_function
 from iotbx import bioinformatics
 from six.moves import zip
 
+
 def get_extension(filename):
 
-  import os.path
-  return os.path.splitext( filename )[1]
+    import os.path
+
+    return os.path.splitext(filename)[1]
 
 
 def any_alignment(source):
 
-  if isinstance( source, str ):
-    infile = open( source )
-    data = infile.read()
-    infile.close()
-    extension = get_extension( filename = source )
-
-  else:
-    data = source.read()
-
-    try:
-      name = source.name
-
-    except AttributeError:
-      extension = None
+    if isinstance(source, str):
+        infile = open(source)
+        data = infile.read()
+        infile.close()
+        extension = get_extension(filename=source)
 
     else:
-      extension = get_extension( filename = name )
+        data = source.read()
 
-  return bioinformatics.any_alignment_string( data = data, extension = extension )
+        try:
+            name = source.name
+
+        except AttributeError:
+            extension = None
+
+        else:
+            extension = get_extension(filename=name)
+
+    return bioinformatics.any_alignment_string(data=data, extension=extension)
 
 
 class Result(object):
-  """
-  Homology search from alignment file
-  """
+    """
+    Homology search from alignment file
+    """
 
-  def __init__(self, alignment):
+    def __init__(self, alignment):
 
-    self.alignment = alignment
-    self.max_count = None
+        self.alignment = alignment
+        self.max_count = None
 
+    def restrict(self, max_count):
 
-  def restrict(self, max_count):
+        if max_count is None:
+            self.max_count = None
 
-    if max_count is None:
-      self.max_count = None
+        else:
+            self.max_count = max_count + 1
 
-    else:
-      self.max_count = max_count + 1
+    def hits(self):
 
+        names = self.alignment.names[1 : self.max_count]
+        alignments = self.alignment.alignments[1 : self.max_count]
 
-  def hits(self):
+        try:
+            descriptions = self.alignment.descriptions[1 : self.max_count]
 
-    names = self.alignment.names[ 1 : self.max_count ]
-    alignments = self.alignment.alignments[ 1 : self.max_count ]
+        except AttributeError:
+            descriptions = alignments
 
-    try:
-      descriptions = self.alignment.descriptions[ 1 : self.max_count ]
+        base = self.alignment.alignments[0]
 
-    except AttributeError:
-      descriptions = alignments
+        for (n, seq, desc) in zip(names, alignments, descriptions):
+            pieces = n.split("_")
+            assert 0 < len(pieces)
 
-    base = self.alignment.alignments[0]
+            if len(pieces) == 1:
+                pdb = pieces[0]
+                chain = ""
 
-    for ( n, seq, desc ) in zip( names, alignments, descriptions ):
-      pieces = n.split( "_" )
-      assert 0 < len( pieces )
+            else:
+                (pdb, chain) = pieces[:2]
 
-      if len( pieces ) == 1:
-        pdb = pieces[0]
-        chain = ""
+            alignment = bioinformatics.clustal_alignment(
+                names=["target", "%s_%s" % (pdb, chain)],
+                alignments=[base, seq],
+                program="<unknown>",
+            )
+            yield bioinformatics.homology_search_hit(
+                identifier=pdb, chain=chain, annotation=desc, alignment=alignment
+            )
 
-      else:
-        ( pdb, chain ) = pieces[:2]
+    def __len__(self):
 
-      alignment = bioinformatics.clustal_alignment(
-        names = [ "target", "%s_%s" % ( pdb, chain ) ],
-        alignments = [ base, seq ],
-        program = "<unknown>"
-        )
-      yield bioinformatics.homology_search_hit(
-        identifier = pdb,
-        chain = chain,
-        annotation = desc,
-        alignment = alignment
-        )
+        if self.max_count is None:
+            return self.alignment.multiplicity() - 1
 
-
-  def __len__(self):
-
-    if self.max_count is None:
-      return self.alignment.multiplicity() - 1
-
-    else:
-      return self.max_count - 1
+        else:
+            return self.max_count - 1
 
 
 def parse(source):
 
-  alignment = any_alignment( source = source )
-  return Result( alignment = alignment )
-
+    alignment = any_alignment(source=source)
+    return Result(alignment=alignment)

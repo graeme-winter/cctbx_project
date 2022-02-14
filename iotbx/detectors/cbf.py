@@ -2,14 +2,16 @@ from __future__ import absolute_import, division, print_function
 from iotbx.detectors.detectorbase import DetectorImageBase
 from iotbx.detectors.marIP import MARIPImage
 
+
 class CBFImage(MARIPImage):
-  def __init__(self,filename):
-    DetectorImageBase.__init__(self,filename)
-    try:
-      from cbflib_adaptbx import CBFAdaptor # optional package
-      self.adaptor = CBFAdaptor(filename)
-      # for testing only:
-      '''
+    def __init__(self, filename):
+        DetectorImageBase.__init__(self, filename)
+        try:
+            from cbflib_adaptbx import CBFAdaptor  # optional package
+
+            self.adaptor = CBFAdaptor(filename)
+            # for testing only:
+            """
       self.adaptor.read_header()
       print "     size1:", self.adaptor.size1()
       print "     size2:", self.adaptor.size2()
@@ -24,41 +26,45 @@ class CBFImage(MARIPImage):
       print self.adaptor.raster_description()
       flags = self.adaptor.transform_flags()
       print flags.transpose, flags.reverse_slow, flags.reverse_fast
-      '''
-    except Exception:
-      from iotbx.detectors.marIP import NullAdaptor
-      self.adaptor = NullAdaptor()
-    self.vendortype = "CBF"
-    self.readHeader()
-    try:
-      self.vendor_specific_null_value = int(self.adaptor.undefined_value())
-    except RuntimeError as e:
-      self.vendor_specific_null_value = 0
+      """
+        except Exception:
+            from iotbx.detectors.marIP import NullAdaptor
 
-  def beam_center_slow(self):
-    return self.adaptor.beam_index_slow*self.adaptor.pixel_size()
+            self.adaptor = NullAdaptor()
+        self.vendortype = "CBF"
+        self.readHeader()
+        try:
+            self.vendor_specific_null_value = int(self.adaptor.undefined_value())
+        except RuntimeError as e:
+            self.vendor_specific_null_value = 0
 
-  def beam_center_fast(self):
-    return self.adaptor.beam_index_fast*self.adaptor.pixel_size()
+    def beam_center_slow(self):
+        return self.adaptor.beam_index_slow * self.adaptor.pixel_size()
 
-  def read(self):
-    T = self.adaptor.transform_flags()
+    def beam_center_fast(self):
+        return self.adaptor.beam_index_fast * self.adaptor.pixel_size()
 
-    #future: use these tests to trigger in-place column & row swaps
-    assert T.reverse_fast == False
-    assert T.reverse_slow == False
+    def read(self):
+        T = self.adaptor.transform_flags()
 
-    from cbflib_adaptbx import cbf_binary_adaptor
-    M = cbf_binary_adaptor( self.filename )
-    data = M.uncompress_implementation("buffer_based").uncompress_data()
-    if T.transpose==True:
-      #very inefficient; 0.09 sec for 3K x 3K uncompression
-      #              yet 0.54 sec for in-place transpose
-      # other options not tried: a) alloc & set new matrix; b) use data as is
-      data.matrix_transpose_in_place()
+        # future: use these tests to trigger in-place column & row swaps
+        assert T.reverse_fast == False
+        assert T.reverse_slow == False
 
-    self.bin_safe_set_data(data)
+        from cbflib_adaptbx import cbf_binary_adaptor
 
-if __name__=='__main__':
-  import sys
-  C = CBFImage(sys.argv[1])
+        M = cbf_binary_adaptor(self.filename)
+        data = M.uncompress_implementation("buffer_based").uncompress_data()
+        if T.transpose == True:
+            # very inefficient; 0.09 sec for 3K x 3K uncompression
+            #              yet 0.54 sec for in-place transpose
+            # other options not tried: a) alloc & set new matrix; b) use data as is
+            data.matrix_transpose_in_place()
+
+        self.bin_safe_set_data(data)
+
+
+if __name__ == "__main__":
+    import sys
+
+    C = CBFImage(sys.argv[1])

@@ -4,7 +4,8 @@ import iotbx.phil
 from libtbx.utils import Sorry
 import sys, os
 
-master_phil = iotbx.phil.parse("""
+master_phil = iotbx.phil.parse(
+    """
 data = None
   .type = path
   .help = Path to an input mtz file.
@@ -139,7 +140,8 @@ ga_params
     .type = float
     .help = NA
 }
-""")
+"""
+)
 
 txt_help = """**************************************************************************************************
 
@@ -158,93 +160,106 @@ For feedback, please contact monarin@stanford.edu.
 
 List of available parameters:
 """
+
+
 def process_input(argv=None):
-  if argv == None:
-    argv = sys.argv[1:]
+    if argv == None:
+        argv = sys.argv[1:]
 
-  user_phil = []
-  for arg in sys.argv[1:]:
-    if os.path.isfile(arg):
-      if arg.lower().find('.mtz') > 0:
-        user_phil.append(iotbx.phil.parse("""data=\"%s\"""" % arg))
-      else:
-        try:
-          user_phil.append(iotbx.phil.parse(open(arg).read()))
-        except RuntimeError as e :
-          print('Error reading input: run phenix.sisa -h for help')
-          raise Sorry("Unrecognized argument '%s' (error: %s)" % (arg, str(e)))
-    else :
-      print(arg)
-      if arg == '--help' or arg == '-h':
-        print(txt_help)
-        master_phil.show(attributes_level=1)
+    user_phil = []
+    for arg in sys.argv[1:]:
+        if os.path.isfile(arg):
+            if arg.lower().find(".mtz") > 0:
+                user_phil.append(iotbx.phil.parse("""data=\"%s\"""" % arg))
+            else:
+                try:
+                    user_phil.append(iotbx.phil.parse(open(arg).read()))
+                except RuntimeError as e:
+                    print("Error reading input: run phenix.sisa -h for help")
+                    raise Sorry(
+                        "Unrecognized argument '%s' (error: %s)" % (arg, str(e))
+                    )
+        else:
+            print(arg)
+            if arg == "--help" or arg == "-h":
+                print(txt_help)
+                master_phil.show(attributes_level=1)
+                exit()
+            else:
+                try:
+                    user_phil.append(iotbx.phil.parse(arg))
+                except RuntimeError as e:
+                    print("Error reading input: run phenix.sisa -h for help")
+                    raise Sorry(
+                        "Unrecognized argument '%s' (error: %s)" % (arg, str(e))
+                    )
+
+    working_phil = master_phil.fetch(sources=user_phil)
+    params = working_phil.extract()
+
+    # check dry-run
+    if len(user_phil) == 0:
+        master_phil.show()
+        print(
+            "Use the above list of parameters to generate your input file (.phil). For more information, run phenix.sisa -h."
+        )
         exit()
-      else:
-        try :
-          user_phil.append(iotbx.phil.parse(arg))
-        except RuntimeError as e :
-          print('Error reading input: run phenix.sisa -h for help')
-          raise Sorry("Unrecognized argument '%s' (error: %s)" % (arg, str(e)))
 
-  working_phil = master_phil.fetch(sources=user_phil)
-  params = working_phil.extract()
+    if params.data is None:
+        print(
+            "MTZ file with amplitudes, HL coefficients, and PHIB is required. For more information, run phenix.sisa -h."
+        )
+        exit()
 
-  #check dry-run
-  if len(user_phil) == 0:
-    master_phil.show()
-    print('Use the above list of parameters to generate your input file (.phil). For more information, run phenix.sisa -h.')
-    exit()
+    # capture input read out by phil
+    from six.moves import cStringIO as StringIO
 
-  if params.data is None:
-    print('MTZ file with amplitudes, HL coefficients, and PHIB is required. For more information, run phenix.sisa -h.')
-    exit()
+    class Capturing(list):
+        def __enter__(self):
+            self._stdout = sys.stdout
+            sys.stdout = self._stringio = StringIO()
+            return self
 
-  #capture input read out by phil
-  from six.moves import cStringIO as StringIO
-  class Capturing(list):
-    def __enter__(self):
-      self._stdout = sys.stdout
-      sys.stdout = self._stringio = StringIO()
-      return self
-    def __exit__(self, *args):
-      self.extend(self._stringio.getvalue().splitlines())
-      sys.stdout = self._stdout
+        def __exit__(self, *args):
+            self.extend(self._stringio.getvalue().splitlines())
+            sys.stdout = self._stdout
 
-  with Capturing() as output:
-    working_phil.show()
+    with Capturing() as output:
+        working_phil.show()
 
-  txt_out = 'sisa.optimize (v.0 150326a) input:\n'
-  for one_output in output:
-    txt_out += one_output + '\n'
+    txt_out = "sisa.optimize (v.0 150326a) input:\n"
+    for one_output in output:
+        txt_out += one_output + "\n"
 
-  print(txt_out)
+    print(txt_out)
 
+    if params.autodm:
+        if params.seq_file is None:
+            raise Sorry(
+                "Sequence file is needed for automatic density modification. You can set autodm=False to disable this step."
+            )
 
-  if params.autodm:
-    if params.seq_file is None:
-      raise Sorry("Sequence file is needed for automatic density modification. You can set autodm=False to disable this step.")
+    # determine automatic run_no if run_name is not given
+    run_seq_list = flex.int()
+    if params.run_name is None:
+        for dirs in os.walk(params.project_name):
+            current_dir = dirs[0]
+            if current_dir.find("Sisa_run_") > 0:
+                try:
+                    current_dir_arr = current_dir.split("_")
+                    run_seq_list.append(int(current_dir_arr[len(current_dir_arr) - 1]))
+                except Exception:
+                    dummy = 1
+        if len(run_seq_list) == 0:
+            run_seq = 1
+        else:
+            run_seq = flex.max(run_seq_list) + 1
+        params.run_name = "Sisa_run_" + str(run_seq)
 
-  #determine automatic run_no if run_name is not given
-  run_seq_list = flex.int()
-  if params.run_name is None:
-    for dirs in os.walk(params.project_name):
-      current_dir = dirs[0]
-      if current_dir.find('Sisa_run_') > 0:
-        try:
-          current_dir_arr = current_dir.split('_')
-          run_seq_list.append(int(current_dir_arr[len(current_dir_arr)-1]))
-        except Exception:
-          dummy = 1
-    if len(run_seq_list) == 0:
-      run_seq = 1
-    else:
-      run_seq = flex.max(run_seq_list) + 1
-    params.run_name = 'Sisa_run_'+str(run_seq)
+    # generate run_no folder only if the folder does not exist.
+    project_run_path = params.project_name + "/" + params.run_name
+    if os.path.exists(project_run_path):
+        raise Sorry("The run number %s already exists." % project_run_path)
 
-  #generate run_no folder only if the folder does not exist.
-  project_run_path = params.project_name + '/' + params.run_name
-  if os.path.exists(project_run_path):
-    raise Sorry("The run number %s already exists."%project_run_path)
-
-  os.makedirs(project_run_path)
-  return params, txt_out
+    os.makedirs(project_run_path)
+    return params, txt_out

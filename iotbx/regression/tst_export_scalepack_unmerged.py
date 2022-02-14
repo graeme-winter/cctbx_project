@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from iotbx.reflection_file_reader import any_reflection_file
 from iotbx.command_line import export_scalepack_unmerged
@@ -6,11 +5,17 @@ from libtbx.utils import null_out
 
 prefix = "tst_export_scalepack_unmerged"
 
-def exercise_xds() : pass # TODO
-def exercise_mtz() : pass # TODO
+
+def exercise_xds():
+    pass  # TODO
+
+
+def exercise_mtz():
+    pass  # TODO
+
 
 def exercise_scalepack():
-  sca_in = """\
+    sca_in = """\
     4 i41
   1  0  0  0  1  0  0  0  1
   0  0  0
@@ -41,20 +46,41 @@ def exercise_scalepack():
    1   0  -3   1   0   3    13 2 1  2 17169.5  1768.9
    1   0  -3   1   0   3   198 2 0  2 16195.8  1927.5
 """
-  sca_file = prefix + "_in.sca"
-  with open(sca_file, "w") as f:
-    f.write(sca_in)
-  ofn = export_scalepack_unmerged.run(args=[sca_file], out=null_out())[0]
-  assert (ofn == "tst_export_scalepack_unmerged_in_unmerged.sca")
-  hkl_in = any_reflection_file(ofn).file_content()
-  i_obs = hkl_in.as_miller_arrays(merge_equivalents=False)[0]
-  assert (not i_obs.is_unique_set_under_symmetry())
-  assert (list(hkl_in.batch_numbers) == [188, 8, 19, 184, 4, 198, 22, 180, 26,
-          10, 184, 19, 193, 11, 185, 18, 4, 189, 13, 198])
+    sca_file = prefix + "_in.sca"
+    with open(sca_file, "w") as f:
+        f.write(sca_in)
+    ofn = export_scalepack_unmerged.run(args=[sca_file], out=null_out())[0]
+    assert ofn == "tst_export_scalepack_unmerged_in_unmerged.sca"
+    hkl_in = any_reflection_file(ofn).file_content()
+    i_obs = hkl_in.as_miller_arrays(merge_equivalents=False)[0]
+    assert not i_obs.is_unique_set_under_symmetry()
+    assert list(hkl_in.batch_numbers) == [
+        188,
+        8,
+        19,
+        184,
+        4,
+        198,
+        22,
+        180,
+        26,
+        10,
+        184,
+        19,
+        193,
+        11,
+        185,
+        18,
+        4,
+        189,
+        13,
+        198,
+    ]
+
 
 def exercise_cif():
-  # .cif input
-  cif_in = """\
+    # .cif input
+    cif_in = """\
 data_r2etdsf
 #
 _cell.entry_id      2etd
@@ -104,19 +130,20 @@ _refln.intensity_sigma
 1 1 1    0    2   16  o     135.6     76.3
 1 1 1    0   -2   16  o     117.0     60.4
 """
-  cif_file = prefix + ".cif"
-  with open(cif_file, "w") as f:
-    f.write(cif_in)
-  hkl_orig = any_reflection_file(cif_file).file_content()
-  i_obs_orig = hkl_orig.as_miller_arrays(merge_equivalents=False)[0]
-  ofn = export_scalepack_unmerged.run(args=[cif_file], out=null_out())[0]
-  assert (ofn == prefix + "_unmerged.sca")
-  hkl_new = any_reflection_file(ofn).file_content()
-  i_obs_new = hkl_new.as_miller_arrays(merge_equivalents=False)[0]
-  assert (not i_obs_new.is_unique_set_under_symmetry())
-  assert i_obs_new.indices().all_eq(i_obs_orig.indices())
+    cif_file = prefix + ".cif"
+    with open(cif_file, "w") as f:
+        f.write(cif_in)
+    hkl_orig = any_reflection_file(cif_file).file_content()
+    i_obs_orig = hkl_orig.as_miller_arrays(merge_equivalents=False)[0]
+    ofn = export_scalepack_unmerged.run(args=[cif_file], out=null_out())[0]
+    assert ofn == prefix + "_unmerged.sca"
+    hkl_new = any_reflection_file(ofn).file_content()
+    i_obs_new = hkl_new.as_miller_arrays(merge_equivalents=False)[0]
+    assert not i_obs_new.is_unique_set_under_symmetry()
+    assert i_obs_new.indices().all_eq(i_obs_orig.indices())
 
-if (__name__ == "__main__"):
-  exercise_scalepack()
-  exercise_cif()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_scalepack()
+    exercise_cif()
+    print("OK")

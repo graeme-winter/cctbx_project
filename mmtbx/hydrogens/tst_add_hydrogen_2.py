@@ -8,152 +8,173 @@ from libtbx.test_utils import approx_equal
 
 # ------------------------------------------------------------------------------
 
+
 def run():
-  test_000()
-  test_001()
-  test_002()
-  test_003()
-  test_004()
-  test_005()
-  test_006()
-  test_007()
-  test_008()
-  test_009()
+    test_000()
+    test_001()
+    test_002()
+    test_003()
+    test_004()
+    test_005()
+    test_006()
+    test_007()
+    test_008()
+    test_009()
+
 
 # ------------------------------------------------------------------------------
 
-def compare_models(pdb_str,
-                   contains     = None,
-                   not_contains = None):
-  #
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  # initial model
-  model_initial = mmtbx.model.manager(model_input = pdb_inp,
-                                      log         = null_out())
-  hd_sel_initial = model_initial.get_hd_selection()
-  number_h_expected = hd_sel_initial.count(True)
-  ph_initial = model_initial.get_hierarchy()
-  h_atoms_initial = ph_initial.select(hd_sel_initial).atoms()
-  h_names_initial = list(h_atoms_initial.extract_name())
-  # remove H atoms
-  model_without_h = model_initial.select(~hd_sel_initial)
-  hd_sel_without_h = model_without_h.get_hd_selection()
-  assert (hd_sel_without_h is not None)
-  assert (hd_sel_without_h.count(True) == 0)
-  # place H atoms again
-  reduce_add_h_obj = reduce_hydrogen.place_hydrogens(model = model_without_h)
-  reduce_add_h_obj.run()
-  #
-  model_h_added = reduce_add_h_obj.get_model()
-  hd_sel_h_added = model_h_added.get_hd_selection()
-  ph_h_added = model_h_added.get_hierarchy()
-  h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
-  h_names_added = list(h_atoms_added.extract_name())
-  number_h_added = hd_sel_h_added.count(True)
-  #
-  assert ph_initial.is_similar_hierarchy(other=ph_h_added)
 
-  assert(number_h_expected == number_h_added)
+def compare_models(pdb_str, contains=None, not_contains=None):
+    #
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    # initial model
+    model_initial = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    hd_sel_initial = model_initial.get_hd_selection()
+    number_h_expected = hd_sel_initial.count(True)
+    ph_initial = model_initial.get_hierarchy()
+    h_atoms_initial = ph_initial.select(hd_sel_initial).atoms()
+    h_names_initial = list(h_atoms_initial.extract_name())
+    # remove H atoms
+    model_without_h = model_initial.select(~hd_sel_initial)
+    hd_sel_without_h = model_without_h.get_hd_selection()
+    assert hd_sel_without_h is not None
+    assert hd_sel_without_h.count(True) == 0
+    # place H atoms again
+    reduce_add_h_obj = reduce_hydrogen.place_hydrogens(model=model_without_h)
+    reduce_add_h_obj.run()
+    #
+    model_h_added = reduce_add_h_obj.get_model()
+    hd_sel_h_added = model_h_added.get_hd_selection()
+    ph_h_added = model_h_added.get_hierarchy()
+    h_atoms_added = ph_h_added.select(hd_sel_h_added).atoms()
+    h_names_added = list(h_atoms_added.extract_name())
+    number_h_added = hd_sel_h_added.count(True)
+    #
+    assert ph_initial.is_similar_hierarchy(other=ph_h_added)
 
-  if not_contains:
-    assert (not_contains not in h_names_added)
-  if contains:
-    assert (contains in h_names_added)
+    assert number_h_expected == number_h_added
 
-  sc_h_initial = model_initial.select(hd_sel_initial).get_sites_cart()
-  sc_h_added   = model_h_added.select(hd_sel_h_added).get_sites_cart()
+    if not_contains:
+        assert not_contains not in h_names_added
+    if contains:
+        assert contains in h_names_added
 
-  d1 = {h_names_initial[i]: sc_h_initial[i] for i in range(len(h_names_initial))}
-  d2 = {h_names_added[i]: sc_h_added[i] for i in range(len(h_names_added))}
+    sc_h_initial = model_initial.select(hd_sel_initial).get_sites_cart()
+    sc_h_added = model_h_added.select(hd_sel_h_added).get_sites_cart()
 
-  for name, sc in d2.items():
-    assert(name in d1)
-    assert approx_equal(sc, d1[name], 0.01), name
+    d1 = {h_names_initial[i]: sc_h_initial[i] for i in range(len(h_names_initial))}
+    d2 = {h_names_added[i]: sc_h_added[i] for i in range(len(h_names_added))}
+
+    for name, sc in d2.items():
+        assert name in d1
+        assert approx_equal(sc, d1[name], 0.01), name
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_000():
-  '''
+    """
     CDL is true by default. Will crash for this example if is False.
-  '''
-  compare_models(pdb_str = pdb_str_000)
+    """
+    compare_models(pdb_str=pdb_str_000)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_001():
-  '''
-  clash between LYS 246 NZ & Tam 2 C5 --> fails in REDUCE
+    """
+    clash between LYS 246 NZ & Tam 2 C5 --> fails in REDUCE
 
-  Removing either Lys 246 NZ, or TAM 2 C5, or both of Lys 246 HZ1 and HZ3 will
-  allow Reduce to run to completion and produce a usable result.
-  However, Lys 246 HZ1 and HZ3 will not be added back by Reduce.
-  '''
-  compare_models(pdb_str = pdb_str_001)
+    Removing either Lys 246 NZ, or TAM 2 C5, or both of Lys 246 HZ1 and HZ3 will
+    allow Reduce to run to completion and produce a usable result.
+    However, Lys 246 HZ1 and HZ3 will not be added back by Reduce.
+    """
+    compare_models(pdb_str=pdb_str_001)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_002():
-  '''
+    """
     Test if multi-model file is supported
-  '''
-  compare_models(pdb_str = pdb_str_002)
+    """
+    compare_models(pdb_str=pdb_str_002)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_003():
-  '''
+    """
     Check if normal and modified nucleic acid work.
-  '''
-  compare_models(pdb_str = pdb_str_003)
+    """
+    compare_models(pdb_str=pdb_str_003)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_004():
-  '''
+    """
     Check if dc is processed correctly: TYR dc with every atom in either A or B
-  '''
-  compare_models(pdb_str = pdb_str_004)
+    """
+    compare_models(pdb_str=pdb_str_004)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_005():
-  '''
+    """
     Check if dc is processed correctly: Glu dc with atoms in A or B or '' (blank)
-  '''
-  compare_models(pdb_str = pdb_str_005)
+    """
+    compare_models(pdb_str=pdb_str_005)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_006():
-  '''
+    """
     Check if model without H to be placed is correctly processed
-  '''
-  compare_models(pdb_str = pdb_str_006)
+    """
+    compare_models(pdb_str=pdb_str_006)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_007():
-  '''
+    """
     Check if mmCIF file format works
-  '''
-  compare_models(pdb_str = pdb_str_007)
+    """
+    compare_models(pdb_str=pdb_str_007)
+
 
 # ------------------------------------------------------------------------------
+
 
 def test_008():
-  '''
+    """
     Test CYS-CYS disulfide with double conformation
-  '''
-  compare_models(pdb_str = pdb_str_008)
+    """
+    compare_models(pdb_str=pdb_str_008)
+
 
 # ------------------------------------------------------------------------------
 
+
 def test_009():
-  '''
+    """
     1KYC: SIN linked to GLU1, but later in file. Goal: no NH3 to GLU.
-  '''
-  compare_models(pdb_str = pdb_str_009)
-  assert 0
+    """
+    compare_models(pdb_str=pdb_str_009)
+    assert 0
+
 
 # ------------------------------------------------------------------------------
 
@@ -413,7 +434,7 @@ HETATM   60  H5* UMS A   3       8.158   9.276  13.531  1.00 36.88           H
 HETATM   64  H2* UMS A   3      12.022   6.833  11.440  1.00 40.93           H
 """
 
-pdb_str_004 = '''
+pdb_str_004 = """
 REMARK TYR double conformation where *every* atom is in either A or B
 CRYST1   15.639   15.148   16.657  90.00  90.00  90.00 P 1
 ATOM      1  N  ATYR A  59       5.624   5.492   5.997  0.63  5.05           N
@@ -456,9 +477,9 @@ ATOM     37  HD2BTYR A  59       8.266   8.637   7.480  0.37  6.25           H
 ATOM     38  HE1BTYR A  59      10.257   6.008  10.714  0.37 11.97           H
 ATOM     39  HE2BTYR A  59       9.422   9.625   9.215  0.37  9.52           H
 ATOM     40  HH BTYR A  59      10.618   9.336  11.086  0.37 26.50           H
-'''
+"""
 
-pdb_str_005 = '''
+pdb_str_005 = """
 REMARK Glu double conformation where atoms are either A, B or '' (blank)
 CRYST1   13.702   13.985   14.985  90.00  90.00  90.00 P 1
 ATOM      1  N   GLU A  78       8.702   8.360   5.570  1.00 35.65           N
@@ -486,19 +507,19 @@ ATOM     22  HB2BGLU A  78       8.073   8.013   8.070  0.30 35.70           H
 ATOM     23  HB3BGLU A  78       6.992   9.022   7.488  0.30 35.70           H
 ATOM     24  HG3BGLU A  78       5.525   7.010   7.587  0.30 36.05           H
 ATOM     25  HG2BGLU A  78       5.730   7.910   8.881  0.30 36.05           H
-'''
+"""
 
-pdb_str_006 = '''
+pdb_str_006 = """
 REMARK Hg, Sr and HOH: no H atoms are expected to be placed
 CRYST1   10.286   24.260   13.089  90.00  90.00  90.00 P 1
 HETATM    1 HG    HG A 101       5.000   7.056   5.951  0.60 17.71          HG
 HETATM    2 SR    SR A 102       5.182  10.793   8.089  0.85 18.78          SR
 HETATM    3  O   HOH A 201       5.093   5.000   5.000  1.00 25.34           O
 HETATM    4  O   HOH A 202       5.286  19.260   7.818  1.00 28.43           O
-'''
+"""
 
 # check if mmCIF file works
-pdb_str_007 = '''
+pdb_str_007 = """
 data_1UBQ
 #
 _entry.id   1UBQ
@@ -553,9 +574,9 @@ ATOM   605 H H   . GLY A 1 76 ? 41.063 38.062 34.504 0.25 36.05 ? 76  GLY A H   
 ATOM   606 H HA3 . GLY A 1 76 ? 39.566 39.910 33.413 0.25 36.19 ? 76  GLY A HA3 1
 ATOM   607 H HA2 . GLY A 1 76 ? 41.011 40.491 33.675 0.25 36.19 ? 76  GLY A HA2 1
 HETATM 611 O O   . HOH B 2 .  ? 45.747 30.081 19.708 1.00 12.43 ? 77  HOH A O   1
-'''
+"""
 
-pdb_str_008 = '''
+pdb_str_008 = """
 REMARK disulfide bond with altloc
 CRYST1   13.626   15.799   17.617  90.00  90.00  90.00 P 1
 ATOM      1  N   CYS A  27      17.541   4.439  12.897  1.00 13.99           N
@@ -585,9 +606,9 @@ ATOM     27  OXTBCYS A 123      13.981   9.728  18.968  0.42 28.04           O
 ATOM     28  HA BCYS A 123      16.045   8.426  17.432  0.42 25.86           H
 ATOM     29  HB2BCYS A 123      13.642   7.500  16.307  1.00 24.16           H
 ATOM     30  HB3BCYS A 123      14.850   8.168  15.519  1.00 24.16           H
-'''
+"""
 
-pdb_str_009 = '''
+pdb_str_009 = """
 REMARK 1KYC: SIN is linked to GLU 1, but at end of model file
 CRYST1   19.769   30.000   32.270  90.00  90.00  90.00 P 1
 ATOM      1  N   GLU A   1       9.100  10.903   6.846  1.00 18.32           N
@@ -635,9 +656,9 @@ HETATM   42  H21 SIN A   0      10.110  12.330   5.000  1.00 21.62           H
 HETATM   43  H22 SIN A   0      11.609  11.561   5.518  1.00 21.62           H
 HETATM   44  H31 SIN A   0      11.985  13.602   7.004  1.00 22.69           H
 HETATM   45  H32 SIN A   0      12.173  13.820   5.265  1.00 22.69           H
-'''
+"""
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time: %8.3f" % (time.time() - t0))

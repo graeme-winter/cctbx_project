@@ -64,91 +64,104 @@ TER
 END
 """
 
+
 def get_pdb_inputs(pdb_str, restraints):
-  ppf = mmtbx.utils.process_pdb_file_srv(log=False).process_pdb_files(
-    raw_records=pdb_str.splitlines())[0]
-  xrs = ppf.xray_structure(show_summary = False)
-  restraints_manager=None
-  if(restraints):
-    restraints_manager = mmtbx.restraints.manager(
-      geometry      = ppf.geometry_restraints_manager(show_energies = False),
-      normalization = True)
-  return group_args(
-    ph  = ppf.all_chain_proxies.pdb_hierarchy,
-    grm = restraints_manager,
-    xrs = xrs)
+    ppf = mmtbx.utils.process_pdb_file_srv(log=False).process_pdb_files(
+        raw_records=pdb_str.splitlines()
+    )[0]
+    xrs = ppf.xray_structure(show_summary=False)
+    restraints_manager = None
+    if restraints:
+        restraints_manager = mmtbx.restraints.manager(
+            geometry=ppf.geometry_restraints_manager(show_energies=False),
+            normalization=True,
+        )
+    return group_args(
+        ph=ppf.all_chain_proxies.pdb_hierarchy, grm=restraints_manager, xrs=xrs
+    )
+
 
 def get_map(xrs):
-  f_calc = xrs.structure_factors(d_min = 1.2).f_calc()
-  fft_map = f_calc.fft_map(resolution_factor=0.25)
-  fft_map.apply_sigma_scaling()
-  return fft_map.real_map_unpadded()
+    f_calc = xrs.structure_factors(d_min=1.2).f_calc()
+    fft_map = f_calc.fft_map(resolution_factor=0.25)
+    fft_map.apply_sigma_scaling()
+    return fft_map.real_map_unpadded()
+
 
 def exercise():
-  """
-  Exercise refine "easy" with DNA/RNA.
-  """
-  pi_good = get_pdb_inputs(pdb_str=pdb_str_answer, restraints=False)
-  map_data = get_map(xrs=pi_good.xrs)
-  xrs_good = pi_good.xrs.deep_copy_scatterers()
-  pi_good.ph.write_pdb_file(file_name="answer.pdb",
-    crystal_symmetry=xrs_good.crystal_symmetry())
-  #
-  pi_poor = get_pdb_inputs(pdb_str=pdb_str_poor, restraints=True)
-  pi_poor.ph.write_pdb_file(file_name="poor.pdb")
-  xrs_poor = pi_poor.xrs.deep_copy_scatterers()
-  #
-  d = xrs_good.distances(other=xrs_poor)
-  print(d.min_max_mean().as_tuple())
-  assert flex.max(d)>3
-  assert flex.mean(d)>1
+    """
+    Exercise refine "easy" with DNA/RNA.
+    """
+    pi_good = get_pdb_inputs(pdb_str=pdb_str_answer, restraints=False)
+    map_data = get_map(xrs=pi_good.xrs)
+    xrs_good = pi_good.xrs.deep_copy_scatterers()
+    pi_good.ph.write_pdb_file(
+        file_name="answer.pdb", crystal_symmetry=xrs_good.crystal_symmetry()
+    )
+    #
+    pi_poor = get_pdb_inputs(pdb_str=pdb_str_poor, restraints=True)
+    pi_poor.ph.write_pdb_file(file_name="poor.pdb")
+    xrs_poor = pi_poor.xrs.deep_copy_scatterers()
+    #
+    d = xrs_good.distances(other=xrs_poor)
+    print(d.min_max_mean().as_tuple())
+    assert flex.max(d) > 3
+    assert flex.mean(d) > 1
 
-  chain = 'B'
-  res_num = 40
-  alt_loc = None
-  ero = False
-  n_refine_cycles = 3
-  target_map = get_map(xrs=pi_good.xrs)
-  sites_cart = xrs_poor.sites_cart()
-  for ch in pi_poor.ph.chains():
-    if ch.id.strip() != chain : continue
-    print('chain')
-    for rg in ch.residue_groups():
-      if rg.resseq_as_int() != res_num : continue
-      print("res#")
-      if rg.have_conformers() and not alt_loc :
-        s = 'Specified residue has alternate conformations. Please specify '
-        raise RuntimeError(s + 'alt_loc on the command line')
-      for residue in rg.atom_groups():
-        if alt_loc and alt_loc != residue.altloc.strip():
-          continue
-        flipbase.flip_base(residue, angle=180)
+    chain = "B"
+    res_num = 40
+    alt_loc = None
+    ero = False
+    n_refine_cycles = 3
+    target_map = get_map(xrs=pi_good.xrs)
+    sites_cart = xrs_poor.sites_cart()
+    for ch in pi_poor.ph.chains():
+        if ch.id.strip() != chain:
+            continue
+        print("chain")
+        for rg in ch.residue_groups():
+            if rg.resseq_as_int() != res_num:
+                continue
+            print("res#")
+            if rg.have_conformers() and not alt_loc:
+                s = "Specified residue has alternate conformations. Please specify "
+                raise RuntimeError(s + "alt_loc on the command line")
+            for residue in rg.atom_groups():
+                if alt_loc and alt_loc != residue.altloc.strip():
+                    continue
+                flipbase.flip_base(residue, angle=180)
 
-        sites_cart.set_selected(residue.atoms().extract_i_seq(),
-          residue.atoms().extract_xyz())
-        xray_structure = xrs_poor.replace_sites_cart(sites_cart)
-        sele = residue.atoms().extract_i_seq()
-        print('real-space refinement BEGIN'.center(79,'*'))
-        for i in range(n_refine_cycles):
-          print('real-space refinement cycle %i...' % (i + 1))
-          ero = individual_sites.easy(
-            map_data                    = target_map,
-            xray_structure              = xray_structure,
-            pdb_hierarchy               = pi_poor.ph,
-            geometry_restraints_manager = pi_poor.grm,
-            selection                   = sele)
-        print('real-space refinement FINISHED'.center(79,'*'))
-        xrs_refined = ero.xray_structure
-  if not ero : raise RuntimeError('Specified residue not found')
-  d = xrs_good.distances(other=xrs_refined)
-  print(d.min_max_mean().as_tuple())
-  assert flex.max(d)<0.072, flex.max(d)
-  assert flex.mean(d)<0.04, flex.mean(d)
-  ero.pdb_hierarchy.write_pdb_file(file_name="refined.pdb",
-    crystal_symmetry=xrs_good.crystal_symmetry())
+                sites_cart.set_selected(
+                    residue.atoms().extract_i_seq(), residue.atoms().extract_xyz()
+                )
+                xray_structure = xrs_poor.replace_sites_cart(sites_cart)
+                sele = residue.atoms().extract_i_seq()
+                print("real-space refinement BEGIN".center(79, "*"))
+                for i in range(n_refine_cycles):
+                    print("real-space refinement cycle %i..." % (i + 1))
+                    ero = individual_sites.easy(
+                        map_data=target_map,
+                        xray_structure=xray_structure,
+                        pdb_hierarchy=pi_poor.ph,
+                        geometry_restraints_manager=pi_poor.grm,
+                        selection=sele,
+                    )
+                print("real-space refinement FINISHED".center(79, "*"))
+                xrs_refined = ero.xray_structure
+    if not ero:
+        raise RuntimeError("Specified residue not found")
+    d = xrs_good.distances(other=xrs_refined)
+    print(d.min_max_mean().as_tuple())
+    assert flex.max(d) < 0.072, flex.max(d)
+    assert flex.mean(d) < 0.04, flex.mean(d)
+    ero.pdb_hierarchy.write_pdb_file(
+        file_name="refined.pdb", crystal_symmetry=xrs_good.crystal_symmetry()
+    )
+
 
 def exercise2():
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string="""\
+    pdb_in = iotbx.pdb.hierarchy.input(
+        pdb_string="""\
 ATOM   3988  P    DA G  10       2.095 -23.407  14.671  1.00 24.76           P
 ATOM   3989  OP1  DA G  10       2.702 -22.768  13.479  1.00 24.54           O
 ATOM   3990  OP2  DA G  10       1.098 -22.688  15.497  1.00 26.02           O
@@ -170,18 +183,20 @@ ATOM   4005  N1   DA G  10       9.181 -30.024  15.746  1.00 12.16           N
 ATOM   4006  C2   DA G  10       8.797 -29.503  16.921  1.00 14.06           C
 ATOM   4007  N3   DA G  10       8.029 -28.435  17.152  1.00 13.57           N
 ATOM   4008  C4   DA G  10       7.629 -27.865  15.998  1.00 13.67           C
-""")
-  #open("tmp1.pdb", "w").write(pdb_in.hierarchy.as_pdb_string())
-  base = pdb_in.hierarchy.only_atom_group()
-  xyz = base.atoms().extract_xyz().deep_copy()
-  flipbase.flip_base(base, angle=180)
-  xyz_new = base.atoms().extract_xyz()
-  assert approx_equal(xyz_new.rms_difference(xyz), 2.45942)
-  #open("tmp2.pdb", "w").write(pdb_in.hierarchy.as_pdb_string())
+"""
+    )
+    # open("tmp1.pdb", "w").write(pdb_in.hierarchy.as_pdb_string())
+    base = pdb_in.hierarchy.only_atom_group()
+    xyz = base.atoms().extract_xyz().deep_copy()
+    flipbase.flip_base(base, angle=180)
+    xyz_new = base.atoms().extract_xyz()
+    assert approx_equal(xyz_new.rms_difference(xyz), 2.45942)
+    # open("tmp2.pdb", "w").write(pdb_in.hierarchy.as_pdb_string())
 
-if(__name__ == "__main__"):
-  timer = user_plus_sys_time()
-  exercise()
-  exercise2()
-  print("Time: %6.2f" % timer.elapsed())
-  print("OK")
+
+if __name__ == "__main__":
+    timer = user_plus_sys_time()
+    exercise()
+    exercise2()
+    print("Time: %6.2f" % timer.elapsed())
+    print("OK")

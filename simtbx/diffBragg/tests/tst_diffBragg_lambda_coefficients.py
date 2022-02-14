@@ -1,18 +1,21 @@
-
 """
 This test checks the lambda coefficients property and derivatives
 """
 from __future__ import division
 
 from argparse import ArgumentParser
+
 parser = ArgumentParser()
 parser.add_argument("--cuda", action="store_true")
-parser.add_argument("--plot", action='store_true')
-parser.add_argument("--idx", type=int, help="coefficient index (0 or 1)", default=0, choices=[0,1])
+parser.add_argument("--plot", action="store_true")
+parser.add_argument(
+    "--idx", type=int, help="coefficient index (0 or 1)", default=0, choices=[0, 1]
+)
 args = parser.parse_args()
 if args.cuda:
     import os
-    os.environ["DIFFBRAGG_USE_CUDA"]="1"
+
+    os.environ["DIFFBRAGG_USE_CUDA"] = "1"
 
 import numpy as np
 import pylab as plt
@@ -26,7 +29,11 @@ from dxtbx.model import Crystal
 ucell = (70, 60, 50, 90.0, 110, 90.0)
 symbol = "C121"
 
-a_real, b_real, c_real = sqr(uctbx.unit_cell(ucell).orthogonalization_matrix()).transpose().as_list_of_lists()
+a_real, b_real, c_real = (
+    sqr(uctbx.unit_cell(ucell).orthogonalization_matrix())
+    .transpose()
+    .as_list_of_lists()
+)
 C = Crystal(a_real, b_real, c_real, symbol)
 
 # random raotation
@@ -40,7 +47,7 @@ S.crystal.dxtbx_crystal = C
 spectrum = S.beam.spectrum
 wave, flux = spectrum[0]
 Nwave = 5
-waves = np.linspace(wave-wave*0.002, wave+wave*0.002, Nwave)
+waves = np.linspace(wave - wave * 0.002, wave + wave * 0.002, Nwave)
 fluxes = np.ones(Nwave) * flux / Nwave
 
 lambda0_GT = 0
@@ -82,10 +89,11 @@ shifts = []
 shifts2 = []
 
 from scipy import constants
-ENERGY_CONV = 1e10*constants.c*constants.h / constants.electron_volt
 
-energy_shifts = 0.1, .3, .5, 1, 3, 5, 10   # in electron volt
-b_percs = 0.001, 0.002, 0.004, 0.008,  0.016, 0.032, 0.064
+ENERGY_CONV = 1e10 * constants.c * constants.h / constants.electron_volt
+
+energy_shifts = 0.1, 0.3, 0.5, 1, 3, 5, 10  # in electron volt
+b_percs = 0.001, 0.002, 0.004, 0.008, 0.016, 0.032, 0.064
 reference_energy = ENERGY_CONV / wave
 
 for i_shift, en_shift in enumerate(energy_shifts):
@@ -93,16 +101,16 @@ for i_shift, en_shift in enumerate(energy_shifts):
     wave_shifted = ENERGY_CONV / (reference_energy + en_shift)
     wave_shift = wave - wave_shifted
     delta_a = wave_shift
-    delta_b = lambda1_GT*b_percs[i_shift]
+    delta_b = lambda1_GT * b_percs[i_shift]
 
     if args.idx == 0:
-        shift = b_percs[i_shift]*0.01
-        new_waves = waves*lambda1_GT + lambda0_GT+shift
+        shift = b_percs[i_shift] * 0.01
+        new_waves = waves * lambda1_GT + lambda0_GT + shift
     else:
-        shift = b_percs[i_shift]*0.01
-        new_waves = waves*(lambda1_GT+shift) + lambda0_GT
+        shift = b_percs[i_shift] * 0.01
+        new_waves = waves * (lambda1_GT + shift) + lambda0_GT
 
-    en = np.mean(ENERGY_CONV/new_waves)
+    en = np.mean(ENERGY_CONV / new_waves)
 
     if args.idx == 0:
         S.D.lambda_coefficients = lambda0_GT + shift, lambda1_GT
@@ -125,8 +133,8 @@ for i_shift, en_shift in enumerate(energy_shifts):
 
     all_error.append(error)
 
-    print ("error=%f, step=%f, energy=%f" % (error, delta_a, en))
-    #if args.plot:
+    print("error=%f, step=%f, energy=%f" % (error, delta_a, en))
+    # if args.plot:
     #    plt.subplot(121)
     #    plt.imshow(fdiff)
     #    plt.title("finite diff")
@@ -139,15 +147,15 @@ for i_shift, en_shift in enumerate(energy_shifts):
     #    plt.pause(0.8)
 
 if args.plot:
-    #plt.close()
-    plt.plot(shifts, all_error, 'o')
+    # plt.close()
+    plt.plot(shifts, all_error, "o")
     plt.show()
-    #if args.curvatures:
+    # if args.curvatures:
     #    plt.plot(shifts2, all_error2, 'o')
     #    plt.show()
 
 l = linregress(shifts, all_error)
-assert l.rvalue > .9999  # this is definitely a line!
+assert l.rvalue > 0.9999  # this is definitely a line!
 assert l.slope > 0
 assert l.pvalue < 1e-6
 

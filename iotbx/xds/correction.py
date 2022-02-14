@@ -9,70 +9,73 @@
 from __future__ import absolute_import, division, print_function
 from six.moves import range
 
+
 class reader:
-  """A class to read the X/Y-CORRECTIONS.CBF files used in XDS"""
-  def __init__(self):
-    pass
+    """A class to read the X/Y-CORRECTIONS.CBF files used in XDS"""
 
-  def read_file(self, filename):
-    """Read the CBF correction file"""
-    import pycbf
-    self.cbf_handle = pycbf.cbf_handle_struct()
-    self.cbf_handle.read_file(filename, pycbf.MSG_DIGEST)
-    self.cbf_handle.rewind_datablock()
+    def __init__(self):
+        pass
 
-  def get_correction_array(self):
-    """Get the correction array from the file"""
-    import numpy
+    def read_file(self, filename):
+        """Read the CBF correction file"""
+        import pycbf
 
-    # Select the first datablock and rewind all the categories
-    self.cbf_handle.select_datablock(0)
-    self.cbf_handle.select_category(0)
-    self.cbf_handle.select_column(2)
-    self.cbf_handle.select_row(0)
+        self.cbf_handle = pycbf.cbf_handle_struct()
+        self.cbf_handle.read_file(filename, pycbf.MSG_DIGEST)
+        self.cbf_handle.rewind_datablock()
 
-    # Check the type of the element to ensure it's a binary
-    # otherwise raise an exception
-    type = self.cbf_handle.get_typeofvalue()
-    if type.find('bnry') > -1:
+    def get_correction_array(self):
+        """Get the correction array from the file"""
+        import numpy
 
-      # Read the image data into an array
-      image_string = self.cbf_handle.get_integerarray_as_string()
-      image = numpy.fromstring(image_string, numpy.int32)
+        # Select the first datablock and rewind all the categories
+        self.cbf_handle.select_datablock(0)
+        self.cbf_handle.select_category(0)
+        self.cbf_handle.select_column(2)
+        self.cbf_handle.select_row(0)
 
-      # Get the array parameters
-      parameters = self.cbf_handle.get_integerarrayparameters_wdims()
-      image_size = (parameters[10], parameters[9])
+        # Check the type of the element to ensure it's a binary
+        # otherwise raise an exception
+        type = self.cbf_handle.get_typeofvalue()
+        if type.find("bnry") > -1:
 
-      # Resize the image
-      image.shape = (image_size)
+            # Read the image data into an array
+            image_string = self.cbf_handle.get_integerarray_as_string()
+            image = numpy.fromstring(image_string, numpy.int32)
 
-    else:
-      raise TypeError('Can\'t find image')
+            # Get the array parameters
+            parameters = self.cbf_handle.get_integerarrayparameters_wdims()
+            image_size = (parameters[10], parameters[9])
 
-    # Return the image
-    return image
+            # Resize the image
+            image.shape = image_size
 
-  def get_correction(self, dim):
-    """Get the correction at each pixel."""
-    import numpy
+        else:
+            raise TypeError("Can't find image")
 
-    # Get the raw array
-    raw_array = self.get_correction_array()
+        # Return the image
+        return image
 
-    # Ensure out dimensions are ok
-    if raw_array.shape[0] * 4 < dim[0] or raw_array.shape[1] * 4 < dim[1]:
-      raise ValueError("Dimensions are incompatible")
+    def get_correction(self, dim):
+        """Get the correction at each pixel."""
+        import numpy
 
-    # Create the array of the given dimension
-    correction = numpy.zeros(dim, dtype=numpy.float64)
+        # Get the raw array
+        raw_array = self.get_correction_array()
 
-    # Loop through all pixels and get the correction
-    i1 = numpy.array([list(range(dim[1]))] * dim[0], dtype=numpy.int32)
-    j1 = numpy.array([list(range(dim[0]))] * dim[1], dtype=numpy.int32).transpose()
-    i2 = numpy.divide(i1, 4)
-    j2 = numpy.divide(j1, 4)
-    correction[j1,i1] = raw_array[j2,i2] / 10.0
+        # Ensure out dimensions are ok
+        if raw_array.shape[0] * 4 < dim[0] or raw_array.shape[1] * 4 < dim[1]:
+            raise ValueError("Dimensions are incompatible")
 
-    # Return the array of corrections
-    return correction
+        # Create the array of the given dimension
+        correction = numpy.zeros(dim, dtype=numpy.float64)
+
+        # Loop through all pixels and get the correction
+        i1 = numpy.array([list(range(dim[1]))] * dim[0], dtype=numpy.int32)
+        j1 = numpy.array([list(range(dim[0]))] * dim[1], dtype=numpy.int32).transpose()
+        i2 = numpy.divide(i1, 4)
+        j2 = numpy.divide(j1, 4)
+        correction[j1, i1] = raw_array[j2, i2] / 10.0
+
+        # Return the array of corrections
+        return correction

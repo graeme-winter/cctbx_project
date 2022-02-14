@@ -24,170 +24,151 @@ from collections import deque
 
 
 class server(object):
-  """
-  Holds the underlying manager and sorts finished jobs according to submitter
-  """
+    """
+    Holds the underlying manager and sorts finished jobs according to submitter
+    """
 
-  def __init__(self, resource):
+    def __init__(self, resource):
 
-    self.resource = resource
-    self.results_submitted_through = {}
-    self.unfinisheds_submitted_through = {}
-    self.submitter_for = {}
+        self.resource = resource
+        self.results_submitted_through = {}
+        self.unfinisheds_submitted_through = {}
+        self.submitter_for = {}
 
+    def manager(self):
 
-  def manager(self):
+        identifier = object()
+        assert identifier not in self.results_submitted_through
+        assert identifier not in self.unfinisheds_submitted_through
+        self.results_submitted_through[identifier] = deque()
+        self.unfinisheds_submitted_through[identifier] = 0
+        return manager(server=self, identifier=identifier)
 
-    identifier = object()
-    assert identifier not in self.results_submitted_through
-    assert identifier not in self.unfinisheds_submitted_through
-    self.results_submitted_through[ identifier ] = deque()
-    self.unfinisheds_submitted_through[ identifier ] = 0
-    return manager( server = self, identifier = identifier )
+    # Internal methods
+    def submit(self, identifier, target, args=(), kwargs={}):
 
+        jobid = self.resource.submit(target=target, args=args, kwargs=kwargs)
+        assert jobid not in self.submitter_for
+        self.submitter_for[jobid] = identifier
+        self.unfinisheds_submitted_through[identifier] += 1
 
-  # Internal methods
-  def submit(self, identifier, target, args = (), kwargs = {}):
+        return jobid
 
-    jobid = self.resource.submit( target = target, args = args, kwargs = kwargs )
-    assert jobid not in self.submitter_for
-    self.submitter_for[ jobid ] = identifier
-    self.unfinisheds_submitted_through[ identifier ] += 1
+    def results_for(self, identifier):
 
-    return jobid
+        return self.results_submitted_through[identifier]
 
+    def unfinisheds_for(self, identifier):
 
-  def results_for(self, identifier):
+        return self.unfinisheds_submitted_through[identifier]
 
-    return self.results_submitted_through[ identifier ]
+    def update(self):
 
+        while self.resource.has_results():
+            self.fetch()
 
-  def unfinisheds_for(self, identifier):
+    def fetch(self):
 
-    return self.unfinisheds_submitted_through[ identifier ]
+        (jobid, result) = next(self.resource.results())
+        identifier = self.submitter_for[jobid]
+        del self.submitter_for[jobid]
+        self.results_submitted_through[identifier].append((jobid, result))
+        self.unfinisheds_submitted_through[identifier] -= 1
 
+    # Calls forwarded to underlying manager
+    def is_full(self):
 
-  def update(self):
+        return self.resource.is_full()
 
-    while self.resource.has_results():
-      self.fetch()
+    def shutdown(self):
 
+        self.resource.shutdown()
 
-  def fetch(self):
+    def resume(self):
 
-    ( jobid, result ) = next(self.resource.results())
-    identifier = self.submitter_for[ jobid ]
-    del self.submitter_for[ jobid ]
-    self.results_submitted_through[ identifier ].append( ( jobid, result ) )
-    self.unfinisheds_submitted_through[ identifier ] -= 1
+        self.resource.resume()
 
+    def join(self):
 
-  # Calls forwarded to underlying manager
-  def is_full(self):
+        self.resource.join()
 
-    return self.resource.is_full()
+    def terminate(self):
 
-
-  def shutdown(self):
-
-    self.resource.shutdown()
-
-
-  def resume(self):
-
-    self.resource.resume()
-
-
-  def join(self):
-
-    self.resource.join()
-
-
-  def terminate(self):
-
-    self.resource.terminate()
+        self.resource.terminate()
 
 
 class manager(object):
-  """
-  Behaves like a manager, but uses an external resource to run the jobs
+    """
+    Behaves like a manager, but uses an external resource to run the jobs
 
-  Unintuitive feature:
-    manager.is_empty() == True and manager.is_full() == True is possible
-    simultaneously, even if the number of cpus is not zero. This is because
-    adapter.is_empty() report the status of the adapter queue, while
-    adapter.is_full() reports that of the manager. This gives the behaviour
-    one normally expects, i.e. no submission if there are no free cpus, and
-    empty status when jobs submitted through the adaptor have all been
-    processed.
-  """
+    Unintuitive feature:
+      manager.is_empty() == True and manager.is_full() == True is possible
+      simultaneously, even if the number of cpus is not zero. This is because
+      adapter.is_empty() report the status of the adapter queue, while
+      adapter.is_full() reports that of the manager. This gives the behaviour
+      one normally expects, i.e. no submission if there are no free cpus, and
+      empty status when jobs submitted through the adaptor have all been
+      processed.
+    """
 
-  def __init__(self, server, identifier):
+    def __init__(self, server, identifier):
 
-    self.server = server
-    self.identifier = identifier
+        self.server = server
+        self.identifier = identifier
 
+    @property
+    def completed_results(self):
 
-  @property
-  def completed_results(self):
+        return self.server.results_for(identifier=self.identifier)
 
-    return self.server.results_for( identifier = self.identifier )
+    def has_results(self):
 
+        self.server.update()
+        return self.completed_results
 
-  def has_results(self):
+    def results(self):
 
-    self.server.update()
-    return self.completed_results
+        self.server.update()
+        results = self.completed_results
 
+        while not self.is_empty():
+            while not results:
+                self.server.fetch()
 
-  def results(self):
+            yield results.popleft()
 
-    self.server.update()
-    results = self.completed_results
+    def submit(self, target, args=(), kwargs={}):
 
-    while not self.is_empty():
-      while not results:
-        self.server.fetch()
+        return self.server.submit(
+            identifier=self.identifier,
+            target=target,
+            args=args,
+            kwargs=kwargs,
+        )
 
-      yield results.popleft()
+    def is_empty(self):
 
+        return (
+            self.server.unfinisheds_for(identifier=self.identifier) == 0
+            and not self.completed_results
+        )
 
-  def submit(self, target, args = (), kwargs = {}):
+    def is_full(self):
 
-    return self.server.submit(
-      identifier = self.identifier,
-      target = target,
-      args = args,
-      kwargs = kwargs,
-      )
+        return self.server.is_full()
 
+    def shutdown(self):
 
-  def is_empty(self):
+        self.server.shutdown()
 
-    return ( self.server.unfinisheds_for( identifier = self.identifier ) == 0
-      and not self.completed_results )
+    def resume(self):
 
+        self.server.resume()
 
-  def is_full(self):
+    def join(self):
 
-    return self.server.is_full()
+        self.server.join()
 
+    def terminate(self):
 
-  def shutdown(self):
-
-    self.server.shutdown()
-
-
-  def resume(self):
-
-    self.server.resume()
-
-
-  def join(self):
-
-    self.server.join()
-
-
-  def terminate(self):
-
-    self.server.terminate()
+        self.server.terminate()

@@ -6,79 +6,88 @@ import iotbx.cif
 from libtbx.utils import null_out
 from six.moves import zip
 
+
 def prepare_inputs(pdb_str, cif_str):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  cif_object = iotbx.cif.reader(input_string = cif_str).model()
-  # bla.cif does not exist, but cif_objects needs a filename in first position
-  # of the tuple
-  cif_objects = [('bla.cif', cif_object)]
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    cif_object = iotbx.cif.reader(input_string=cif_str).model()
+    # bla.cif does not exist, but cif_objects needs a filename in first position
+    # of the tuple
+    cif_objects = [("bla.cif", cif_object)]
 
-  model = mmtbx.model.manager(
-    model_input=pdb_inp,
-    restraint_objects = cif_objects,
-    log = null_out())
-  model.process(make_restraints=True)
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model = mmtbx.model.manager(
+        model_input=pdb_inp, restraint_objects=cif_objects, log=null_out()
+    )
+    model.process(make_restraints=True)
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  return model
+    return model
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # For this ligand, three H cannot be parameterized
 # NH2 group is planar, but there are no dihedral restraints
 # no dihedral restraint for H11
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def exercise1(pdb_str, cif_str):
-  model = prepare_inputs(pdb_str, cif_str)
-  riding_h_manager = model.get_riding_h_manager()
-  atoms = model.get_hierarchy().atoms()
+    model = prepare_inputs(pdb_str, cif_str)
+    riding_h_manager = model.get_riding_h_manager()
+    atoms = model.get_hierarchy().atoms()
 
-  h_para = riding_h_manager.h_parameterization
+    h_para = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart = model.get_sites_cart(),
-    threshold  = 0.05)
-  h_distances   = diagnostics.h_distances
-  type_list     = diagnostics.type_list
+    diagnostics = riding_h_manager.diagnostics(
+        sites_cart=model.get_sites_cart(), threshold=0.05
+    )
+    h_distances = diagnostics.h_distances
+    type_list = diagnostics.type_list
 
-# number of H atoms
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_para) - h_para.count(None)
+    # number of H atoms
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_para) - h_para.count(None)
 
-  assert (number_h_para == number_h-3), 'Not all H atoms are parameterized'
+    assert number_h_para == number_h - 3, "Not all H atoms are parameterized"
 
-  for ih in h_distances:
-    # One atom is expected to be moved
-    if (ih == 16):
-      continue
-    labels = atoms[ih].fetch_labels()
-    assert (h_distances[ih] < 0.1), \
-      'distance too large: %s  atom: %s (%s) residue: %s ' \
-      % (h_para[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
+    for ih in h_distances:
+        # One atom is expected to be moved
+        if ih == 16:
+            continue
+        labels = atoms[ih].fetch_labels()
+        assert (
+            h_distances[ih] < 0.1
+        ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+            h_para[ih].htype,
+            atoms[ih].name,
+            ih,
+            labels.resseq.strip(),
+        )
 
-  for type1, type2 in zip(type_list, type_list_known1):
-    assert (type1 == type2)
-    #print "'%s'," % type1,
+    for type1, type2 in zip(type_list, type_list_known1):
+        assert type1 == type2
+        # print "'%s'," % type1,
+
 
 def exercise2(pdb_str, cif_str):
-  model = prepare_inputs(pdb_str, cif_str)
-  riding_h_manager = model.get_riding_h_manager()
-  atoms = model.get_hierarchy().atoms()
+    model = prepare_inputs(pdb_str, cif_str)
+    riding_h_manager = model.get_riding_h_manager()
+    atoms = model.get_hierarchy().atoms()
 
-  h_para = riding_h_manager.h_parameterization
+    h_para = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart = model.get_sites_cart(),
-    threshold  = 0.05)
-  h_distances   = diagnostics.h_distances
-  type_list     = diagnostics.type_list
+    diagnostics = riding_h_manager.diagnostics(
+        sites_cart=model.get_sites_cart(), threshold=0.05
+    )
+    h_distances = diagnostics.h_distances
+    type_list = diagnostics.type_list
 
-# number of H atoms
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_para) - h_para.count(None)
+    # number of H atoms
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_para) - h_para.count(None)
 
-  assert (number_h_para == 0), 'Not all H atoms are parameterized'
+    assert number_h_para == 0, "Not all H atoms are parameterized"
+
 
 pdb_str1 = """\
 REMARK iotbx.pdb.box_around_molecule --buffer-layer=5 "02.updated.nomin..pdb"
@@ -267,9 +276,9 @@ _chem_comp_plane_atom.dist_esd
 3HA plan-3  C2     0.020
 """
 
-#type_list_known1 = ['flat_2neigbs', 'alg1b', 'flat_2neigbs', 'flat_2neigbs',
+# type_list_known1 = ['flat_2neigbs', 'alg1b', 'flat_2neigbs', 'flat_2neigbs',
 #  'alg1a', 'alg1a']
-type_list_known1 = ['flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs']
+type_list_known1 = ["flat_2neigbs", "flat_2neigbs", "flat_2neigbs"]
 
 # Zundelion ( [H2O -- H -- OH2]+)
 
@@ -350,8 +359,8 @@ ZDL   H4      O1      H5          109.49 6.000
 ZDL   O       H5      O1          180.00 9.000
 """
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise1(pdb_str1, cif_str1)
-  exercise2(pdb_str2, cif_str2)
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise1(pdb_str1, cif_str1)
+    exercise2(pdb_str2, cif_str2)
+    print("OK. Time: %8.3f" % (time.time() - t0))

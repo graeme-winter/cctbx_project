@@ -347,25 +347,26 @@ _chem_comp_tor.period
 #
 """
 
-def run(prefix = "tst_model_get_vdw_radii"):
-  fo = open("%s.pdb"%prefix,"w")
-  print(pdb, file=fo)
-  fo.close()
-  fo = open("%s.cif"%prefix,"w")
-  print(cif, file=fo)
-  fo.close()
-  #
-  i = mmtbx.utils.process_command_line_args(args = ["%s.cif"%prefix])
-  pdb_inp = iotbx.pdb.input(file_name = "%s.pdb"%prefix)
-  model = mmtbx.model.manager(
-    model_input       = pdb_inp,
-    restraint_objects = i.cif_objects,
-    log               = null_out())
-  model.process()
-  derived_keys = model.get_vdw_radii()
-  # compare with answer
-  for atom_name in pdb_inp.atoms().extract_name():
-    assert atom_name.strip() in derived_keys
 
-if (__name__ == "__main__"):
-  run()
+def run(prefix="tst_model_get_vdw_radii"):
+    fo = open("%s.pdb" % prefix, "w")
+    print(pdb, file=fo)
+    fo.close()
+    fo = open("%s.cif" % prefix, "w")
+    print(cif, file=fo)
+    fo.close()
+    #
+    i = mmtbx.utils.process_command_line_args(args=["%s.cif" % prefix])
+    pdb_inp = iotbx.pdb.input(file_name="%s.pdb" % prefix)
+    model = mmtbx.model.manager(
+        model_input=pdb_inp, restraint_objects=i.cif_objects, log=null_out()
+    )
+    model.process()
+    derived_keys = model.get_vdw_radii()
+    # compare with answer
+    for atom_name in pdb_inp.atoms().extract_name():
+        assert atom_name.strip() in derived_keys
+
+
+if __name__ == "__main__":
+    run()

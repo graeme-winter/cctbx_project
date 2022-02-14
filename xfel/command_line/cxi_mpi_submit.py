@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 from six.moves import range
+
 # -*- Mode: Python; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 8 -*-
 #
 # LIBTBX_SET_DISPATCHER_NAME cxi.mpi_submit
@@ -75,7 +76,7 @@ cxi.mpi_submit /path/to/h5/runs/directory/266708-0/run*.h5 \\
 """
 
 
-phil_str = '''
+phil_str = """
   dry_run = False
     .type = bool
     .help = If True, the program will create the trial directory but not submit the job, \
@@ -123,355 +124,446 @@ phil_str = '''
       .type = bool
       .help = Option to split error and log files into separate per process
   }
-'''
+"""
 
 phil_scope = parse(phil_str + mp_phil_str, process_includes=True)
 mp_phil_scope = parse(mp_phil_str, process_includes=True)
 
+
 def copy_config(config, dest_dir, root_name, params, target_num):
-  """ Copy a config file to a directory, and all of its referenced phil files. Recursively
-  copies the files and changes the includes statements to match the new file names.
-  @param config config file to copy
-  @param dest_dir Full path to directory to copy file to
-  @param root_name Name to give to copied file. Included phil files will be given
-  this name + _N where N is incremented for each file included in the phil file
-  @param params phil parameters
-  @param target_num for target phil files found in config, latest number found
-  """
-   # make a copy of the original cfg file
-  shutil.copy(config, os.path.join(dest_dir, "%s_orig.cfg"%root_name))
+    """Copy a config file to a directory, and all of its referenced phil files. Recursively
+    copies the files and changes the includes statements to match the new file names.
+    @param config config file to copy
+    @param dest_dir Full path to directory to copy file to
+    @param root_name Name to give to copied file. Included phil files will be given
+    this name + _N where N is incremented for each file included in the phil file
+    @param params phil parameters
+    @param target_num for target phil files found in config, latest number found
+    """
+    # make a copy of the original cfg file
+    shutil.copy(config, os.path.join(dest_dir, "%s_orig.cfg" % root_name))
 
-  config_path = os.path.join(dest_dir, "%s.cfg"%root_name)
+    config_path = os.path.join(dest_dir, "%s.cfg" % root_name)
 
-  # Re-write the config file, changing paths to be relative to the trial directory.
-  # Also copy and re-write included phil files, while updating the config file to
-  # the new paths
-  # Note, some legacy rewrites done by cxi.lsf are not included here.
-  f = open(config_path, 'w')
-  for line in open(config).readlines():
-    if "[pyana]" in line:
-      raise Sorry("Pyana not supported. Check your config file.")
-    if "RUN_NO" in line:
-      line = line.replace("RUN_NO", str(params.input.run_num))
-    if "RUN_STR" in line:
-      line = line.replace("RUN_STR", "r%04d"%(params.input.run_num))
-    if "trial_id" in line:
-      key, val = line.split("=")
-      line = "%s= %d\n"%(key,params.input.trial)
-    if "rungroup_id" in line:
-      key, val = line.split("=")
-      line = "%s= %s\n"%(key,params.input.rungroup) # None ok
-    elif "_dirname" in line:
-      key, val = line.split("=")
-      val = os.path.join(dest_dir, os.path.basename(val.strip()))
-      if not os.path.exists(val):
-        os.mkdir(val)
-      line = "%s= %s\n"%(key,val)
-    elif "xtal_target" in line:
-      key, val = line.split("=")
-      val = val.strip()
-      if not os.path.exists(val):
-        raise Sorry("One of the xtal_target files in the cfg file doesn't exist: %s"%val)
-      new_target = "params_%d"%target_num
-      copy_target(val, dest_dir, new_target)
-      target_num += 1
-      line = "%s= %s.phil\n"%(key,os.path.join(dest_dir, new_target))
-    f.write(line)
-  f.close()
-  return target_num
+    # Re-write the config file, changing paths to be relative to the trial directory.
+    # Also copy and re-write included phil files, while updating the config file to
+    # the new paths
+    # Note, some legacy rewrites done by cxi.lsf are not included here.
+    f = open(config_path, "w")
+    for line in open(config).readlines():
+        if "[pyana]" in line:
+            raise Sorry("Pyana not supported. Check your config file.")
+        if "RUN_NO" in line:
+            line = line.replace("RUN_NO", str(params.input.run_num))
+        if "RUN_STR" in line:
+            line = line.replace("RUN_STR", "r%04d" % (params.input.run_num))
+        if "trial_id" in line:
+            key, val = line.split("=")
+            line = "%s= %d\n" % (key, params.input.trial)
+        if "rungroup_id" in line:
+            key, val = line.split("=")
+            line = "%s= %s\n" % (key, params.input.rungroup)  # None ok
+        elif "_dirname" in line:
+            key, val = line.split("=")
+            val = os.path.join(dest_dir, os.path.basename(val.strip()))
+            if not os.path.exists(val):
+                os.mkdir(val)
+            line = "%s= %s\n" % (key, val)
+        elif "xtal_target" in line:
+            key, val = line.split("=")
+            val = val.strip()
+            if not os.path.exists(val):
+                raise Sorry(
+                    "One of the xtal_target files in the cfg file doesn't exist: %s"
+                    % val
+                )
+            new_target = "params_%d" % target_num
+            copy_target(val, dest_dir, new_target)
+            target_num += 1
+            line = "%s= %s.phil\n" % (key, os.path.join(dest_dir, new_target))
+        f.write(line)
+    f.close()
+    return target_num
+
 
 def copy_target(target, dest_dir, root_name):
-  """ Copy a phil file to a directory, and all of its included phil files. Recursively
-  copies the files and changes the includes statements to match the new file names.
-  @param target Phil file to copy
-  @param dest_dir Full path to directory to copy file to
-  @param root_name Name to give to copied file. Included phil files will be given
-  this name + _N where N is incremented for each file included in the phil file
-  """
-  # Each included phil file will be named root_name_N.phil where N is this number,
-  # incremented for each included phil file
-  num_sub_targets = 1
-  f = open(os.path.join(dest_dir, root_name + ".phil"), 'w')
-  for line in open(target).readlines():
-    if "include" in line:
-      inc_str, include_type, sub_target = line.strip().split() # Example: include file cxi-8.2.phil
-      if include_type != 'file':
-        raise Sorry("Include isn't a file") # FIXME look up what other values are possible here
-      sub_target_root_name = "%s_%d"%(root_name, num_sub_targets)
-      line = " ".join([inc_str, include_type, sub_target_root_name  + ".phil\n"])
-      # recursive call to check for other included files
-      copy_target(os.path.join(os.path.dirname(target), sub_target), dest_dir, sub_target_root_name)
-      num_sub_targets += 1
-    f.write(line)
+    """Copy a phil file to a directory, and all of its included phil files. Recursively
+    copies the files and changes the includes statements to match the new file names.
+    @param target Phil file to copy
+    @param dest_dir Full path to directory to copy file to
+    @param root_name Name to give to copied file. Included phil files will be given
+    this name + _N where N is incremented for each file included in the phil file
+    """
+    # Each included phil file will be named root_name_N.phil where N is this number,
+    # incremented for each included phil file
+    num_sub_targets = 1
+    f = open(os.path.join(dest_dir, root_name + ".phil"), "w")
+    for line in open(target).readlines():
+        if "include" in line:
+            (
+                inc_str,
+                include_type,
+                sub_target,
+            ) = line.strip().split()  # Example: include file cxi-8.2.phil
+            if include_type != "file":
+                raise Sorry(
+                    "Include isn't a file"
+                )  # FIXME look up what other values are possible here
+            sub_target_root_name = "%s_%d" % (root_name, num_sub_targets)
+            line = " ".join([inc_str, include_type, sub_target_root_name + ".phil\n"])
+            # recursive call to check for other included files
+            copy_target(
+                os.path.join(os.path.dirname(target), sub_target),
+                dest_dir,
+                sub_target_root_name,
+            )
+            num_sub_targets += 1
+        f.write(line)
 
-def get_trialdir(output_dir, run_num, trial = None, rungroup = None, task = None):
+
+def get_trialdir(output_dir, run_num, trial=None, rungroup=None, task=None):
     try:
-      rundir = os.path.join(output_dir, "r%04d"%int(run_num))
+        rundir = os.path.join(output_dir, "r%04d" % int(run_num))
     except ValueError:
-      rundir = os.path.join(output_dir, run_num)
+        rundir = os.path.join(output_dir, run_num)
 
     if not os.path.exists(output_dir):
-       os.makedirs(output_dir)
+        os.makedirs(output_dir)
 
     if not os.path.exists(rundir):
-      os.mkdir(rundir)
+        os.mkdir(rundir)
 
     # If a trial number wasn't included, find the next available, up to 999 trials
     if trial is None:
-      found_one = False
-      for i in range(1000):
-        trialdir = os.path.join(rundir, "%03d"%i)
-        if rungroup is not None:
-          trialdir += "_rg%03d"%rungroup
-        if not os.path.exists(trialdir):
-          found_one = True
-          break
-      if found_one:
-        trial = i
-      else:
-        raise Sorry("All trial numbers in use")
+        found_one = False
+        for i in range(1000):
+            trialdir = os.path.join(rundir, "%03d" % i)
+            if rungroup is not None:
+                trialdir += "_rg%03d" % rungroup
+            if not os.path.exists(trialdir):
+                found_one = True
+                break
+        if found_one:
+            trial = i
+        else:
+            raise Sorry("All trial numbers in use")
     else:
-      trialdir = os.path.join(rundir, "%03d"%trial)
-      if rungroup is not None:
-        trialdir += "_rg%03d"%rungroup
-      if os.path.exists(trialdir) and task is None:
-        raise Sorry("Trial %d already in use"%trial)
+        trialdir = os.path.join(rundir, "%03d" % trial)
+        if rungroup is not None:
+            trialdir += "_rg%03d" % rungroup
+        if os.path.exists(trialdir) and task is None:
+            raise Sorry("Trial %d already in use" % trial)
 
     if not os.path.exists(trialdir):
-      os.mkdir(trialdir)
+        os.mkdir(trialdir)
 
     if task is not None:
-      trialdir = os.path.join(trialdir, "task%03d"%task)
-      if os.path.exists(trialdir):
-        raise Sorry("Task %d already exists"%task)
-      os.mkdir(trialdir)
+        trialdir = os.path.join(trialdir, "task%03d" % task)
+        if os.path.exists(trialdir):
+            raise Sorry("Task %d already exists" % task)
+        os.mkdir(trialdir)
     return trial, trialdir
 
+
 def get_submission_id(result, method):
-  if method == "mpi" or method == "lsf":
-    submission_id = None
-    for line in result.stdout_lines:
-      # example for lsf: 'Job <XXXXXX> is submitted to queue <YYYYYYY>.'
-      if len(line.split()) < 2: continue
-      s = line.split()[1].lstrip('<').rstrip('>')
-      try:
-        s = int(s)
-      except ValueError:
-        pass
-      else:
-        submission_id = str(s)
-    print(submission_id)
-    return submission_id
-  elif method == 'pbs':
-    submission_id = "".join(result.stdout_lines).strip()
-    print(submission_id)
-    return submission_id
-  elif method == 'slurm' or method == "shifter":
-    # Assuming that all shifter instances are running on NERSC (slurm) systems
-    return result.stdout_lines[0].split()[-1].strip()
-  elif method == 'htcondor':
-    return result.stdout_lines[-1].split()[-1].rstrip('.')
-  elif method == 'sge':
-    #  example for sge at Diamond: 'Your job JOB_ID ("JOB_NAME") has been submitted'
-    line = "".join(result.stdout_lines).strip()
-    s = line.split()
-    submission_id = ''.join(i for i in s if i.isdigit())   # or just simply use s[2], the command used will extract the number from the "line"
-    print (line)
-    print('Submission', 'ID', 'is', submission_id)
-    return submission_id
+    if method == "mpi" or method == "lsf":
+        submission_id = None
+        for line in result.stdout_lines:
+            # example for lsf: 'Job <XXXXXX> is submitted to queue <YYYYYYY>.'
+            if len(line.split()) < 2:
+                continue
+            s = line.split()[1].lstrip("<").rstrip(">")
+            try:
+                s = int(s)
+            except ValueError:
+                pass
+            else:
+                submission_id = str(s)
+        print(submission_id)
+        return submission_id
+    elif method == "pbs":
+        submission_id = "".join(result.stdout_lines).strip()
+        print(submission_id)
+        return submission_id
+    elif method == "slurm" or method == "shifter":
+        # Assuming that all shifter instances are running on NERSC (slurm) systems
+        return result.stdout_lines[0].split()[-1].strip()
+    elif method == "htcondor":
+        return result.stdout_lines[-1].split()[-1].rstrip(".")
+    elif method == "sge":
+        #  example for sge at Diamond: 'Your job JOB_ID ("JOB_NAME") has been submitted'
+        line = "".join(result.stdout_lines).strip()
+        s = line.split()
+        submission_id = "".join(
+            i for i in s if i.isdigit()
+        )  # or just simply use s[2], the command used will extract the number from the "line"
+        print(line)
+        print("Submission", "ID", "is", submission_id)
+        return submission_id
+
 
 def do_submit(command, submit_path, stdoutdir, mp_params, job_name, dry_run=False):
-  submit_command = get_submit_command_chooser(command, submit_path, stdoutdir, mp_params, job_name=job_name)
-  if mp_params.method in ['lsf', 'sge', 'pbs']:
-    parts = submit_command.split(" ")
-    script = open(parts.pop(-1), "rb")
-    run_command = script.read().split(b"\n")[-2]
-    command = " ".join(parts + [run_command.decode()])
-  else:
-    command = submit_command
-  print(command)
-  submit_command = str(submit_command) # unicode workaround
-
-  if dry_run:
-    print("Dry run: job not submitted. Trial directory created here:", os.path.dirname(submit_path))
-    print("Execute this command to submit the job:")
-    print(submit_command)
-  elif mp_params.method == 'local':
-    submission_id = os.fork()
-    if submission_id > 0:
-      return submission_id
+    submit_command = get_submit_command_chooser(
+        command, submit_path, stdoutdir, mp_params, job_name=job_name
+    )
+    if mp_params.method in ["lsf", "sge", "pbs"]:
+        parts = submit_command.split(" ")
+        script = open(parts.pop(-1), "rb")
+        run_command = script.read().split(b"\n")[-2]
+        command = " ".join(parts + [run_command.decode()])
     else:
-      stdout = os.open(os.path.join(stdoutdir, 'log.out'), os.O_WRONLY|os.O_CREAT|os.O_TRUNC); os.dup2(stdout, 1)
-      stderr = os.open(os.path.join(stdoutdir, 'log.err'), os.O_WRONLY|os.O_CREAT|os.O_TRUNC); os.dup2(stderr, 2)
-      os.execv(command.split()[0], command.split())
-  else:
-    try:
-      result = easy_run.fully_buffered(command=submit_command)
-      result.raise_if_errors()
-    except Exception as e:
-      if not "Warning: job being submitted without an AFS token." in str(e):
-        raise e
+        command = submit_command
+    print(command)
+    submit_command = str(submit_command)  # unicode workaround
 
-    return get_submission_id(result, mp_params.method)
+    if dry_run:
+        print(
+            "Dry run: job not submitted. Trial directory created here:",
+            os.path.dirname(submit_path),
+        )
+        print("Execute this command to submit the job:")
+        print(submit_command)
+    elif mp_params.method == "local":
+        submission_id = os.fork()
+        if submission_id > 0:
+            return submission_id
+        else:
+            stdout = os.open(
+                os.path.join(stdoutdir, "log.out"),
+                os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+            )
+            os.dup2(stdout, 1)
+            stderr = os.open(
+                os.path.join(stdoutdir, "log.err"),
+                os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+            )
+            os.dup2(stderr, 2)
+            os.execv(command.split()[0], command.split())
+    else:
+        try:
+            result = easy_run.fully_buffered(command=submit_command)
+            result.raise_if_errors()
+        except Exception as e:
+            if not "Warning: job being submitted without an AFS token." in str(e):
+                raise e
+
+        return get_submission_id(result, mp_params.method)
+
 
 class Script(object):
-  """ Script to submit XFEL data for processing"""
-  def __init__(self):
-    pass
+    """Script to submit XFEL data for processing"""
 
-  def run(self, argv = None):
-    """ Set up run folder and submit the job. """
-    if argv is None:
-      argv = sys.argv[1:]
+    def __init__(self):
+        pass
 
-    if len(argv) == 0 or "-h" in argv or "--help" in argv or "-c" in argv:
-      print(help_str)
-      print("Showing phil parameters:")
-      print(phil_scope.as_str(attributes_level = 2))
-      return
+    def run(self, argv=None):
+        """Set up run folder and submit the job."""
+        if argv is None:
+            argv = sys.argv[1:]
 
-    user_phil = []
-    dispatcher_args = []
-    for arg in argv:
-      if arg.endswith(".h5"):
-        dispatcher_args.append(arg)
-      elif (os.path.isfile(arg)):
-        try:
-          user_phil.append(parse(file_name=arg))
-        except Exception as e:
-          if os.path.splitext(arg)[1] == ".phil": raise e
-          dispatcher_args.append(arg)
-      else:
-        try:
-          user_phil.append(parse(arg))
-        except RuntimeError as e:
-          dispatcher_args.append(arg)
-    scope, unused = phil_scope.fetch(sources=user_phil, track_unused_definitions=True)
-    params = scope.extract()
-    dispatcher_args.extend(["%s=%s"%(u.path,u.object.words[0].value) for u in unused])
+        if len(argv) == 0 or "-h" in argv or "--help" in argv or "-c" in argv:
+            print(help_str)
+            print("Showing phil parameters:")
+            print(phil_scope.as_str(attributes_level=2))
+            return
 
-    assert params.input.run_num is not None
-    if params.input.dispatcher in ["cxi.xtc_process", "cctbx.xfel.xtc_process"]:
-      # processing XTC streams at LCLS -- dispatcher will locate raw data
-      assert params.input.experiment is not None or params.input.locator is not None
-      print("Submitting run %d of experiment %s"%(int(params.input.run_num), params.input.experiment))
-    else:
-      print("Submitting run %s"%(params.input.run_num))
+        user_phil = []
+        dispatcher_args = []
+        for arg in argv:
+            if arg.endswith(".h5"):
+                dispatcher_args.append(arg)
+            elif os.path.isfile(arg):
+                try:
+                    user_phil.append(parse(file_name=arg))
+                except Exception as e:
+                    if os.path.splitext(arg)[1] == ".phil":
+                        raise e
+                    dispatcher_args.append(arg)
+            else:
+                try:
+                    user_phil.append(parse(arg))
+                except RuntimeError as e:
+                    dispatcher_args.append(arg)
+        scope, unused = phil_scope.fetch(
+            sources=user_phil, track_unused_definitions=True
+        )
+        params = scope.extract()
+        dispatcher_args.extend(
+            ["%s=%s" % (u.path, u.object.words[0].value) for u in unused]
+        )
 
-    trial, trialdir = get_trialdir(params.output.output_dir, params.input.run_num, params.input.trial, params.input.rungroup, params.input.task)
-    params.input.trial = trial
-    print("Using trial", params.input.trial)
+        assert params.input.run_num is not None
+        if params.input.dispatcher in ["cxi.xtc_process", "cctbx.xfel.xtc_process"]:
+            # processing XTC streams at LCLS -- dispatcher will locate raw data
+            assert (
+                params.input.experiment is not None or params.input.locator is not None
+            )
+            print(
+                "Submitting run %d of experiment %s"
+                % (int(params.input.run_num), params.input.experiment)
+            )
+        else:
+            print("Submitting run %s" % (params.input.run_num))
 
-    # log file will live here
-    stdoutdir = os.path.join(trialdir, "stdout")
-    os.mkdir(stdoutdir)
-    logging_str = ""
-    if params.output.split_logs:# test parameter for split_log then open and close log file and loop over nprocs
-      if params.mp.method=='shifter' and params.mp.shifter.staging=='DataWarp':
-        bbdirstr = "${DW_JOB_STRIPED}/stdout"
-        logging_str = "output.logging_dir=%s"%bbdirstr
-      else:
-        for i in range(params.mp.nproc):
-          error_files = os.path.join(stdoutdir,"error_rank%04d.out"%i)
-          log_files = os.path.join(stdoutdir,"log_rank%04d.out"%i)
-          open(log_files,'a').close()
-          open(error_files,'a').close()
-        logging_str = "output.logging_dir=%s"%stdoutdir
-    else:
-      logging_str = ""
+        trial, trialdir = get_trialdir(
+            params.output.output_dir,
+            params.input.run_num,
+            params.input.trial,
+            params.input.rungroup,
+            params.input.task,
+        )
+        params.input.trial = trial
+        print("Using trial", params.input.trial)
 
-    # Copy any config or phil files specified
-    target_num = 1
-    has_config = False
-    redone_args = []
-    for arg in dispatcher_args:
-      if not len(arg.split('=')) == 2:
-        redone_args.append(arg)
-        continue
-      name, value = arg.split('=')
+        # log file will live here
+        stdoutdir = os.path.join(trialdir, "stdout")
+        os.mkdir(stdoutdir)
+        logging_str = ""
+        if (
+            params.output.split_logs
+        ):  # test parameter for split_log then open and close log file and loop over nprocs
+            if (
+                params.mp.method == "shifter"
+                and params.mp.shifter.staging == "DataWarp"
+            ):
+                bbdirstr = "${DW_JOB_STRIPED}/stdout"
+                logging_str = "output.logging_dir=%s" % bbdirstr
+            else:
+                for i in range(params.mp.nproc):
+                    error_files = os.path.join(stdoutdir, "error_rank%04d.out" % i)
+                    log_files = os.path.join(stdoutdir, "log_rank%04d.out" % i)
+                    open(log_files, "a").close()
+                    open(error_files, "a").close()
+                logging_str = "output.logging_dir=%s" % stdoutdir
+        else:
+            logging_str = ""
 
-      if "cfg" in name and os.path.splitext(value)[1].lower() == ".cfg":
-        cfg = value
-        if not os.path.exists(cfg):
-          raise Sorry("Config file doesn't exist: %s"%cfg)
-        if has_config:
-          raise Sorry("Multiple config files found")
-        has_config = True
-        target_num = copy_config(cfg, trialdir, "psana", params, target_num)
-        redone_args.append("%s=%s"%(name, os.path.join(trialdir, "psana.cfg")))
-      elif "target" in name or os.path.splitext(value)[1].lower() == ".phil":
-        phil = value
-        if not os.path.exists(phil):
-          raise Sorry("Phil file doesn't exist: %s"%phil)
-        copy_target(phil, trialdir, "params_%d"%target_num)
-        redone_args.append("%s=%s"%(name, os.path.join(trialdir, "params_%d.phil"%target_num)))
-        target_num += 1
-      else:
-        redone_args.append(arg)
-    dispatcher_args = redone_args
+        # Copy any config or phil files specified
+        target_num = 1
+        has_config = False
+        redone_args = []
+        for arg in dispatcher_args:
+            if not len(arg.split("=")) == 2:
+                redone_args.append(arg)
+                continue
+            name, value = arg.split("=")
 
-    # If additional phil params are provided, copy them over too
-    if params.input.target is not None:
-      if not os.path.exists(params.input.target):
-        raise Sorry("Target file doesn't exist: %s"%params.input.target)
-      copy_target(params.input.target, trialdir, "params_%d"%target_num)
-      params.input.target = os.path.join(trialdir, "params_%d.phil"%target_num)
-      target_num += 1
+            if "cfg" in name and os.path.splitext(value)[1].lower() == ".cfg":
+                cfg = value
+                if not os.path.exists(cfg):
+                    raise Sorry("Config file doesn't exist: %s" % cfg)
+                if has_config:
+                    raise Sorry("Multiple config files found")
+                has_config = True
+                target_num = copy_config(cfg, trialdir, "psana", params, target_num)
+                redone_args.append(
+                    "%s=%s" % (name, os.path.join(trialdir, "psana.cfg"))
+                )
+            elif "target" in name or os.path.splitext(value)[1].lower() == ".phil":
+                phil = value
+                if not os.path.exists(phil):
+                    raise Sorry("Phil file doesn't exist: %s" % phil)
+                copy_target(phil, trialdir, "params_%d" % target_num)
+                redone_args.append(
+                    "%s=%s"
+                    % (name, os.path.join(trialdir, "params_%d.phil" % target_num))
+                )
+                target_num += 1
+            else:
+                redone_args.append(arg)
+        dispatcher_args = redone_args
 
-    # Some configs files will specify out_dirname. If not, we want to explicitly create one
-    # so the dispatcher will have an output directory.
-    output_dir = os.path.join(trialdir, "out")
-    if not os.path.exists(output_dir):
-      os.makedirs(output_dir)
+        # If additional phil params are provided, copy them over too
+        if params.input.target is not None:
+            if not os.path.exists(params.input.target):
+                raise Sorry("Target file doesn't exist: %s" % params.input.target)
+            copy_target(params.input.target, trialdir, "params_%d" % target_num)
+            params.input.target = os.path.join(trialdir, "params_%d.phil" % target_num)
+            target_num += 1
 
-    # Write out a script for submitting this job and submit it
-    submit_path = os.path.join(trialdir, "submit.sh")
+        # Some configs files will specify out_dirname. If not, we want to explicitly create one
+        # so the dispatcher will have an output directory.
+        output_dir = os.path.join(trialdir, "out")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-    extra_str = ""
-    data_str = ""
+        # Write out a script for submitting this job and submit it
+        submit_path = os.path.join(trialdir, "submit.sh")
 
-    assert [params.input.locator, params.input.experiment].count(None) != 0
-    if params.input.locator is not None:
-      locator_file = os.path.join(trialdir, "data.loc")
-      shutil.copyfile(params.input.locator, locator_file)
-      data_str += locator_file
+        extra_str = ""
+        data_str = ""
 
-    from xfel.ui import known_dials_dispatchers
-    if params.input.dispatcher in known_dials_dispatchers:
-      import importlib
-      dispatcher_params = importlib.import_module(known_dials_dispatchers[params.input.dispatcher]).phil_scope.extract()
-    else:
-      dispatcher_params = None
+        assert [params.input.locator, params.input.experiment].count(None) != 0
+        if params.input.locator is not None:
+            locator_file = os.path.join(trialdir, "data.loc")
+            shutil.copyfile(params.input.locator, locator_file)
+            data_str += locator_file
 
-    if params.input.experiment is None:
-      if hasattr(dispatcher_params, 'input') and hasattr(dispatcher_params.input, 'trial'):
-        assert hasattr(dispatcher_params.input, 'run_num')
-        data_str += " input.trial=%s input.run_num=%s" % ( # pass along for logging
-          params.input.trial, params.input.run_num)
-    else:
-      data_str += " input.trial=%s input.experiment=%s input.run_num=%s" % (
-        params.input.trial, params.input.experiment, params.input.run_num)
+        from xfel.ui import known_dials_dispatchers
 
-    for arg in dispatcher_args:
-      extra_str += " %s" % arg
+        if params.input.dispatcher in known_dials_dispatchers:
+            import importlib
 
-    if params.input.target is not None:
-      extra_str += " %s" % params.input.target
+            dispatcher_params = importlib.import_module(
+                known_dials_dispatchers[params.input.dispatcher]
+            ).phil_scope.extract()
+        else:
+            dispatcher_params = None
 
-    if hasattr(dispatcher_params, 'input') and hasattr(dispatcher_params.input, 'rungroup') and params.input.rungroup is not None:
-      data_str += " input.rungroup=%d" % params.input.rungroup
+        if params.input.experiment is None:
+            if hasattr(dispatcher_params, "input") and hasattr(
+                dispatcher_params.input, "trial"
+            ):
+                assert hasattr(dispatcher_params.input, "run_num")
+                data_str += (
+                    " input.trial=%s input.run_num=%s"
+                    % (  # pass along for logging
+                        params.input.trial,
+                        params.input.run_num,
+                    )
+                )
+        else:
+            data_str += " input.trial=%s input.experiment=%s input.run_num=%s" % (
+                params.input.trial,
+                params.input.experiment,
+                params.input.run_num,
+            )
 
-    command = "%s %s output.output_dir=%s %s %s" % (
-      params.input.dispatcher, data_str, output_dir,
-      logging_str, extra_str
-    )
+        for arg in dispatcher_args:
+            extra_str += " %s" % arg
 
-    job_name = "r%s"%params.input.run_num
+        if params.input.target is not None:
+            extra_str += " %s" % params.input.target
 
-    submission_id = do_submit(command, submit_path, stdoutdir, params.mp, job_name=job_name, dry_run=params.dry_run)
-    print("Job submitted.  Output in", trialdir)
-    return submission_id
+        if (
+            hasattr(dispatcher_params, "input")
+            and hasattr(dispatcher_params.input, "rungroup")
+            and params.input.rungroup is not None
+        ):
+            data_str += " input.rungroup=%d" % params.input.rungroup
+
+        command = "%s %s output.output_dir=%s %s %s" % (
+            params.input.dispatcher,
+            data_str,
+            output_dir,
+            logging_str,
+            extra_str,
+        )
+
+        job_name = "r%s" % params.input.run_num
+
+        submission_id = do_submit(
+            command,
+            submit_path,
+            stdoutdir,
+            params.mp,
+            job_name=job_name,
+            dry_run=params.dry_run,
+        )
+        print("Job submitted.  Output in", trialdir)
+        return submission_id
+
 
 if __name__ == "__main__":
-  script = Script()
-  script.run()
+    script = Script()
+    script.run()

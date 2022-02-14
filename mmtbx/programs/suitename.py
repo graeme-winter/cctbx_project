@@ -24,55 +24,62 @@ from iotbx.cli_parser import CCTBXParser
 from libtbx.program_template import ProgramTemplate
 from libtbx.utils import multi_out, show_total_time
 
-#import libtbx.load_env
-#from libtbx.utils import Usage
+# import libtbx.load_env
+# from libtbx.utils import Usage
 
 import os, sys
 
+
 def run(args):
-  "The main program, if run from CCTBX / PHENIX."
-  logger = multi_out()
-  logger.register('stderr', sys.stderr)
-  logger2 = multi_out()
-  logger2.register('stdout', sys.stdout)
-  logger3 = multi_out()
-  # TO DIAGNOSE OPTIONS TROUBLES:
-  # logger3.register('verbiage', open("suitename.stderr.log", "w"))
+    "The main program, if run from CCTBX / PHENIX."
+    logger = multi_out()
+    logger.register("stderr", sys.stderr)
+    logger2 = multi_out()
+    logger2.register("stdout", sys.stdout)
+    logger3 = multi_out()
+    # TO DIAGNOSE OPTIONS TROUBLES:
+    # logger3.register('verbiage', open("suitename.stderr.log", "w"))
 
-  parser = dualparse.parseArgs(Program, logger3)
-  working_phil = parser.working_phil
-  options = working_phil.extract().suitename
+    parser = dualparse.parseArgs(Program, logger3)
+    working_phil = parser.working_phil
+    options = working_phil.extract().suitename
 
-  # now we call into the core of suitename itself
-  if options.version:
-      print(version, file=logger2)
-      return
-  if options.infile == "" or options.infile =="-" or options.residuein or options.suitein:
-      # let the core figure out the input
-      main(optionsIn=options, outFile=logger2, errorFile=logger)
-  else:
-      type, ext = analyzeFileType(options.infile)
-      if type=="":
-        logger.write("File extension "+str(ext)+" not recognized\n")
+    # now we call into the core of suitename itself
+    if options.version:
+        print(version, file=logger2)
         return
-      if type == "pdb":
-          suites.main(options=options, outFile=logger2, errorFile=logger)
-      else:
-        # help the core figure out the input file type
-        if type == "kinemage":
-          options.suitein = True
-        elif type == "dangle":
-          options.residuein = True
+    if (
+        options.infile == ""
+        or options.infile == "-"
+        or options.residuein
+        or options.suitein
+    ):
+        # let the core figure out the input
         main(optionsIn=options, outFile=logger2, errorFile=logger)
+    else:
+        type, ext = analyzeFileType(options.infile)
+        if type == "":
+            logger.write("File extension " + str(ext) + " not recognized\n")
+            return
+        if type == "pdb":
+            suites.main(options=options, outFile=logger2, errorFile=logger)
+        else:
+            # help the core figure out the input file type
+            if type == "kinemage":
+                options.suitein = True
+            elif type == "dangle":
+                options.residuein = True
+            main(optionsIn=options, outFile=logger2, errorFile=logger)
 
 
-extensionList={
+extensionList = {
     "pdb": "pdb",
     "cif": "pdb",
     "kin": "kinemage",
     "dangle": "dangle",
     "suitegeom": "dangle",
 }
+
 
 def analyzeFileType(filename):
     base, extension = os.path.splitext(filename)
@@ -82,16 +89,19 @@ def analyzeFileType(filename):
 
 
 class Program(ProgramTemplate):
-  prog = os.getenv('LIBTBX_DISPATCHER_NAME')
-  program_name = "suitename"
-  description="""
+    prog = os.getenv("LIBTBX_DISPATCHER_NAME")
+    program_name = "suitename"
+    description = (
+        """
    < insert help text here>
-""" % locals()
+"""
+        % locals()
+    )
 
-  # The substructure below has been commented out because it would make it more
-  # difficult to integrate with suitename's ability to run independently
-  # of CCTBX
-  master_phil_str = """
+    # The substructure below has been commented out because it would make it more
+    # difficult to integrate with suitename's ability to run independently
+    # of CCTBX
+    master_phil_str = """
     suitename {
       # input
         infile=""
@@ -161,23 +171,22 @@ class Program(ProgramTemplate):
       }
 """
 
-# might add:
-        # altidval="A"
-        #   .type=str
-        #   .help="which alternate conformer to use (A, B, etc)"
-#
-  datatypes = ['model', 'phil']  # also
-  data_manager_options = ['model_skip_expand_with_mtrix']
-  known_article_ids = ['molprobity']
+    # might add:
+    # altidval="A"
+    #   .type=str
+    #   .help="which alternate conformer to use (A, B, etc)"
+    #
+    datatypes = ["model", "phil"]  # also
+    data_manager_options = ["model_skip_expand_with_mtrix"]
+    known_article_ids = ["molprobity"]
 
-  def validate(self):
-    pass
+    def validate(self):
+        pass
 
-  def run(self, args):
-    pass
+    def run(self, args):
+        pass
 
-
-  # end of class Program
+    # end of class Program
 
 
 # def rest_of_old_run(args):  -- an intermediate state, outdated technique
@@ -199,7 +208,7 @@ class Program(ProgramTemplate):
 #     parser.data_manager, phil1, logger=logger2)
 #   main()
 
-#=============================================================================
+# =============================================================================
 # def run(args):
 #
 #   # create parser
@@ -232,5 +241,5 @@ class Program(ProgramTemplate):
 #   show_total_time(out=logger)
 
 # =============================================================================
-if __name__ == '__main__':
-  run(sys.argv[1:])
+if __name__ == "__main__":
+    run(sys.argv[1:])

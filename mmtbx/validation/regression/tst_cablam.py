@@ -169,46 +169,49 @@ SUMMARY: 0 residues (0.00%) are correctable to helix, 1 residues (0.66%) are cor
 ref_cablam_oneline = """pdbid:151:1.3:3.3:0.00
 """
 
-class cablam_test_string():
-  #I wrote the regression test to use a class with a custom .write() method as a
-  #  proof of principle for learning OOP and to see if I could. Possible because
-  #  all my print functions accept an optional writeto= variable.
-  def write(self,string):
-    self.output += str(string)
-  def __init__(self):
-    self.output = ""
+
+class cablam_test_string:
+    # I wrote the regression test to use a class with a custom .write() method as a
+    #  proof of principle for learning OOP and to see if I could. Possible because
+    #  all my print functions accept an optional writeto= variable.
+    def write(self, string):
+        self.output += str(string)
+
+    def __init__(self):
+        self.output = ""
+
 
 def exercise_cablam():
-  regression_pdb = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/pdb103l.ent",
-    test=os.path.isfile) #This is the same file used for tst_kinemage.py
-  if (regression_pdb is None):
-    print("Skipping exercise_cablam(): input pdb (pdb103l.ent) not available")
-    return
-  #-----
-  pdb_io = pdb.input(regression_pdb)
-  pdbid = os.path.basename(regression_pdb)
-  hierarchy = pdb_io.construct_hierarchy()
+    regression_pdb = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/pdb103l.ent", test=os.path.isfile
+    )  # This is the same file used for tst_kinemage.py
+    if regression_pdb is None:
+        print("Skipping exercise_cablam(): input pdb (pdb103l.ent) not available")
+        return
+    # -----
+    pdb_io = pdb.input(regression_pdb)
+    pdbid = os.path.basename(regression_pdb)
+    hierarchy = pdb_io.construct_hierarchy()
 
-  output_holder = cablam_test_string()
+    output_holder = cablam_test_string()
 
-  cablamalyze = cablam.cablamalyze(
-    pdb_hierarchy = hierarchy,
-    outliers_only=False,
-    out=output_holder,
-    quiet=False)
+    cablamalyze = cablam.cablamalyze(
+        pdb_hierarchy=hierarchy, outliers_only=False, out=output_holder, quiet=False
+    )
 
-  cablamalyze.as_oneline()
-  assert not show_diff(output_holder.output , ref_cablam_oneline)
+    cablamalyze.as_oneline()
+    assert not show_diff(output_holder.output, ref_cablam_oneline)
 
-  output_holder.output = ""
+    output_holder.output = ""
 
-  cablamalyze.as_text()
-  assert not show_diff(output_holder.output , ref_cablam_text)
+    cablamalyze.as_text()
+    assert not show_diff(output_holder.output, ref_cablam_text)
+
 
 def run():
-  exercise_cablam()
-  print("OK")
+    exercise_cablam()
+    print("OK")
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

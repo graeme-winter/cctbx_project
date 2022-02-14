@@ -3,10 +3,10 @@ import six
 from six.moves import range
 from six.moves import zip
 
-class pcr_parser(object):
 
-  def __init__(self, inputstring=None, pcrfile=None, enforce_valid_comments=True):
-    """Function to parse a FullProf command file into a ConfigObj
+class pcr_parser(object):
+    def __init__(self, inputstring=None, pcrfile=None, enforce_valid_comments=True):
+        """Function to parse a FullProf command file into a ConfigObj
 
     It was modeled according to the FullProf manual and actual output
     files from FullProf and still far from being complete.
@@ -15,216 +15,252 @@ class pcr_parser(object):
     would format it.
     :type inputstring: string
     """
-    from configobj import ConfigObj
-    self.LO = 0
-    self.cfg = ConfigObj()
-    self.lines = inputstring.splitlines()
-    self.enforce_valid_comments = enforce_valid_comments
-    for line in self.lines:
-      print(line) # for debugging
-    if not self.lines[1].startswith("!"):
-      if self.enforce_valid_comments:
-        raise ValueError("""\
+        from configobj import ConfigObj
+
+        self.LO = 0
+        self.cfg = ConfigObj()
+        self.lines = inputstring.splitlines()
+        self.enforce_valid_comments = enforce_valid_comments
+        for line in self.lines:
+            print(line)  # for debugging
+        if not self.lines[1].startswith("!"):
+            if self.enforce_valid_comments:
+                raise ValueError(
+                    """\
         This function only works with correctly commented FullProf files!
-        Please run fp2k on your input file first.""")
-      else:
-        for line in self.lines.copy():
-          if line.startswith("!"):
-            self.lines.remove(line)
-    self._parse()
+        Please run fp2k on your input file first."""
+                )
+            else:
+                for line in self.lines.copy():
+                    if line.startswith("!"):
+                        self.lines.remove(line)
+        self._parse()
 
-  def __get_next_line(self, raw=False):
-    self.LO += 1    # (increment line counter)
-    if raw:
-      return self.lines[self.LO]
-    else:
-      return self.lines[self.LO].split()
+    def __get_next_line(self, raw=False):
+        self.LO += 1  # (increment line counter)
+        if raw:
+            return self.lines[self.LO]
+        else:
+            return self.lines[self.LO].split()
 
-  def __parse_line(self, dict_to_append_to, KEYS, typeselect=" "):
-    linevals = self.__get_next_line()
-    i = 0
-    for val in KEYS.split(", "):
-      if len(linevals) < 1: break
-      if len(typeselect) > i:
-        typesel = typeselect[i].lower()
-      else:
-        typsel = typeselect[-1].lower()
-      if typesel == "i":   # integer
-        dict_to_append_to[val.strip()] = int(linevals.pop(0))
-      elif typesel == "f": # float
-        dict_to_append_to[val.strip()] = float(linevals.pop(0))
-      else:
-        dict_to_append_to[val.strip()] = linevals.pop(0)
-      i += 1
+    def __parse_line(self, dict_to_append_to, KEYS, typeselect=" "):
+        linevals = self.__get_next_line()
+        i = 0
+        for val in KEYS.split(", "):
+            if len(linevals) < 1:
+                break
+            if len(typeselect) > i:
+                typesel = typeselect[i].lower()
+            else:
+                typsel = typeselect[-1].lower()
+            if typesel == "i":  # integer
+                dict_to_append_to[val.strip()] = int(linevals.pop(0))
+            elif typesel == "f":  # float
+                dict_to_append_to[val.strip()] = float(linevals.pop(0))
+            else:
+                dict_to_append_to[val.strip()] = linevals.pop(0)
+            i += 1
 
-  def __check_comment(self, expected_comment="!"):
-    if self.enforce_valid_comments:
-      self.LO += 1
-      line = self.lines[self.LO]
-      if not line.startswith(expected_comment):
-        raise ValueError("Expected to find comment '{comm}',\
-                         but found '{line}'".format(expected_comment, line))
+    def __check_comment(self, expected_comment="!"):
+        if self.enforce_valid_comments:
+            self.LO += 1
+            line = self.lines[self.LO]
+            if not line.startswith(expected_comment):
+                raise ValueError(
+                    "Expected to find comment '{comm}',\
+                         but found '{line}'".format(
+                        expected_comment, line
+                    )
+                )
 
-  def extract_structures(self):
-    structures = {}
-    for i in range(len(self.cfg['phases'])):
-      structures[i+1]= self.extract_structure(phase_nr=i+1)
-    return structures
+    def extract_structures(self):
+        structures = {}
+        for i in range(len(self.cfg["phases"])):
+            structures[i + 1] = self.extract_structure(phase_nr=i + 1)
+        return structures
 
+    def extract_structure(self, phase_nr=1):
+        """This method tries to extract the crystal structure from the parsed pcrfile.
 
-  def extract_structure(self, phase_nr=1):
-    """This method tries to extract the crystal structure from the parsed pcrfile.
+        :returns: the extracted structure
+        :rtype: cctbx.xray.structure
+        """
+        from cctbx import xray
+        from cctbx import crystal
+        from cctbx.array_family import flex
 
-    :returns: the extracted structure
-    :rtype: cctbx.xray.structure
-    """
-    from cctbx import xray
-    from cctbx import crystal
-    from cctbx.array_family import flex
-    p = self.cfg['phases'][str(phase_nr)]
-    atoms = p['atoms']
-    unit_cell = [ p['a'], p['b'], p['c'], p['alpha'], p['beta'], p['gamma'] ]
-    special_position_settings=crystal.special_position_settings(
-              crystal_symmetry=crystal.symmetry(
-                    unit_cell=unit_cell,
-                    space_group_symbol=p['SYMB']))
-    scatterers = []
-    for k, a in six.iteritems(atoms):
-      scatterers.append(xray.scatterer(label=a['LABEL'],
-                                       scattering_type=a['NTYP'],
-                                       site=(a['X'], a['Y'], a['Z']),
-                                       b=a['B']))
-    scatterers_flex=flex.xray_scatterer(scatterers)
-    structure = xray.structure(special_position_settings=special_position_settings,
-                               scatterers=scatterers_flex)
-    return structure.as_py_code()
+        p = self.cfg["phases"][str(phase_nr)]
+        atoms = p["atoms"]
+        unit_cell = [p["a"], p["b"], p["c"], p["alpha"], p["beta"], p["gamma"]]
+        special_position_settings = crystal.special_position_settings(
+            crystal_symmetry=crystal.symmetry(
+                unit_cell=unit_cell, space_group_symbol=p["SYMB"]
+            )
+        )
+        scatterers = []
+        for k, a in six.iteritems(atoms):
+            scatterers.append(
+                xray.scatterer(
+                    label=a["LABEL"],
+                    scattering_type=a["NTYP"],
+                    site=(a["X"], a["Y"], a["Z"]),
+                    b=a["B"],
+                )
+            )
+        scatterers_flex = flex.xray_scatterer(scatterers)
+        structure = xray.structure(
+            special_position_settings=special_position_settings,
+            scatterers=scatterers_flex,
+        )
+        return structure.as_py_code()
 
-  def _parse(self):
-    """Function to parse a FullProf command file into a ConfigObj
-    """
-    # XXX Todo: Implement a lot more (TOF, special cases)
-    self.cfg['TITLE'] = self.lines[0][5:].strip()
-    if self.enforce_valid_comments:
-      for line in self.lines:
-        if line.startswith("!Job "): break
-        self.LO += 1
-    # alias private class functions for conveniance
-    get_next_line = self.__get_next_line
-    parse_line = self.__parse_line
-    check_comment = self.__check_comment
-    parse_line(self.cfg,
-      'JOBTYP, NPROF, NPHASE, NBCKGD, NEXCRG, NSCAT, NORI, IDUM, IWGT,\
-      ILOR, IASG, IRESO, ISTEP, NRELL, ICRYG, IXUNIT, ICORR', "i")
-    if self.cfg['IRESO'] != 0:
-      raise ValueError("IRESO<>0 not supported (yet)! IRESO={}".format(self.cfg['IRESO']))
-    check_comment("!")
-    check_comment("!Ipr ")
-    parse_line(self.cfg,
-      'IOT, IPL, IPC, MAT, NXT, LST1, LST2, LST3, IPL1, IPL2, INSTRM,\
-      JCIL, JSY, JLKH, JFOU, ISHOR, IANALY', "i")
-    check_comment("!")
-    check_comment("! Lambda1 ")
-    parse_line(self.cfg,
-      'LAMDA1, LAMDA2, RATIO, BKPOS, WDT, CTHM, TMR, RLIM, K', "f")
-    check_comment("!")
-    check_comment("!NCY ")
-    parse_line(self.cfg,
-      'MCYCLE, EPS, RELAX1, RELAX2, RELAX3, RELAX4, THMIN, STEP, THMAX,\
-      ALPSD, SENT0', "if")
-    if self.cfg['ICRYG'] == 0:
-      NBCKGD = self.cfg['NBCKGD']
-      if NBCKGD > 2 or NBCKGD < -3:
+    def _parse(self):
+        """Function to parse a FullProf command file into a ConfigObj"""
+        # XXX Todo: Implement a lot more (TOF, special cases)
+        self.cfg["TITLE"] = self.lines[0][5:].strip()
+        if self.enforce_valid_comments:
+            for line in self.lines:
+                if line.startswith("!Job "):
+                    break
+                self.LO += 1
+        # alias private class functions for conveniance
+        get_next_line = self.__get_next_line
+        parse_line = self.__parse_line
+        check_comment = self.__check_comment
+        parse_line(
+            self.cfg,
+            "JOBTYP, NPROF, NPHASE, NBCKGD, NEXCRG, NSCAT, NORI, IDUM, IWGT,\
+      ILOR, IASG, IRESO, ISTEP, NRELL, ICRYG, IXUNIT, ICORR",
+            "i",
+        )
+        if self.cfg["IRESO"] != 0:
+            raise ValueError(
+                "IRESO<>0 not supported (yet)! IRESO={}".format(self.cfg["IRESO"])
+            )
         check_comment("!")
-        check_comment("! 2Theta")
-        # extract background from file
-        background = []
-        for i in range(abs(NBCKGD)):
-          linevals = get_next_line()
-          background += ( float(linevals[0]), float(linevals[1]) )
-        self.cfg['background'] = background
-      #check_comment("!")
-      #check_comment("! Excluded ")
-      # XXX Todo: implement
-    check_comment("!")
-    check_comment("!")
-    self.cfg['MAXS'] = int(get_next_line()[0])
-    if self.cfg['ICRYG'] == 0:
-      check_comment("!")
-      check_comment("!  Zero ")
-      parse_line(self.cfg,
-        'ZER, FLGZER, SYCOS, FLCOS, SYSIN, FLSYN, LAMBDA, FLAMBDA, IGLMORE', "f"*8+"i")
-      if self.cfg['IGLMORE'] == 1:
+        check_comment("!Ipr ")
+        parse_line(
+            self.cfg,
+            "IOT, IPL, IPC, MAT, NXT, LST1, LST2, LST3, IPL1, IPL2, INSTRM,\
+      JCIL, JSY, JLKH, JFOU, ISHOR, IANALY",
+            "i",
+        )
         check_comment("!")
-        check_comment("! Microabsorption")
-        check_comment("!   P0 ")
-        parse_line(self.cfg, 'CPO, Cp, CCp, Tau, CTau', "f")
-      check_comment("!   Background")
-      linevals = get_next_line()
-      lineflags = get_next_line()
-      backgroundpoly = {}
-      i = 0
-      for (v, f) in zip(linevals, lineflags):
-        backgroundpoly[str(i)] = [ v, f ]
-        i += 1
-      self.cfg['backgroundpoly'] = backgroundpoly
-    phases = {}
-    for p in range(self.cfg['NPHASE']):
-      check_comment("!-------")
-      check_comment("!  Data for PHASE")
-      check_comment("!-------")
-      phase = {}
-      phase['PHSNM'] = get_next_line()
-      check_comment("!")
-      check_comment("!Nat ")
-      parse_line(phase, 'NAT, NDIST, NMAGC, PREF1, PREF2, PREF3,\
-        JBT, IRF, ISYM, ISTR, IFURT, ATZ, NVK, NPRO, IMORE', "iiifffiiiiifiii")
-      if phase['IMORE'] != 0:
-        # XXX Todo: read more phase data
-        pass
-      check_comment("!")
-      phase['SYMB'] = get_next_line(raw=True)[:20].strip()
-      if phase['ISYM'] != 0:
-        # XXX Todo: read more phase data
-        pass
-      check_comment("!Atom ")
-      atoms = {}
-      for a in range(phase['NAT']):
-        atom = {}
-        parse_line(atom,
-          'LABEL, NTYP, X, Y, Z, B, N, IOPIN, IOPFIN, N_Type', "ssfffffiii")
-        parse_line(atom,
-          'CX, CY, CZ, CB, CN, CMx, CMy, CMz', "f")
-        atoms[str(a)] = atom
-      phase['atoms'] = atoms
-      check_comment("!-------> Profile ")
-      check_comment("!  Scale ")
-      parse_line(phase, 'S, GAM1, Bov, STR1, STR2, STR3, IstrainModel', "ffffffi")
-      parse_line(phase, 'CS, FLGAM1, CBov, CSTR1, CSTR2, CSTR3', "f")
-      if phase['IRF'] == 4:
-        # XXX Todo: read more phase data
-        pass
-      else:
-        check_comment("!       U")
-        parse_line(phase, 'U, V, W, X, Y, IG, SZ, IsizeModel', "fffffffi")
-        parse_line(phase, 'CU, CV, CW, CX, CY  CIG  CSZ', "f")
-      check_comment("!     a ")
-      parse_line(phase, 'a, b, c, alpha, beta, gamma', "f")
-      parse_line(phase, 'CA, CB, CC, CD, CE, CF', "f")
-      check_comment("!  Pref1 ")
-      parse_line(phase, 'G1, G2, Pas1, Pas2, Pas3, Pas4', "f")
-      parse_line(phase, 'CG1, CG2, CPas1, CPas2, CPas3, CPas4', "f")
-      if self.cfg['RATIO'] < 0:
-        check_comment("!Additional U,V,W")
-        parse_line(phase, 'U2, V2, W2', "f")
-        parse_line(phase, 'CU2, CV2, CW2', "f")
+        check_comment("! Lambda1 ")
+        parse_line(
+            self.cfg, "LAMDA1, LAMDA2, RATIO, BKPOS, WDT, CTHM, TMR, RLIM, K", "f"
+        )
+        check_comment("!")
+        check_comment("!NCY ")
+        parse_line(
+            self.cfg,
+            "MCYCLE, EPS, RELAX1, RELAX2, RELAX3, RELAX4, THMIN, STEP, THMAX,\
+      ALPSD, SENT0",
+            "if",
+        )
+        if self.cfg["ICRYG"] == 0:
+            NBCKGD = self.cfg["NBCKGD"]
+            if NBCKGD > 2 or NBCKGD < -3:
+                check_comment("!")
+                check_comment("! 2Theta")
+                # extract background from file
+                background = []
+                for i in range(abs(NBCKGD)):
+                    linevals = get_next_line()
+                    background += (float(linevals[0]), float(linevals[1]))
+                self.cfg["background"] = background
+            # check_comment("!")
+            # check_comment("! Excluded ")
+            # XXX Todo: implement
+        check_comment("!")
+        check_comment("!")
+        self.cfg["MAXS"] = int(get_next_line()[0])
+        if self.cfg["ICRYG"] == 0:
+            check_comment("!")
+            check_comment("!  Zero ")
+            parse_line(
+                self.cfg,
+                "ZER, FLGZER, SYCOS, FLCOS, SYSIN, FLSYN, LAMBDA, FLAMBDA, IGLMORE",
+                "f" * 8 + "i",
+            )
+            if self.cfg["IGLMORE"] == 1:
+                check_comment("!")
+                check_comment("! Microabsorption")
+                check_comment("!   P0 ")
+                parse_line(self.cfg, "CPO, Cp, CCp, Tau, CTau", "f")
+            check_comment("!   Background")
+            linevals = get_next_line()
+            lineflags = get_next_line()
+            backgroundpoly = {}
+            i = 0
+            for (v, f) in zip(linevals, lineflags):
+                backgroundpoly[str(i)] = [v, f]
+                i += 1
+            self.cfg["backgroundpoly"] = backgroundpoly
+        phases = {}
+        for p in range(self.cfg["NPHASE"]):
+            check_comment("!-------")
+            check_comment("!  Data for PHASE")
+            check_comment("!-------")
+            phase = {}
+            phase["PHSNM"] = get_next_line()
+            check_comment("!")
+            check_comment("!Nat ")
+            parse_line(
+                phase,
+                "NAT, NDIST, NMAGC, PREF1, PREF2, PREF3,\
+        JBT, IRF, ISYM, ISTR, IFURT, ATZ, NVK, NPRO, IMORE",
+                "iiifffiiiiifiii",
+            )
+            if phase["IMORE"] != 0:
+                # XXX Todo: read more phase data
+                pass
+            check_comment("!")
+            phase["SYMB"] = get_next_line(raw=True)[:20].strip()
+            if phase["ISYM"] != 0:
+                # XXX Todo: read more phase data
+                pass
+            check_comment("!Atom ")
+            atoms = {}
+            for a in range(phase["NAT"]):
+                atom = {}
+                parse_line(
+                    atom,
+                    "LABEL, NTYP, X, Y, Z, B, N, IOPIN, IOPFIN, N_Type",
+                    "ssfffffiii",
+                )
+                parse_line(atom, "CX, CY, CZ, CB, CN, CMx, CMy, CMz", "f")
+                atoms[str(a)] = atom
+            phase["atoms"] = atoms
+            check_comment("!-------> Profile ")
+            check_comment("!  Scale ")
+            parse_line(phase, "S, GAM1, Bov, STR1, STR2, STR3, IstrainModel", "ffffffi")
+            parse_line(phase, "CS, FLGAM1, CBov, CSTR1, CSTR2, CSTR3", "f")
+            if phase["IRF"] == 4:
+                # XXX Todo: read more phase data
+                pass
+            else:
+                check_comment("!       U")
+                parse_line(phase, "U, V, W, X, Y, IG, SZ, IsizeModel", "fffffffi")
+                parse_line(phase, "CU, CV, CW, CX, CY  CIG  CSZ", "f")
+            check_comment("!     a ")
+            parse_line(phase, "a, b, c, alpha, beta, gamma", "f")
+            parse_line(phase, "CA, CB, CC, CD, CE, CF", "f")
+            check_comment("!  Pref1 ")
+            parse_line(phase, "G1, G2, Pas1, Pas2, Pas3, Pas4", "f")
+            parse_line(phase, "CG1, CG2, CPas1, CPas2, CPas3, CPas4", "f")
+            if self.cfg["RATIO"] < 0:
+                check_comment("!Additional U,V,W")
+                parse_line(phase, "U2, V2, W2", "f")
+                parse_line(phase, "CU2, CV2, CW2", "f")
 
-      phases[str(p+1)] = phase
-    self.cfg['phases'] = phases
+            phases[str(p + 1)] = phase
+        self.cfg["phases"] = phases
 
 
-if __name__ == '__main__':
-  # just a little test for debugging
-  testfile1="""\
+if __name__ == "__main__":
+    # just a little test for debugging
+    testfile1 = """\
 COMM  CeO2 CSIRO Test 25-143
 ! Current global Chi2 (Bragg contrib.) =      11.67
 ! Files => DAT-file: ce1.dat,  PCR-file: ce1
@@ -289,7 +325,7 @@ O      O       0.25000  0.25000  0.25000  0.92218   0.04000   0   0   0    0  # 
       25.000     143.000       1
 """
 
-  testfile2="""\
+    testfile2 = """\
 COMM unnamed
 ! Files => DAT-file: rnd_27A_15L_10M_02H_P_1_25_,  PCR-file: rnd_27A_15L_10M_02H_P_1_25_
 !Job Npr Nph Nba Nex Nsc Nor Dum Iwg Ilo Ias Res Ste Nre Cry Uni Cor Opt Aut
@@ -392,8 +428,8 @@ Ti10  Ti      0.49678  0.67274  0.97981  0.39478   1.00000   0   0   0    0
 !  2Th1/TOF1    2Th2/TOF2  Pattern # 1
       10.000     100.000       1
 """
-  x = pcr_parser(testfile1)
-  print(x.cfg)
-  x = pcr_parser(testfile2)
-  print(x.cfg)
-  print(x.extract_structure())
+    x = pcr_parser(testfile1)
+    print(x.cfg)
+    x = pcr_parser(testfile2)
+    print(x.cfg)
+    print(x.extract_structure())

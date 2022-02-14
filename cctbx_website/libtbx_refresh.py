@@ -4,4 +4,4 @@ import libtbx.load_env
 
 parent_dir = libtbx.env.dist_path("cctbx_website", default=None)
 if parent_dir is not None:
-  run(parent_dir)
+    run(parent_dir)

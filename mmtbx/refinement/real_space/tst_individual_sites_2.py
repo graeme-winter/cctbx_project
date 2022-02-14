@@ -1713,64 +1713,70 @@ ATOM   1700  OXT CYS L 214      16.410  11.577  11.930  1.00 93.46           O
 TER
 """
 
+
 def get_pdb_inputs(pdb_str):
-  ppf = mmtbx.utils.process_pdb_file_srv().process_pdb_files(
-    raw_records=pdb_str.splitlines())[0]
-  xrs = ppf.xray_structure(show_summary = False)
-  restraints_manager = mmtbx.restraints.manager(
-    geometry      = ppf.geometry_restraints_manager(show_energies = False),
-    normalization = True)
-  return group_args(
-    ph  = ppf.all_chain_proxies.pdb_hierarchy,
-    grm = restraints_manager,
-    xrs = xrs)
+    ppf = mmtbx.utils.process_pdb_file_srv().process_pdb_files(
+        raw_records=pdb_str.splitlines()
+    )[0]
+    xrs = ppf.xray_structure(show_summary=False)
+    restraints_manager = mmtbx.restraints.manager(
+        geometry=ppf.geometry_restraints_manager(show_energies=False),
+        normalization=True,
+    )
+    return group_args(
+        ph=ppf.all_chain_proxies.pdb_hierarchy, grm=restraints_manager, xrs=xrs
+    )
+
 
 def get_map(xrs):
-  f_calc = xrs.structure_factors(d_min = 1.0).f_calc()
-  fft_map = f_calc.fft_map(resolution_factor=0.25)
-  fft_map.apply_sigma_scaling()
-  return fft_map.real_map_unpadded()
+    f_calc = xrs.structure_factors(d_min=1.0).f_calc()
+    fft_map = f_calc.fft_map(resolution_factor=0.25)
+    fft_map.apply_sigma_scaling()
+    return fft_map.real_map_unpadded()
+
 
 def exercise():
-  """
-  Exercise refine "easy".
-  """
-  pi = get_pdb_inputs(pdb_str=pdb_str_1)
-  pi.ph.write_pdb_file(file_name="answer.pdb")
-  sel = pi.ph.atom_selection_cache().selection(string = "resid 1:107")
-  map_data = get_map(xrs=pi.xrs)
-  xrs = pi.xrs.deep_copy_scatterers()
-  xrs_fixed = xrs.select(selection = ~sel)
-  xrs_poor = xrs.deep_copy_scatterers()
-  xrs_poor.shake_sites_in_place(mean_distance=0.5, selection=sel)
-  #
-  x1 = xrs_poor.select(selection = sel)
-  x2 = xrs.select(selection = sel)
-  d = flex.mean(x1.distances(other=x2))
-  assert approx_equal(d, 0.5, 0.05)
-  #
-  ero = individual_sites.easy(
-    map_data                    = map_data,
-    xray_structure              = xrs_poor,
-    pdb_hierarchy               = pi.ph,
-    geometry_restraints_manager = pi.grm,
-    selection                   = sel,
-    log                         = sys.stdout)
-  xrs_refined = ero.xray_structure
-  # comapre fixed
-  x1 = xrs_refined.select(selection = ~sel)
-  d = x1.distances(other=xrs_fixed)
-  assert approx_equal(d.min_max_mean().as_tuple(), [0,0,0])
-  # compare refined
-  x1 = xrs_refined.select(selection = sel)
-  x2 = xrs.select(selection = sel)
-  d = flex.mean(x1.distances(other=x2))
-  assert d < 0.05
-  ero.pdb_hierarchy.write_pdb_file(file_name="refined.pdb")
+    """
+    Exercise refine "easy".
+    """
+    pi = get_pdb_inputs(pdb_str=pdb_str_1)
+    pi.ph.write_pdb_file(file_name="answer.pdb")
+    sel = pi.ph.atom_selection_cache().selection(string="resid 1:107")
+    map_data = get_map(xrs=pi.xrs)
+    xrs = pi.xrs.deep_copy_scatterers()
+    xrs_fixed = xrs.select(selection=~sel)
+    xrs_poor = xrs.deep_copy_scatterers()
+    xrs_poor.shake_sites_in_place(mean_distance=0.5, selection=sel)
+    #
+    x1 = xrs_poor.select(selection=sel)
+    x2 = xrs.select(selection=sel)
+    d = flex.mean(x1.distances(other=x2))
+    assert approx_equal(d, 0.5, 0.05)
+    #
+    ero = individual_sites.easy(
+        map_data=map_data,
+        xray_structure=xrs_poor,
+        pdb_hierarchy=pi.ph,
+        geometry_restraints_manager=pi.grm,
+        selection=sel,
+        log=sys.stdout,
+    )
+    xrs_refined = ero.xray_structure
+    # comapre fixed
+    x1 = xrs_refined.select(selection=~sel)
+    d = x1.distances(other=xrs_fixed)
+    assert approx_equal(d.min_max_mean().as_tuple(), [0, 0, 0])
+    # compare refined
+    x1 = xrs_refined.select(selection=sel)
+    x2 = xrs.select(selection=sel)
+    d = flex.mean(x1.distances(other=x2))
+    assert d < 0.05
+    ero.pdb_hierarchy.write_pdb_file(file_name="refined.pdb")
 
-if(__name__ == "__main__"):
-  flex.set_random_seed(10000)
-  random.seed(10000)
-  timer = user_plus_sys_time()
-  exercise()
-  print("Time: %6.2f" % timer.elapsed())
+
+if __name__ == "__main__":
+    flex.set_random_seed(10000)
+    random.seed(10000)
+    timer = user_plus_sys_time()
+    exercise()
+    print("Time: %6.2f" % timer.elapsed())

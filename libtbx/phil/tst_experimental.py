@@ -3,8 +3,10 @@ from __future__ import absolute_import, division, print_function
 import libtbx.phil
 from libtbx.phil import experimental
 
+
 def exercise():
-  master_phil = libtbx.phil.parse("""
+    master_phil = libtbx.phil.parse(
+        """
 first_prop = 0
   .type = int
 second_prop = "default text"
@@ -35,9 +37,10 @@ first_scope
       .type = floats(size=2)
   }
 }
-""")
+"""
+    )
 
-  default_str = """
+    default_str = """
 first_scope {
   key = 1
   number = 1.0
@@ -65,7 +68,7 @@ first_scope {
 }
 """
 
-  overlay_str = """
+    overlay_str = """
 first_prop = 1
 first_scope {
   key = 1
@@ -86,41 +89,43 @@ first_scope {
 }
 """
 
-  # XXX Correct use of _phil and _params?
-  default_phil = master_phil.fetch(sources=[libtbx.phil.parse(default_str)])
-  default_params = default_phil.extract()
+    # XXX Correct use of _phil and _params?
+    default_phil = master_phil.fetch(sources=[libtbx.phil.parse(default_str)])
+    default_params = default_phil.extract()
 
-  overlay_phil = master_phil.fetch(sources=[libtbx.phil.parse(overlay_str)])
-  overlay_params = overlay_phil.extract()
+    overlay_phil = master_phil.fetch(sources=[libtbx.phil.parse(overlay_str)])
+    overlay_params = overlay_phil.extract()
 
-  experimental.merge_params_by_key(default_params, overlay_params, "key")
+    experimental.merge_params_by_key(default_params, overlay_params, "key")
 
-  assert default_params.first_prop == 1
-  assert default_params.second_prop == "default text"
-  assert len(default_params.first_scope) == 2
+    assert default_params.first_prop == 1
+    assert default_params.second_prop == "default text"
+    assert len(default_params.first_scope) == 2
 
-  for fs in default_params.first_scope:
-    if (fs.key == 1):
-      assert fs.number == 2 and fs.text == "Default first scope text"
-      assert len(fs.second_scope) == 4
-      for ss in fs.second_scope:
-        if (ss.key == 0):
-          assert ss.flag == False and ss.list == [1, 0]
-        elif (ss.key == 1):
-          assert ss.flag == False and ss.list == [1, 1]
-        elif (ss.key == 2):
-          assert ss.flag is None and ss.list is None
-        elif (ss.key == 4):
-          assert ss.flag is None and ss.list == [0, 2]
+    for fs in default_params.first_scope:
+        if fs.key == 1:
+            assert fs.number == 2 and fs.text == "Default first scope text"
+            assert len(fs.second_scope) == 4
+            for ss in fs.second_scope:
+                if ss.key == 0:
+                    assert ss.flag == False and ss.list == [1, 0]
+                elif ss.key == 1:
+                    assert ss.flag == False and ss.list == [1, 1]
+                elif ss.key == 2:
+                    assert ss.flag is None and ss.list is None
+                elif ss.key == 4:
+                    assert ss.flag is None and ss.list == [0, 2]
 
-    elif (fs.key == 2):
-      assert fs.number is None and fs.text == "First key 2 text"
-      assert len(fs.second_scope) == 1
-      assert fs.second_scope[0].key == 0 and \
-          fs.second_scope[0].flag == True and \
-          fs.second_scope[0].list == [0, 1]
+        elif fs.key == 2:
+            assert fs.number is None and fs.text == "First key 2 text"
+            assert len(fs.second_scope) == 1
+            assert (
+                fs.second_scope[0].key == 0
+                and fs.second_scope[0].flag == True
+                and fs.second_scope[0].list == [0, 1]
+            )
 
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+if __name__ == "__main__":
+    exercise()
+    print("OK")

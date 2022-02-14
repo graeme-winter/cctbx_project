@@ -2,7 +2,8 @@ from __future__ import absolute_import, division, print_function
 
 import time
 from libtbx import easy_run
-#import libtbx.load_env
+
+# import libtbx.load_env
 import time
 from iotbx import pdb
 
@@ -123,38 +124,46 @@ ATOM      5  CB  ALA A  21      19.888   6.838   8.983  1.00 10.00           C
 TER
 """
 
-def exercise(prefix="tst_model_vs_data1"):
-  pdb_file = open("%s_start.pdb" % prefix, "w")
-  pdb_file.write(cryst_str)
-  pdb_file.write(pdb_str)
-  pdb_file.close()
-  cmd = " ".join([
-      "phenix.model_map",
-      "%s_start.pdb" % prefix,
-      "output_file_name_prefix=%s.map" % prefix,
-      ">%s_mm.log" % prefix])
-  print(cmd)
-  assert not easy_run.call(cmd)
-  cmd = " ".join([
-      "phenix.model_vs_map",
-      "%s_start.pdb" % prefix,
-      "%s.map.ccp4" % prefix,
-      "resolution=5",
-      ">%s_mvsm_ccp4.log" % prefix])
-  print(cmd)
-  assert not easy_run.call(cmd)
-  # xplor is not supported...
-  # cmd = " ".join([
-  #     "phenix.model_vs_map",
-  #     "%s_start.pdb" % prefix,
-  #     "%s.map.xplor" % prefix,
-  #     "resolution=5",
-  #     ">%s_mvsm_xpl.log" % prefix])
-  # print cmd
-  # assert not easy_run.call(cmd)
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print()
-  print("Time:", round(time.time()-t0, 3))
+def exercise(prefix="tst_model_vs_data1"):
+    pdb_file = open("%s_start.pdb" % prefix, "w")
+    pdb_file.write(cryst_str)
+    pdb_file.write(pdb_str)
+    pdb_file.close()
+    cmd = " ".join(
+        [
+            "phenix.model_map",
+            "%s_start.pdb" % prefix,
+            "output_file_name_prefix=%s.map" % prefix,
+            ">%s_mm.log" % prefix,
+        ]
+    )
+    print(cmd)
+    assert not easy_run.call(cmd)
+    cmd = " ".join(
+        [
+            "phenix.model_vs_map",
+            "%s_start.pdb" % prefix,
+            "%s.map.ccp4" % prefix,
+            "resolution=5",
+            ">%s_mvsm_ccp4.log" % prefix,
+        ]
+    )
+    print(cmd)
+    assert not easy_run.call(cmd)
+    # xplor is not supported...
+    # cmd = " ".join([
+    #     "phenix.model_vs_map",
+    #     "%s_start.pdb" % prefix,
+    #     "%s.map.xplor" % prefix,
+    #     "resolution=5",
+    #     ">%s_mvsm_xpl.log" % prefix])
+    # print cmd
+    # assert not easy_run.call(cmd)
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print()
+    print("Time:", round(time.time() - t0, 3))

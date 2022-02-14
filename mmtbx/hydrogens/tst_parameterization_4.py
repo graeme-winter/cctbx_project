@@ -9,72 +9,85 @@ from mmtbx.hydrogens import riding
 from libtbx.utils import null_out
 from six.moves import zip
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # This test checks the parameterization of hydrogen atoms for all H geometries
 # for each fragment, the coordinates are minimized before computation of
 # new H atom positions.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def exercise(pdb_str, use_ideal_bonds_angles):
-# --------------------------------------------------------------
-#          code to switch off CDL
-# --------------------------------------------------------------
-  #params_line = grand_master_phil_str
-  #params = iotbx.phil.parse(
-  #    input_string=params_line, process_includes=True).extract()
-  #params.pdb_interpretation.restraints_library.cdl=False
-# ---------------------------------------------------------------
+    # --------------------------------------------------------------
+    #          code to switch off CDL
+    # --------------------------------------------------------------
+    # params_line = grand_master_phil_str
+    # params = iotbx.phil.parse(
+    #    input_string=params_line, process_includes=True).extract()
+    # params.pdb_interpretation.restraints_library.cdl=False
+    # ---------------------------------------------------------------
 
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
-  model.process(make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  geometry_restraints = model.get_restraints_manager().geometry
-  xray_structure = model.get_xray_structure()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    geometry_restraints = model.get_restraints_manager().geometry
+    xray_structure = model.get_xray_structure()
 
-  sites_cart = model.get_sites_cart()
+    sites_cart = model.get_sites_cart()
 
-  grf = cctbx.geometry_restraints.flags.flags(default=True)
-  minimized = mmtbx.refinement.geometry_minimization.lbfgs(
-      sites_cart                         = sites_cart,
-      correct_special_position_tolerance = 1.0,
-      geometry_restraints_manager        = geometry_restraints,
-      geometry_restraints_flags          = grf,
-      lbfgs_termination_params           = scitbx.lbfgs.termination_parameters(
-        max_iterations=500))
-  xray_structure.set_sites_cart(sites_cart)
-  pdb_hierarchy.adopt_xray_structure(xray_structure)
-  atoms = pdb_hierarchy.atoms()
-  sites_cart = xray_structure.sites_cart()
+    grf = cctbx.geometry_restraints.flags.flags(default=True)
+    minimized = mmtbx.refinement.geometry_minimization.lbfgs(
+        sites_cart=sites_cart,
+        correct_special_position_tolerance=1.0,
+        geometry_restraints_manager=geometry_restraints,
+        geometry_restraints_flags=grf,
+        lbfgs_termination_params=scitbx.lbfgs.termination_parameters(
+            max_iterations=500
+        ),
+    )
+    xray_structure.set_sites_cart(sites_cart)
+    pdb_hierarchy.adopt_xray_structure(xray_structure)
+    atoms = pdb_hierarchy.atoms()
+    sites_cart = xray_structure.sites_cart()
 
-  riding_h_manager = riding.manager(
-    pdb_hierarchy       = pdb_hierarchy,
-    geometry_restraints = geometry_restraints,
-    use_ideal_bonds_angles = use_ideal_bonds_angles)
+    riding_h_manager = riding.manager(
+        pdb_hierarchy=pdb_hierarchy,
+        geometry_restraints=geometry_restraints,
+        use_ideal_bonds_angles=use_ideal_bonds_angles,
+    )
 
-  h_parameterization = riding_h_manager.h_parameterization
+    h_parameterization = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart = sites_cart,
-    threshold  = 0.05)
-  h_distances   = diagnostics.h_distances
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
+    h_distances = diagnostics.h_distances
 
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_parameterization) - h_parameterization.count(None)
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_parameterization) - h_parameterization.count(None)
 
-  assert (number_h_para == number_h), 'Not all H atoms are parameterized'
+    assert number_h_para == number_h, "Not all H atoms are parameterized"
 
-  for ih in h_distances:
-    labels = atoms[ih].fetch_labels()
-    if use_ideal_bonds_angles:
-      assert (h_distances[ih] < 0.03), \
-        'distance too large: %s  atom: %s (%s) residue: %s ' \
-        % (h_parameterization[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
-    else:
-      assert (h_distances[ih] < 1e-7), \
-        'distance too large: %s  atom: %s (%s) residue: %s  distance %s' \
-        % (h_parameterization[ih].htype, atoms[ih].name, ih, labels.resseq.strip(), h_distances[ih])
+    for ih in h_distances:
+        labels = atoms[ih].fetch_labels()
+        if use_ideal_bonds_angles:
+            assert (
+                h_distances[ih] < 0.03
+            ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+                h_parameterization[ih].htype,
+                atoms[ih].name,
+                ih,
+                labels.resseq.strip(),
+            )
+        else:
+            assert (
+                h_distances[ih] < 1e-7
+            ), "distance too large: %s  atom: %s (%s) residue: %s  distance %s" % (
+                h_parameterization[ih].htype,
+                atoms[ih].name,
+                ih,
+                labels.resseq.strip(),
+                h_distances[ih],
+            )
+
 
 # alg2a - flat two neighbors
 pdb_str_00 = """
@@ -170,22 +183,29 @@ ATOM     90 HG13AVAL A   7      17.463  10.015  12.354  0.44 13.27           H
 """
 
 
-#type_list_known = ['flat_2neigbs', '2tetra', '2tetra', '3neigbs', 'alg1a',
+# type_list_known = ['flat_2neigbs', '2tetra', '2tetra', '3neigbs', 'alg1a',
 #  'alg1a', 'alg1b', 'prop', 'prop', 'prop']
 
-pdb_list = [pdb_str_00, pdb_str_01, pdb_str_02, pdb_str_03,
-  pdb_str_04, pdb_str_05]
+pdb_list = [pdb_str_00, pdb_str_01, pdb_str_02, pdb_str_03, pdb_str_04, pdb_str_05]
 
-pdb_list_name = ['pdb_str_00', 'pdb_str_01', 'pdb_str_02', 'pdb_str_03',
-  'pdb_str_04', 'pdb_str_05']
+pdb_list_name = [
+    "pdb_str_00",
+    "pdb_str_01",
+    "pdb_str_02",
+    "pdb_str_03",
+    "pdb_str_04",
+    "pdb_str_05",
+]
+
 
 def run():
-  for use_ideal_bonds_angles in [True, False]:
-    print('use_ideal_bonds_angles =', use_ideal_bonds_angles)
-    for pdb_str, str_name in zip(pdb_list,pdb_list_name):
-      exercise(pdb_str=pdb_str, use_ideal_bonds_angles=use_ideal_bonds_angles)
+    for use_ideal_bonds_angles in [True, False]:
+        print("use_ideal_bonds_angles =", use_ideal_bonds_angles)
+        for pdb_str, str_name in zip(pdb_list, pdb_list_name):
+            exercise(pdb_str=pdb_str, use_ideal_bonds_angles=use_ideal_bonds_angles)
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  run()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    run()
+    print("OK. Time: %8.3f" % (time.time() - t0))

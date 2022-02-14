@@ -7,104 +7,146 @@ from libtbx.test_utils import show_diff
 
 from six.moves import cStringIO as StringIO
 
+
 def exercise_geometry_restraints_as_cif():
-  quartz = xray.structure(
-    crystal_symmetry=crystal.symmetry(
-      (5.01,5.01,5.47,90,90,120), "P6222"),
-    scatterers=flex.xray_scatterer([
-      xray.scatterer("Si", (1/2.,1/2.,1/3.)),
-      xray.scatterer("O", (0.197,-0.197,0.83333))]))
-  bond_proxies = geometry_restraints.shared_bond_simple_proxy((
-    geometry_restraints.bond_simple_proxy(
-      i_seqs=[0,1],
-      rt_mx_ji=sgtbx.rt_mx("x-y,x,z-2/3"),
-      distance_ideal=1.6,
-      weight=3.2),
-    geometry_restraints.bond_simple_proxy(
-      i_seqs=[0,1],
-      distance_ideal=1.7,
-      weight=1.8),
-  ))
-  dihedral_proxies = geometry_restraints.shared_dihedral_proxy((
-    geometry_restraints.dihedral_proxy(
-      i_seqs = [1,0,1,0],
-      sym_ops = (sgtbx.rt_mx("1+y,1-x+y, z-1/3"),
-                 sgtbx.rt_mx(),
-                 sgtbx.rt_mx("x-y,x,z-2/3"),
-                 sgtbx.rt_mx("1-x,y-x,1/3-z")),
-      angle_ideal=-30,
-      weight=2),
-    geometry_restraints.dihedral_proxy(
-      i_seqs = [1,0,1,0],
-      sym_ops = (sgtbx.rt_mx("1+y,1-x+y, z-1/3"),
-                 sgtbx.rt_mx(),
-                 sgtbx.rt_mx("-y,x-y,z-1/3"),
-                 sgtbx.rt_mx("x-y,x,1/3+z")),
-      angle_ideal=90,
-      weight=3),
-  ))
-  chirality_proxies = geometry_restraints.shared_chirality_proxy((
-    geometry_restraints.chirality_proxy(
-      i_seqs = [1,0,1,0],
-      sym_ops = (sgtbx.rt_mx("1+y,1-x+y, z-1/3"),
-                 sgtbx.rt_mx(),
-                 sgtbx.rt_mx("x-y,x,z-2/3"),
-                 sgtbx.rt_mx("1-x,y-x,1/3-z")),
-      volume_ideal=1.2,
-      both_signs=False,
-      weight=2),
-    geometry_restraints.chirality_proxy(
-      i_seqs = [1,0,1,0],
-      sym_ops = (sgtbx.rt_mx("1+y,1-x+y, z-1/3"),
-                 sgtbx.rt_mx(),
-                 sgtbx.rt_mx("x-y,x,z-2/3"),
-                 sgtbx.rt_mx("1-x,y-x,1/3-z")),
-      volume_ideal=1.2,
-      both_signs=True,
-      weight=2),
-  ))
-  angle_proxies = geometry_restraints.shared_angle_proxy((
-    geometry_restraints.angle_proxy(
-      i_seqs = [1,0,1],
-      sym_ops = (sgtbx.rt_mx("x-y,x,z-2/3"),
-                 sgtbx.rt_mx(),
-                 sgtbx.rt_mx("-y,x-y,z-1/3")),
-      angle_ideal=103,
-      weight=2),
-    geometry_restraints.angle_proxy(
-      i_seqs = [1,0,1],
-      sym_ops = (sgtbx.rt_mx("y+1,-x+y+1,z-1/3"),
-                 sgtbx.rt_mx(),
-                 sgtbx.rt_mx("-y,x-y,z-1/3")),
-      angle_ideal=110,
-      weight=5),
-    geometry_restraints.angle_proxy(
-      i_seqs = [0,1,0],
-      sym_ops = (sgtbx.rt_mx("y,-x+y,z+2/3"),
-                 sgtbx.rt_mx(),
-                 sgtbx.rt_mx("-x+y,-x,z+1/3")),
-      angle_ideal=150,
-      weight=5),
-  ))
-  bond_similarity_proxies = geometry_restraints.shared_bond_similarity_proxy((
-    geometry_restraints.bond_similarity_proxy(
-      i_seqs=[(0,1),(0,1),(0,1)],
-      sym_ops=(sgtbx.rt_mx("x-y,x,z-2/3"),
-               sgtbx.rt_mx("-y,x-y,z-1/3"),
-               sgtbx.rt_mx("y+1,-x+y+1,z-1/3")),
-      weights=(1,1,1)),
-  ))
-  cif_block = iotbx.cif.model.block()
-  iotbx.cif.restraints.add_to_cif_block(
-    cif_block, quartz,
-    bond_proxies=bond_proxies,
-    angle_proxies=angle_proxies,
-    dihedral_proxies=dihedral_proxies,
-    chirality_proxies=chirality_proxies,
-    bond_similarity_proxies=bond_similarity_proxies)
-  s = StringIO()
-  cif_block.show(out=s)
-  assert not show_diff(s.getvalue(), """\
+    quartz = xray.structure(
+        crystal_symmetry=crystal.symmetry((5.01, 5.01, 5.47, 90, 90, 120), "P6222"),
+        scatterers=flex.xray_scatterer(
+            [
+                xray.scatterer("Si", (1 / 2.0, 1 / 2.0, 1 / 3.0)),
+                xray.scatterer("O", (0.197, -0.197, 0.83333)),
+            ]
+        ),
+    )
+    bond_proxies = geometry_restraints.shared_bond_simple_proxy(
+        (
+            geometry_restraints.bond_simple_proxy(
+                i_seqs=[0, 1],
+                rt_mx_ji=sgtbx.rt_mx("x-y,x,z-2/3"),
+                distance_ideal=1.6,
+                weight=3.2,
+            ),
+            geometry_restraints.bond_simple_proxy(
+                i_seqs=[0, 1], distance_ideal=1.7, weight=1.8
+            ),
+        )
+    )
+    dihedral_proxies = geometry_restraints.shared_dihedral_proxy(
+        (
+            geometry_restraints.dihedral_proxy(
+                i_seqs=[1, 0, 1, 0],
+                sym_ops=(
+                    sgtbx.rt_mx("1+y,1-x+y, z-1/3"),
+                    sgtbx.rt_mx(),
+                    sgtbx.rt_mx("x-y,x,z-2/3"),
+                    sgtbx.rt_mx("1-x,y-x,1/3-z"),
+                ),
+                angle_ideal=-30,
+                weight=2,
+            ),
+            geometry_restraints.dihedral_proxy(
+                i_seqs=[1, 0, 1, 0],
+                sym_ops=(
+                    sgtbx.rt_mx("1+y,1-x+y, z-1/3"),
+                    sgtbx.rt_mx(),
+                    sgtbx.rt_mx("-y,x-y,z-1/3"),
+                    sgtbx.rt_mx("x-y,x,1/3+z"),
+                ),
+                angle_ideal=90,
+                weight=3,
+            ),
+        )
+    )
+    chirality_proxies = geometry_restraints.shared_chirality_proxy(
+        (
+            geometry_restraints.chirality_proxy(
+                i_seqs=[1, 0, 1, 0],
+                sym_ops=(
+                    sgtbx.rt_mx("1+y,1-x+y, z-1/3"),
+                    sgtbx.rt_mx(),
+                    sgtbx.rt_mx("x-y,x,z-2/3"),
+                    sgtbx.rt_mx("1-x,y-x,1/3-z"),
+                ),
+                volume_ideal=1.2,
+                both_signs=False,
+                weight=2,
+            ),
+            geometry_restraints.chirality_proxy(
+                i_seqs=[1, 0, 1, 0],
+                sym_ops=(
+                    sgtbx.rt_mx("1+y,1-x+y, z-1/3"),
+                    sgtbx.rt_mx(),
+                    sgtbx.rt_mx("x-y,x,z-2/3"),
+                    sgtbx.rt_mx("1-x,y-x,1/3-z"),
+                ),
+                volume_ideal=1.2,
+                both_signs=True,
+                weight=2,
+            ),
+        )
+    )
+    angle_proxies = geometry_restraints.shared_angle_proxy(
+        (
+            geometry_restraints.angle_proxy(
+                i_seqs=[1, 0, 1],
+                sym_ops=(
+                    sgtbx.rt_mx("x-y,x,z-2/3"),
+                    sgtbx.rt_mx(),
+                    sgtbx.rt_mx("-y,x-y,z-1/3"),
+                ),
+                angle_ideal=103,
+                weight=2,
+            ),
+            geometry_restraints.angle_proxy(
+                i_seqs=[1, 0, 1],
+                sym_ops=(
+                    sgtbx.rt_mx("y+1,-x+y+1,z-1/3"),
+                    sgtbx.rt_mx(),
+                    sgtbx.rt_mx("-y,x-y,z-1/3"),
+                ),
+                angle_ideal=110,
+                weight=5,
+            ),
+            geometry_restraints.angle_proxy(
+                i_seqs=[0, 1, 0],
+                sym_ops=(
+                    sgtbx.rt_mx("y,-x+y,z+2/3"),
+                    sgtbx.rt_mx(),
+                    sgtbx.rt_mx("-x+y,-x,z+1/3"),
+                ),
+                angle_ideal=150,
+                weight=5,
+            ),
+        )
+    )
+    bond_similarity_proxies = geometry_restraints.shared_bond_similarity_proxy(
+        (
+            geometry_restraints.bond_similarity_proxy(
+                i_seqs=[(0, 1), (0, 1), (0, 1)],
+                sym_ops=(
+                    sgtbx.rt_mx("x-y,x,z-2/3"),
+                    sgtbx.rt_mx("-y,x-y,z-1/3"),
+                    sgtbx.rt_mx("y+1,-x+y+1,z-1/3"),
+                ),
+                weights=(1, 1, 1),
+            ),
+        )
+    )
+    cif_block = iotbx.cif.model.block()
+    iotbx.cif.restraints.add_to_cif_block(
+        cif_block,
+        quartz,
+        bond_proxies=bond_proxies,
+        angle_proxies=angle_proxies,
+        dihedral_proxies=dihedral_proxies,
+        chirality_proxies=chirality_proxies,
+        bond_similarity_proxies=bond_similarity_proxies,
+    )
+    s = StringIO()
+    cif_block.show(out=s)
+    assert not show_diff(
+        s.getvalue(),
+        """\
 loop_
   _restr_distance_atom_site_label_1
   _restr_distance_atom_site_label_2
@@ -176,34 +218,44 @@ loop_
   Si  O  4_554  1
   Si  O  3_664  1
 
-""")
+""",
+    )
+
 
 def exercise_adp_restraints_as_cif():
-  import libtbx.load_env
-  if not libtbx.env.has_module("smtbx"):
-    print("Skipping exercise_adp_restraints_as_cif(): smtbx not available")
-    return
-  from smtbx.refinement.restraints import adp_restraints as smtbx_adp_restraints
-  import smtbx.development
-  xs = smtbx.development.sucrose()
-  rigid_bond_proxies = smtbx_adp_restraints.rigid_bond_restraints(
-    xray_structure=xs).proxies[:3]
-  rigu_proxies = smtbx_adp_restraints.rigu_restraints(
-    xray_structure=xs).proxies[:3]
-  adp_similarity_proxies = smtbx_adp_restraints.adp_similarity_restraints(
-    xray_structure=xs).proxies[:3]
-  isotropic_adp_proxies = smtbx_adp_restraints.isotropic_adp_restraints(
-    xray_structure=xs).proxies[:3]
-  cif_block = iotbx.cif.model.block()
-  iotbx.cif.restraints.add_to_cif_block(
-    cif_block, xs,
-    rigid_bond_proxies=rigid_bond_proxies,
-    rigu_proxies=rigu_proxies,
-    adp_similarity_proxies=adp_similarity_proxies,
-    isotropic_adp_proxies=isotropic_adp_proxies)
-  s = StringIO()
-  cif_block.show(out=s)
-  assert not show_diff(s.getvalue(), """\
+    import libtbx.load_env
+
+    if not libtbx.env.has_module("smtbx"):
+        print("Skipping exercise_adp_restraints_as_cif(): smtbx not available")
+        return
+    from smtbx.refinement.restraints import adp_restraints as smtbx_adp_restraints
+    import smtbx.development
+
+    xs = smtbx.development.sucrose()
+    rigid_bond_proxies = smtbx_adp_restraints.rigid_bond_restraints(
+        xray_structure=xs
+    ).proxies[:3]
+    rigu_proxies = smtbx_adp_restraints.rigu_restraints(xray_structure=xs).proxies[:3]
+    adp_similarity_proxies = smtbx_adp_restraints.adp_similarity_restraints(
+        xray_structure=xs
+    ).proxies[:3]
+    isotropic_adp_proxies = smtbx_adp_restraints.isotropic_adp_restraints(
+        xray_structure=xs
+    ).proxies[:3]
+    cif_block = iotbx.cif.model.block()
+    iotbx.cif.restraints.add_to_cif_block(
+        cif_block,
+        xs,
+        rigid_bond_proxies=rigid_bond_proxies,
+        rigu_proxies=rigu_proxies,
+        adp_similarity_proxies=adp_similarity_proxies,
+        isotropic_adp_proxies=isotropic_adp_proxies,
+    )
+    s = StringIO()
+    cif_block.show(out=s)
+    assert not show_diff(
+        s.getvalue(),
+        """\
 loop_
   _restr_U_rigid_atom_site_label_1
   _restr_U_rigid_atom_site_label_2
@@ -240,13 +292,15 @@ loop_
   O2  0.2000
   O3  0.2000
 
-""")
+""",
+    )
 
 
 def run():
-  exercise_adp_restraints_as_cif()
-  exercise_geometry_restraints_as_cif()
-  print("OK")
+    exercise_adp_restraints_as_cif()
+    exercise_geometry_restraints_as_cif()
+    print("OK")
 
-if __name__ == '__main__':
-  run()
+
+if __name__ == "__main__":
+    run()

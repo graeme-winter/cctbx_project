@@ -4,7 +4,8 @@ import iotbx.phil
 
 # standard input params for find_secondary_structure
 
-alpha_params=iotbx.phil.parse("""
+alpha_params = iotbx.phil.parse(
+    """
 
      name = Alpha helix
        .type = str
@@ -91,9 +92,11 @@ alpha_params=iotbx.phil.parse("""
        .help = Base score for helices
        .short_caption = Base score for helices
 
-""")
+"""
+)
 
-three_ten_params=iotbx.phil.parse("""
+three_ten_params = iotbx.phil.parse(
+    """
      name = 3-10 helix
        .type = str
        .help = Secondary structure name (alpha helix)
@@ -180,9 +183,11 @@ three_ten_params=iotbx.phil.parse("""
        .help = Base score for 3_10 helices
        .short_caption = Base score for 3_10 helices
 
-""")
+"""
+)
 
-pi_params=iotbx.phil.parse("""
+pi_params = iotbx.phil.parse(
+    """
      name = Pi helix
        .type = str
        .help = Secondary structure name (pi helix)
@@ -268,9 +273,11 @@ pi_params=iotbx.phil.parse("""
        .help = Base score for pi helices
        .short_caption = Base score for pi helices
 
-""")
+"""
+)
 
-beta_params=iotbx.phil.parse("""
+beta_params = iotbx.phil.parse(
+    """
 
      name = Beta strand
        .type = str
@@ -382,9 +389,11 @@ beta_params=iotbx.phil.parse("""
 
 
 
-""")
+"""
+)
 
-other_params = iotbx.phil.parse("""
+other_params = iotbx.phil.parse(
+    """
      name = Other structure
        .type = str
        .help = Secondary structure name (other)
@@ -463,4 +472,5 @@ other_params = iotbx.phil.parse("""
        .type = float
        .help = Base score for other
        .short_caption = Base score for other
-""")
+"""
+)

@@ -101,15 +101,13 @@ digraph dependencies {
 }
 """
 
+
 def test_simple_disorder():
-  ins = fnames.thpp_ins
-  model = smtbx.refinement.model.from_shelx(ins)
-  ls = model.least_squares()
-  assert str(ls.reparametrisation).strip() == \
-          expected_str_reparametrisation.strip()
-  ls.build_up()
-  covann = ls.covariance_matrix_and_annotations()
-  assert approx_equal(covann.variance_of('C7B.occ'),
-                      covann.variance_of('C7A.occ'))
-  assert approx_equal(covann.variance_of('C3.occ'),
-                      covann.variance_of('N3.occ'))
+    ins = fnames.thpp_ins
+    model = smtbx.refinement.model.from_shelx(ins)
+    ls = model.least_squares()
+    assert str(ls.reparametrisation).strip() == expected_str_reparametrisation.strip()
+    ls.build_up()
+    covann = ls.covariance_matrix_and_annotations()
+    assert approx_equal(covann.variance_of("C7B.occ"), covann.variance_of("C7A.occ"))
+    assert approx_equal(covann.variance_of("C3.occ"), covann.variance_of("N3.occ"))

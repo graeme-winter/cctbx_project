@@ -1,6 +1,6 @@
 from __future__ import division
-sbatch_template = \
-"""#!/bin/bash -l
+
+sbatch_template = """#!/bin/bash -l
 #SBATCH --qos=<queue>
 #SBATCH --job-name=<jobname>
 #SBATCH --reservation=<reservation>
@@ -25,8 +25,7 @@ srun shifter <srun_script>
 echo -n "Finished job @ t="; date +%s
 """
 
-srun_template = \
-"""#!/bin/bash
+srun_template = """#!/bin/bash
 
 #cctbx
 source /img/activate.sh

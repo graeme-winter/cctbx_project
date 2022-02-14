@@ -50,30 +50,75 @@ ATOM  99999  CD  PRO    44      39.395  26.345 -61.727  1.00 56.81      BL28 C
 
 """
 
+
 def exercise(prefix="iotbx_tst_mmcif_segids"):
-  """
-  Properly output segids when chain ids are empty. Case for Ribosome community.
-  After making it work, it should be moved to cctbx_project/iotbx/regression.
-  """
-  out = StringIO()
-  pdb_inp = iotbx.pdb.input(lines=pdb_str, source_info=None)
-  h = pdb_inp.construct_hierarchy()
-  print("Original:")
-  print(h.as_pdb_string())
-  assert len(h.only_model().chains()) == 3
-  assert [x.id for x in h.only_model().chains()] == [' ', ' ', ' ']
-  assert [x.segid for x in h.atoms()] == ['A16S', 'A16S', 'A16S', 'A16S', 'A16S',
-      'A16S', 'A16S', 'A16S', 'A16S', 'A16S', 'A16S', 'A16S', 'A16S', 'A16S',
-      'A16S', 'A16S', 'A16S', 'B23S', 'B23S', 'B23S', 'B23S', 'B23S', 'B23S',
-      'B23S', 'B23S', 'B23S', 'B23S', 'B23S', 'B23S', 'B23S', 'B23S', 'B23S',
-      'B23S', 'B23S', 'B23S', 'B23S', 'B23S', 'BL28', 'BL28', 'BL28', 'BL28',
-      'BL28', 'BL28', 'BL28']
-  cif_block = h.as_cif_block()
-  cif = iotbx.cif.model.cif()
-  cif['test'] = cif_block
-  cif.show(out=out, align_columns=True)
-  lines = out.getvalue()
-  assert "  ATOM  20  OP2  .  C    B23S  172  ?  77.56000   39.38700  -72.10600  1.000  132.48000  O  1-  B  ?  .  1" in lines
+    """
+    Properly output segids when chain ids are empty. Case for Ribosome community.
+    After making it work, it should be moved to cctbx_project/iotbx/regression.
+    """
+    out = StringIO()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str, source_info=None)
+    h = pdb_inp.construct_hierarchy()
+    print("Original:")
+    print(h.as_pdb_string())
+    assert len(h.only_model().chains()) == 3
+    assert [x.id for x in h.only_model().chains()] == [" ", " ", " "]
+    assert [x.segid for x in h.atoms()] == [
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "A16S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "B23S",
+        "BL28",
+        "BL28",
+        "BL28",
+        "BL28",
+        "BL28",
+        "BL28",
+        "BL28",
+    ]
+    cif_block = h.as_cif_block()
+    cif = iotbx.cif.model.cif()
+    cif["test"] = cif_block
+    cif.show(out=out, align_columns=True)
+    lines = out.getvalue()
+    assert (
+        "  ATOM  20  OP2  .  C    B23S  172  ?  77.56000   39.38700  -72.10600  1.000  132.48000  O  1-  B  ?  .  1"
+        in lines
+    )
+
 
 if __name__ == "__main__":
-  exercise()
+    exercise()

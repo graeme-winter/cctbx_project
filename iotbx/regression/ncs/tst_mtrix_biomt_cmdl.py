@@ -204,7 +204,7 @@ ATOM   4640  OH  TYR C 159      68.888  47.260 109.362 16.00 16.00           O
 END
 """
 
-pdb_str_1="""
+pdb_str_1 = """
 MTRIX1   1  1.000000  0.000000  0.000000        0.00000    1
 MTRIX2   1  0.000000  1.000000  0.000000        0.00000    1
 MTRIX3   1  0.000000  0.000000  1.000000        0.00000    1
@@ -231,7 +231,7 @@ TER
 END
 """
 
-pdb_str_1a="""
+pdb_str_1a = """
 CRYST1   11.101   13.080   14.163  90.00  90.00  90.00 P 1
 SCALE1      0.090082  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.076453  0.000000        0.00000
@@ -269,7 +269,7 @@ TER
 END
 """
 
-pdb_str_2="""
+pdb_str_2 = """
 MTRIX1   1  1.000000  0.000000  0.000000        0.00000    1
 MTRIX2   1  0.000000  1.000000  0.000000        0.00000    1
 MTRIX3   1  0.000000  0.000000  1.000000        0.00000    1
@@ -292,7 +292,7 @@ TER
 END
 """
 
-pdb_str_2a="""
+pdb_str_2a = """
 ATOM      1  N   THRA1   1       5.111   8.080   7.645  1.00 20.00           N
 ATOM      2  CA  THRA1   2       5.000   6.722   7.125  1.00 20.00           C
 ATOM      3  C   THRA1   3       5.075   5.694   8.249  1.00 20.00           C
@@ -326,7 +326,7 @@ TER
 END
 """
 
-pdb_str_2b="""
+pdb_str_2b = """
 HELIX    1   1 THR A    1  THR A    2  1                                   6
 SHEET    1   A 2 THR A   1  THR A   3  0
 SHEET    2   A 2 THR B   4  THR B   5 -1  O  THR B   4   N  THR A   2
@@ -352,7 +352,7 @@ TER
 END
 """
 
-pdb_str_3="""
+pdb_str_3 = """
 data_1A37
 #
 loop_
@@ -451,7 +451,7 @@ ATOM 16   O OD2 . ASP A 1 2   ? 11.821 44.453 18.866  1.00 70.41  ? ? ? ? ? ? 2 
 #
 """
 
-pdb_str_3a="""
+pdb_str_3a = """
 data_default
 _cell.angle_beta                  90.000
 _cell.angle_gamma                 120.000
@@ -531,63 +531,99 @@ loop_
    ATOM 16 OD2 . ASP A2 2 ? 46.41590 35.71682 19.98816 1.000 70.41000 O ? B ? 4 1
 """
 
-def exercise_000(file_name="tst_mtrix_biomt_cmdl_000.pdb"):
-  """
-  Make sure SS gets populated by BIOMT
-  """
 
-  of = open(file_name,"w")
-  print(pdb_str_0, file=of)
-  of.close()
-  # template when pdb_as_cif will handle BIOMT records as well...
-  # easy_run.call("phenix.pdb_as_cif %s"%file_name)
-  # for file_type in ['pdb', 'cif']:
-  for file_type in ['pdb']:
-    print("file_type:", file_type)
-    easy_run.call("phenix.pdb.biomt_reconstruction %s.%s" % (file_name[:-4], file_type))
-    pdb_inp = iotbx.pdb.input(
-      file_name="%s_BIOMT_expanded.%s" % (file_name[:-4], file_type))
+def exercise_000(file_name="tst_mtrix_biomt_cmdl_000.pdb"):
+    """
+    Make sure SS gets populated by BIOMT
+    """
+
+    of = open(file_name, "w")
+    print(pdb_str_0, file=of)
+    of.close()
+    # template when pdb_as_cif will handle BIOMT records as well...
+    # easy_run.call("phenix.pdb_as_cif %s"%file_name)
+    # for file_type in ['pdb', 'cif']:
+    for file_type in ["pdb"]:
+        print("file_type:", file_type)
+        easy_run.call(
+            "phenix.pdb.biomt_reconstruction %s.%s" % (file_name[:-4], file_type)
+        )
+        pdb_inp = iotbx.pdb.input(
+            file_name="%s_BIOMT_expanded.%s" % (file_name[:-4], file_type)
+        )
+        a = pdb_inp.extract_secondary_structure()
+        assert a.get_n_helices() == 27
+        assert a.get_n_sheets() == 9, "%d" % a.get_n_sheets()
+        # checking chain ids. If this part is failing, then something is changed in
+        # chain expanding which made chain ids in hierarchy.py:join_roots()
+        # not compatible with those used in secondary_structure.py:multiply_to_asu
+        chain_ids = [h.start_chain_id for h in a.helices]
+        assert chain_ids == [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I",
+            "J",
+            "K",
+            "L",
+            "M",
+            "N",
+            "O",
+            "P",
+            "Q",
+            "R",
+            "S",
+            "T",
+            "U",
+            "V",
+            "W",
+            "X",
+            "Y",
+            "Z",
+            "0",
+        ], chain_ids
+        # checking sheets
+        for i, sh in enumerate(a.sheets):
+            assert sh.n_strands == 2
+            assert sh.registrations[0] == None
+            assert sh.registrations[1].cur_chain_id == chain_ids[i * 3 + 1]
+            assert sh.registrations[1].prev_chain_id == chain_ids[i * 3]
+            assert sh.strands[0].start_chain_id == chain_ids[i * 3], sh.strands[
+                0
+            ].start_chain_id
+            assert sh.strands[0].end_chain_id == chain_ids[i * 3]
+            assert sh.strands[1].start_chain_id == chain_ids[i * 3 + 1], sh.strands[
+                1
+            ].start_chain_id
+            assert sh.strands[1].end_chain_id == chain_ids[i * 3 + 1]
+
+
+def exercise_001(file_name="tst_mtrix_biomt_cmdl_001.pdb"):
+    """
+    Make sure SS gets populated by MTRIX
+    """
+    of = open(file_name, "w")
+    print(pdb_str_2b, file=of)
+    of.close()
+    easy_run.call("phenix.pdb.mtrix_reconstruction %s" % file_name)
+    pdb_inp = iotbx.pdb.input(file_name="tst_mtrix_biomt_cmdl_001_MTRIX_expanded.pdb")
     a = pdb_inp.extract_secondary_structure()
-    assert a.get_n_helices() == 27
-    assert a.get_n_sheets() == 9, "%d" % a.get_n_sheets()
+    assert a.get_n_helices() == 3, a.get_n_helices()
+    assert a.get_n_sheets() == 3, "%d" % a.get_n_sheets()
     # checking chain ids. If this part is failing, then something is changed in
     # chain expanding which made chain ids in hierarchy.py:join_roots()
     # not compatible with those used in secondary_structure.py:multiply_to_asu
     chain_ids = [h.start_chain_id for h in a.helices]
-    assert chain_ids == ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
-        'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-        'W', 'X', 'Y', 'Z', '0'], chain_ids
+    assert chain_ids == ["A", "C", "E"], chain_ids
     # checking sheets
-    for i, sh in enumerate(a.sheets):
-      assert sh.n_strands == 2
-      assert sh.registrations[0] == None
-      assert sh.registrations[1].cur_chain_id == chain_ids[i*3+1]
-      assert sh.registrations[1].prev_chain_id == chain_ids[i*3]
-      assert sh.strands[0].start_chain_id == chain_ids[i*3], sh.strands[0].start_chain_id
-      assert sh.strands[0].end_chain_id == chain_ids[i*3]
-      assert sh.strands[1].start_chain_id == chain_ids[i*3+1], sh.strands[1].start_chain_id
-      assert sh.strands[1].end_chain_id == chain_ids[i*3+1]
-
-def exercise_001(file_name="tst_mtrix_biomt_cmdl_001.pdb"):
-  """
-  Make sure SS gets populated by MTRIX
-  """
-  of = open(file_name,"w")
-  print(pdb_str_2b, file=of)
-  of.close()
-  easy_run.call("phenix.pdb.mtrix_reconstruction %s"%file_name)
-  pdb_inp = iotbx.pdb.input(
-    file_name="tst_mtrix_biomt_cmdl_001_MTRIX_expanded.pdb")
-  a = pdb_inp.extract_secondary_structure()
-  assert a.get_n_helices() == 3, a.get_n_helices()
-  assert a.get_n_sheets() == 3, "%d" % a.get_n_sheets()
-  # checking chain ids. If this part is failing, then something is changed in
-  # chain expanding which made chain ids in hierarchy.py:join_roots()
-  # not compatible with those used in secondary_structure.py:multiply_to_asu
-  chain_ids = [h.start_chain_id for h in a.helices]
-  assert chain_ids == ['A', 'C', 'E'], chain_ids
-  # checking sheets
-  assert not show_diff (a.as_pdb_str(),"""\
+    assert not show_diff(
+        a.as_pdb_str(),
+        """\
 HELIX    1   1 THR A    1  THR A    2  1                                   6
 HELIX    2   2 THR C    1  THR C    2  1                                   6
 HELIX    3   3 THR E    1  THR E    2  1                                   6
@@ -596,135 +632,137 @@ SHEET    2   1 2 THR B   4  THR B   5 -1  O  THR B   4   N  THR A   2
 SHEET    1   2 2 THR C   1  THR C   3  0
 SHEET    2   2 2 THR D   4  THR D   5 -1  O  THR D   4   N  THR C   2
 SHEET    1   3 2 THR E   1  THR E   3  0
-SHEET    2   3 2 THR F   4  THR F   5 -1  O  THR F   4   N  THR E   2""")
+SHEET    2   3 2 THR F   4  THR F   5 -1  O  THR F   4   N  THR E   2""",
+    )
+
 
 def exercise_002(file_name="tst_mtrix_biomt_cmdl_002.pdb"):
-  """
-  Make sure SS is fine when expanding without MTRIX
-  """
-  of = open(file_name,"w")
-  print(pdb_str_0, file=of)
-  of.close()
-  easy_run.call("phenix.pdb.mtrix_reconstruction %s"%file_name)
-  pdb_inp = iotbx.pdb.input(
-    file_name="tst_mtrix_biomt_cmdl_002_MTRIX_expanded.pdb")
-  a = pdb_inp.extract_secondary_structure()
-  assert a.get_n_helices() == 3, a.get_n_helices()
-  assert a.get_n_sheets() == 1, "%d" % a.get_n_sheets()
-  # checking chain ids. If this part is failing, then something is changed in
-  # chain expanding which made chain ids in hierarchy.py:join_roots()
-  # not compatible with those used in secondary_structure.py:multiply_to_asu
-  chain_ids = [h.start_chain_id for h in a.helices]
-  assert chain_ids == ['A', 'B', 'C'], chain_ids
-  # checking sheets
-  for i, sh in enumerate(a.sheets):
-    assert sh.n_strands == 2
-    assert sh.registrations[0] == None
-    assert sh.registrations[1].cur_chain_id == 'B'
-    assert sh.registrations[1].prev_chain_id == 'A'
-    assert sh.strands[0].start_chain_id == 'A'
-    assert sh.strands[0].end_chain_id == 'A'
-    assert sh.strands[1].start_chain_id == 'B'
-    assert sh.strands[1].end_chain_id == 'B'
+    """
+    Make sure SS is fine when expanding without MTRIX
+    """
+    of = open(file_name, "w")
+    print(pdb_str_0, file=of)
+    of.close()
+    easy_run.call("phenix.pdb.mtrix_reconstruction %s" % file_name)
+    pdb_inp = iotbx.pdb.input(file_name="tst_mtrix_biomt_cmdl_002_MTRIX_expanded.pdb")
+    a = pdb_inp.extract_secondary_structure()
+    assert a.get_n_helices() == 3, a.get_n_helices()
+    assert a.get_n_sheets() == 1, "%d" % a.get_n_sheets()
+    # checking chain ids. If this part is failing, then something is changed in
+    # chain expanding which made chain ids in hierarchy.py:join_roots()
+    # not compatible with those used in secondary_structure.py:multiply_to_asu
+    chain_ids = [h.start_chain_id for h in a.helices]
+    assert chain_ids == ["A", "B", "C"], chain_ids
+    # checking sheets
+    for i, sh in enumerate(a.sheets):
+        assert sh.n_strands == 2
+        assert sh.registrations[0] == None
+        assert sh.registrations[1].cur_chain_id == "B"
+        assert sh.registrations[1].prev_chain_id == "A"
+        assert sh.strands[0].start_chain_id == "A"
+        assert sh.strands[0].end_chain_id == "A"
+        assert sh.strands[1].start_chain_id == "B"
+        assert sh.strands[1].end_chain_id == "B"
+
 
 def exercise_003(file_name="tst_mtrix_biomt_cmdl_003.pdb"):
-  """
-  Make sure SS is fine when expanding without BIOMT
-  """
-  of = open(file_name,"w")
-  print(pdb_str_2b, file=of)
-  of.close()
-  easy_run.call("phenix.pdb.biomt_reconstruction %s"%file_name)
-  pdb_inp = iotbx.pdb.input(
-    file_name="tst_mtrix_biomt_cmdl_003_BIOMT_expanded.pdb")
-  a = pdb_inp.extract_secondary_structure()
-  assert a.get_n_helices() == 1, a.get_n_helices()
-  assert a.get_n_sheets() == 1, "%d" % a.get_n_sheets()
-  # checking chain ids. If this part is failing, then something is changed in
-  # chain expanding which made chain ids in hierarchy.py:join_roots()
-  # not compatible with those used in secondary_structure.py:multiply_to_asu
-  chain_ids = [h.start_chain_id for h in a.helices]
-  assert chain_ids == ['A'], chain_ids
-  # checking sheets
-  for i, sh in enumerate(a.sheets):
-    assert sh.n_strands == 2
-    assert sh.registrations[0] == None
-    assert sh.registrations[1].cur_chain_id == 'B'
-    assert sh.registrations[1].prev_chain_id == 'A'
-    assert sh.strands[0].start_chain_id == 'A'
-    assert sh.strands[0].end_chain_id == 'A'
-    assert sh.strands[1].start_chain_id == 'B'
-    assert sh.strands[1].end_chain_id == 'B'
+    """
+    Make sure SS is fine when expanding without BIOMT
+    """
+    of = open(file_name, "w")
+    print(pdb_str_2b, file=of)
+    of.close()
+    easy_run.call("phenix.pdb.biomt_reconstruction %s" % file_name)
+    pdb_inp = iotbx.pdb.input(file_name="tst_mtrix_biomt_cmdl_003_BIOMT_expanded.pdb")
+    a = pdb_inp.extract_secondary_structure()
+    assert a.get_n_helices() == 1, a.get_n_helices()
+    assert a.get_n_sheets() == 1, "%d" % a.get_n_sheets()
+    # checking chain ids. If this part is failing, then something is changed in
+    # chain expanding which made chain ids in hierarchy.py:join_roots()
+    # not compatible with those used in secondary_structure.py:multiply_to_asu
+    chain_ids = [h.start_chain_id for h in a.helices]
+    assert chain_ids == ["A"], chain_ids
+    # checking sheets
+    for i, sh in enumerate(a.sheets):
+        assert sh.n_strands == 2
+        assert sh.registrations[0] == None
+        assert sh.registrations[1].cur_chain_id == "B"
+        assert sh.registrations[1].prev_chain_id == "A"
+        assert sh.strands[0].start_chain_id == "A"
+        assert sh.strands[0].end_chain_id == "A"
+        assert sh.strands[1].start_chain_id == "B"
+        assert sh.strands[1].end_chain_id == "B"
+
 
 def exercise_01(file_name="tst_mtrix_biomt_cmdl_01.pdb"):
-  """
-  Use MTRIX.
-  """
-  of = open(file_name,"w")
-  print(pdb_str_1, file=of)
-  of.close()
-  easy_run.call("phenix.pdb.mtrix_reconstruction %s"%file_name)
-  pdb_inp1 = iotbx.pdb.input(
-    file_name="tst_mtrix_biomt_cmdl_01_MTRIX_expanded.pdb")
-  pdb_inp2 = iotbx.pdb.input(source_info=None, lines=pdb_str_1a)
-  dist = flex.sqrt((
-    pdb_inp1.atoms().extract_xyz() - pdb_inp2.atoms().extract_xyz()).dot())
-  assert approx_equal(dist.min_max_mean().as_tuple(), [0,0,0])
-  assert pdb_inp1.crystal_symmetry().is_similar_symmetry(
-         pdb_inp2.crystal_symmetry())
-  assert pdb_inp1.crystal_symmetry() is not None
-  assert pdb_inp2.crystal_symmetry() is not None
-  assert pdb_inp1.crystal_symmetry().unit_cell() is not None
-  assert pdb_inp2.crystal_symmetry().unit_cell() is not None
+    """
+    Use MTRIX.
+    """
+    of = open(file_name, "w")
+    print(pdb_str_1, file=of)
+    of.close()
+    easy_run.call("phenix.pdb.mtrix_reconstruction %s" % file_name)
+    pdb_inp1 = iotbx.pdb.input(file_name="tst_mtrix_biomt_cmdl_01_MTRIX_expanded.pdb")
+    pdb_inp2 = iotbx.pdb.input(source_info=None, lines=pdb_str_1a)
+    dist = flex.sqrt(
+        (pdb_inp1.atoms().extract_xyz() - pdb_inp2.atoms().extract_xyz()).dot()
+    )
+    assert approx_equal(dist.min_max_mean().as_tuple(), [0, 0, 0])
+    assert pdb_inp1.crystal_symmetry().is_similar_symmetry(pdb_inp2.crystal_symmetry())
+    assert pdb_inp1.crystal_symmetry() is not None
+    assert pdb_inp2.crystal_symmetry() is not None
+    assert pdb_inp1.crystal_symmetry().unit_cell() is not None
+    assert pdb_inp2.crystal_symmetry().unit_cell() is not None
+
 
 def exercise_02(file_name="tst_mtrix_biomt_cmdl_02.pdb"):
-  """
-  Make sure it's not going to make up CRYST1.
-  """
-  of = open(file_name,"w")
-  print(pdb_str_2, file=of)
-  of.close()
-  easy_run.call("phenix.pdb.mtrix_reconstruction %s"%file_name)
-  pdb_inp1 = iotbx.pdb.input(
-    file_name="tst_mtrix_biomt_cmdl_02_MTRIX_expanded.pdb")
-  pdb_inp2 = iotbx.pdb.input(source_info=None, lines=pdb_str_2a)
-  dist = flex.sqrt((
-    pdb_inp1.atoms().extract_xyz() - pdb_inp2.atoms().extract_xyz()).dot())
-  assert approx_equal(dist.min_max_mean().as_tuple(), [0,0,0])
-  assert [pdb_inp1.crystal_symmetry(),
-          pdb_inp2.crystal_symmetry()].count(None)==2
+    """
+    Make sure it's not going to make up CRYST1.
+    """
+    of = open(file_name, "w")
+    print(pdb_str_2, file=of)
+    of.close()
+    easy_run.call("phenix.pdb.mtrix_reconstruction %s" % file_name)
+    pdb_inp1 = iotbx.pdb.input(file_name="tst_mtrix_biomt_cmdl_02_MTRIX_expanded.pdb")
+    pdb_inp2 = iotbx.pdb.input(source_info=None, lines=pdb_str_2a)
+    dist = flex.sqrt(
+        (pdb_inp1.atoms().extract_xyz() - pdb_inp2.atoms().extract_xyz()).dot()
+    )
+    assert approx_equal(dist.min_max_mean().as_tuple(), [0, 0, 0])
+    assert [pdb_inp1.crystal_symmetry(), pdb_inp2.crystal_symmetry()].count(None) == 2
+
 
 def exercise_03(file_name="tst_mtrix_biomt_cmdl_03.cif"):
-  """
-  Handle mmCIF.
-  """
-  of = open(file_name,"w")
-  print(pdb_str_3, file=of)
-  of.close()
-  easy_run.call("phenix.pdb.mtrix_reconstruction %s"%file_name)
-  pdb_inp1 = iotbx.pdb.input(
-    file_name="tst_mtrix_biomt_cmdl_03_MTRIX_expanded.cif")
-  pdb_inp2 = iotbx.pdb.input(source_info=None, lines=pdb_str_3a)
-  dist = flex.sqrt((
-    pdb_inp1.atoms().extract_xyz() - pdb_inp2.atoms().extract_xyz()).dot())
-  assert approx_equal(dist.min_max_mean().as_tuple(), [0,0,0])
-  assert pdb_inp1.crystal_symmetry().is_similar_symmetry(
-         pdb_inp2.crystal_symmetry())
-  assert pdb_inp1.crystal_symmetry() is not None
-  assert pdb_inp2.crystal_symmetry() is not None
-  assert pdb_inp1.crystal_symmetry().unit_cell() is not None
-  assert pdb_inp2.crystal_symmetry().unit_cell() is not None
+    """
+    Handle mmCIF.
+    """
+    of = open(file_name, "w")
+    print(pdb_str_3, file=of)
+    of.close()
+    easy_run.call("phenix.pdb.mtrix_reconstruction %s" % file_name)
+    pdb_inp1 = iotbx.pdb.input(file_name="tst_mtrix_biomt_cmdl_03_MTRIX_expanded.cif")
+    pdb_inp2 = iotbx.pdb.input(source_info=None, lines=pdb_str_3a)
+    dist = flex.sqrt(
+        (pdb_inp1.atoms().extract_xyz() - pdb_inp2.atoms().extract_xyz()).dot()
+    )
+    assert approx_equal(dist.min_max_mean().as_tuple(), [0, 0, 0])
+    assert pdb_inp1.crystal_symmetry().is_similar_symmetry(pdb_inp2.crystal_symmetry())
+    assert pdb_inp1.crystal_symmetry() is not None
+    assert pdb_inp2.crystal_symmetry() is not None
+    assert pdb_inp1.crystal_symmetry().unit_cell() is not None
+    assert pdb_inp2.crystal_symmetry().unit_cell() is not None
 
-if(__name__=='__main__'):
-  if libtbx.env.has_module("phenix"):
-    # SS records handling
-    exercise_000()
-    exercise_001()
-    exercise_002()
-    exercise_003()
-    # # other
-    exercise_01()
-    exercise_02()
-    exercise_03()
-  else:
-    print("Skipping tests: phenix not found")
+
+if __name__ == "__main__":
+    if libtbx.env.has_module("phenix"):
+        # SS records handling
+        exercise_000()
+        exercise_001()
+        exercise_002()
+        exercise_003()
+        # # other
+        exercise_01()
+        exercise_02()
+        exercise_03()
+    else:
+        print("Skipping tests: phenix not found")

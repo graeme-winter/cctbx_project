@@ -4,23 +4,25 @@ from six.moves import zip
 
 
 def validate_result(h1, h2):
-  assert h1.is_similar_hierarchy(h2)
-  atoms1 = h1.atoms()
-  atoms2 = h2.atoms()
-  for a1, a2 in zip(atoms1, atoms2):
-    # print dir(a1)
-    # print a1.id_str()
-    # print a1.format_anisou_record()
-    assert a1.id_str() == a2.id_str(), "%s != %s" % (a1.id_str(), a2.id_str())
-    # cutting ANISOU because we do atoms_reset_serial()
-    assert a1.format_anisou_record()[13:] == a2.format_anisou_record()[13:],"%s != %s"%(
-        a1.format_anisou_record(), a2.format_anisou_record())
+    assert h1.is_similar_hierarchy(h2)
+    atoms1 = h1.atoms()
+    atoms2 = h2.atoms()
+    for a1, a2 in zip(atoms1, atoms2):
+        # print dir(a1)
+        # print a1.id_str()
+        # print a1.format_anisou_record()
+        assert a1.id_str() == a2.id_str(), "%s != %s" % (a1.id_str(), a2.id_str())
+        # cutting ANISOU because we do atoms_reset_serial()
+        assert (
+            a1.format_anisou_record()[13:] == a2.format_anisou_record()[13:]
+        ), "%s != %s" % (a1.format_anisou_record(), a2.format_anisou_record())
+
 
 def exercise_1():
-  """
-  simple one residue test
-  """
-  in_pdb_str = """\
+    """
+    simple one residue test
+    """
+    in_pdb_str = """\
 ATOM      1  N   THR C   1      12.121   9.329  18.086  1.00 10.00           N
 ATOM      3  C   THR C   1      13.707  10.622  16.718  1.00 10.00           C
 ATOM      6  OG1 THR C   1      10.087  11.287  17.482  1.00 10.00           O
@@ -29,7 +31,7 @@ ATOM      2  CA  THR C   1      12.245  10.284  16.991  1.00 10.00           C
 ATOM      5  CB  THR C   1      11.474  11.584  17.284  1.00 10.00           C
 ATOM      7  CG2 THR C   1      11.619  12.563  16.129  1.00 10.00           C
   """
-  out_pdb_str = """\
+    out_pdb_str = """\
 ATOM      1  N   THR C   1      12.121   9.329  18.086  1.00 10.00           N
 ATOM      2  CA  THR C   1      12.245  10.284  16.991  1.00 10.00           C
 ATOM      3  C   THR C   1      13.707  10.622  16.718  1.00 10.00           C
@@ -38,7 +40,7 @@ ATOM      5  CB  THR C   1      11.474  11.584  17.284  1.00 10.00           C
 ATOM      6  OG1 THR C   1      10.087  11.287  17.482  1.00 10.00           O
 ATOM      7  CG2 THR C   1      11.619  12.563  16.129  1.00 10.00           C
   """
-  in_pdb_str1 = """\
+    in_pdb_str1 = """\
 ATOM    233  N   ARG A  16      18.484  -1.972   5.177  1.00 57.75           N
 ANISOU  233  N   ARG A  16     7670   7185   7086    504    345   1028       N
 ATOM    234  CA  ARG A  16      19.270  -3.198   5.125  1.00 40.85           C
@@ -75,7 +77,7 @@ ATOM    254 HH12 ARG A  16      19.073  -3.238  -0.057  1.00233.31           H
 ATOM    255 HH21 ARG A  16      19.040  -6.527   0.127  1.00164.32           H
 ATOM    256 HH22 ARG A  16      18.393  -5.362  -0.538  1.00164.32           H
   """
-  out_pdb_str1 = """\
+    out_pdb_str1 = """\
 ATOM      1  N   ARG A  16      18.484  -1.972   5.177  1.00 57.75           N
 ANISOU    1  N   ARG A  16     7670   7185   7086    504    345   1028       N
 ATOM      2  CA  ARG A  16      19.270  -3.198   5.125  1.00 40.85           C
@@ -113,28 +115,36 @@ ATOM     23 HH21 ARG A  16      19.040  -6.527   0.127  1.00164.32           H
 ATOM     24 HH22 ARG A  16      18.393  -5.362  -0.538  1.00164.32           H
 TER
   """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
 
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str1).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str1).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str1).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str1).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
 
 
 def exercise_2():
-  """
-  multi chain test
-  """
-  in_pdb_str = """\
+    """
+    multi chain test
+    """
+    in_pdb_str = """\
 ATOM    674  N   PHE A  89     -13.997 -12.169 -16.080  1.00 30.39           N
 ATOM    675  CA  PHE A  89     -14.205 -13.374 -15.271  1.00 31.46           C
 ATOM    676  C   PHE A  89     -15.660 -13.679 -15.012  1.00 32.05           C
@@ -157,20 +167,24 @@ ATOM    692  CD  GLN B   3       7.158  20.850   3.831  1.00 55.64           C
 ATOM    693  OE1 GLN B   3       7.843  21.020   4.834  1.00 56.71           O
 ATOM    694  NE2 GLN B   3       5.812  20.762   3.876  1.00 54.75           N
   """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
 
 
 def exercise_3():
-  """
-  multi model test
-  """
-  in_pdb_str = """\
+    """
+    multi model test
+    """
+    in_pdb_str = """\
 MODEL        1
 ATOM    686  N   GLN B   3       4.525  19.816   1.629  1.00 52.67           N
 ATOM    687  CA  GLN B   3       5.708  20.537   1.020  1.00 53.13           C
@@ -193,19 +207,24 @@ ATOM    701  CD1 LEU B   4       5.232  19.472  -5.480  1.00 41.90           C
 ATOM    702  CD2 LEU B   4       4.267  17.162  -5.271  1.00 42.51           C
 ENDMDL
   """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
+
 
 def exercise_4():
-  """
-  alternative conformations test
-  """
-  in_pdb_str = """\
+    """
+    alternative conformations test
+    """
+    in_pdb_str = """\
 ATOM    146  N   TRP A   9      20.043  18.668  31.573  1.00  5.76           N
 ATOM    147  CA  TRP A   9      19.105  18.066  32.480  1.00  5.43           C
 ATOM    148  C   TRP A   9      19.223  16.553  32.483  1.00  6.09           C
@@ -238,7 +257,7 @@ ATOM    174  HZ2BTRP A   9      16.380  24.223  31.300  0.25 11.77           H
 ATOM    175  HZ3ATRP A   9      16.158  21.868  35.506  0.75 13.75           H
 ATOM    176  HH2ATRP A   9      16.950  22.201  29.951  0.75 10.90           H
   """
-  out_pdb_str = """\
+    out_pdb_str = """\
 ATOM      1  N   TRP A   9      20.043  18.668  31.573  1.00  5.76           N
 ATOM      2  CA  TRP A   9      19.105  18.066  32.480  1.00  5.43           C
 ATOM      3  C   TRP A   9      19.223  16.553  32.483  1.00  6.09           C
@@ -271,20 +290,24 @@ ATOM     29  CZ3BTRP A   9      16.994  21.984  29.037  0.25  8.89           C
 ATOM     30  CH2BTRP A   9      16.699  23.238  29.593  0.25 10.35           C
 ATOM     31  HZ2BTRP A   9      16.380  24.223  31.300  0.25 11.77           H
   """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
 
 
 def exercise_5():
-  """
-  insertion codes test + small atom names + oxt
-  """
-  in_pdb_str = """\
+    """
+    insertion codes test + small atom names + oxt
+    """
+    in_pdb_str = """\
 ATOM   2527  N   THR B  97A     -2.797 -21.183  13.289  1.00166.13           N
 ATOM   2528  CA  THR B  97A     -3.395 -20.517  14.441  1.00156.77           C
 ATOM   2529  cb  THR B  97A     -3.659 -19.020  14.175  1.00154.53           C
@@ -301,7 +324,7 @@ ATOM   2539 HG21 THR B  97A     -2.574 -17.378  13.544  1.00169.78           H
 ATOM   2540 HG22 THR B  97A     -1.701 -18.391  14.383  1.00169.78           H
 ATOM   2541 HG23 THR B  97A     -2.073 -18.723  12.885  1.00169.78           H
   """
-  out_pdb_str = """\
+    out_pdb_str = """\
 ATOM      1  N   THR B  97A     -2.797 -21.183  13.289  1.00166.13           N
 ATOM      2  CA  THR B  97A     -3.395 -20.517  14.441  1.00156.77           C
 ATOM      3  C   THR B  97A     -4.707 -21.194  14.819  1.00135.28           C
@@ -318,19 +341,24 @@ ATOM     13 HG21 THR B  97A     -2.574 -17.378  13.544  1.00169.78           H
 ATOM     14 HG22 THR B  97A     -1.701 -18.391  14.383  1.00169.78           H
 ATOM     15 HG23 THR B  97A     -2.073 -18.723  12.885  1.00169.78           H
 """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
+
 
 def exercise_6():
-  """
-  segids test
-  """
-  in_pdb_str = """\
+    """
+    segids test
+    """
+    in_pdb_str = """\
 ATOM   1270  N   ASP B  78      15.391  19.770  -5.786  1.00 23.52      seg1 N
 ATOM   1271  CA  ASP B  78      16.810  19.893  -6.020  1.00 23.79      seg1 C
 ATOM   1272  C   ASP B  78      17.210  21.335  -6.226  1.00 23.90      seg1 C
@@ -340,20 +368,24 @@ ATOM   1275  CG  ASP B  78      17.134  17.633  -6.986  1.00 27.72      seg1 C
 ATOM   1276  OD1 ASP B  78      17.487  16.952  -7.962  1.00 29.41      seg1 O
 ATOM   1277  OD2 ASP B  78      16.728  17.173  -5.867  1.00 26.25      seg1 O
   """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
 
 
 def exercise_7():
-  """
-  nucleic acids: DNA
-  """
-  in_pdb_str = """\
+    """
+    nucleic acids: DNA
+    """
+    in_pdb_str = """\
 HEADER    DNA                                     23-JUL-13   4LTG
 CRYST1   44.300   44.300   27.550  90.00  90.00  90.00 P 43 21 2     8
 ORIGX1      1.000000  0.000000  0.000000        0.00000
@@ -490,19 +522,24 @@ ATOM    314  H62  DA A  10     -27.549  37.425 -10.670  1.00 20.35           H
 ATOM    315  H2   DA A  10     -24.549  35.393  -6.866  1.00 18.44           H
 TER     316       DA A  10
 """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
+
 
 def exercise_8():
-  """
-  non-standard ligands
-  """
-  in_pdb_str = """\
+    """
+    non-standard ligands
+    """
+    in_pdb_str = """\
 HETATM  317 RU   RKL A 101     -45.719  30.968   8.877  1.00 11.71          RU
 HETATM  318  C1  RKL A 101     -48.034  30.452  10.475  1.00 12.70           C
 HETATM  319  N1  RKL A 101     -45.981  29.249   9.992  1.00 12.74           N
@@ -577,7 +614,7 @@ HETATM  387  H34 RKL A 101     -46.334  33.821   3.256  1.00 13.85           H
 HETATM  388  H37 RKL A 101     -45.110  35.918   7.266  1.00 13.33           H
 HETATM  389  H38 RKL A 101     -45.080  34.177   8.985  1.00 12.40           H
   """
-  out_pdb_str = """\
+    out_pdb_str = """\
 HETATM    1  C1  RKL A 101     -48.034  30.452  10.475  1.00 12.70           C
 HETATM    2  C10 RKL A 101     -47.205  29.296  10.658  1.00 12.10           C
 HETATM    3  C11 RKL A 101     -45.601  27.081  10.913  1.00 15.50           C
@@ -653,19 +690,24 @@ HETATM   72  H4  RKL A 101     -50.905  31.887  11.513  1.00 13.58           H
 HETATM   73  H9  RKL A 101     -46.944  26.390  12.455  1.00 15.01           H
 TER
   """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
+
 
 def exercise_9():
-  """
-  HETATM+strange residue+altloc
-  """
-  in_pdb_str = """\
+    """
+    HETATM+strange residue+altloc
+    """
+    in_pdb_str = """\
 HETATM  177  N   DLE A  10      19.161  15.952  33.645  1.00  6.08           N
 HETATM  178  CA  DLE A  10      19.055  14.520  33.727  1.00  8.34           C
 HETATM  179  CB ADLE A  10      17.599  14.234  34.534  0.40  7.56           C
@@ -710,7 +752,7 @@ HETATM  217 HD23ADLE A  10      14.912  13.781  34.681  0.40 16.66           H
 HETATM  218 HD23BDLE A  10      15.821  15.551  35.543  0.30 20.36           H
 HETATM  219 HD23CDLE A  10      15.007  13.925  34.299  0.30 19.10           H
   """
-  out_pdb_str = """\
+    out_pdb_str = """\
 HETATM    1  N   DLE A  10      19.161  15.952  33.645  1.00  6.08           N
 HETATM    2  CA  DLE A  10      19.055  14.520  33.727  1.00  8.34           C
 HETATM    3  C   DLE A  10      19.895  13.952  34.844  1.00  6.92           C
@@ -754,19 +796,24 @@ HETATM   40 HD13CDLE A  10      17.223  12.487  32.102  0.30 22.83           H
 HETATM   41 HD21CDLE A  10      15.860  14.014  33.935  0.30 10.12           H
 HETATM   42 HD22CDLE A  10      14.534  14.774  33.069  0.30 19.10           H
 HETATM   43 HD23CDLE A  10      15.007  13.925  34.299  0.30 19.10           H  """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=out_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
+
 
 def exercise_10():
-  """
-  nucleic acids: RNA
-  """
-  in_pdb_str = """\
+    """
+    nucleic acids: RNA
+    """
+    in_pdb_str = """\
 HEADER    RNA                                     26-MAR-97   1MIS
 CRYST1    1.000    1.000    1.000  90.00  90.00  90.00 P 1           1
 ORIGX1      1.000000  0.000000  0.000000        0.00000
@@ -873,19 +920,24 @@ ATOM    163  H62   A A   5     -50.244 115.650 -55.071  1.00  0.00           H
 ATOM    164  H2    A A   5     -52.341 115.756 -59.891  1.00  0.00           H
 TER     262        C A   8
 """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
+
 
 def exercise_11():
-  """
-  neutron structure
-  """
-  in_pdb_str = """\
+    """
+    neutron structure
+    """
+    in_pdb_str = """\
 ATOM    257  N   TRP A  16      36.612  25.839  63.233  1.00 11.33           N
 ATOM    258  CA  TRP A  16      37.749  26.091  62.353  1.00 12.58           C
 ATOM    259  C   TRP A  16      38.792  26.998  62.988  1.00 15.16           C
@@ -913,19 +965,24 @@ ATOM    280  HZ2 TRP A  16      34.096  31.477  61.936  1.00 16.81           H
 ATOM    281  HZ3 TRP A  16      32.278  27.917  62.268  1.00 14.23           H
 ATOM    282  HH2 TRP A  16      32.212  30.179  62.470  1.00 12.97           H
   """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=False)
-  # print in_h.as_pdb_string()
-  # in_h.sort_atoms_in_place()
-  # print "="*50
-  # print in_h.as_pdb_string()
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    # print in_h.as_pdb_string()
+    # in_h.sort_atoms_in_place()
+    # print "="*50
+    # print in_h.as_pdb_string()
+    validate_result(in_h, out_h)
+
 
 def exercise_12():
-  """
-  Beginning of a chain, CA with 3 hydrogens: H1, H2, H3
-  """
-  in_pdb_str = """\
+    """
+    Beginning of a chain, CA with 3 hydrogens: H1, H2, H3
+    """
+    in_pdb_str = """\
 ATOM      1  N   PHE A   1       2.305   1.496  17.812  1.00  1.22           N
 ATOM      2  CA  PHE A   1       1.374   2.648  17.647  1.00  1.07           C
 ATOM      3  C   PHE A   1       2.067   3.806  16.938  1.00  1.09           C
@@ -942,20 +999,25 @@ ATOM     13  H2  PHE A   1       2.210   0.937  17.126  1.00  1.40           H
 ATOM     14  H3  PHE A   1       3.143   1.794  17.838  1.00  1.40           H
 ATOM     15  HA  PHE A   1       0.616   2.372  17.108  1.00  1.25           H
   """
-  in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=True)
-  out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(sort_atoms=False)
-  validate_result(in_h, out_h)
+    in_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=True
+    )
+    out_h = iotbx.pdb.input(source_info=None, lines=in_pdb_str).construct_hierarchy(
+        sort_atoms=False
+    )
+    validate_result(in_h, out_h)
 
-if (__name__ == "__main__"):
-  exercise_1()
-  exercise_2()
-  exercise_3()
-  exercise_4()
-  exercise_5()
-  exercise_6()
-  exercise_7()
-  exercise_8()
-  exercise_9()
-  exercise_10()
-  exercise_11()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_1()
+    exercise_2()
+    exercise_3()
+    exercise_4()
+    exercise_5()
+    exercise_6()
+    exercise_7()
+    exercise_8()
+    exercise_9()
+    exercise_10()
+    exercise_11()
+    print("OK")

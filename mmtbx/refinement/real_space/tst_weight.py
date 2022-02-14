@@ -1712,43 +1712,49 @@ TER
 END
 """
 
+
 def get_pdb_inputs(pdb_str):
-  ppf = mmtbx.utils.process_pdb_file_srv().process_pdb_files(
-    raw_records=pdb_str.splitlines())[0]
-  xrs = ppf.xray_structure(show_summary = False)
-  restraints_manager = mmtbx.restraints.manager(
-    geometry      = ppf.geometry_restraints_manager(show_energies = False),
-    normalization = True)
-  return group_args(
-    ph  = ppf.all_chain_proxies.pdb_hierarchy,
-    grm = restraints_manager,
-    xrs = xrs)
+    ppf = mmtbx.utils.process_pdb_file_srv().process_pdb_files(
+        raw_records=pdb_str.splitlines()
+    )[0]
+    xrs = ppf.xray_structure(show_summary=False)
+    restraints_manager = mmtbx.restraints.manager(
+        geometry=ppf.geometry_restraints_manager(show_energies=False),
+        normalization=True,
+    )
+    return group_args(
+        ph=ppf.all_chain_proxies.pdb_hierarchy, grm=restraints_manager, xrs=xrs
+    )
+
 
 def exercise():
-  """
-  Exercise determination of optimal weights for real-space refinement of
-  individual coordinates.
-  """
-  for d_min in [1,2,6]:
-    print(d_min, "-"*69)
-    pi = get_pdb_inputs(pdb_str=pdb_str_1)
-    f_calc = pi.xrs.structure_factors(d_min = d_min).f_calc()
-    fft_map = f_calc.fft_map(resolution_factor=0.25)
-    fft_map.apply_sigma_scaling()
-    map_data = fft_map.real_map_unpadded()
-    w = weight.run(
-      map_data                    = map_data,
-      xray_structure              = pi.xrs,
-      pdb_hierarchy               = pi.ph,
-      geometry_restraints_manager = pi.grm).weight
-    ro = individual_sites.simple(
-      target_map = map_data,
-      selection  = flex.bool(pi.xrs.scatterers().size(), True),
-      geometry_restraints_manager = pi.grm.geometry)
-    ro.refine(weight=w, xray_structure = pi.xrs)
-    print(ro.rmsds())
+    """
+    Exercise determination of optimal weights for real-space refinement of
+    individual coordinates.
+    """
+    for d_min in [1, 2, 6]:
+        print(d_min, "-" * 69)
+        pi = get_pdb_inputs(pdb_str=pdb_str_1)
+        f_calc = pi.xrs.structure_factors(d_min=d_min).f_calc()
+        fft_map = f_calc.fft_map(resolution_factor=0.25)
+        fft_map.apply_sigma_scaling()
+        map_data = fft_map.real_map_unpadded()
+        w = weight.run(
+            map_data=map_data,
+            xray_structure=pi.xrs,
+            pdb_hierarchy=pi.ph,
+            geometry_restraints_manager=pi.grm,
+        ).weight
+        ro = individual_sites.simple(
+            target_map=map_data,
+            selection=flex.bool(pi.xrs.scatterers().size(), True),
+            geometry_restraints_manager=pi.grm.geometry,
+        )
+        ro.refine(weight=w, xray_structure=pi.xrs)
+        print(ro.rmsds())
 
-if(__name__ == "__main__"):
-  timer = user_plus_sys_time()
-  exercise()
-  print("Time: %6.2f" % timer.elapsed())
+
+if __name__ == "__main__":
+    timer = user_plus_sys_time()
+    exercise()
+    print("Time: %6.2f" % timer.elapsed())

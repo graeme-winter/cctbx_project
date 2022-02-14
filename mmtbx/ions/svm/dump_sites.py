@@ -22,62 +22,64 @@ from mmtbx.ions.svm.utils import iterate_sites
 from mmtbx.command_line import load_model_and_data
 from mmtbx.command_line.water_screen import master_phil
 
-def _main(args, out=sys.stdout):
-  """
-  Main entry point to this script.
 
-  Parameters
-  ----------
-  args : list of str
-      List of arguments, should not include the first argument with the
-      executable name.
-  out : file, optional
-  """
-  usage_string = """\
+def _main(args, out=sys.stdout):
+    """
+    Main entry point to this script.
+
+    Parameters
+    ----------
+    args : list of str
+        List of arguments, should not include the first argument with the
+        executable name.
+    out : file, optional
+    """
+    usage_string = """\
 phenix.python -m mmtbx.ions.svm.dump_sites model.pdb data.mtz [options ...]
 
 Utility to dump information about the properties of water and ion sites in a
 model. This properties include local environment, electron density maps, and
 atomic properties.
 """
-  cmdline = load_model_and_data(
-    args=args,
-    master_phil=master_phil(),
-    out=out,
-    process_pdb_file=True,
-    create_fmodel=True,
-    prefer_anomalous=True,
-    set_wavelength_from_model_header=True,
-    set_inelastic_form_factors="sasaki",
-    usage_string=usage_string,
+    cmdline = load_model_and_data(
+        args=args,
+        master_phil=master_phil(),
+        out=out,
+        process_pdb_file=True,
+        create_fmodel=True,
+        prefer_anomalous=True,
+        set_wavelength_from_model_header=True,
+        set_inelastic_form_factors="sasaki",
+        usage_string=usage_string,
     )
 
-  params = cmdline.params
-  params.use_svm = True
+    params = cmdline.params
+    params.use_svm = True
 
-  make_header("Inspecting sites", out=out)
+    make_header("Inspecting sites", out=out)
 
-  manager = ions.identify.create_manager(
-    pdb_hierarchy=cmdline.pdb_hierarchy,
-    fmodel=cmdline.fmodel,
-    geometry_restraints_manager=cmdline.geometry,
-    wavelength=params.input.wavelength,
-    params=params,
-    verbose=params.debug,
-    nproc=params.nproc,
-    log=out,
+    manager = ions.identify.create_manager(
+        pdb_hierarchy=cmdline.pdb_hierarchy,
+        fmodel=cmdline.fmodel,
+        geometry_restraints_manager=cmdline.geometry,
+        wavelength=params.input.wavelength,
+        params=params,
+        verbose=params.debug,
+        nproc=params.nproc,
+        log=out,
     )
 
-  manager.show_current_scattering_statistics(out=out)
+    manager.show_current_scattering_statistics(out=out)
 
-  sites = dump_sites(manager)
+    sites = dump_sites(manager)
 
-  out_name = os.path.splitext(params.input.pdb.file_name[0])[0] + "_sites.pkl"
-  print("Dumping to", out_name, file=out)
-  easy_pickle.dump(out_name, sites)
+    out_name = os.path.splitext(params.input.pdb.file_name[0])[0] + "_sites.pkl"
+    print("Dumping to", out_name, file=out)
+    easy_pickle.dump(out_name, sites)
+
 
 def dump_sites(manager):
-  """
+    """
   Iterate over all the ions and waters built into the model and dump out
   information about their properties.
 
@@ -91,34 +93,35 @@ def dump_sites(manager):
   mmtbx.ions.environment.ScatteringEnvironment
   """
 
-  atoms = iterate_sites(
-    manager.pdb_hierarchy,
-    res_filter=ions.SUPPORTED + WATER_RES_NAMES,
-    split_sites=True,
+    atoms = iterate_sites(
+        manager.pdb_hierarchy,
+        res_filter=ions.SUPPORTED + WATER_RES_NAMES,
+        split_sites=True,
     )
 
-  # Can't pickle entire AtomProperties because they include references to the
-  # Atom object. Instead, gather what properties we want and store them in a
-  # second list
-  properties = []
-  for atom in atoms:
-    map_stats = manager.map_stats(atom.i_seq)
-    fo_density = manager.get_map_gaussian_fit("mFo", atom.i_seq)
-    chem_env = ChemicalEnvironment(
-      atom.i_seq,
-      manager.find_nearby_atoms(atom.i_seq, far_distance_cutoff=3.5),
-      manager,
-      )
-    scatter_env = ScatteringEnvironment(
-      atom.i_seq,
-      manager,
-      fo_density=fo_density,
-      fofc_density=(map_stats.fofc, 0),
-      anom_density=(map_stats.anom, 0),
-      )
-    properties.append((chem_env, scatter_env))
+    # Can't pickle entire AtomProperties because they include references to the
+    # Atom object. Instead, gather what properties we want and store them in a
+    # second list
+    properties = []
+    for atom in atoms:
+        map_stats = manager.map_stats(atom.i_seq)
+        fo_density = manager.get_map_gaussian_fit("mFo", atom.i_seq)
+        chem_env = ChemicalEnvironment(
+            atom.i_seq,
+            manager.find_nearby_atoms(atom.i_seq, far_distance_cutoff=3.5),
+            manager,
+        )
+        scatter_env = ScatteringEnvironment(
+            atom.i_seq,
+            manager,
+            fo_density=fo_density,
+            fofc_density=(map_stats.fofc, 0),
+            anom_density=(map_stats.anom, 0),
+        )
+        properties.append((chem_env, scatter_env))
 
-  return properties
+    return properties
+
 
 if __name__ == "__main__":
-  _main(sys.argv[1:])
+    _main(sys.argv[1:])

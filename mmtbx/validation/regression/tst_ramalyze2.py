@@ -8,17 +8,18 @@ from mmtbx.validation import ramalyze
 # Make sure that pdb file with several models produces results for all models
 # ------------------------------------------------------------------------------
 
+
 def exercise():
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  pdb_hierarchy = model.get_hierarchy()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    pdb_hierarchy = model.get_hierarchy()
 
-  r = ramalyze.ramalyze(
-    pdb_hierarchy = pdb_hierarchy,
-    outliers_only = False)
+    r = ramalyze.ramalyze(pdb_hierarchy=pdb_hierarchy, outliers_only=False)
 
-  assert (len(r.results) == 3), 'Supposed to fail until fixed. Ramalyze results not available for all models.'
+    assert (
+        len(r.results) == 3
+    ), "Supposed to fail until fixed. Ramalyze results not available for all models."
+
 
 pdb_str = """
 CRYST1    1.000    1.000    1.000  90.00  90.00  90.00 P 1           1
@@ -166,7 +167,7 @@ ENDMDL
 END
 """
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise()
+    print("OK. Time: %8.3f" % (time.time() - t0))

@@ -3,7 +3,7 @@ import iotbx.pdb
 from scitbx.array_family import flex
 import time
 
-pdb_str="""
+pdb_str = """
 CRYST1  454.007  426.033  459.047  90.00  90.00  90.00 P 1
 SCALE1      0.002203  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.002347  0.000000        0.00000
@@ -184,25 +184,50 @@ TER
 END
 """
 
-def rf(a,b):
-  a=abs(a).data()
-  b=abs(b).data()
-  sc = flex.sum(a*b)/flex.sum(b*b)
-  b = b*sc
-  return flex.sum(flex.abs(a-b))/flex.sum(a+b)*2*100.
+
+def rf(a, b):
+    a = abs(a).data()
+    b = abs(b).data()
+    sc = flex.sum(a * b) / flex.sum(b * b)
+    b = b * sc
+    return flex.sum(flex.abs(a - b)) / flex.sum(a + b) * 2 * 100.0
+
 
 def run():
-  p = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  h = p.construct_hierarchy()
-  x = h.extract_xray_structure(crystal_symmetry=p.crystal_symmetry())
-  for d_min in [8,9,10,15,20,25,30,35,40,45,
-                50,55,60,65,70,75,80,85,90,95,100,200]:
-    t0=time.time()
-    fc_f = x.structure_factors(d_min=d_min, algorithm="fft").f_calc()
-    t = time.time()-t0
-    fc_d = x.structure_factors(d_min=d_min, algorithm="direct").f_calc()
-    r = rf(fc_f, fc_d)
-    assert r<0.6, r
+    p = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    h = p.construct_hierarchy()
+    x = h.extract_xray_structure(crystal_symmetry=p.crystal_symmetry())
+    for d_min in [
+        8,
+        9,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        200,
+    ]:
+        t0 = time.time()
+        fc_f = x.structure_factors(d_min=d_min, algorithm="fft").f_calc()
+        t = time.time() - t0
+        fc_d = x.structure_factors(d_min=d_min, algorithm="direct").f_calc()
+        r = rf(fc_f, fc_d)
+        assert r < 0.6, r
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

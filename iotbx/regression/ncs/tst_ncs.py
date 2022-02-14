@@ -6,7 +6,7 @@ import mmtbx.model
 import iotbx.ncs
 import iotbx.ncs as ncs
 
-pdb_str_1="""\
+pdb_str_1 = """\
 MTRIX1   1  1.000000  0.000000  0.000000        0.00000    1
 MTRIX2   1  0.000000  1.000000  0.000000        0.00000    1
 MTRIX3   1  0.000000  0.000000  1.000000        0.00000    1
@@ -27,7 +27,7 @@ ATOM      7  CG2 THR A   7      10.523   7.209   9.055  1.00 20.00           C
 TER
 """
 
-pdb_str_3="""
+pdb_str_3 = """
 REMARK   0 Test molecule with BIOMOLECULE: 1
 REMARK   0
 REMARK   0 The test will generate the biomolecule (the multimer assembly)
@@ -193,8 +193,7 @@ END
 """
 
 # A dimer
-pdb_str_9=\
-"""
+pdb_str_9 = """
 CRYST1   18.411   24.923   19.598  90.00  90.00  90.00 P 1
 ATOM      1  N   LEU A 219      12.476   8.570   6.342  1.00 30.00           N
 ATOM      2  CA  LEU A 219      11.029   8.720   6.198  1.00 30.00           C
@@ -372,33 +371,36 @@ ATOM     85  SD  MET B 228      -7.511 -19.311  16.335  1.00 30.00           S
 ATOM     86  CE  MET B 228      -7.660 -21.082  16.598  1.00 30.00           C
 TER
 """
+
+
 def exercise_02():
-  """
-  Generate ncs operators
-  """
-  from mmtbx.ncs.ncs import generate_ncs_ops
-  assert generate_ncs_ops(symmetry='d7')[0].max_operators()==14
-  assert generate_ncs_ops(symmetry='c7')[0].max_operators()==7
-  assert generate_ncs_ops(symmetry='o')[0].max_operators()==24
-  assert generate_ncs_ops(symmetry='t')[0].max_operators()==12
-  assert generate_ncs_ops(symmetry='i')[0].max_operators()==60
+    """
+    Generate ncs operators
+    """
+    from mmtbx.ncs.ncs import generate_ncs_ops
+
+    assert generate_ncs_ops(symmetry="d7")[0].max_operators() == 14
+    assert generate_ncs_ops(symmetry="c7")[0].max_operators() == 7
+    assert generate_ncs_ops(symmetry="o")[0].max_operators() == 24
+    assert generate_ncs_ops(symmetry="t")[0].max_operators() == 12
+    assert generate_ncs_ops(symmetry="i")[0].max_operators() == 60
 
 
 def exercise_03():
-  """
-  Verify that there are no errors processing the write command
-  No inception of the output is done. Just making sure it does not break
-  """
-  pdb_inp = pdb.input(source_info=None, lines=pdb_str_1)
-  transform_info = pdb_inp.process_MTRIX_records()
-  transforms_obj = iotbx.ncs.input(
-    hierarchy=pdb_inp.construct_hierarchy())
-  pdb_inp = pdb.input(source_info=None, lines=pdb_str_1)
-  transforms_obj.get_ncs_info_as_spec()
+    """
+    Verify that there are no errors processing the write command
+    No inception of the output is done. Just making sure it does not break
+    """
+    pdb_inp = pdb.input(source_info=None, lines=pdb_str_1)
+    transform_info = pdb_inp.process_MTRIX_records()
+    transforms_obj = iotbx.ncs.input(hierarchy=pdb_inp.construct_hierarchy())
+    pdb_inp = pdb.input(source_info=None, lines=pdb_str_1)
+    transforms_obj.get_ncs_info_as_spec()
+
 
 def exercise_04():
-  """Test MTRIX record processing"""
-  expected  = """\
+    """Test MTRIX record processing"""
+    expected = """\
 CRYST1   10.000   10.000   10.000  90.00  90.00  90.00 P 1
 SCALE1      0.100000  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.100000  0.000000        0.00000
@@ -465,14 +467,15 @@ TER
 HETATM    4  C1  EDO S  40     -64.600   8.838  71.372  0.33 60.93           C
 END
 """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_3)
-  model = mmtbx.model.manager(pdb_inp, expand_with_mtrix=False)
-  model.expand_with_BIOMT_records()
-  assert not show_diff(expected, model.model_as_pdb())
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_3)
+    model = mmtbx.model.manager(pdb_inp, expand_with_mtrix=False)
+    model.expand_with_BIOMT_records()
+    assert not show_diff(expected, model.model_as_pdb())
+
 
 def exercise_05():
-  """Test MTRIX record processing"""
-  cau_expected_results  = """\
+    """Test MTRIX record processing"""
+    cau_expected_results = """\
 CRYST1   10.000   10.000   10.000  90.00  90.00  90.00 P 1
 SCALE1      0.100000  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.100000  0.000000        0.00000
@@ -509,69 +512,75 @@ TER
 HETATM    4  C1  EDO I  40      39.954  52.026  72.372  0.33 60.93           C
 END
 """
-  # use MTRIX data
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_3)
-  model = mmtbx.model.manager(pdb_inp)
-  assert not show_diff(cau_expected_results, model.model_as_pdb())
+    # use MTRIX data
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str_3)
+    model = mmtbx.model.manager(pdb_inp)
+    assert not show_diff(cau_expected_results, model.model_as_pdb())
+
 
 def exercise_06():
-  """ Test that when building bio-molecule and then finding NCS relations
-  from it, we get the same rotation and translation"""
-  pdb_strings = [pdb_str_4, pdb_str_5]
-  for method,pdb_string in enumerate(pdb_strings):
-    pdb_inp = pdb.input(source_info=None, lines=pdb_string)
-    model = mmtbx.model.manager(pdb_inp, expand_with_mtrix=False)
-    crystal_symmetry = model.crystal_symmetry()
-    # The exact transforms from pdb_string
-    r1_expected = matrix.sqr(
-      [0.309017, -0.951057, 0.0,0.951057, 0.309017,-0.0,0.0,0.0,1.0])
-    r2_expected = matrix.sqr(
-      [-0.809017,-0.587785,0.0,0.587785,-0.809017,-0.0,0.0,0.0,1.0])
-    t1_expected = matrix.col([0,0,7])
-    t2_expected = matrix.col([0,0,0])
-    # Look at biomt records retrieved from PDB file
-    if method == 0:
-      rec = model._model_input.process_BIOMT_records()
-      model.expand_with_BIOMT_records()
-      h = model.get_hierarchy()
-    else:
-      rec = model._model_input.process_MTRIX_records()
-      model.expand_with_MTRIX_records()
-      h = model.get_hierarchy()
-    r1 = rec.r[1]
-    r2 = rec.r[2]
-    t1 = rec.t[1]
-    t2 = rec.t[2]
-    assert approx_equal(r1, r1_expected, eps=0.001)
-    assert approx_equal(t1, t1_expected, eps=0.1)
-    assert approx_equal(r2, r2_expected, eps=0.001)
-    assert approx_equal(t2, t2_expected, eps=0.1)
-    # Look at the rotation and translation found by the NCS search
-    s = h.as_pdb_string(crystal_symmetry=crystal_symmetry)
-    ncs_obj = ncs.input(hierarchy=pdb.input(
-      source_info=None, lines=s).construct_hierarchy())
-    nrgl = ncs_obj.get_ncs_restraints_group_list()
-    assert approx_equal(r1_expected, nrgl[0].copies[0].r, eps=0.001)
-    assert approx_equal(t1_expected, nrgl[0].copies[0].t, eps=0.1)
-    assert approx_equal(r2_expected, nrgl[0].copies[1].r, eps=0.001)
-    assert approx_equal(t2_expected, nrgl[0].copies[1].t, eps=0.1)
-    if method == 0:
-      assert nrgl.get_n_groups() == 1
-    elif method == 1:
-      assert nrgl.get_n_groups() == 2
+    """Test that when building bio-molecule and then finding NCS relations
+    from it, we get the same rotation and translation"""
+    pdb_strings = [pdb_str_4, pdb_str_5]
+    for method, pdb_string in enumerate(pdb_strings):
+        pdb_inp = pdb.input(source_info=None, lines=pdb_string)
+        model = mmtbx.model.manager(pdb_inp, expand_with_mtrix=False)
+        crystal_symmetry = model.crystal_symmetry()
+        # The exact transforms from pdb_string
+        r1_expected = matrix.sqr(
+            [0.309017, -0.951057, 0.0, 0.951057, 0.309017, -0.0, 0.0, 0.0, 1.0]
+        )
+        r2_expected = matrix.sqr(
+            [-0.809017, -0.587785, 0.0, 0.587785, -0.809017, -0.0, 0.0, 0.0, 1.0]
+        )
+        t1_expected = matrix.col([0, 0, 7])
+        t2_expected = matrix.col([0, 0, 0])
+        # Look at biomt records retrieved from PDB file
+        if method == 0:
+            rec = model._model_input.process_BIOMT_records()
+            model.expand_with_BIOMT_records()
+            h = model.get_hierarchy()
+        else:
+            rec = model._model_input.process_MTRIX_records()
+            model.expand_with_MTRIX_records()
+            h = model.get_hierarchy()
+        r1 = rec.r[1]
+        r2 = rec.r[2]
+        t1 = rec.t[1]
+        t2 = rec.t[2]
+        assert approx_equal(r1, r1_expected, eps=0.001)
+        assert approx_equal(t1, t1_expected, eps=0.1)
+        assert approx_equal(r2, r2_expected, eps=0.001)
+        assert approx_equal(t2, t2_expected, eps=0.1)
+        # Look at the rotation and translation found by the NCS search
+        s = h.as_pdb_string(crystal_symmetry=crystal_symmetry)
+        ncs_obj = ncs.input(
+            hierarchy=pdb.input(source_info=None, lines=s).construct_hierarchy()
+        )
+        nrgl = ncs_obj.get_ncs_restraints_group_list()
+        assert approx_equal(r1_expected, nrgl[0].copies[0].r, eps=0.001)
+        assert approx_equal(t1_expected, nrgl[0].copies[0].t, eps=0.1)
+        assert approx_equal(r2_expected, nrgl[0].copies[1].r, eps=0.001)
+        assert approx_equal(t2_expected, nrgl[0].copies[1].t, eps=0.1)
+        if method == 0:
+            assert nrgl.get_n_groups() == 1
+        elif method == 1:
+            assert nrgl.get_n_groups() == 2
+
 
 def exercise_08():
-  """
-  Test for MTRIX record when copies already present in file
-  """
-  pdb_inp = pdb.input(source_info=None, lines=pdb_str_8)
-  model = mmtbx.model.manager(pdb_inp)
-  assert model.get_number_of_atoms() == 7
+    """
+    Test for MTRIX record when copies already present in file
+    """
+    pdb_inp = pdb.input(source_info=None, lines=pdb_str_8)
+    model = mmtbx.model.manager(pdb_inp)
+    assert model.get_number_of_atoms() == 7
 
-if(__name__=='__main__'):
-  exercise_02()
-  exercise_03()
-  exercise_04()
-  exercise_05()
-  exercise_06()
-  exercise_08()
+
+if __name__ == "__main__":
+    exercise_02()
+    exercise_03()
+    exercise_04()
+    exercise_05()
+    exercise_06()
+    exercise_08()

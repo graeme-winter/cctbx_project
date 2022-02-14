@@ -1,12 +1,10 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.validation.molprobity import nqh_minimize
 from iotbx import pdb
 from libtbx.utils import null_out
 import time
 
-pdb_str_1 = \
-"""USER  MOD Single : A  49 GLN     :FLIP  amide:sc=   0.595  F(o=-3.2!,f=0.59)
+pdb_str_1 = """USER  MOD Single : A  49 GLN     :FLIP  amide:sc=   0.595  F(o=-3.2!,f=0.59)
 USER  MOD Single : A  60 ASN    B:FLIP  amide:sc= -0.0622  F(o=-0.92,f=-0.062)
 ATOM    321  N   ARG A  42      32.478  30.917  22.269  1.00  5.73           N
 ATOM    322  CA  ARG A  42      31.200  30.329  22.780  1.00  6.97           C
@@ -64,32 +62,38 @@ ATOM      0 HD22BASN A  60      14.897  21.766  11.714  1.00 24.09           H  
 END
 """
 
+
 def run_validation(pdb_file, ignore_hd=True):
-  from mmtbx.validation import restraints
-  import mmtbx.command_line
-  cmdline = mmtbx.command_line.load_model_and_data(
-    args=[pdb_file],
-    master_phil=mmtbx.command_line.generic_simple_input_phil(),
-    process_pdb_file=True,
-    require_data=False,
-    out=null_out())
-  validation = restraints.combined(
-    pdb_hierarchy=cmdline.pdb_hierarchy,
-    xray_structure=cmdline.xray_structure,
-    geometry_restraints_manager=cmdline.geometry,
-    ignore_hd=ignore_hd)
-  return validation
+    from mmtbx.validation import restraints
+    import mmtbx.command_line
+
+    cmdline = mmtbx.command_line.load_model_and_data(
+        args=[pdb_file],
+        master_phil=mmtbx.command_line.generic_simple_input_phil(),
+        process_pdb_file=True,
+        require_data=False,
+        out=null_out(),
+    )
+    validation = restraints.combined(
+        pdb_hierarchy=cmdline.pdb_hierarchy,
+        xray_structure=cmdline.xray_structure,
+        geometry_restraints_manager=cmdline.geometry,
+        ignore_hd=ignore_hd,
+    )
+    return validation
+
 
 def exercise_nqh_minimize():
-  open('modelFH.pdb', 'w').write(pdb_str_1)
-  args = ['modelFH.pdb', 'modelFH_reg.pdb', '.']
-  nqh_minimize.run(args)
-  v1 = run_validation('modelFH.pdb', ignore_hd=True)
-  v2 = run_validation('modelFH_reg.pdb', ignore_hd=True)
-  assert v1.bonds.n_outliers == 3
-  assert v2.bonds.n_outliers == 0
+    open("modelFH.pdb", "w").write(pdb_str_1)
+    args = ["modelFH.pdb", "modelFH_reg.pdb", "."]
+    nqh_minimize.run(args)
+    v1 = run_validation("modelFH.pdb", ignore_hd=True)
+    v2 = run_validation("modelFH_reg.pdb", ignore_hd=True)
+    assert v1.bonds.n_outliers == 3
+    assert v2.bonds.n_outliers == 0
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise_nqh_minimize()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise_nqh_minimize()
+    print("OK. Time: %8.3f" % (time.time() - t0))

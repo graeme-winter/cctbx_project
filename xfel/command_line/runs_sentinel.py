@@ -39,71 +39,87 @@ master_phil = """
   }
 """
 
+
 def run(args):
-  try:
-    from cxi_xdr_xes.cftbx.cspad_ana import db as db
-  except ImportError:
-    raise Sorry("Trial logging not supported for this installation. Contact the developers for access.")
+    try:
+        from cxi_xdr_xes.cftbx.cspad_ana import db as db
+    except ImportError:
+        raise Sorry(
+            "Trial logging not supported for this installation. Contact the developers for access."
+        )
 
-  phil = iotbx.phil.process_command_line(args=args, master_string=master_phil)
-  params = phil.work.extract()
+    phil = iotbx.phil.process_command_line(args=args, master_string=master_phil)
+    params = phil.work.extract()
 
-  if params.db.host is None:
-    raise Usage("Please provide a host name")
-  if params.db.name is None:
-    raise Usage("Please provide a database name")
-  if params.db.user is None:
-    raise Usage("Please provide a user name")
-  if params.db.password is None:
-    import getpass
-    password = getpass.getpass()
-  else:
-    password = params.db.password
+    if params.db.host is None:
+        raise Usage("Please provide a host name")
+    if params.db.name is None:
+        raise Usage("Please provide a database name")
+    if params.db.user is None:
+        raise Usage("Please provide a user name")
+    if params.db.password is None:
+        import getpass
 
-  try:
-    dbobj = db.dbconnect(host=params.db.host, db=params.db.name, username=params.db.user, password=password)
-  except Exception as e:
-    raise Sorry(e)
+        password = getpass.getpass()
+    else:
+        password = params.db.password
 
-  from xfel.xpp.simulate import file_table
-  query = "https://pswww.slac.stanford.edu/ws-auth/dataexport/placed?exp_name=%s"%(params.experiment)
+    try:
+        dbobj = db.dbconnect(
+            host=params.db.host,
+            db=params.db.name,
+            username=params.db.user,
+            password=password,
+        )
+    except Exception as e:
+        raise Sorry(e)
 
-  # set up extra run tags, if provided
-  if params.run_tags is not None:
-    extra1 = ", tags"
-    extra2 = ",'%s'"%params.run_tags
-  else:
-    extra1 = ""
-    extra2 = ""
+    from xfel.xpp.simulate import file_table
 
-  while True:
-    # Get the set of known runs in the experiment database
-    cmd = "SELECT run from %s_runs"%params.experiment_tag
-    cursor = dbobj.cursor()
-    cursor.execute(cmd)
+    query = "https://pswww.slac.stanford.edu/ws-auth/dataexport/placed?exp_name=%s" % (
+        params.experiment
+    )
 
-    # Get the set of runs from SLAC's database
-    FT = file_table(params,query)
+    # set up extra run tags, if provided
+    if params.run_tags is not None:
+        extra1 = ", tags"
+        extra2 = ",'%s'" % params.run_tags
+    else:
+        extra1 = ""
+        extra2 = ""
 
-    # Find the delta
-    known_runs = [int(entry[0]) for entry in cursor.fetchall()]
-    unknown_runs = [run for run in FT.rundict if run not in known_runs]
+    while True:
+        # Get the set of known runs in the experiment database
+        cmd = "SELECT run from %s_runs" % params.experiment_tag
+        cursor = dbobj.cursor()
+        cursor.execute(cmd)
 
-    print("%d new runs"%len(unknown_runs))
+        # Get the set of runs from SLAC's database
+        FT = file_table(params, query)
 
-    # Enter any new runs into the experiment database
-    if len(unknown_runs) > 0:
-      cmd = "INSERT INTO %s_runs (run%s) VALUES "%(params.experiment_tag, extra1)
-      comma = ""
-      for run in unknown_runs:
-        cmd += comma + "(%d%s)"%(run, extra2)
-        comma = ", "
+        # Find the delta
+        known_runs = [int(entry[0]) for entry in cursor.fetchall()]
+        unknown_runs = [run for run in FT.rundict if run not in known_runs]
 
-      cursor = dbobj.cursor()
-      cursor.execute(cmd)
-      dbobj.commit()
+        print("%d new runs" % len(unknown_runs))
 
-    time.sleep(10)
+        # Enter any new runs into the experiment database
+        if len(unknown_runs) > 0:
+            cmd = "INSERT INTO %s_runs (run%s) VALUES " % (
+                params.experiment_tag,
+                extra1,
+            )
+            comma = ""
+            for run in unknown_runs:
+                cmd += comma + "(%d%s)" % (run, extra2)
+                comma = ", "
+
+            cursor = dbobj.cursor()
+            cursor.execute(cmd)
+            dbobj.commit()
+
+        time.sleep(10)
+
 
 if __name__ == "__main__":
-  run(sys.argv[1:])
+    run(sys.argv[1:])

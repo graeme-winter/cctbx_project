@@ -64,41 +64,45 @@ TER
 END
 """
 
-def exercise_geo_out():
-  log = null_out()
-  # import sys
-  # log = sys.stdout
-  mon_lib_srv = mmtbx.monomer_library.server.server()
-  ener_lib = mmtbx.monomer_library.server.ener_lib()
-  pdb_int_pars = mmtbx.monomer_library.pdb_interpretation.master_params.extract()
-  pdb_int_pars.secondary_structure.enabled=True
-  processed_pdb_file = mmtbx.monomer_library.pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    params=pdb_int_pars,
-    raw_records=pdb_str.split('\n'),
-    substitute_non_crystallographic_unit_cell_if_necessary=True,
-    log=log)
-  acp = processed_pdb_file.all_chain_proxies
-  source = acp.pdb_inp.source_info()
-  defpars = mmtbx.secondary_structure.sec_str_master_phil.fetch()
-  custom_pars = defpars.fetch(source = iotbx.phil.parse(
-      "h_bond_restraints.remove_outliers=False\n"))
-  custom_pars_extr = custom_pars.extract()
-  ss_manager = mmtbx.secondary_structure.manager(
-      pdb_hierarchy=acp.pdb_hierarchy,
-      params=custom_pars_extr.secondary_structure)
-  grm = processed_pdb_file.geometry_restraints_manager(
-      show_energies                = False,
-      assume_hydrogens_all_missing = True,
-      )
-  n_hbp = grm.get_n_hbond_proxies()
-  assert n_hbp == 4
 
-if (__name__ == "__main__"):
-  if libtbx.env.has_module("ksdssp"):
-    # removed check for old h-bond proxies
-    exercise_geo_out()
-    print("OK")
-  else :
-    print("skipping test, ksdssp not available")
+def exercise_geo_out():
+    log = null_out()
+    # import sys
+    # log = sys.stdout
+    mon_lib_srv = mmtbx.monomer_library.server.server()
+    ener_lib = mmtbx.monomer_library.server.ener_lib()
+    pdb_int_pars = mmtbx.monomer_library.pdb_interpretation.master_params.extract()
+    pdb_int_pars.secondary_structure.enabled = True
+    processed_pdb_file = mmtbx.monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        params=pdb_int_pars,
+        raw_records=pdb_str.split("\n"),
+        substitute_non_crystallographic_unit_cell_if_necessary=True,
+        log=log,
+    )
+    acp = processed_pdb_file.all_chain_proxies
+    source = acp.pdb_inp.source_info()
+    defpars = mmtbx.secondary_structure.sec_str_master_phil.fetch()
+    custom_pars = defpars.fetch(
+        source=iotbx.phil.parse("h_bond_restraints.remove_outliers=False\n")
+    )
+    custom_pars_extr = custom_pars.extract()
+    ss_manager = mmtbx.secondary_structure.manager(
+        pdb_hierarchy=acp.pdb_hierarchy, params=custom_pars_extr.secondary_structure
+    )
+    grm = processed_pdb_file.geometry_restraints_manager(
+        show_energies=False,
+        assume_hydrogens_all_missing=True,
+    )
+    n_hbp = grm.get_n_hbond_proxies()
+    assert n_hbp == 4
+
+
+if __name__ == "__main__":
+    if libtbx.env.has_module("ksdssp"):
+        # removed check for old h-bond proxies
+        exercise_geo_out()
+        print("OK")
+    else:
+        print("skipping test, ksdssp not available")

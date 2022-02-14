@@ -11,7 +11,8 @@ import os.path
 import sys
 from six.moves import range
 
-master_phil = iotbx.phil.parse("""
+master_phil = iotbx.phil.parse(
+    """
 include scope libtbx.phil.interface.tracking_params
 input_files {
     data = None
@@ -263,277 +264,357 @@ crystal_info {
         .help = '''Verbose output'''
         .short_caption = Verbose output
    }
-""", process_includes=True)
+""",
+    process_includes=True,
+)
 master_params = master_phil
 
-def get_params(args,out=sys.stdout):
-  command_line = iotbx.phil.process_command_line_with_files(
-    args=args,
-    master_phil=master_phil,
-    reflection_file_def="input_files.data",
-    seq_file_def="crystal_info.seq_file")
-  params = command_line.work.extract()
-  print("\nPlan a SAD experiment\n", file=out)
-  master_phil.format(python_object=params).show(out=out)
-  return params
+
+def get_params(args, out=sys.stdout):
+    command_line = iotbx.phil.process_command_line_with_files(
+        args=args,
+        master_phil=master_phil,
+        reflection_file_def="input_files.data",
+        seq_file_def="crystal_info.seq_file",
+    )
+    params = command_line.work.extract()
+    print("\nPlan a SAD experiment\n", file=out)
+    master_phil.format(python_object=params).show(out=out)
+    return params
+
 
 def setup_params(params, out):
-  if not params.crystal_info.wavelength:
-    raise Sorry("Please supply a wavelength for data collection.")
-  if not params.crystal_info.atom_type:
-    raise Sorry(
-      "Please supply an atom_type for the anomalously-scattering atom.")
-  if not params.crystal_info.f_double_prime:
-     fp_fdp=get_fp_fdp(
-      atom_type=params.crystal_info.atom_type,
-      wavelength=params.crystal_info.wavelength,out=out)
-     if fp_fdp is not None:
-       params.crystal_info.f_double_prime=fp_fdp.fdp()
-     else:
-       raise Sorry(
-        "Please specify f_double_prime as the wavelength %7.2f A is" %(
-         params.crystal_info.wavelength)+
-         "\nout of range of the Sasaki tables used here.")
+    if not params.crystal_info.wavelength:
+        raise Sorry("Please supply a wavelength for data collection.")
+    if not params.crystal_info.atom_type:
+        raise Sorry("Please supply an atom_type for the anomalously-scattering atom.")
+    if not params.crystal_info.f_double_prime:
+        fp_fdp = get_fp_fdp(
+            atom_type=params.crystal_info.atom_type,
+            wavelength=params.crystal_info.wavelength,
+            out=out,
+        )
+        if fp_fdp is not None:
+            params.crystal_info.f_double_prime = fp_fdp.fdp()
+        else:
+            raise Sorry(
+                "Please specify f_double_prime as the wavelength %7.2f A is"
+                % (params.crystal_info.wavelength)
+                + "\nout of range of the Sasaki tables used here."
+            )
 
-  if params.crystal_info.solvent_fraction and \
-     params.crystal_info.solvent_fraction > 1.01:
-    raise Sorry("Solvent fraction should be from 0 to 1")
+    if (
+        params.crystal_info.solvent_fraction
+        and params.crystal_info.solvent_fraction > 1.01
+    ):
+        raise Sorry("Solvent fraction should be from 0 to 1")
 
-  if params.crystal_info.seq_file and \
-       os.path.isfile(params.crystal_info.seq_file):
-    residues,sites,number_of_s,solvent_fraction,ncs_copies=get_residues_and_ha(
-      seq_file=params.crystal_info.seq_file,
-      atom_type=params.crystal_info.atom_type,
-      chain_type=params.crystal_info.chain_type,
-      solvent_fraction=params.crystal_info.solvent_fraction,
-      data=params.input_files.data,
-      ncs_copies=params.crystal_info.ncs_copies,
-      out=out)
+    if params.crystal_info.seq_file and os.path.isfile(params.crystal_info.seq_file):
+        (
+            residues,
+            sites,
+            number_of_s,
+            solvent_fraction,
+            ncs_copies,
+        ) = get_residues_and_ha(
+            seq_file=params.crystal_info.seq_file,
+            atom_type=params.crystal_info.atom_type,
+            chain_type=params.crystal_info.chain_type,
+            solvent_fraction=params.crystal_info.solvent_fraction,
+            data=params.input_files.data,
+            ncs_copies=params.crystal_info.ncs_copies,
+            out=out,
+        )
+        if not params.crystal_info.residues:
+            print(
+                "Number of residues based on sequence file: %d" % (residues), file=out
+            )
+            params.crystal_info.residues = residues
+        if not params.crystal_info.number_of_s:
+            print(
+                "Number of S atoms based on sequence file: %d" % (number_of_s), file=out
+            )
+            params.crystal_info.number_of_s = number_of_s
+
+        if not params.crystal_info.sites:
+            print(
+                "Number of sites for anomalously-scattering atom "
+                + "based on sequence file: %d" % (sites),
+                file=out,
+            )
+            params.crystal_info.sites = sites
+
+        if ncs_copies and not params.crystal_info.ncs_copies:
+            print(
+                "NCS copies " + "based on sequence file and data : %d" % (ncs_copies),
+                file=out,
+            )
+            params.crystal_info.ncs_copies = ncs_copies
+
+        if solvent_fraction and not params.crystal_info.solvent_fraction:
+            print(
+                "Solvent fraction "
+                + "based on sequence file and data : %5.2f" % (solvent_fraction),
+                file=out,
+            )
+            params.crystal_info.solvent_fraction = solvent_fraction
+
+    else:
+        if (
+            params.crystal_info.number_of_s is None
+            and params.include_weak_anomalous_scattering is True
+        ):
+            raise Sorry(
+                "Sorry need a sequence file or number_of_s if "
+                + "\ninclude_weak_anomalous_scattering=True"
+            )
+        elif (
+            params.crystal_info.number_of_s is None
+            and params.include_weak_anomalous_scattering is Auto
+        ):
+            print(
+                "Note: not applying include_weak_anomalous_scattering as"
+                + " no sequence \nfile or number_of_s are supplied",
+                file=out,
+            )
+            params.include_weak_anomalous_scattering = False
+
+    if params.crystal_info.solvent_fraction is None:
+        params.crystal_info.solvent_fraction = 0.50  # just guess
+
     if not params.crystal_info.residues:
-      print("Number of residues based on sequence file: %d" %(
-        residues), file=out)
-      params.crystal_info.residues=residues
-    if not params.crystal_info.number_of_s:
-      print("Number of S atoms based on sequence file: %d" %(
-        number_of_s), file=out)
-      params.crystal_info.number_of_s=number_of_s
-
-    if not params.crystal_info.sites:
-      print("Number of sites for anomalously-scattering atom "+\
-        "based on sequence file: %d" %( sites), file=out)
-      params.crystal_info.sites=sites
-
-    if ncs_copies and not params.crystal_info.ncs_copies:
-      print("NCS copies "+\
-        "based on sequence file and data : %d" %( ncs_copies), file=out)
-      params.crystal_info.ncs_copies=ncs_copies
-
-    if solvent_fraction and not params.crystal_info.solvent_fraction:
-      print("Solvent fraction "+\
-        "based on sequence file and data : %5.2f" %( solvent_fraction), file=out)
-      params.crystal_info.solvent_fraction=solvent_fraction
-
-  else:
-    if params.crystal_info.number_of_s is None and \
-         params.include_weak_anomalous_scattering is True:
-      raise Sorry("Sorry need a sequence file or number_of_s if "+
-        "\ninclude_weak_anomalous_scattering=True")
-    elif params.crystal_info.number_of_s is None and \
-         params.include_weak_anomalous_scattering is Auto:
-      print("Note: not applying include_weak_anomalous_scattering as"+\
-        " no sequence \nfile or number_of_s are supplied", file=out)
-      params.include_weak_anomalous_scattering=False
-
-  if params.crystal_info.solvent_fraction is None:
-    params.crystal_info.solvent_fraction=0.50  # just guess
-
-  if not params.crystal_info.residues:
-    raise Sorry("Please specify number of residues (residues=500) or a sequence file")
-  if params.crystal_info.sites:
-    pass # OK
-  elif (params.crystal_info.sites_min and params.crystal_info.sites_max):
-    pass # OK
-  else:
-    raise Sorry(
-      "Please specify number of sites or a sequence file and atom_type")
+        raise Sorry(
+            "Please specify number of residues (residues=500) or a sequence file"
+        )
+    if params.crystal_info.sites:
+        pass  # OK
+    elif params.crystal_info.sites_min and params.crystal_info.sites_max:
+        pass  # OK
+    else:
+        raise Sorry("Please specify number of sites or a sequence file and atom_type")
 
 
 class result_table:
-  def __init__(self):
-    self.table_rows=[]
-    self.table_header=[]
-    self.number_of_columns=0
+    def __init__(self):
+        self.table_rows = []
+        self.table_header = []
+        self.number_of_columns = 0
 
-  def add_table_header(self,header): # must be first
-    self.table_header=header
-    self.number_of_columns=len(header)
+    def add_table_header(self, header):  # must be first
+        self.table_header = header
+        self.number_of_columns = len(header)
 
-  def add_table_row(self,row):
-    assert self.table_header and len(row)==len(self.table_header)
-    self.table_rows.append(row)
+    def add_table_row(self, row):
+        assert self.table_header and len(row) == len(self.table_header)
+        self.table_rows.append(row)
 
-  def get_formats(self,buffer=0):
-    self.widths=[]
-    self.formats=[]
-    for i in range(self.number_of_columns):
-      w=len(self.table_header[i])
-      for tr in self.table_rows:
-        w=max(w,len(tr[i]))
-      self.widths.append(w)
-      self.formats.append("%s%ss" %("%",w+buffer))
+    def get_formats(self, buffer=0):
+        self.widths = []
+        self.formats = []
+        for i in range(self.number_of_columns):
+            w = len(self.table_header[i])
+            for tr in self.table_rows:
+                w = max(w, len(tr[i]))
+            self.widths.append(w)
+            self.formats.append("%s%ss" % ("%", w + buffer))
 
-  def show_summary(self,buffer=3,gui_output=False,out=sys.stdout):
-    assert not gui_output # not implemented yet
-    self.get_formats(buffer=buffer)
-    for i in range(self.number_of_columns):
-      print(self.formats[i] %(self.table_header[i]), end=' ', file=out)
-    print(file=out)
+    def show_summary(self, buffer=3, gui_output=False, out=sys.stdout):
+        assert not gui_output  # not implemented yet
+        self.get_formats(buffer=buffer)
+        for i in range(self.number_of_columns):
+            print(self.formats[i] % (self.table_header[i]), end=" ", file=out)
+        print(file=out)
 
-    for tr in self.table_rows:
-      for i in range(self.number_of_columns):
-        print(self.formats[i] %(tr[i]), end=' ', file=out)
-      print(file=out)
-
-def run(args,params=None,return_plan=False,out=sys.stdout):
-  # NOTE: can call with params and skip reading any files.
-  if not params:
-    params=get_params(args,out=out)
-
-  setup_params(params, out=out)
-
-  if params.crystal_info.sites_min and params.crystal_info.sites_max:
-    return run_varying_sites(params,out=out)
-  elif params.i_over_sigma_range_low and params.i_over_sigma_range_high:
-    return run_varying_i_over_sigma(params,out=out)
-  else:
-    return run_with_params(params,out=out)
-
-def run_varying_i_over_sigma(params,out=sys.stdout):
-  from copy import deepcopy
-  local_params=deepcopy(params)
-  local_params.i_over_sigma_range_low=None
-  local_params.i_over_sigma_range_high=None
-  local_params.control.fixed_resolution=True
-
-  local_params.control.show_summary=True
-  t=result_table()
-  t.add_table_header([
-     "I/sigI",
-     "cc_half",
-     "cc*_anom",
-     "Signal",
-     "p(Substr)",
-     "FOM",
-   ])
-
-  delta=max(0.001,
-    (params.i_over_sigma_range_high-params.i_over_sigma_range_low)/max(1,
-     params.steps))
-  i_over_sigma=params.i_over_sigma_range_low
-  while i_over_sigma <= params.i_over_sigma_range_high+0.01:
-    local_params.i_over_sigma=i_over_sigma
-    plan=run_with_params(local_params,quiet=True,out=out)
-    [dmin,nsites,nrefl,fpp,local_i_over_sigma,
-        sigf,cc_half_weak,cc_half,cc_ano_weak,cc_ano,s_ano,solved,fom]=\
-      plan.representative_values
-    t.add_table_row([
-        "%6.2f" % (i_over_sigma),
-        "%6.3f" % (cc_half),
-        "%6.3f" % ( cc_ano),
-        "%5.2f" % ( s_ano),
-        "%5.2f" % (solved),
-        "%4.3f" % (fom),
-      ])
-    i_over_sigma+=delta
-
-  plan.show_characteristics(out=out)
-  print("\nExpected data utility varying the value of overall I/sigI", file=out)
-  t.show_summary(out=out)
-
-def run_varying_sites(params,out=sys.stdout):
-  if not params.i_over_sigma:
-    raise Sorry("For varying sites you need to set i_over_sigma")
-  from copy import deepcopy
-  local_params=deepcopy(params)
-  local_params.crystal_info.sites_min=None
-  local_params.crystal_info.sites_max=None
-  local_params.control.show_summary=True
-  local_params.control.fixed_resolution=True
-  t=result_table()
-  t.add_table_header([
-     "Sites",
-     "cc_half",
-     "cc*_anom",
-     "Signal",
-     "p(Substr)",
-     "FOM",
-   ])
-
-  if params.crystal_info.sites_min>params.crystal_info.sites_max:
-    raise Sorry("Please set sites_min < sites_max")
-  for sites in range(params.crystal_info.sites_min,
-     params.crystal_info.sites_max+1):
-    local_params.crystal_info.sites=sites
-    plan=run_with_params(local_params,quiet=True,out=out)
-    [dmin,nsites,nrefl,fpp,local_i_over_sigma,
-        sigf,cc_half_weak,cc_half,cc_ano_weak,cc_ano,s_ano,solved,fom]=\
-      plan.representative_values
-    t.add_table_row([
-        "%3d" % (nsites),
-        "%6.3f" % (cc_half),
-        "%6.3f" % ( cc_ano),
-        "%5.2f" % ( s_ano),
-        "%5.1f" % (solved),
-        "%4.3f" % (fom),
-      ])
-  plan.show_characteristics(out=out)
-
-  print("\nExpected data utility varying the number of sites", file=out)
-  t.show_summary(out=out)
+        for tr in self.table_rows:
+            for i in range(self.number_of_columns):
+                print(self.formats[i] % (tr[i]), end=" ", file=out)
+            print(file=out)
 
 
-def run_with_params(params,quiet=False,out=sys.stdout):
-  plan=mmtbx.scaling.plan_sad_experiment.estimate_necessary_i_sigi(
-    chain_type=params.crystal_info.chain_type,
-    residues=params.crystal_info.residues,
-    number_of_s=params.crystal_info.number_of_s,
-    solvent_fraction=params.crystal_info.solvent_fraction,
-    nsites=params.crystal_info.sites,
-    wavelength=params.crystal_info.wavelength,
-    atom_type=params.crystal_info.atom_type,
-    fpp=params.crystal_info.f_double_prime,
-    target_s_ano=params.target_signal,
-    i_over_sigma=params.i_over_sigma,
-    max_i_over_sigma=params.max_i_over_sigma,
-    min_cc_ano=params.min_cc_ano,
-    min_in_bin=params.min_in_bin,
-    data=params.input_files.data,
-    data_labels=params.input_files.data_labels,
-    resolution=params.crystal_info.resolution,
-    b_value=params.crystal_info.b_value,
-    b_value_anomalous=params.crystal_info.b_value_anomalous,
-    fixed_resolution=params.control.fixed_resolution,
-    occupancy=params.crystal_info.occupancy,
-    ideal_cc_anom=params.ideal_cc_anom,
-    bayesian_updates=params.bayesian_updates,
-    include_weak_anomalous_scattering=params.include_weak_anomalous_scattering,
-    intrinsic_scatterers_as_noise=params.intrinsic_scatterers_as_noise,)
-  if quiet:
-    return plan
-  elif params.control.show_summary:
-    plan.show_summary()
-  else:
-    return plan.show(out=out)
+def run(args, params=None, return_plan=False, out=sys.stdout):
+    # NOTE: can call with params and skip reading any files.
+    if not params:
+        params = get_params(args, out=out)
+
+    setup_params(params, out=out)
+
+    if params.crystal_info.sites_min and params.crystal_info.sites_max:
+        return run_varying_sites(params, out=out)
+    elif params.i_over_sigma_range_low and params.i_over_sigma_range_high:
+        return run_varying_i_over_sigma(params, out=out)
+    else:
+        return run_with_params(params, out=out)
+
+
+def run_varying_i_over_sigma(params, out=sys.stdout):
+    from copy import deepcopy
+
+    local_params = deepcopy(params)
+    local_params.i_over_sigma_range_low = None
+    local_params.i_over_sigma_range_high = None
+    local_params.control.fixed_resolution = True
+
+    local_params.control.show_summary = True
+    t = result_table()
+    t.add_table_header(
+        [
+            "I/sigI",
+            "cc_half",
+            "cc*_anom",
+            "Signal",
+            "p(Substr)",
+            "FOM",
+        ]
+    )
+
+    delta = max(
+        0.001,
+        (params.i_over_sigma_range_high - params.i_over_sigma_range_low)
+        / max(1, params.steps),
+    )
+    i_over_sigma = params.i_over_sigma_range_low
+    while i_over_sigma <= params.i_over_sigma_range_high + 0.01:
+        local_params.i_over_sigma = i_over_sigma
+        plan = run_with_params(local_params, quiet=True, out=out)
+        [
+            dmin,
+            nsites,
+            nrefl,
+            fpp,
+            local_i_over_sigma,
+            sigf,
+            cc_half_weak,
+            cc_half,
+            cc_ano_weak,
+            cc_ano,
+            s_ano,
+            solved,
+            fom,
+        ] = plan.representative_values
+        t.add_table_row(
+            [
+                "%6.2f" % (i_over_sigma),
+                "%6.3f" % (cc_half),
+                "%6.3f" % (cc_ano),
+                "%5.2f" % (s_ano),
+                "%5.2f" % (solved),
+                "%4.3f" % (fom),
+            ]
+        )
+        i_over_sigma += delta
+
+    plan.show_characteristics(out=out)
+    print("\nExpected data utility varying the value of overall I/sigI", file=out)
+    t.show_summary(out=out)
+
+
+def run_varying_sites(params, out=sys.stdout):
+    if not params.i_over_sigma:
+        raise Sorry("For varying sites you need to set i_over_sigma")
+    from copy import deepcopy
+
+    local_params = deepcopy(params)
+    local_params.crystal_info.sites_min = None
+    local_params.crystal_info.sites_max = None
+    local_params.control.show_summary = True
+    local_params.control.fixed_resolution = True
+    t = result_table()
+    t.add_table_header(
+        [
+            "Sites",
+            "cc_half",
+            "cc*_anom",
+            "Signal",
+            "p(Substr)",
+            "FOM",
+        ]
+    )
+
+    if params.crystal_info.sites_min > params.crystal_info.sites_max:
+        raise Sorry("Please set sites_min < sites_max")
+    for sites in range(
+        params.crystal_info.sites_min, params.crystal_info.sites_max + 1
+    ):
+        local_params.crystal_info.sites = sites
+        plan = run_with_params(local_params, quiet=True, out=out)
+        [
+            dmin,
+            nsites,
+            nrefl,
+            fpp,
+            local_i_over_sigma,
+            sigf,
+            cc_half_weak,
+            cc_half,
+            cc_ano_weak,
+            cc_ano,
+            s_ano,
+            solved,
+            fom,
+        ] = plan.representative_values
+        t.add_table_row(
+            [
+                "%3d" % (nsites),
+                "%6.3f" % (cc_half),
+                "%6.3f" % (cc_ano),
+                "%5.2f" % (s_ano),
+                "%5.1f" % (solved),
+                "%4.3f" % (fom),
+            ]
+        )
+    plan.show_characteristics(out=out)
+
+    print("\nExpected data utility varying the number of sites", file=out)
+    t.show_summary(out=out)
+
+
+def run_with_params(params, quiet=False, out=sys.stdout):
+    plan = mmtbx.scaling.plan_sad_experiment.estimate_necessary_i_sigi(
+        chain_type=params.crystal_info.chain_type,
+        residues=params.crystal_info.residues,
+        number_of_s=params.crystal_info.number_of_s,
+        solvent_fraction=params.crystal_info.solvent_fraction,
+        nsites=params.crystal_info.sites,
+        wavelength=params.crystal_info.wavelength,
+        atom_type=params.crystal_info.atom_type,
+        fpp=params.crystal_info.f_double_prime,
+        target_s_ano=params.target_signal,
+        i_over_sigma=params.i_over_sigma,
+        max_i_over_sigma=params.max_i_over_sigma,
+        min_cc_ano=params.min_cc_ano,
+        min_in_bin=params.min_in_bin,
+        data=params.input_files.data,
+        data_labels=params.input_files.data_labels,
+        resolution=params.crystal_info.resolution,
+        b_value=params.crystal_info.b_value,
+        b_value_anomalous=params.crystal_info.b_value_anomalous,
+        fixed_resolution=params.control.fixed_resolution,
+        occupancy=params.crystal_info.occupancy,
+        ideal_cc_anom=params.ideal_cc_anom,
+        bayesian_updates=params.bayesian_updates,
+        include_weak_anomalous_scattering=params.include_weak_anomalous_scattering,
+        intrinsic_scatterers_as_noise=params.intrinsic_scatterers_as_noise,
+    )
+    if quiet:
+        return plan
+    elif params.control.show_summary:
+        plan.show_summary()
+    else:
+        return plan.show(out=out)
+
 
 def validate_params(params):
-  return setup_params(params, out=null_out())
+    return setup_params(params, out=null_out())
+
 
 class launcher(runtime_utils.target_with_save_result):
-  def run(self):
-    return run(self.args, out=sys.stdout)
+    def run(self):
+        return run(self.args, out=sys.stdout)
+
 
 def finish_job(result):
-  return ([], [])
+    return ([], [])
 
-if __name__=="__main__":
-  run(sys.argv[1:])
+
+if __name__ == "__main__":
+    run(sys.argv[1:])

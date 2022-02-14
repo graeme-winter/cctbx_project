@@ -67,14 +67,16 @@ TER
 END
 """
 
-def exercise(prefix="tst_cif_as_pdb_1atom"):
-  """ Note that cif contains only 1 atom and information is not wrapped into
-  loops (loop_) as usual
-  """
-  cif_inp = iotbx.pdb.input(lines=test_cif_str, source_info=None)
-  model = mmtbx.model.manager(model_input=cif_inp)
-  pdb_txt = model.model_as_pdb()
-  assert not show_diff(pdb_txt, pdb_answer)
 
-if __name__ == '__main__':
-  exercise()
+def exercise(prefix="tst_cif_as_pdb_1atom"):
+    """Note that cif contains only 1 atom and information is not wrapped into
+    loops (loop_) as usual
+    """
+    cif_inp = iotbx.pdb.input(lines=test_cif_str, source_info=None)
+    model = mmtbx.model.manager(model_input=cif_inp)
+    pdb_txt = model.model_as_pdb()
+    assert not show_diff(pdb_txt, pdb_answer)
+
+
+if __name__ == "__main__":
+    exercise()

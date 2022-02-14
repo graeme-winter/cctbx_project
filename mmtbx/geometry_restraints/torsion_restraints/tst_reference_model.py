@@ -1,7 +1,9 @@
 from __future__ import absolute_import, division, print_function
 from mmtbx import monomer_library
-from mmtbx.geometry_restraints.torsion_restraints.reference_model import \
-    reference_model, reference_model_params
+from mmtbx.geometry_restraints.torsion_restraints.reference_model import (
+    reference_model,
+    reference_model_params,
+)
 from mmtbx.geometry_restraints.torsion_restraints import utils
 from mmtbx.validation.rotalyze import rotalyze
 import mmtbx.model
@@ -93,193 +95,261 @@ ATOM   5497  CB  ALA C 271      17.151  68.239  29.297  1.00  8.10           C
 
 
 def exercise_reference_model(args, mon_lib_srv, ener_lib):
-  log = StringIO()
-  work_params = reference_model_params.extract()
-  work_params.reference_model.enabled = True
-  work_params.reference_model.fix_outliers = False
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(lines=flex.split_lines(model_raw_records),
-                                    source_info=None))
-  model.process(make_restraints=True)
-  pdb_h = model.get_hierarchy()
-  reference_hierarchy_list = []
-  tmp_hierarchy = iotbx.pdb.input(
-    source_info=None,
-    lines=flex.split_lines(reference_raw_records)).construct_hierarchy()
+    log = StringIO()
+    work_params = reference_model_params.extract()
+    work_params.reference_model.enabled = True
+    work_params.reference_model.fix_outliers = False
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(
+            lines=flex.split_lines(model_raw_records), source_info=None
+        )
+    )
+    model.process(make_restraints=True)
+    pdb_h = model.get_hierarchy()
+    reference_hierarchy_list = []
+    tmp_hierarchy = iotbx.pdb.input(
+        source_info=None, lines=flex.split_lines(reference_raw_records)
+    ).construct_hierarchy()
 
-  reference_hierarchy_list.append(tmp_hierarchy)
-  rm = reference_model(
-         model=model,
-         reference_hierarchy_list=reference_hierarchy_list,
-         params=work_params.reference_model,
-         log=log)
-  assert rm.get_n_proxies() == 5, "Got %d, expected 5" % rm.get_n_proxies()
+    reference_hierarchy_list.append(tmp_hierarchy)
+    rm = reference_model(
+        model=model,
+        reference_hierarchy_list=reference_hierarchy_list,
+        params=work_params.reference_model,
+        log=log,
+    )
+    assert rm.get_n_proxies() == 5, "Got %d, expected 5" % rm.get_n_proxies()
 
-  reference_hierarchy_list_alt_seq = []
-  tmp_hierarchy = iotbx.pdb.input(
-    source_info=None,
-    lines=flex.split_lines(reference_raw_records_alt_seq)).\
-            construct_hierarchy()
-  reference_hierarchy_list_alt_seq.append(tmp_hierarchy)
-  reference_hierarchy_list_ref_match = []
-  tmp_hierarchy = iotbx.pdb.input(
-    source_info=None,
-    lines=flex.split_lines(reference_raw_records_match)).\
-            construct_hierarchy()
-  reference_hierarchy_list_ref_match.append(tmp_hierarchy)
+    reference_hierarchy_list_alt_seq = []
+    tmp_hierarchy = iotbx.pdb.input(
+        source_info=None, lines=flex.split_lines(reference_raw_records_alt_seq)
+    ).construct_hierarchy()
+    reference_hierarchy_list_alt_seq.append(tmp_hierarchy)
+    reference_hierarchy_list_ref_match = []
+    tmp_hierarchy = iotbx.pdb.input(
+        source_info=None, lines=flex.split_lines(reference_raw_records_match)
+    ).construct_hierarchy()
+    reference_hierarchy_list_ref_match.append(tmp_hierarchy)
 
-  i_seq_name_hash = utils.build_name_hash(
-    pdb_hierarchy=pdb_h)
-  assert i_seq_name_hash == \
-    {0: ' N   ASN C 236     ', 1: ' CA  ASN C 236     ',
-     2: ' C   ASN C 236     ', 3: ' O   ASN C 236     ',
-     4: ' CB  ASN C 236     ', 5: ' CG  ASN C 236     ',
-     6: ' OD1 ASN C 236     ', 7: ' ND2 ASN C 236     ',
-     8: ' N   LEU C 237     ', 9: ' CA  LEU C 237     ',
-     10: ' C   LEU C 237     ', 11: ' O   LEU C 237     ',
-     12: ' CB  LEU C 237     ', 13: ' CG  LEU C 237     ',
-     14: ' CD1 LEU C 237     ', 15: ' CD2 LEU C 237     '}
-  i_seq_element_hash = utils.build_element_hash(
-    pdb_hierarchy=pdb_h)
-  assert i_seq_element_hash == \
-       {0: 'N', 1: 'C', 2: 'C', 3: 'O', 4: 'C', 5: 'C', 6: 'O', 7: 'N', 8: 'N',
-        9: 'C', 10: 'C', 11: 'O', 12: 'C', 13: 'C', 14: 'C', 15: 'C'}
+    i_seq_name_hash = utils.build_name_hash(pdb_hierarchy=pdb_h)
+    assert i_seq_name_hash == {
+        0: " N   ASN C 236     ",
+        1: " CA  ASN C 236     ",
+        2: " C   ASN C 236     ",
+        3: " O   ASN C 236     ",
+        4: " CB  ASN C 236     ",
+        5: " CG  ASN C 236     ",
+        6: " OD1 ASN C 236     ",
+        7: " ND2 ASN C 236     ",
+        8: " N   LEU C 237     ",
+        9: " CA  LEU C 237     ",
+        10: " C   LEU C 237     ",
+        11: " O   LEU C 237     ",
+        12: " CB  LEU C 237     ",
+        13: " CG  LEU C 237     ",
+        14: " CD1 LEU C 237     ",
+        15: " CD2 LEU C 237     ",
+    }
+    i_seq_element_hash = utils.build_element_hash(pdb_hierarchy=pdb_h)
+    assert i_seq_element_hash == {
+        0: "N",
+        1: "C",
+        2: "C",
+        3: "O",
+        4: "C",
+        5: "C",
+        6: "O",
+        7: "N",
+        8: "N",
+        9: "C",
+        10: "C",
+        11: "O",
+        12: "C",
+        13: "C",
+        14: "C",
+        15: "C",
+    }
 
-  ref_pdb_hierarchy = reference_hierarchy_list[0]
-  dihedral_proxies = \
-    utils.get_complete_dihedral_proxies(pdb_hierarchy=ref_pdb_hierarchy)
-  sites_cart_ref = ref_pdb_hierarchy.atoms().extract_xyz()
-  dihedral_hash = rm.build_dihedral_hash(
-    dihedral_proxies=dihedral_proxies,
-    sites_cart=sites_cart_ref,
-    pdb_hierarchy=ref_pdb_hierarchy,
-    include_hydrogens=False,
-    include_main_chain=True,
-    include_side_chain=True)
-  assert len(dihedral_hash) == 5
-  reference_dihedral_proxies = rm.reference_dihedral_proxies.deep_copy()
-  assert reference_dihedral_proxies is not None
-  assert len(reference_dihedral_proxies) == len(dihedral_hash)
-  for rdp in reference_dihedral_proxies:
-    assert rdp.limit == work_params.reference_model.limit
+    ref_pdb_hierarchy = reference_hierarchy_list[0]
+    dihedral_proxies = utils.get_complete_dihedral_proxies(
+        pdb_hierarchy=ref_pdb_hierarchy
+    )
+    sites_cart_ref = ref_pdb_hierarchy.atoms().extract_xyz()
+    dihedral_hash = rm.build_dihedral_hash(
+        dihedral_proxies=dihedral_proxies,
+        sites_cart=sites_cart_ref,
+        pdb_hierarchy=ref_pdb_hierarchy,
+        include_hydrogens=False,
+        include_main_chain=True,
+        include_side_chain=True,
+    )
+    assert len(dihedral_hash) == 5
+    reference_dihedral_proxies = rm.reference_dihedral_proxies.deep_copy()
+    assert reference_dihedral_proxies is not None
+    assert len(reference_dihedral_proxies) == len(dihedral_hash)
+    for rdp in reference_dihedral_proxies:
+        assert rdp.limit == work_params.reference_model.limit
 
-  r1 = rotalyze(pdb_hierarchy=pdb_h, outliers_only=False)
-  out1 = StringIO()
-  r1.show_old_output(out=out1)
-  r2 = rotalyze(pdb_hierarchy=ref_pdb_hierarchy, outliers_only=False)
-  out2 = StringIO()
-  r2.show_old_output(out=out2)
+    r1 = rotalyze(pdb_hierarchy=pdb_h, outliers_only=False)
+    out1 = StringIO()
+    r1.show_old_output(out=out1)
+    r2 = rotalyze(pdb_hierarchy=ref_pdb_hierarchy, outliers_only=False)
+    out2 = StringIO()
+    r2.show_old_output(out=out2)
 
-  assert not show_diff(out1.getvalue(), """\
+    assert not show_diff(
+        out1.getvalue(),
+        """\
  C 236  ASN:1.00:0.2:227.3:80.2:::OUTLIER:OUTLIER
  C 237  LEU:1.00:0.0:209.6:357.2:::OUTLIER:OUTLIER
-""")
+""",
+    )
 
-  assert not show_diff(out2.getvalue(), """\
+    assert not show_diff(
+        out2.getvalue(),
+        """\
  C 236  ASN:1.00:39.1:203.2:43.6:::Favored:t0
  C 237  LEU:1.00:60.8:179.1:57.3:::Favored:tp
-""")
+""",
+    )
 
-  xray_structure = pdb_h.extract_xray_structure()
-  rm.set_rotamer_to_reference(
-    xray_structure=xray_structure,
-    mon_lib_srv=mon_lib_srv,
-    quiet=True)
-  pdb_h.adopt_xray_structure(xray_structure)
-  r2 = rotalyze(pdb_hierarchy=pdb_h, outliers_only=False)
-  out3 = StringIO()
-  r2.show_old_output(out=out3)
-  assert not show_diff(out3.getvalue(), """\
+    xray_structure = pdb_h.extract_xray_structure()
+    rm.set_rotamer_to_reference(
+        xray_structure=xray_structure, mon_lib_srv=mon_lib_srv, quiet=True
+    )
+    pdb_h.adopt_xray_structure(xray_structure)
+    r2 = rotalyze(pdb_hierarchy=pdb_h, outliers_only=False)
+    out3 = StringIO()
+    r2.show_old_output(out=out3)
+    assert not show_diff(
+        out3.getvalue(),
+        """\
  C 236  ASN:1.00:39.1:203.2:43.6:::Favored:t0
  C 237  LEU:1.00:60.8:179.1:57.3:::Favored:tp
-""")
+""",
+    )
 
-  match_map = rm.match_map['ref0']
-  assert match_map == \
-  {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 11,
-   12: 12, 13: 13, 14: 14, 15: 15}
+    match_map = rm.match_map["ref0"]
+    assert match_map == {
+        0: 0,
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+        8: 8,
+        9: 9,
+        10: 10,
+        11: 11,
+        12: 12,
+        13: 13,
+        14: 14,
+        15: 15,
+    }
 
-  master_phil_str_overrides = """
+    master_phil_str_overrides = """
   reference_model.reference_group {
     reference= chain B and resseq 246:247
     selection= chain C and resid 236:237
   }
   """
-  def_pars = reference_model_params
-  pars = iotbx.phil.parse(master_phil_str_overrides)
-  all_pars = def_pars.fetch(pars).extract()
-  all_pars.reference_model.enabled = True
-  rm = reference_model(
-         model = model,
-         reference_hierarchy_list=reference_hierarchy_list_alt_seq,
-         params=all_pars.reference_model,
-         log=log)
-  match_map = rm.match_map
-  assert match_map['ref0'] == \
-  {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 11,
-   12: 12, 13: 13, 14: 14, 15: 15}
+    def_pars = reference_model_params
+    pars = iotbx.phil.parse(master_phil_str_overrides)
+    all_pars = def_pars.fetch(pars).extract()
+    all_pars.reference_model.enabled = True
+    rm = reference_model(
+        model=model,
+        reference_hierarchy_list=reference_hierarchy_list_alt_seq,
+        params=all_pars.reference_model,
+        log=log,
+    )
+    match_map = rm.match_map
+    assert match_map["ref0"] == {
+        0: 0,
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+        8: 8,
+        9: 9,
+        10: 10,
+        11: 11,
+        12: 12,
+        13: 13,
+        14: 14,
+        15: 15,
+    }
 
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/1ywf.pdb",
-    test=os.path.isfile)
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(file_name=pdb_file,
-                                    source_info=None))
-  model.process(make_restraints=True)
-  pdb_h = model.get_hierarchy()
-  # pdb_hierarchy = iotbx.pdb.input(file_name=pdb_file).construct_hierarchy()
-  reference_file_list = []
-  reference_file_list.append(pdb_file)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/1ywf.pdb", test=os.path.isfile
+    )
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(file_name=pdb_file, source_info=None)
+    )
+    model.process(make_restraints=True)
+    pdb_h = model.get_hierarchy()
+    # pdb_hierarchy = iotbx.pdb.input(file_name=pdb_file).construct_hierarchy()
+    reference_file_list = []
+    reference_file_list.append(pdb_file)
 
-  work_pars = reference_model_params.extract()
-  work_pars.reference_model.fix_outliers = False
-  work_pars.reference_model.enabled = True
-
-  rm = reference_model(
-         model=model,
-         reference_file_list=reference_file_list,
-         params=work_pars.reference_model,
-         log=log)
-  reference_dihedral_proxies = rm.reference_dihedral_proxies
-  standard_weight = 0
-  for dp in reference_dihedral_proxies:
-    if dp.weight == 1.0:
-      standard_weight += 1
-  assert standard_weight == 1181, "Expecting 1181, got %d" % standard_weight
-  if (not libtbx.env.has_module(name="ksdssp")):
-    print("Skipping KSDSSP tests: ksdssp module not available.")
-  else:
     work_pars = reference_model_params.extract()
-    work_pars.reference_model.secondary_structure_only = True
+    work_pars.reference_model.fix_outliers = False
     work_pars.reference_model.enabled = True
-    rm.params = work_pars.reference_model
-    rm.get_reference_dihedral_proxies(model=model)
+
+    rm = reference_model(
+        model=model,
+        reference_file_list=reference_file_list,
+        params=work_pars.reference_model,
+        log=log,
+    )
     reference_dihedral_proxies = rm.reference_dihedral_proxies
-    ss_weight = 0
+    standard_weight = 0
     for dp in reference_dihedral_proxies:
-      if dp.weight == 1.0:
-        ss_weight += 1
-    assert ss_weight == 694, "expecting 694 proxies, got %d" % ss_weight
+        if dp.weight == 1.0:
+            standard_weight += 1
+    assert standard_weight == 1181, "Expecting 1181, got %d" % standard_weight
+    if not libtbx.env.has_module(name="ksdssp"):
+        print("Skipping KSDSSP tests: ksdssp module not available.")
+    else:
+        work_pars = reference_model_params.extract()
+        work_pars.reference_model.secondary_structure_only = True
+        work_pars.reference_model.enabled = True
+        rm.params = work_pars.reference_model
+        rm.get_reference_dihedral_proxies(model=model)
+        reference_dihedral_proxies = rm.reference_dihedral_proxies
+        ss_weight = 0
+        for dp in reference_dihedral_proxies:
+            if dp.weight == 1.0:
+                ss_weight += 1
+        assert ss_weight == 694, "expecting 694 proxies, got %d" % ss_weight
 
-  #test SSM alignment
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/ncs/rnase-s.pdb",
-    test=os.path.isfile)
-  pdb_hierarchy = iotbx.pdb.input(file_name=pdb_file).construct_hierarchy()
-  reference_file_list = []
-  reference_file_list.append(pdb_file)
-  pdb_hierarchy.reset_i_seq_if_necessary()
+    # test SSM alignment
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/ncs/rnase-s.pdb", test=os.path.isfile
+    )
+    pdb_hierarchy = iotbx.pdb.input(file_name=pdb_file).construct_hierarchy()
+    reference_file_list = []
+    reference_file_list.append(pdb_file)
+    pdb_hierarchy.reset_i_seq_if_necessary()
 
-  import ccp4io_adaptbx
-  ssm = ccp4io_adaptbx.SecondaryStructureMatching(
-    reference=pdb_hierarchy.models()[0].chains()[0],
-    moving=pdb_hierarchy.models()[0].chains()[1])
-  alignment = ccp4io_adaptbx.SSMAlignment.residue_groups(match=ssm)
-  assert ssm.GetQvalues()[0] > 0.98
+    import ccp4io_adaptbx
+
+    ssm = ccp4io_adaptbx.SecondaryStructureMatching(
+        reference=pdb_hierarchy.models()[0].chains()[0],
+        moving=pdb_hierarchy.models()[0].chains()[1],
+    )
+    alignment = ccp4io_adaptbx.SSMAlignment.residue_groups(match=ssm)
+    assert ssm.GetQvalues()[0] > 0.98
+
 
 def exercise_multiple_to_one(args, mon_lib_srv, ener_lib):
 
-  pdb_str_original = """\
+    pdb_str_original = """\
 CRYST1   69.211   49.956   52.557  90.00  90.00  90.00 P 1
 ATOM      1  N   THR A   3      51.193  44.956  23.993  1.00 80.52           N
 ATOM      2  CA  THR A   3      50.812  43.732  23.211  1.00 80.52           C
@@ -516,7 +586,7 @@ TER     232      ASN D  10
 END
 """
 
-  pdb_str_ref_minimized = """\
+    pdb_str_ref_minimized = """\
 CRYST1   69.211   49.956   52.557  90.00  90.00  90.00 P 1
 SCALE1      0.014449  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.020018  0.000000        0.00000
@@ -581,16 +651,16 @@ ATOM    110  O   ASN A  10      49.101  31.139  16.787  1.00 79.63           O
 TER
   """
 
-  ref_file = open("ref.pdb", 'w')
-  ref_file.write(pdb_str_ref_minimized)
-  ref_file.close()
-  log = StringIO()
-  # log = sys.stdout
-  # orig_file = open("start.pdb", "w")
-  # orig_file.write(pdb_str_original)
-  # orig_file.close()
-  def_pars = reference_model_params
-  params_text = """\
+    ref_file = open("ref.pdb", "w")
+    ref_file.write(pdb_str_ref_minimized)
+    ref_file.close()
+    log = StringIO()
+    # log = sys.stdout
+    # orig_file = open("start.pdb", "w")
+    # orig_file.write(pdb_str_original)
+    # orig_file.close()
+    def_pars = reference_model_params
+    params_text = """\
  reference_model {
     reference_group {
       reference = chain 'A'
@@ -613,41 +683,44 @@ TER
       file_name = "ref.pdb"
     }
   }  """
-  pars = iotbx.phil.parse(params_text)
-  all_pars = def_pars.fetch(pars).extract()
-  all_pars.reference_model.enabled = True
+    pars = iotbx.phil.parse(params_text)
+    all_pars = def_pars.fetch(pars).extract()
+    all_pars.reference_model.enabled = True
 
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(lines=flex.split_lines(pdb_str_original),
-                                    source_info=None))
-  model.process(make_restraints=True)
-  pdb_h = model.get_hierarchy()
-  rm = reference_model(
-         model = model,
-         reference_file_list=['ref.pdb'],
-         params=all_pars.reference_model,
-         log=log)
-  # rm.show_reference_summary(log=log)
-  assert rm.get_n_proxies() == 124, \
-      "Expecting 124 proxies, got %d" % rm.get_n_proxies()
-  # STOP()
-  new_h = pdb_h.deep_copy()
-  xray_structure = new_h.extract_xray_structure()
-  rm.set_rotamer_to_reference(
-    xray_structure=xray_structure)
-  new_h.adopt_xray_structure(xray_structure)
-  r1 = rotalyze(pdb_hierarchy=new_h, outliers_only=False)
-  assert r1.n_outliers == 0
-  # new_h.write_pdb_file(file_name="final.pdb")
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(
+            lines=flex.split_lines(pdb_str_original), source_info=None
+        )
+    )
+    model.process(make_restraints=True)
+    pdb_h = model.get_hierarchy()
+    rm = reference_model(
+        model=model,
+        reference_file_list=["ref.pdb"],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    # rm.show_reference_summary(log=log)
+    assert rm.get_n_proxies() == 124, (
+        "Expecting 124 proxies, got %d" % rm.get_n_proxies()
+    )
+    # STOP()
+    new_h = pdb_h.deep_copy()
+    xray_structure = new_h.extract_xray_structure()
+    rm.set_rotamer_to_reference(xray_structure=xray_structure)
+    new_h.adopt_xray_structure(xray_structure)
+    r1 = rotalyze(pdb_hierarchy=new_h, outliers_only=False)
+    assert r1.n_outliers == 0
+    # new_h.write_pdb_file(file_name="final.pdb")
 
-  #
-  # The same, but from multiple files
-  for i in range(4):
-    ref_file = open("ref_%d.pdb" % i, 'w')
-    ref_file.write(pdb_str_ref_minimized)
-    ref_file.close()
-  def_pars = reference_model_params
-  params_text = """\
+    #
+    # The same, but from multiple files
+    for i in range(4):
+        ref_file = open("ref_%d.pdb" % i, "w")
+        ref_file.write(pdb_str_ref_minimized)
+        ref_file.close()
+    def_pars = reference_model_params
+    params_text = """\
   reference_model {
     file = ref_0.pdb
     file = ref_1.pdb
@@ -674,25 +747,27 @@ TER
       file_name = "ref_3.pdb"
     }
   }  """
-  pars = iotbx.phil.parse(params_text)
-  all_pars = def_pars.fetch(pars).extract()
-  all_pars.reference_model.enabled = True
-  rm = reference_model(
-         model=model,
-         reference_file_list=['ref_0.pdb', 'ref_1.pdb', 'ref_2.pdb', 'ref_3.pdb'],
-         params=all_pars.reference_model,
-         log=log)
-  assert rm.get_n_proxies() == 124, \
-      "Expecting 124 proxies, got %d" % rm.get_n_proxies()
-  for i in range(4):
-    os.remove("ref_%d.pdb" % i)
-  #
-  # The same, 1 group, should be 116/4=29 proxies
-  ref_file = open("ref_0.pdb", 'w')
-  ref_file.write(pdb_str_ref_minimized)
-  ref_file.close()
-  def_pars = reference_model_params
-  params_text = """\
+    pars = iotbx.phil.parse(params_text)
+    all_pars = def_pars.fetch(pars).extract()
+    all_pars.reference_model.enabled = True
+    rm = reference_model(
+        model=model,
+        reference_file_list=["ref_0.pdb", "ref_1.pdb", "ref_2.pdb", "ref_3.pdb"],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    assert rm.get_n_proxies() == 124, (
+        "Expecting 124 proxies, got %d" % rm.get_n_proxies()
+    )
+    for i in range(4):
+        os.remove("ref_%d.pdb" % i)
+    #
+    # The same, 1 group, should be 116/4=29 proxies
+    ref_file = open("ref_0.pdb", "w")
+    ref_file.write(pdb_str_ref_minimized)
+    ref_file.close()
+    def_pars = reference_model_params
+    params_text = """\
   reference_model {
     file = ref_0.pdb
     reference_group {
@@ -701,86 +776,88 @@ TER
       file_name = "ref_0.pdb"
     }
   }  """
-  pars = iotbx.phil.parse(params_text)
-  all_pars = def_pars.fetch(pars).extract()
-  all_pars.reference_model.enabled = True
-  rm = reference_model(
-         model=model,
-         reference_file_list=['ref_0.pdb'],
-         params=all_pars.reference_model,
-         log=log)
-  assert rm.get_n_proxies() == 31, \
-      "Expecting 31 proxies, got %d" % rm.get_n_proxies()
-  all_pars.reference_model.side_chain=False
-  rm = reference_model(
-         model=model,
-         reference_file_list=['ref_0.pdb'],
-         params=all_pars.reference_model,
-         log=log)
-  assert rm.get_n_proxies() == 21, \
-      "Expecting 21 proxies, got %d" % rm.get_n_proxies()
-  all_pars.reference_model.side_chain=True
-  all_pars.reference_model.main_chain=False
-  rm = reference_model(
-         model=model,
-         reference_file_list=['ref_0.pdb'],
-         params=all_pars.reference_model,
-         log=log)
-  assert rm.get_n_proxies() == 10, \
-      "Expecting 10 proxies, got %d" % rm.get_n_proxies()
+    pars = iotbx.phil.parse(params_text)
+    all_pars = def_pars.fetch(pars).extract()
+    all_pars.reference_model.enabled = True
+    rm = reference_model(
+        model=model,
+        reference_file_list=["ref_0.pdb"],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    assert rm.get_n_proxies() == 31, "Expecting 31 proxies, got %d" % rm.get_n_proxies()
+    all_pars.reference_model.side_chain = False
+    rm = reference_model(
+        model=model,
+        reference_file_list=["ref_0.pdb"],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    assert rm.get_n_proxies() == 21, "Expecting 21 proxies, got %d" % rm.get_n_proxies()
+    all_pars.reference_model.side_chain = True
+    all_pars.reference_model.main_chain = False
+    rm = reference_model(
+        model=model,
+        reference_file_list=["ref_0.pdb"],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    assert rm.get_n_proxies() == 10, "Expecting 10 proxies, got %d" % rm.get_n_proxies()
 
-  # just throw all in without specifying:
-  all_pars = def_pars.fetch().extract()
-  all_pars.reference_model.enabled = True
-  all_pars.reference_model.file = 'ref_0.pdb'
-  rm = reference_model(
-         model=model,
-         reference_file_list=['ref_0.pdb'],
-         params=all_pars.reference_model,
-         log=log)
-  assert rm.get_n_proxies() == 124, \
-      "Expecting 124 proxies, got %d" % rm.get_n_proxies()
-  os.remove("ref_0.pdb")
+    # just throw all in without specifying:
+    all_pars = def_pars.fetch().extract()
+    all_pars.reference_model.enabled = True
+    all_pars.reference_model.file = "ref_0.pdb"
+    rm = reference_model(
+        model=model,
+        reference_file_list=["ref_0.pdb"],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    assert rm.get_n_proxies() == 124, (
+        "Expecting 124 proxies, got %d" % rm.get_n_proxies()
+    )
+    os.remove("ref_0.pdb")
 
-  # reference on self and make sure it is chains A<->A, B<->B etc
-  log = StringIO()
-  def_pars = reference_model_params
-  all_pars = def_pars.fetch().extract()
-  all_pars.reference_model.enabled = True
-  all_pars.reference_model.use_starting_model_as_reference = True
-  rm = reference_model(
-      model=model,
-      reference_hierarchy_list=\
-          [model.get_hierarchy()],
-      params=all_pars.reference_model,
-      log=log)
-  rm.show_reference_summary(log=log)
-  log_strings = log.getvalue().split("\n")
-  # print rm.get_n_proxies()
-  # print "=========="
-  # print "\n".join(log_strings)
-  # print "=========="
-  assert rm.get_n_proxies() == 124, \
-      "Expecting 124 proxies, got %d" % rm.get_n_proxies()
-  for needed_string in [
-      "GLN A   6  <=====>  GLN A   6",
-      "ALA A   9  <=====>  ALA A   9",
-      "ASN A  10  <=====>  ASN A  10",
-      "THR B   3  <=====>  THR B   3",
-      "GLN B   6  <=====>  GLN B   6",
-      "ALA B   9  <=====>  ALA B   9",
-      "ASN B  10  <=====>  ASN B  10",
-      "THR C   3  <=====>  THR C   3",
-      "GLN C   6  <=====>  GLN C   6",
-      "ALA D   5  <=====>  ALA D   5",
-      "GLN D   6  <=====>  GLN D   6",
-      ]:
-    assert needed_string in log_strings, "'%s' not in log!" % needed_string
-
+    # reference on self and make sure it is chains A<->A, B<->B etc
+    log = StringIO()
+    def_pars = reference_model_params
+    all_pars = def_pars.fetch().extract()
+    all_pars.reference_model.enabled = True
+    all_pars.reference_model.use_starting_model_as_reference = True
+    rm = reference_model(
+        model=model,
+        reference_hierarchy_list=[model.get_hierarchy()],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    rm.show_reference_summary(log=log)
+    log_strings = log.getvalue().split("\n")
+    # print rm.get_n_proxies()
+    # print "=========="
+    # print "\n".join(log_strings)
+    # print "=========="
+    assert rm.get_n_proxies() == 124, (
+        "Expecting 124 proxies, got %d" % rm.get_n_proxies()
+    )
+    for needed_string in [
+        "GLN A   6  <=====>  GLN A   6",
+        "ALA A   9  <=====>  ALA A   9",
+        "ASN A  10  <=====>  ASN A  10",
+        "THR B   3  <=====>  THR B   3",
+        "GLN B   6  <=====>  GLN B   6",
+        "ALA B   9  <=====>  ALA B   9",
+        "ASN B  10  <=====>  ASN B  10",
+        "THR C   3  <=====>  THR C   3",
+        "GLN C   6  <=====>  GLN C   6",
+        "ALA D   5  <=====>  ALA D   5",
+        "GLN D   6  <=====>  GLN D   6",
+    ]:
+        assert needed_string in log_strings, "'%s' not in log!" % needed_string
 
 
 def exercise_multiple_ncs_groups_found(mon_lib_srv, ener_lib):
-  pdb_str_original = """\
+    pdb_str_original = """\
 CRYST1   49.945   53.842   33.425  90.00  90.00  90.00 P 1
 ATOM   5466  N   ASN C 236       9.580  47.176  25.356  1.00 60.13           N
 ATOM   5467  CA  ASN C 236       8.200  46.668  25.442  1.00 60.52           C
@@ -860,7 +937,7 @@ TER
 END
   """
 
-  pdb_str_ref = """\
+    pdb_str_ref = """\
 CRYST1   49.945   53.842   33.425  90.00  90.00  90.00 P 1
 ATOM   5466  N   ASN C 236      10.328  45.698  25.449  1.00 60.13           N
 ATOM   5467  CA  ASN C 236       8.971  45.973  25.787  1.00 60.52           C
@@ -938,33 +1015,35 @@ ATOM    109  C   ASN A  10      39.283   5.748  11.958  1.00 79.63           C
 ATOM    110  O   ASN A  10      39.365   5.382  10.797  1.00 79.63           O
 TER
   """
-  ref_file = open("ref.pdb", 'w')
-  ref_file.write(pdb_str_ref)
-  ref_file.close()
-  log = StringIO()
-  # log = sys.stdout
+    ref_file = open("ref.pdb", "w")
+    ref_file.write(pdb_str_ref)
+    ref_file.close()
+    log = StringIO()
+    # log = sys.stdout
 
-  def_pars = reference_model_params
-  all_pars = def_pars.fetch().extract()
-  all_pars.reference_model.file = 'ref.pdb'
-  all_pars.reference_model.enabled = True
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(lines=flex.split_lines(pdb_str_original),
-                                    source_info=None))
-  model.process(make_restraints=True)
-  pdb_h = model.get_hierarchy()
-  rm = reference_model(
-         model=model,
-         reference_file_list=['ref.pdb'],
-         params=all_pars.reference_model,
-         log=log)
-  assert rm.get_n_proxies() == 36, \
-      "Expecting 36 proxies, got %d" % rm.get_n_proxies()
-  os.remove("ref.pdb")
+    def_pars = reference_model_params
+    all_pars = def_pars.fetch().extract()
+    all_pars.reference_model.file = "ref.pdb"
+    all_pars.reference_model.enabled = True
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(
+            lines=flex.split_lines(pdb_str_original), source_info=None
+        )
+    )
+    model.process(make_restraints=True)
+    pdb_h = model.get_hierarchy()
+    rm = reference_model(
+        model=model,
+        reference_file_list=["ref.pdb"],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    assert rm.get_n_proxies() == 36, "Expecting 36 proxies, got %d" % rm.get_n_proxies()
+    os.remove("ref.pdb")
 
 
 def exercise_cutted_residue(mon_lib_srv, ener_lib):
-  pdb_str_original = """\
+    pdb_str_original = """\
 CRYST1  117.739  195.224  119.094  90.00 101.60  90.00 P 1 21 1
 ATOM   6368  N   THR K 332       4.163  72.088  52.141  1.00171.28           N
 ATOM   6369  CA  THR K 332       2.830  71.741  52.608  1.00153.71           C
@@ -985,7 +1064,7 @@ ATOM   6383  OG  SER K 334      -5.836  69.041  50.632  1.00170.98           O
 END
   """
 
-  pdb_str_ref = """\
+    pdb_str_ref = """\
 CRYST1  117.739  195.224  119.094  90.00 101.60  90.00 P 1 21 1
 ATOM      1  N   THR G 332       4.195  72.012  51.895  1.00171.28           N
 ATOM      2  CA  THR G 332       2.946  71.699  52.580  1.00153.71           C
@@ -1008,7 +1087,7 @@ ATOM     18  O   SER G 334      -3.964  67.686  52.556  1.00161.93           O
 ATOM     19  CB  SER G 334      -4.595  69.652  50.131  1.00162.09           C
 ATOM     20  OG  SER G 334      -5.954  69.950  50.396  1.00170.98           O
   """
-  params_text = """\
+    params_text = """\
   reference_model {
     reference_group {
       reference = chain 'G'
@@ -1017,40 +1096,43 @@ ATOM     20  OG  SER G 334      -5.954  69.950  50.396  1.00170.98           O
     }
   }
   """
-  ref_file = open("ref.pdb", 'w')
-  ref_file.write(pdb_str_ref)
-  ref_file.close()
-  log = StringIO()
-  # log = sys.stdout
-  # orig_file = open("start.pdb", "w")
-  # orig_file.write(pdb_str_original)
-  # orig_file.close()
-  def_pars = reference_model_params
-  pars = iotbx.phil.parse(params_text)
-  all_pars = def_pars.fetch(pars).extract()
-  all_pars.reference_model.enabled = True
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(lines=flex.split_lines(pdb_str_original),
-                                    source_info=None))
-  model.process(make_restraints=True)
-  pdb_h = model.get_hierarchy()
+    ref_file = open("ref.pdb", "w")
+    ref_file.write(pdb_str_ref)
+    ref_file.close()
+    log = StringIO()
+    # log = sys.stdout
+    # orig_file = open("start.pdb", "w")
+    # orig_file.write(pdb_str_original)
+    # orig_file.close()
+    def_pars = reference_model_params
+    pars = iotbx.phil.parse(params_text)
+    all_pars = def_pars.fetch(pars).extract()
+    all_pars.reference_model.enabled = True
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(
+            lines=flex.split_lines(pdb_str_original), source_info=None
+        )
+    )
+    model.process(make_restraints=True)
+    pdb_h = model.get_hierarchy()
 
-  rm = reference_model(
-         model=model,
-         reference_file_list=['ref.pdb'],
-         params=all_pars.reference_model,
-         log=log)
-  rm.show_reference_summary(log=log)
-  new_h = pdb_h.deep_copy()
-  xray_structure = new_h.extract_xray_structure()
-  rm.set_rotamer_to_reference(
-    xray_structure=xray_structure)
-  new_h.adopt_xray_structure(xray_structure)
-  r1 = rotalyze(pdb_hierarchy=new_h, outliers_only=False)
-  assert r1.n_outliers == 0
+    rm = reference_model(
+        model=model,
+        reference_file_list=["ref.pdb"],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    rm.show_reference_summary(log=log)
+    new_h = pdb_h.deep_copy()
+    xray_structure = new_h.extract_xray_structure()
+    rm.set_rotamer_to_reference(xray_structure=xray_structure)
+    new_h.adopt_xray_structure(xray_structure)
+    r1 = rotalyze(pdb_hierarchy=new_h, outliers_only=False)
+    assert r1.n_outliers == 0
+
 
 def exercise_dna(mon_lib_srv, ener_lib):
-  pdb_str_original = """\
+    pdb_str_original = """\
 CRYST1   25.287   40.217   65.471  90.00  90.00  90.00 P 21 21 21    8
 SCALE1      0.039546  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.024865  0.000000        0.00000
@@ -1222,7 +1304,7 @@ ATOM    405  C7   DT B  20      -2.094   6.540 -12.092  1.00 27.47           C
 ATOM    406  C6   DT B  20       0.028   5.263 -12.401  1.00 26.29           C
 TER     490       DG B  24
   """
-  params_text = """\
+    params_text = """\
   reference_model {
     reference_group {
       reference = chain 'A'
@@ -1236,53 +1318,58 @@ TER     490       DG B  24
     }
   }
   """
-  ref_file = open("ref.pdb", 'w')
-  ref_file.write(pdb_str_original)
-  ref_file.close()
-  log = StringIO()
-  # log = sys.stdout
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(lines=flex.split_lines(pdb_str_original),
-                                    source_info=None))
-  model.process(make_restraints=True)
-  pdb_h = model.get_hierarchy()
-  for include_chains in [True, False]:
-    def_pars = reference_model_params
-    pars = iotbx.phil.parse(params_text)
-    all_pars = None
-    if include_chains:
-      all_pars = def_pars.fetch(pars).extract()
-      all_pars.reference_model.enabled = True
-    else:
-      all_pars = def_pars.extract()
-      all_pars.reference_model.enabled = True
-      all_pars.reference_model.file = "ref.pdb"
-    rm = reference_model(
-           model=model,
-           reference_file_list=['ref.pdb'],
-           params=all_pars.reference_model,
-           log=log)
-    rm.show_reference_summary(log=log)
-    assert rm.get_n_proxies() == 74, \
-        "Expecting 74 proxies, got %d" % rm.get_n_proxies()
-    log_strings = log.getvalue().split("\n")
-    for needed_string in [
-        " DA A   5  <=====>   DA A   5",
-        " DA A   6  <=====>   DA A   6",
-        " DT A   7  <=====>   DT A   7",
-        " DT A   8  <=====>   DT A   8",
-        " DA B  17  <=====>   DA B  17",
-        " DA B  18  <=====>   DA B  18",
-        " DT B  19  <=====>   DT B  19",
-        " DT B  20  <=====>   DT B  20",
+    ref_file = open("ref.pdb", "w")
+    ref_file.write(pdb_str_original)
+    ref_file.close()
+    log = StringIO()
+    # log = sys.stdout
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(
+            lines=flex.split_lines(pdb_str_original), source_info=None
+        )
+    )
+    model.process(make_restraints=True)
+    pdb_h = model.get_hierarchy()
+    for include_chains in [True, False]:
+        def_pars = reference_model_params
+        pars = iotbx.phil.parse(params_text)
+        all_pars = None
+        if include_chains:
+            all_pars = def_pars.fetch(pars).extract()
+            all_pars.reference_model.enabled = True
+        else:
+            all_pars = def_pars.extract()
+            all_pars.reference_model.enabled = True
+            all_pars.reference_model.file = "ref.pdb"
+        rm = reference_model(
+            model=model,
+            reference_file_list=["ref.pdb"],
+            params=all_pars.reference_model,
+            log=log,
+        )
+        rm.show_reference_summary(log=log)
+        assert rm.get_n_proxies() == 74, (
+            "Expecting 74 proxies, got %d" % rm.get_n_proxies()
+        )
+        log_strings = log.getvalue().split("\n")
+        for needed_string in [
+            " DA A   5  <=====>   DA A   5",
+            " DA A   6  <=====>   DA A   6",
+            " DT A   7  <=====>   DT A   7",
+            " DT A   8  <=====>   DT A   8",
+            " DA B  17  <=====>   DA B  17",
+            " DA B  18  <=====>   DA B  18",
+            " DT B  19  <=====>   DT B  19",
+            " DT B  20  <=====>   DT B  20",
         ]:
-      assert needed_string in log_strings, "'%s' not in log!" % needed_string
+            assert needed_string in log_strings, "'%s' not in log!" % needed_string
+
 
 def exercise_3chains_self(mon_lib_srv, ener_lib):
-  """
-  Test reference model, 3 chains, reference is the same and selections are
-  supposed to be mixed, like ref=(A or Bref or C) sel=(Aref, B, Cref)  """
-  pdb_str_original = """\
+    """
+    Test reference model, 3 chains, reference is the same and selections are
+    supposed to be mixed, like ref=(A or Bref or C) sel=(Aref, B, Cref)"""
+    pdb_str_original = """\
 CRYST1  129.069   83.165   84.393  90.00  90.00  90.00 P 1
 ATOM      1  N   GLN A   1     118.638  78.165  29.859  1.00 32.70      A    N
 ATOM      2  CA  GLN A   1     118.742  77.022  30.759  1.00 34.10      A    C
@@ -1509,59 +1596,64 @@ ATOM   3429  O   GLU C  10       5.457  21.355  66.443  1.00 13.28      C    O
 TER
 END
   """
-  model = mmtbx.model.manager(
-      model_input = iotbx.pdb.input(lines=flex.split_lines(pdb_str_original),
-                                    source_info=None))
-  model.process(make_restraints=True)
-  pdb_h = model.get_hierarchy()
-  ref_h = pdb_h.deep_copy()
-  # pdb_h.atoms().reset_i_seq()
-  # ref_h.atoms().reset_i_seq()
+    model = mmtbx.model.manager(
+        model_input=iotbx.pdb.input(
+            lines=flex.split_lines(pdb_str_original), source_info=None
+        )
+    )
+    model.process(make_restraints=True)
+    pdb_h = model.get_hierarchy()
+    ref_h = pdb_h.deep_copy()
+    # pdb_h.atoms().reset_i_seq()
+    # ref_h.atoms().reset_i_seq()
 
-  log = StringIO()
-  # log = sys.stdout
-  def_pars = reference_model_params
-  all_pars = def_pars.fetch().extract()
-  all_pars.reference_model.use_starting_model_as_reference=True
-  all_pars.reference_model.enabled = True
-  rm = reference_model(
-         model=model,
-         reference_hierarchy_list=\
-            [model.get_hierarchy()],
-         params=all_pars.reference_model,
-         log=log)
-  rm.show_reference_summary(log=log)
-  assert rm.get_n_proxies() == 141, \
-      "Expecting 141 proxies, got %d" % rm.get_n_proxies()
-  log_strings = log.getvalue().split("\n")
-  # print "========"
-  # print "\n".join(log_strings)
-  # print "========"
-  for needed_string in [
-      "GLY A   8  <=====>  GLY A   8",
-      "PRO A   9  <=====>  PRO A   9",
-      "GLY A  10  <=====>  GLY A  10",
-      "ASP B   1  <=====>  ASP B   1",
-      "ILE B   2  <=====>  ILE B   2",
-      "SER B  10  <=====>  SER B  10",
-      "GLN C   1  <=====>  GLN C   1",
-      "VAL C   2  <=====>  VAL C   2",
-      ]:
-    assert needed_string in log_strings, "'%s' not in log!" % needed_string
+    log = StringIO()
+    # log = sys.stdout
+    def_pars = reference_model_params
+    all_pars = def_pars.fetch().extract()
+    all_pars.reference_model.use_starting_model_as_reference = True
+    all_pars.reference_model.enabled = True
+    rm = reference_model(
+        model=model,
+        reference_hierarchy_list=[model.get_hierarchy()],
+        params=all_pars.reference_model,
+        log=log,
+    )
+    rm.show_reference_summary(log=log)
+    assert rm.get_n_proxies() == 141, (
+        "Expecting 141 proxies, got %d" % rm.get_n_proxies()
+    )
+    log_strings = log.getvalue().split("\n")
+    # print "========"
+    # print "\n".join(log_strings)
+    # print "========"
+    for needed_string in [
+        "GLY A   8  <=====>  GLY A   8",
+        "PRO A   9  <=====>  PRO A   9",
+        "GLY A  10  <=====>  GLY A  10",
+        "ASP B   1  <=====>  ASP B   1",
+        "ILE B   2  <=====>  ILE B   2",
+        "SER B  10  <=====>  SER B  10",
+        "GLN C   1  <=====>  GLN C   1",
+        "VAL C   2  <=====>  VAL C   2",
+    ]:
+        assert needed_string in log_strings, "'%s' not in log!" % needed_string
 
 
 def run(args):
-  t0 = time.time()
-  import mmtbx.monomer_library
-  mon_lib_srv = mmtbx.monomer_library.server.server()
-  ener_lib = mmtbx.monomer_library.server.ener_lib()
-  exercise_reference_model(args, mon_lib_srv, ener_lib)
-  exercise_multiple_to_one(args, mon_lib_srv, ener_lib)
-  exercise_multiple_ncs_groups_found(mon_lib_srv, ener_lib)
-  exercise_cutted_residue(mon_lib_srv, ener_lib)
-  exercise_dna(mon_lib_srv, ener_lib)
-  exercise_3chains_self(mon_lib_srv, ener_lib)
-  print("OK. Time: %8.3f"%(time.time()-t0))
+    t0 = time.time()
+    import mmtbx.monomer_library
 
-if (__name__ == "__main__"):
-  run(args=sys.argv[1:])
+    mon_lib_srv = mmtbx.monomer_library.server.server()
+    ener_lib = mmtbx.monomer_library.server.ener_lib()
+    exercise_reference_model(args, mon_lib_srv, ener_lib)
+    exercise_multiple_to_one(args, mon_lib_srv, ener_lib)
+    exercise_multiple_ncs_groups_found(mon_lib_srv, ener_lib)
+    exercise_cutted_residue(mon_lib_srv, ener_lib)
+    exercise_dna(mon_lib_srv, ener_lib)
+    exercise_3chains_self(mon_lib_srv, ener_lib)
+    print("OK. Time: %8.3f" % (time.time() - t0))
+
+
+if __name__ == "__main__":
+    run(args=sys.argv[1:])

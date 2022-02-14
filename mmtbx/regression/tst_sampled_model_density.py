@@ -9,9 +9,11 @@ HETATM 3334 ZN    ZN E   2     -31.336  69.295  -1.147  0.00 11.59          ZN
 TER
 """
 
-def run():
-  xrs = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
-  smd = real_space.sampled_model_density(xray_structure=xrs, grid_step=0.3)
 
-if __name__ == '__main__':
-  run()
+def run():
+    xrs = iotbx.pdb.input(source_info=None, lines=pdb_str).xray_structure_simple()
+    smd = real_space.sampled_model_density(xray_structure=xrs, grid_step=0.3)
+
+
+if __name__ == "__main__":
+    run()

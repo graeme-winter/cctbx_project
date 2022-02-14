@@ -5,7 +5,8 @@ import mmtbx.monomer_library.pdb_interpretation
 from cctbx.array_family import flex
 import mmtbx.model
 from six.moves import cStringIO as StringIO
-#import libtbx.load_env
+
+# import libtbx.load_env
 from cctbx import geometry_restraints
 from libtbx.test_utils import show_diff, assert_lines_in_text, approx_equal
 from libtbx.utils import null_out
@@ -114,7 +115,7 @@ ATOM     19  C   ILE F 441      50.630  36.474 100.471  1.00215.52           C
 ATOM     20  O   ILE F 441      50.805  37.162 101.476  1.00228.70           O
 """
 # excluded:
-#ATOM      1  N   MET A   1       9.821   6.568   5.000  1.00 66.07           N
+# ATOM      1  N   MET A   1       9.821   6.568   5.000  1.00 66.07           N
 
 raw_records8 = """\
 CRYST1   52.400   52.400   30.700  90.00  90.00 120.00 P 6           6
@@ -265,242 +266,260 @@ END
 
 
 def make_initial_grm(mon_lib_srv, ener_lib, records):
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv    = mon_lib_srv,
-    ener_lib       = ener_lib,
-    raw_records    = records,
-    force_symmetry = True)
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        raw_records=records,
+        force_symmetry=True,
+    )
 
-  geometry = processed_pdb_file.geometry_restraints_manager(
-    show_energies      = True,
-    plain_pairs_radius = 5.0)
-  xrs = processed_pdb_file.xray_structure()
-  return geometry, xrs
+    geometry = processed_pdb_file.geometry_restraints_manager(
+        show_energies=True, plain_pairs_radius=5.0
+    )
+    xrs = processed_pdb_file.xray_structure()
+    return geometry, xrs
+
 
 def show_sorted_geometry(geometry, xrs, file_name):
-  out = open(file_name,'w')
-  geometry.show_sorted(
-      sites_cart=xrs.sites_cart(),
-      site_labels=xrs.scatterers().extract_labels(),
-      f=out)
-  out.close()
+    out = open(file_name, "w")
+    geometry.show_sorted(
+        sites_cart=xrs.sites_cart(),
+        site_labels=xrs.scatterers().extract_labels(),
+        f=out,
+    )
+    out.close()
+
 
 def exercise_add_new_bond_restraint_in_place(mon_lib_srv, ener_lib):
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records4)
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records4)
 
-  proxy = geometry_restraints.bond_simple_proxy(
-    i_seqs=(0,3),
-    distance_ideal=2.0,
-    weight=3000)
-  assert not geometry.is_bonded_atoms(0,3)
-  assert not geometry.is_bonded_atoms(3,0)
-  geometry.add_new_bond_restraints_in_place([proxy], xrs.sites_cart())
-  assert geometry.is_bonded_atoms(0,3)
-  assert geometry.is_bonded_atoms(3,0)
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 8
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0
-  # That's the way to get them:
-  simple, asu = geometry.get_covalent_bond_proxies()
-  assert simple.size() + asu.size() == 8
-  assert geometry.pair_proxies().nonbonded_proxies.simple.size() == 8
-  assert geometry.pair_proxies().nonbonded_proxies.asu.size() == 0
+    proxy = geometry_restraints.bond_simple_proxy(
+        i_seqs=(0, 3), distance_ideal=2.0, weight=3000
+    )
+    assert not geometry.is_bonded_atoms(0, 3)
+    assert not geometry.is_bonded_atoms(3, 0)
+    geometry.add_new_bond_restraints_in_place([proxy], xrs.sites_cart())
+    assert geometry.is_bonded_atoms(0, 3)
+    assert geometry.is_bonded_atoms(3, 0)
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 8
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0
+    # That's the way to get them:
+    simple, asu = geometry.get_covalent_bond_proxies()
+    assert simple.size() + asu.size() == 8
+    assert geometry.pair_proxies().nonbonded_proxies.simple.size() == 8
+    assert geometry.pair_proxies().nonbonded_proxies.asu.size() == 0
+
 
 def exercise_add_super_long_bond(mon_lib_srv, ener_lib):
-  # distance between the two is 26A, they are not added because of
-  # max_distance_between_connecting_atoms=5 is default.
-  # Inspired by 4c8q, atoms are from offending SHEET with wrong parallel/
-  # antiparallel definition.
-  #
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records5)
-  proxy = geometry_restraints.bond_simple_proxy(
-    i_seqs=(0,1),
-    distance_ideal=2.0,
-    weight=3000)
-  assert not geometry.is_bonded_atoms(0,1)
-  assert not geometry.is_bonded_atoms(1,0)
-  geometry.add_new_bond_restraints_in_place([proxy], xrs.sites_cart(),
-      max_distance_between_connecting_atoms=5)
-  assert not geometry.is_bonded_atoms(0,1)
-  assert not geometry.is_bonded_atoms(1,0)
-  # !!! This will fail, but should not. Left for future investigation.
-  # geometry.add_new_bond_restraints_in_place([proxy], xrs.sites_cart(),
-  #     max_distance_between_connecting_atoms=30)
+    # distance between the two is 26A, they are not added because of
+    # max_distance_between_connecting_atoms=5 is default.
+    # Inspired by 4c8q, atoms are from offending SHEET with wrong parallel/
+    # antiparallel definition.
+    #
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records5)
+    proxy = geometry_restraints.bond_simple_proxy(
+        i_seqs=(0, 1), distance_ideal=2.0, weight=3000
+    )
+    assert not geometry.is_bonded_atoms(0, 1)
+    assert not geometry.is_bonded_atoms(1, 0)
+    geometry.add_new_bond_restraints_in_place(
+        [proxy], xrs.sites_cart(), max_distance_between_connecting_atoms=5
+    )
+    assert not geometry.is_bonded_atoms(0, 1)
+    assert not geometry.is_bonded_atoms(1, 0)
+    # !!! This will fail, but should not. Left for future investigation.
+    # geometry.add_new_bond_restraints_in_place([proxy], xrs.sites_cart(),
+    #     max_distance_between_connecting_atoms=30)
+
 
 def exercise_bond_near_symmetry(mon_lib_srv, ener_lib):
-  """ Making bond near symmetry mate:
-  " N   LEU F 444 " -- " O   GLU F 440 " """
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records6)
-  proxy = geometry_restraints.bond_simple_proxy(
-    i_seqs=(16,3),
-    distance_ideal=2.9,
-    weight=3000)
-  assert not geometry.is_bonded_atoms(16,3)
-  assert not geometry.is_bonded_atoms(3,16)
-  # show_sorted_geometry(geometry, xrs, 'before_xercise_bond_near_symmetry.geo')
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 19
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0
-  geometry.add_new_bond_restraints_in_place([proxy], xrs.sites_cart(),
-      max_distance_between_connecting_atoms=10)
-  assert geometry.is_bonded_atoms(3,16)
-  # show_sorted_geometry(geometry, xrs, 'after_xercise_bond_near_symmetry.geo')
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 20  # assert 20
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0  # assert 0
+    """Making bond near symmetry mate:
+    " N   LEU F 444 " -- " O   GLU F 440 " """
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records6)
+    proxy = geometry_restraints.bond_simple_proxy(
+        i_seqs=(16, 3), distance_ideal=2.9, weight=3000
+    )
+    assert not geometry.is_bonded_atoms(16, 3)
+    assert not geometry.is_bonded_atoms(3, 16)
+    # show_sorted_geometry(geometry, xrs, 'before_xercise_bond_near_symmetry.geo')
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 19
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0
+    geometry.add_new_bond_restraints_in_place(
+        [proxy], xrs.sites_cart(), max_distance_between_connecting_atoms=10
+    )
+    assert geometry.is_bonded_atoms(3, 16)
+    # show_sorted_geometry(geometry, xrs, 'after_xercise_bond_near_symmetry.geo')
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 20  # assert 20
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0  # assert 0
+
 
 def exercise_bond_near_symmetry2(mon_lib_srv, ener_lib):
-  """ Same as previous, other atoms were still failing
-  Making bond near symmetry mate:
-  " N   LEU F 441 " -- " O   GLU F 437 " """
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records7)
-  proxy = geometry_restraints.bond_simple_proxy(
-    i_seqs=(16,3),
-    distance_ideal=2.9,
-    weight=3000)
-  assert not geometry.is_bonded_atoms(16,3)
-  assert not geometry.is_bonded_atoms(3,16)
-  # show_sorted_geometry(geometry, xrs, 'before_xercise_bond_near_symmetry2.geo')
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 19
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0
-  geometry.add_new_bond_restraints_in_place([proxy], xrs.sites_cart(),
-      max_distance_between_connecting_atoms=10)
-  assert geometry.is_bonded_atoms(3,16)
-  # show_sorted_geometry(geometry, xrs, 'after_xercise_bond_near_symmetry2.geo')
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 20  # assert 20
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0  # assert 0
+    """Same as previous, other atoms were still failing
+    Making bond near symmetry mate:
+    " N   LEU F 441 " -- " O   GLU F 437 " """
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records7)
+    proxy = geometry_restraints.bond_simple_proxy(
+        i_seqs=(16, 3), distance_ideal=2.9, weight=3000
+    )
+    assert not geometry.is_bonded_atoms(16, 3)
+    assert not geometry.is_bonded_atoms(3, 16)
+    # show_sorted_geometry(geometry, xrs, 'before_xercise_bond_near_symmetry2.geo')
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 19
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0
+    geometry.add_new_bond_restraints_in_place(
+        [proxy], xrs.sites_cart(), max_distance_between_connecting_atoms=10
+    )
+    assert geometry.is_bonded_atoms(3, 16)
+    # show_sorted_geometry(geometry, xrs, 'after_xercise_bond_near_symmetry2.geo')
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 20  # assert 20
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0  # assert 0
+
 
 def exercise_single_atom(mon_lib_srv, ener_lib):
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
 
-  # output for debugging!!!
-  # show_sorted_geometry(geometry, xrs, 'before_exersice_single_atoms.geo')
+    # output for debugging!!!
+    # show_sorted_geometry(geometry, xrs, 'before_exersice_single_atoms.geo')
 
-  xrs_add = iotbx.pdb.input(source_info=None, lines=raw_records2) \
-      .xray_structure_simple()
-  proxy1 = geometry_restraints.bond_simple_proxy(
-      i_seqs=(3,9),
-      distance_ideal=2.0,
-      weight=3000,
-      origin_id=2) # just a test
+    xrs_add = iotbx.pdb.input(
+        source_info=None, lines=raw_records2
+    ).xray_structure_simple()
+    proxy1 = geometry_restraints.bond_simple_proxy(
+        i_seqs=(3, 9), distance_ideal=2.0, weight=3000, origin_id=2
+    )  # just a test
 
-  new_xrs = xrs.concatenate(xrs_add)
-  all_sites_cart = new_xrs.sites_cart()
-  number_of_new_atoms = len(xrs_add.sites_cart())
-  new_geometry = geometry.new_included_bonded_atoms(
-      proxies=[proxy1],
-      sites_cart=all_sites_cart,
-      site_symmetry_table=xrs_add.site_symmetry_table(),
-      nonbonded_types=flex.std_string(["OH2"]*number_of_new_atoms),
-      nonbonded_charges=flex.int(number_of_new_atoms, 0),
-      skip_max_proxy_distance_calculation=True)
-  # output for debugging!!!
-  # show_sorted_geometry(new_geometry, new_xrs,
-  #     'after_exersice_single_atoms.geo')
-  assert new_geometry.is_bonded_atoms(3,9)
+    new_xrs = xrs.concatenate(xrs_add)
+    all_sites_cart = new_xrs.sites_cart()
+    number_of_new_atoms = len(xrs_add.sites_cart())
+    new_geometry = geometry.new_included_bonded_atoms(
+        proxies=[proxy1],
+        sites_cart=all_sites_cart,
+        site_symmetry_table=xrs_add.site_symmetry_table(),
+        nonbonded_types=flex.std_string(["OH2"] * number_of_new_atoms),
+        nonbonded_charges=flex.int(number_of_new_atoms, 0),
+        skip_max_proxy_distance_calculation=True,
+    )
+    # output for debugging!!!
+    # show_sorted_geometry(new_geometry, new_xrs,
+    #     'after_exersice_single_atoms.geo')
+    assert new_geometry.is_bonded_atoms(3, 9)
 
-  assert new_geometry.pair_proxies().bond_proxies.simple.size() == 8
-  assert new_geometry.pair_proxies().bond_proxies.asu.size() == 1
-  # That's the way to get them:
-  simple, asu = new_geometry.get_covalent_bond_proxies()
-  assert simple.size() + asu.size() == 8
-  simple, asu = new_geometry.get_all_bond_proxies()
-  assert simple.size() + asu.size() == 9, "%d, %d" % (simple.size(), asu.size())
-  assert new_geometry.pair_proxies().nonbonded_proxies.simple.size() == 10
-  assert new_geometry.pair_proxies().nonbonded_proxies.asu.size() ==2
-  assert new_geometry.get_hbond_proxies_iseqs() == [(3, 9)]
-  simple, asu = new_geometry.get_covalent_bond_proxies()
-  assert simple.size() + asu.size() == 8, "%d" % (simple.size() + asu.size())
+    assert new_geometry.pair_proxies().bond_proxies.simple.size() == 8
+    assert new_geometry.pair_proxies().bond_proxies.asu.size() == 1
+    # That's the way to get them:
+    simple, asu = new_geometry.get_covalent_bond_proxies()
+    assert simple.size() + asu.size() == 8
+    simple, asu = new_geometry.get_all_bond_proxies()
+    assert simple.size() + asu.size() == 9, "%d, %d" % (simple.size(), asu.size())
+    assert new_geometry.pair_proxies().nonbonded_proxies.simple.size() == 10
+    assert new_geometry.pair_proxies().nonbonded_proxies.asu.size() == 2
+    assert new_geometry.get_hbond_proxies_iseqs() == [(3, 9)]
+    simple, asu = new_geometry.get_covalent_bond_proxies()
+    assert simple.size() + asu.size() == 8, "%d" % (simple.size() + asu.size())
+
 
 def exercise_multiple_atoms(mon_lib_srv, ener_lib):
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
 
-  # output for debugging!!!
-  # show_sorted_geometry(geometry, xrs, 'before_exersice_multiple_atoms.geo')
+    # output for debugging!!!
+    # show_sorted_geometry(geometry, xrs, 'before_exersice_multiple_atoms.geo')
 
-  xrs_add = iotbx.pdb.input(source_info=None, lines=raw_records3) \
-      .xray_structure_simple()
-  proxy1 = geometry_restraints.bond_simple_proxy(
-      i_seqs=(3,9),
-      distance_ideal=2.0,
-      weight=3000)
-  proxy2 = geometry_restraints.bond_simple_proxy(
-      i_seqs=(4,10),
-      distance_ideal=2.0,
-      weight=3000)
+    xrs_add = iotbx.pdb.input(
+        source_info=None, lines=raw_records3
+    ).xray_structure_simple()
+    proxy1 = geometry_restraints.bond_simple_proxy(
+        i_seqs=(3, 9), distance_ideal=2.0, weight=3000
+    )
+    proxy2 = geometry_restraints.bond_simple_proxy(
+        i_seqs=(4, 10), distance_ideal=2.0, weight=3000
+    )
 
-  new_xrs = xrs.concatenate(xrs_add)
-  all_sites_cart = new_xrs.sites_cart()
-  number_of_new_atoms = len(xrs_add.sites_cart())
-  assert geometry.pair_proxies().bond_proxies.simple.size() == 8
-  assert geometry.pair_proxies().bond_proxies.asu.size() == 0
-  assert geometry.pair_proxies().nonbonded_proxies.simple.size() == 10
-  assert geometry.pair_proxies().nonbonded_proxies.asu.size() == 0
-  new_geometry = geometry.new_included_bonded_atoms(
-      proxies=[proxy1, proxy2],
-      sites_cart=all_sites_cart,
-      site_symmetry_table=xrs_add.site_symmetry_table(),
-      nonbonded_types=flex.std_string(["OH2"]*number_of_new_atoms),
-      nonbonded_charges=flex.int(number_of_new_atoms, 0),
-      skip_max_proxy_distance_calculation=True)
-  # output for debugging!!!
-  # show_sorted_geometry(new_geometry, new_xrs,
-  #     'after_exersice_multiple_atoms.geo')
-  assert new_geometry.pair_proxies().bond_proxies.simple.size() == 8
-  assert new_geometry.pair_proxies().bond_proxies.asu.size() == 2
-  assert new_geometry.pair_proxies().nonbonded_proxies.simple.size() == 11
-  assert new_geometry.pair_proxies().nonbonded_proxies.asu.size() == 4
+    new_xrs = xrs.concatenate(xrs_add)
+    all_sites_cart = new_xrs.sites_cart()
+    number_of_new_atoms = len(xrs_add.sites_cart())
+    assert geometry.pair_proxies().bond_proxies.simple.size() == 8
+    assert geometry.pair_proxies().bond_proxies.asu.size() == 0
+    assert geometry.pair_proxies().nonbonded_proxies.simple.size() == 10
+    assert geometry.pair_proxies().nonbonded_proxies.asu.size() == 0
+    new_geometry = geometry.new_included_bonded_atoms(
+        proxies=[proxy1, proxy2],
+        sites_cart=all_sites_cart,
+        site_symmetry_table=xrs_add.site_symmetry_table(),
+        nonbonded_types=flex.std_string(["OH2"] * number_of_new_atoms),
+        nonbonded_charges=flex.int(number_of_new_atoms, 0),
+        skip_max_proxy_distance_calculation=True,
+    )
+    # output for debugging!!!
+    # show_sorted_geometry(new_geometry, new_xrs,
+    #     'after_exersice_multiple_atoms.geo')
+    assert new_geometry.pair_proxies().bond_proxies.simple.size() == 8
+    assert new_geometry.pair_proxies().bond_proxies.asu.size() == 2
+    assert new_geometry.pair_proxies().nonbonded_proxies.simple.size() == 11
+    assert new_geometry.pair_proxies().nonbonded_proxies.asu.size() == 4
+
 
 def exercise_is_bonded_atoms(mon_lib_srv, ener_lib):
-  geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
-  # show_sorted_geometry(geometry, xrs, 'blabla.geo')
-  linked_atoms = [(0,1), (1,2), (1,4), (2,3), (4,5),(5,6), (6,7), (7,8)]
-  for i in range (9):
-    for j in range(9):
-      assert geometry.is_bonded_atoms(i,j) == geometry.is_bonded_atoms(j,i)
-      assert geometry.is_bonded_atoms(i,j) == (tuple(sorted([i,j])) in linked_atoms)
+    geometry, xrs = make_initial_grm(mon_lib_srv, ener_lib, raw_records1)
+    # show_sorted_geometry(geometry, xrs, 'blabla.geo')
+    linked_atoms = [(0, 1), (1, 2), (1, 4), (2, 3), (4, 5), (5, 6), (6, 7), (7, 8)]
+    for i in range(9):
+        for j in range(9):
+            assert geometry.is_bonded_atoms(i, j) == geometry.is_bonded_atoms(j, i)
+            assert geometry.is_bonded_atoms(i, j) == (
+                tuple(sorted([i, j])) in linked_atoms
+            )
+
 
 def exercise_bond_near_symmetry3(mon_lib_srv, ener_lib):
-  """ Since neighbors_fast_pair_generator for non-symmetry interactions
-  provides only (i,j) pair and not (j,i), and there's no sorting involved
-  (no way to guess what to check), there was a bug where non-symmetry interaction
-  was missed in add_new_bond_restraints_in_place.
-  Actually testing that both bonds are added without symmetry operators.
-  """
+    """Since neighbors_fast_pair_generator for non-symmetry interactions
+    provides only (i,j) pair and not (j,i), and there's no sorting involved
+    (no way to guess what to check), there was a bug where non-symmetry interaction
+    was missed in add_new_bond_restraints_in_place.
+    Actually testing that both bonds are added without symmetry operators.
+    """
 
-  from cctbx.geometry_restraints.linking_class import linking_class
-  origin_ids = linking_class()
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records8)
-  model = mmtbx.model.manager(model_input = pdb_inp, log=null_out())
-  model.process(make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  h = model.get_hierarchy()
-  proxy = geometry_restraints.bond_simple_proxy(
-      i_seqs=(64,37),
-      distance_ideal=2.9,
-      weight=400,
-      origin_id=origin_ids.get_origin_id('hydrogen bonds'))
-  proxy2 = geometry_restraints.bond_simple_proxy(
-      i_seqs=(72,37),
-      distance_ideal=2.9,
-      weight=400,
-      origin_id=origin_ids.get_origin_id('hydrogen bonds'))
-  grm.add_new_hbond_restraints_in_place(
-      proxies=[proxy, proxy2],
-      sites_cart=h.atoms().extract_xyz(),
-      max_distance_between_connecting_atoms=10)
-  sites_cart = h.atoms().extract_xyz()
-  site_labels = model.get_xray_structure().scatterers().extract_labels()
-  pair_proxies = grm.pair_proxies(flags=None, sites_cart=sites_cart)
+    from cctbx.geometry_restraints.linking_class import linking_class
 
-  out = StringIO()
-  pair_proxies.bond_proxies.show_sorted(
-      by_value="residual",
-      sites_cart=sites_cart,
-      site_labels=site_labels,
-      f=out,
-      prefix="",
-      origin_id=origin_ids.get_origin_id('hydrogen bonds'))
-  outtxt = out.getvalue()
-  assert not show_diff(outtxt,
-"""\
+    origin_ids = linking_class()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records8)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    h = model.get_hierarchy()
+    proxy = geometry_restraints.bond_simple_proxy(
+        i_seqs=(64, 37),
+        distance_ideal=2.9,
+        weight=400,
+        origin_id=origin_ids.get_origin_id("hydrogen bonds"),
+    )
+    proxy2 = geometry_restraints.bond_simple_proxy(
+        i_seqs=(72, 37),
+        distance_ideal=2.9,
+        weight=400,
+        origin_id=origin_ids.get_origin_id("hydrogen bonds"),
+    )
+    grm.add_new_hbond_restraints_in_place(
+        proxies=[proxy, proxy2],
+        sites_cart=h.atoms().extract_xyz(),
+        max_distance_between_connecting_atoms=10,
+    )
+    sites_cart = h.atoms().extract_xyz()
+    site_labels = model.get_xray_structure().scatterers().extract_labels()
+    pair_proxies = grm.pair_proxies(flags=None, sites_cart=sites_cart)
+
+    out = StringIO()
+    pair_proxies.bond_proxies.show_sorted(
+        by_value="residual",
+        sites_cart=sites_cart,
+        site_labels=site_labels,
+        f=out,
+        prefix="",
+        origin_id=origin_ids.get_origin_id("hydrogen bonds"),
+    )
+    outtxt = out.getvalue()
+    assert not show_diff(
+        outtxt,
+        """\
 Bond restraints: 2
 Sorted by residual:
 bond pdb=" O   ARG A  25 "
@@ -511,125 +530,139 @@ bond pdb=" O   ARG A  25 "
      pdb=" N  BASN A  29 "
   ideal  model  delta    sigma   weight residual
   2.900  2.888  0.012 5.00e-02 4.00e+02 5.59e-02
-"""
-)
+""",
+    )
+
 
 def exercise_bond_over_symmetry(mon_lib_srv, ener_lib):
-  from cctbx.geometry_restraints.linking_class import linking_class
-  origin_ids = linking_class()
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records9)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.restraints_library.mcl=False
-  model = mmtbx.model.manager(
-      model_input = pdb_inp,
-      log=null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  simple, asu = grm.get_all_bond_proxies()
-  assert (simple.size(), asu.size()) == (29, 0)
-  h = model.get_hierarchy()
-  proxy = geometry_restraints.bond_simple_proxy(
-      i_seqs=(32,4),
-      distance_ideal=2.9,
-      weight=400,
-      origin_id=origin_ids.get_origin_id('hydrogen bonds'))
-  proxy2 = geometry_restraints.bond_simple_proxy(
-      i_seqs=(32,24),
-      distance_ideal=2.9,
-      weight=400,
-      origin_id=origin_ids.get_origin_id('hydrogen bonds'))
-  grm.add_new_bond_restraints_in_place(
-      proxies=[proxy, proxy2],
-      sites_cart=h.atoms().extract_xyz())
-  simple, asu = grm.get_all_bond_proxies()
-  assert (simple.size(), asu.size()) == (30,2)
+    from cctbx.geometry_restraints.linking_class import linking_class
 
-  sites_cart = h.atoms().extract_xyz()
-  site_labels = model.get_xray_structure().scatterers().extract_labels()
-  pair_proxies = grm.pair_proxies(flags=None, sites_cart=sites_cart)
+    origin_ids = linking_class()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records9)
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.restraints_library.mcl = False
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    simple, asu = grm.get_all_bond_proxies()
+    assert (simple.size(), asu.size()) == (29, 0)
+    h = model.get_hierarchy()
+    proxy = geometry_restraints.bond_simple_proxy(
+        i_seqs=(32, 4),
+        distance_ideal=2.9,
+        weight=400,
+        origin_id=origin_ids.get_origin_id("hydrogen bonds"),
+    )
+    proxy2 = geometry_restraints.bond_simple_proxy(
+        i_seqs=(32, 24),
+        distance_ideal=2.9,
+        weight=400,
+        origin_id=origin_ids.get_origin_id("hydrogen bonds"),
+    )
+    grm.add_new_bond_restraints_in_place(
+        proxies=[proxy, proxy2], sites_cart=h.atoms().extract_xyz()
+    )
+    simple, asu = grm.get_all_bond_proxies()
+    assert (simple.size(), asu.size()) == (30, 2)
 
-  out = StringIO()
-  pair_proxies.bond_proxies.show_sorted(
-      by_value="residual",
-      sites_cart=sites_cart,
-      site_labels=site_labels,
-      f=out,
-      prefix="")
-  outtxt = out.getvalue()
-  # print(outtxt)
-  #
-  # Not clear why ZN-NE2 bond adds as 2 bonds.
-  assert_lines_in_text(outtxt, """\
+    sites_cart = h.atoms().extract_xyz()
+    site_labels = model.get_xray_structure().scatterers().extract_labels()
+    pair_proxies = grm.pair_proxies(flags=None, sites_cart=sites_cart)
+
+    out = StringIO()
+    pair_proxies.bond_proxies.show_sorted(
+        by_value="residual",
+        sites_cart=sites_cart,
+        site_labels=site_labels,
+        f=out,
+        prefix="",
+    )
+    outtxt = out.getvalue()
+    # print(outtxt)
+    #
+    # Not clear why ZN-NE2 bond adds as 2 bonds.
+    assert_lines_in_text(
+        outtxt,
+        """\
 bond pdb="ZN    ZN A   8 "
      pdb=" NE2 HIS B 304 "
   ideal  model  delta    sigma   weight residual sym.op.
   2.900  2.969 -0.069 5.00e-02 4.00e+02 1.92e+00 -x-1/2,y+1/2,-z+3/4
-    """)
-  assert_lines_in_text(outtxt, """\
+    """,
+    )
+    assert_lines_in_text(
+        outtxt,
+        """\
 bond pdb=" NE2 HIS B 304 "
      pdb="ZN    ZN A   8 "
   ideal  model  delta    sigma   weight residual sym.op.
   2.900  2.969 -0.069 5.00e-02 4.00e+02 1.92e+00 -x-1/2,y-1/2,-z+3/4
-    """)
+    """,
+    )
+
 
 def exercise_bond_over_symmetry_2(mon_lib_srv, ener_lib):
-  """ This test is to illustrate that bond over symmetry actually
-  adds 2 proxies.
-  """
-  from cctbx.geometry_restraints.linking_class import linking_class
-  origin_ids = linking_class()
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records10)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.restraints_library.mcl=False
-  model = mmtbx.model.manager(
-      model_input = pdb_inp,
-      log=null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=True)
-  grm = model.get_restraints_manager().geometry
-  simple, asu = grm.get_all_bond_proxies()
-  assert (simple.size(), asu.size()) == (0, 0)
+    """This test is to illustrate that bond over symmetry actually
+    adds 2 proxies.
+    """
+    from cctbx.geometry_restraints.linking_class import linking_class
 
-  h = model.get_hierarchy()
-  sites_cart = h.atoms().extract_xyz()
-  site_labels = model.get_xray_structure().scatterers().extract_labels()
-  pair_proxies = grm.pair_proxies(flags=None, sites_cart=sites_cart)
+    origin_ids = linking_class()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=raw_records10)
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.restraints_library.mcl = False
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    grm = model.get_restraints_manager().geometry
+    simple, asu = grm.get_all_bond_proxies()
+    assert (simple.size(), asu.size()) == (0, 0)
 
-  out = StringIO()
-  pair_proxies.bond_proxies.show_sorted(
-      by_value="residual",
-      sites_cart=sites_cart,
-      site_labels=site_labels,
-      f=out,
-      prefix="")
-  outtxt = out.getvalue()
-  # print(outtxt)
+    h = model.get_hierarchy()
+    sites_cart = h.atoms().extract_xyz()
+    site_labels = model.get_xray_structure().scatterers().extract_labels()
+    pair_proxies = grm.pair_proxies(flags=None, sites_cart=sites_cart)
 
-  proxy = geometry_restraints.bond_simple_proxy(
-      i_seqs=(0,1),
-      distance_ideal=2.9,
-      weight=400,
-      origin_id=origin_ids.get_origin_id('hydrogen bonds'))
-  grm.add_new_bond_restraints_in_place(
-      proxies=[proxy],
-      sites_cart=h.atoms().extract_xyz())
-  simple, asu = grm.get_all_bond_proxies()
-  # print(simple.size(), asu.size())
-  assert (simple.size(), asu.size()) == (0,2)
+    out = StringIO()
+    pair_proxies.bond_proxies.show_sorted(
+        by_value="residual",
+        sites_cart=sites_cart,
+        site_labels=site_labels,
+        f=out,
+        prefix="",
+    )
+    outtxt = out.getvalue()
+    # print(outtxt)
 
-  sites_cart = h.atoms().extract_xyz()
-  site_labels = model.get_xray_structure().scatterers().extract_labels()
-  pair_proxies = grm.pair_proxies(flags=None, sites_cart=sites_cart)
+    proxy = geometry_restraints.bond_simple_proxy(
+        i_seqs=(0, 1),
+        distance_ideal=2.9,
+        weight=400,
+        origin_id=origin_ids.get_origin_id("hydrogen bonds"),
+    )
+    grm.add_new_bond_restraints_in_place(
+        proxies=[proxy], sites_cart=h.atoms().extract_xyz()
+    )
+    simple, asu = grm.get_all_bond_proxies()
+    # print(simple.size(), asu.size())
+    assert (simple.size(), asu.size()) == (0, 2)
 
-  out = StringIO()
-  pair_proxies.bond_proxies.show_sorted(
-      by_value="residual",
-      sites_cart=sites_cart,
-      site_labels=site_labels,
-      f=out,
-      prefix="")
-  outtxt = out.getvalue()
-  # print(outtxt)
-  assert_lines_in_text(outtxt, """\
+    sites_cart = h.atoms().extract_xyz()
+    site_labels = model.get_xray_structure().scatterers().extract_labels()
+    pair_proxies = grm.pair_proxies(flags=None, sites_cart=sites_cart)
+
+    out = StringIO()
+    pair_proxies.bond_proxies.show_sorted(
+        by_value="residual",
+        sites_cart=sites_cart,
+        site_labels=site_labels,
+        f=out,
+        prefix="",
+    )
+    outtxt = out.getvalue()
+    # print(outtxt)
+    assert_lines_in_text(
+        outtxt,
+        """\
 bond pdb=" CA  HIS A   2 "
      pdb=" N   MET A   1 "
   ideal  model  delta    sigma   weight residual sym.op.
@@ -638,50 +671,61 @@ bond pdb=" N   MET A   1 "
      pdb=" CA  HIS A   2 "
   ideal  model  delta    sigma   weight residual sym.op.
   2.900  1.998  0.902 5.00e-02 4.00e+02 3.25e+02 x,y-1,z
-    """)
+    """,
+    )
 
-  es = grm.energies_sites(sites_cart=sites_cart, compute_gradients=True)
-  out = StringIO()
-  es.show(f=out)
-  outtxt = out.getvalue()
-  # print(outtxt)
-  # do for x coordinate
-  # ATOM      1  N   MET A   1       9.821   1.568   5.000  1.00 66.07           N
-  # ATOM      2  CA  HIS A   2       9.946  12.171   5.357  1.00 66.55           C
+    es = grm.energies_sites(sites_cart=sites_cart, compute_gradients=True)
+    out = StringIO()
+    es.show(f=out)
+    outtxt = out.getvalue()
+    # print(outtxt)
+    # do for x coordinate
+    # ATOM      1  N   MET A   1       9.821   1.568   5.000  1.00 66.07           N
+    # ATOM      2  CA  HIS A   2       9.946  12.171   5.357  1.00 66.55           C
 
-  # calculation is from geometry_restraints/bond.h: gradient_0()
-  # weight * 2 * delta_slack * d_distance_d_site_0(epsilon);
-  # print("X gradient:", 400*2*0.902*(9.946-9.821)) # 90
-  # Note that n=2 but residual sum is 325.349. 349 is chopped off in rounding in
-  # cctbx/geometry_restraints/__init__py, def _bond_show_sorted_impl(...)
-  # where %6.2e is used. in cctbx/geometry_restraints/energies.py: def show()
-  # %.6g is used which is showing more numbers.
-  assert_lines_in_text(outtxt, """\
-      bond_residual_sum (n=2): 325.349""")
-  # print("Gradients:", list(es.gradients))
-  # Seems that gradients were splitted in half (note the X gradient is 90 8 lines above)
-  assert approx_equal(list(es.gradients),
-    [(45.135801792665134, -708.451544937652, 128.90784991984805), (-45.13580179266516, 708.4515449376522, -128.90784991984813)])
+    # calculation is from geometry_restraints/bond.h: gradient_0()
+    # weight * 2 * delta_slack * d_distance_d_site_0(epsilon);
+    # print("X gradient:", 400*2*0.902*(9.946-9.821)) # 90
+    # Note that n=2 but residual sum is 325.349. 349 is chopped off in rounding in
+    # cctbx/geometry_restraints/__init__py, def _bond_show_sorted_impl(...)
+    # where %6.2e is used. in cctbx/geometry_restraints/energies.py: def show()
+    # %.6g is used which is showing more numbers.
+    assert_lines_in_text(
+        outtxt,
+        """\
+      bond_residual_sum (n=2): 325.349""",
+    )
+    # print("Gradients:", list(es.gradients))
+    # Seems that gradients were splitted in half (note the X gradient is 90 8 lines above)
+    assert approx_equal(
+        list(es.gradients),
+        [
+            (45.135801792665134, -708.451544937652, 128.90784991984805),
+            (-45.13580179266516, 708.4515449376522, -128.90784991984813),
+        ],
+    )
+
 
 def exercise():
-  mon_lib_srv = None
-  ener_lib = None
-  try:
-    mon_lib_srv = monomer_library.server.server()
-    ener_lib = monomer_library.server.ener_lib()
-  except: # intentional
-    print("Can not initialize monomer_library, skipping test.")
-  if mon_lib_srv is not None and ener_lib is not None:
-    exercise_add_new_bond_restraint_in_place(mon_lib_srv, ener_lib)
-    exercise_single_atom(mon_lib_srv, ener_lib)
-    exercise_multiple_atoms(mon_lib_srv, ener_lib)
-    exercise_is_bonded_atoms(mon_lib_srv, ener_lib)
-    exercise_add_super_long_bond(mon_lib_srv, ener_lib)
-    exercise_bond_near_symmetry(mon_lib_srv, ener_lib)
-    exercise_bond_near_symmetry2(mon_lib_srv, ener_lib)
-    exercise_bond_near_symmetry3(mon_lib_srv, ener_lib)
-    exercise_bond_over_symmetry(mon_lib_srv, ener_lib)
-    exercise_bond_over_symmetry_2(mon_lib_srv, ener_lib)
+    mon_lib_srv = None
+    ener_lib = None
+    try:
+        mon_lib_srv = monomer_library.server.server()
+        ener_lib = monomer_library.server.ener_lib()
+    except:  # intentional
+        print("Can not initialize monomer_library, skipping test.")
+    if mon_lib_srv is not None and ener_lib is not None:
+        exercise_add_new_bond_restraint_in_place(mon_lib_srv, ener_lib)
+        exercise_single_atom(mon_lib_srv, ener_lib)
+        exercise_multiple_atoms(mon_lib_srv, ener_lib)
+        exercise_is_bonded_atoms(mon_lib_srv, ener_lib)
+        exercise_add_super_long_bond(mon_lib_srv, ener_lib)
+        exercise_bond_near_symmetry(mon_lib_srv, ener_lib)
+        exercise_bond_near_symmetry2(mon_lib_srv, ener_lib)
+        exercise_bond_near_symmetry3(mon_lib_srv, ener_lib)
+        exercise_bond_over_symmetry(mon_lib_srv, ener_lib)
+        exercise_bond_over_symmetry_2(mon_lib_srv, ener_lib)
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

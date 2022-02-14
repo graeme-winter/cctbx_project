@@ -25,81 +25,119 @@ HETATM   10  O   HOH W   2      29.478  23.354  61.364  1.00  8.67
 END
 """
 
-#---
+# ---
 def exercise():
-  bonds = shared.stl_set_unsigned([
-    [1, 2, 3, 5],
-    [0, 4],
-    [0],
-    [0],
-    [1],
-    [0, 6, 7, 8],
-    [5],
-    [5],
-    [5],
-    []
-  ])
+    bonds = shared.stl_set_unsigned(
+        [[1, 2, 3, 5], [0, 4], [0], [0], [1], [0, 6, 7, 8], [5], [5], [5], []]
+    )
 
-  atoms_drawable = flex.bool([True for i in range(0, 10) ])
-  atoms_drawable_non_h = flex.bool(
-    [True, True, False, False, False, True, False, False, False, True]
-  )
+    atoms_drawable = flex.bool([True for i in range(0, 10)])
+    atoms_drawable_non_h = flex.bool(
+        [True, True, False, False, False, True, False, False, False, True]
+    )
 
-  # all atoms drawable
-  visibility = gltbx.viewer_utils.atom_visibility(
-    bonds            = bonds,
-    atoms_drawable   = atoms_drawable,
-    flag_show_points = True
-  )
-  assert (list(visibility.bonds_visible) ==
-    [True, True, True, True, True, True, True, True, True, False]
-  )
-  assert (list(visibility.points_visible) ==
-    [False, False, False, False, False, False, False, False, False, True]
-  )
+    # all atoms drawable
+    visibility = gltbx.viewer_utils.atom_visibility(
+        bonds=bonds, atoms_drawable=atoms_drawable, flag_show_points=True
+    )
+    assert list(visibility.bonds_visible) == [
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        False,
+    ]
+    assert list(visibility.points_visible) == [
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        True,
+    ]
 
-  # hydrogens off, points on
-  visibility = gltbx.viewer_utils.atom_visibility(
-    bonds            = bonds,
-    atoms_drawable   = atoms_drawable_non_h,
-    flag_show_points = True
-  )
-  assert (list(visibility.bonds_visible) ==
-    [True, True, False, False, False, True, False, False, False, False]
-  )
-  assert (list(visibility.points_visible) ==
-    [False, False, False, False, False, False, False, False, False, True]
-  )
+    # hydrogens off, points on
+    visibility = gltbx.viewer_utils.atom_visibility(
+        bonds=bonds, atoms_drawable=atoms_drawable_non_h, flag_show_points=True
+    )
+    assert list(visibility.bonds_visible) == [
+        True,
+        True,
+        False,
+        False,
+        False,
+        True,
+        False,
+        False,
+        False,
+        False,
+    ]
+    assert list(visibility.points_visible) == [
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        True,
+    ]
 
-  # equivalent to "not element H"
-  atoms_selected_non_h = flex.bool(
-    [True, True, False, False, False, True, False, False, False, True]
-  )
+    # equivalent to "not element H"
+    atoms_selected_non_h = flex.bool(
+        [True, True, False, False, False, True, False, False, False, True]
+    )
 
-  visibility.get_selection_visibility(
-    bonds          = bonds,
-    atoms_selected = atoms_selected_non_h
-  )
-  assert (list(visibility.selected_points_visible) ==
-    [False, False, False, False, False, False, False, False, False, True]
-  )
+    visibility.get_selection_visibility(
+        bonds=bonds, atoms_selected=atoms_selected_non_h
+    )
+    assert list(visibility.selected_points_visible) == [
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        True,
+    ]
 
-  # no hydrogens, no points
-  visibility = gltbx.viewer_utils.atom_visibility(
-    bonds            = bonds,
-    atoms_drawable   = atoms_drawable_non_h,
-    flag_show_points = False
-  )
-  assert (list(visibility.bonds_visible) ==
-    [True, True, False, False, False, True, False, False, False, False]
-  )
-  assert (not True in list(visibility.points_visible))
+    # no hydrogens, no points
+    visibility = gltbx.viewer_utils.atom_visibility(
+        bonds=bonds, atoms_drawable=atoms_drawable_non_h, flag_show_points=False
+    )
+    assert list(visibility.bonds_visible) == [
+        True,
+        True,
+        False,
+        False,
+        False,
+        True,
+        False,
+        False,
+        False,
+        False,
+    ]
+    assert not True in list(visibility.points_visible)
 
-  visibility.get_selection_visibility(
-    bonds          = bonds,
-    atoms_selected = atoms_selected_non_h
-  )
-  assert (not True in list(visibility.selected_points_visible))
+    visibility.get_selection_visibility(
+        bonds=bonds, atoms_selected=atoms_selected_non_h
+    )
+    assert not True in list(visibility.selected_points_visible)
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

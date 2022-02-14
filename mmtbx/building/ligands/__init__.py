@@ -1,2 +1,2 @@
 from __future__ import absolute_import, division, print_function
-from mmtbx.building.ligands import lifi # special import
+from mmtbx.building.ligands import lifi  # special import

@@ -21,48 +21,54 @@ wavelength = beam.get_wavelength()
 pixel_size = detector[0].get_pixel_size()[0]
 beam_x, beam_y = detector[0].get_beam_centre_px(beam.get_s0())
 beam_x *= pixel_size
-beam_y += 0 #earlier work required a 3 pixel shift based on powder pattern/fit to unit cell
+beam_y += (
+    0  # earlier work required a 3 pixel shift based on powder pattern/fit to unit cell
+)
 beam_y *= pixel_size
 overload = detector[0].get_trusted_range()[1]
 from xfel.cxi.cspad_ana.cspad_tbx import xpp_active_areas
+
 active_areas = xpp_active_areas["Sacla.MPCCD.8tile"]["active_areas"]
 # the active areas are already determined for the cropped size
 # (ran once without active areas, then measured cropped active areas on image viewer)
 
 dest_base = os.path.basename(os.path.splitext(data_path)[0])
 
+
 def do_work(img_no):
-  n_fails = 0
-  while True:
-    try:
-      raw_data = data.get_raw_data(img_no)
-      break
-    except (KeyError, ValueError):
-      n_fails +=1
-      print("Fail to read, attempt number", n_fails)
-      if n_fails > 100:
-        raise Exception("Couldn't read the data")
-    import time; time.sleep(n_fails * 0.1)
+    n_fails = 0
+    while True:
+        try:
+            raw_data = data.get_raw_data(img_no)
+            break
+        except (KeyError, ValueError):
+            n_fails += 1
+            print("Fail to read, attempt number", n_fails)
+            if n_fails > 100:
+                raise Exception("Couldn't read the data")
+        import time
 
-  imgdict = cspad_tbx.dpack(data=raw_data,
-     distance=distance,
-     pixel_size=pixel_size,
-     wavelength=wavelength,
-     beam_center_x=beam_x,
-     beam_center_y=beam_y,
-     ccd_image_saturation=overload,
-     saturated_value=overload,
-     address="Sacla.MPCCD.8tile",
-     active_areas=active_areas
-     )
-  imgdict = crop_image_pickle(imgdict,
-    preserve_active_areas_even_though_cropping_would_invalidate_them=True)
+        time.sleep(n_fails * 0.1)
 
-  dest_path = os.path.join(dest_dir, dest_base + "_%06d.pickle"%img_no)
-  print("Saving image", img_no, "to", dest_path)
-  easy_pickle.dump(dest_path, imgdict)
+    imgdict = cspad_tbx.dpack(
+        data=raw_data,
+        distance=distance,
+        pixel_size=pixel_size,
+        wavelength=wavelength,
+        beam_center_x=beam_x,
+        beam_center_y=beam_y,
+        ccd_image_saturation=overload,
+        saturated_value=overload,
+        address="Sacla.MPCCD.8tile",
+        active_areas=active_areas,
+    )
+    imgdict = crop_image_pickle(
+        imgdict, preserve_active_areas_even_though_cropping_would_invalidate_them=True
+    )
 
-easy_mp.pool_map(
-            args=list(range(data.get_num_images())),
-            func=do_work,
-            processes=4)
+    dest_path = os.path.join(dest_dir, dest_base + "_%06d.pickle" % img_no)
+    print("Saving image", img_no, "to", dest_path)
+    easy_pickle.dump(dest_path, imgdict)
+
+
+easy_mp.pool_map(args=list(range(data.get_num_images())), func=do_work, processes=4)

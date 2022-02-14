@@ -1,4 +1,4 @@
-'''
+"""
 Standard Program Template for CCTBX Programs
 
 The "program" is the actual task to be performed without any user interfaces.
@@ -24,7 +24,7 @@ Additional functions and class attributes can be defined for doing the actual
 task, but the above functions define a consistent interface.
 
 More documentation to come
-'''
+"""
 from __future__ import absolute_import, division, print_function
 
 import libtbx.phil
@@ -35,70 +35,70 @@ from libtbx.version import get_version
 
 # =============================================================================
 class ProgramTemplate(object):
-  # Class variables for customizing program
+    # Class variables for customizing program
 
-  # name of the program, this overrides the LIBTBX_DISPATCHER_NAME
-  # environment variable
-  program_name = None
+    # name of the program, this overrides the LIBTBX_DISPATCHER_NAME
+    # environment variable
+    program_name = None
 
-  # custom version, this overrides the default version from
-  # libtbx.version.get_version
-  version = None
+    # custom version, this overrides the default version from
+    # libtbx.version.get_version
+    version = None
 
-  # description of the program
-  description = '''
+    # description of the program
+    description = """
 Program Description
-'''
+"""
 
-  # list of keywords for categorizing the program (optional)
-  keywords = None
+    # list of keywords for categorizing the program (optional)
+    keywords = None
 
-  # list of maintainer(s) (GitHub names) for the program (optional)
-  maintainers = None
+    # list of maintainer(s) (GitHub names) for the program (optional)
+    maintainers = None
 
-  # datatypes for program
-  # see iotbx/data_manager/<datatype>.py for list of supported datatypes
-  # default datatypes are set in iotbx/data_manager/__init__.py (default_datatypes)
-  datatypes = None
+    # datatypes for program
+    # see iotbx/data_manager/<datatype>.py for list of supported datatypes
+    # default datatypes are set in iotbx/data_manager/__init__.py (default_datatypes)
+    datatypes = None
 
-  # DataManager options
-  # customization for how the DataManager processes files
-  # available options are set in iotbx/data_manager/__init__.py (data_manager_options)
-  data_manager_options = None
+    # DataManager options
+    # customization for how the DataManager processes files
+    # available options are set in iotbx/data_manager/__init__.py (data_manager_options)
+    data_manager_options = None
 
-  # master PHIL string for the program (required)
-  master_phil_str = '''
+    # master PHIL string for the program (required)
+    master_phil_str = """
 # example
 program {
   parameter = None
     .type = bool
 }
-'''
+"""
 
-  # unique citations for the program. list of citation phil extract objects
-  # see libtbx/citations.py for the PHIL format.
-  citations = None
+    # unique citations for the program. list of citation phil extract objects
+    # see libtbx/citations.py for the PHIL format.
+    citations = None
 
-  # common citations used by the program that exist in libtbx/citations.params
-  # list of article_id strings, e.g. ["polder", "elbow"]).
-  known_article_ids = []
+    # common citations used by the program that exist in libtbx/citations.params
+    # list of article_id strings, e.g. ["polder", "elbow"]).
+    known_article_ids = []
 
-  # text shown at the end of the command-line program
-  epilog = '''
+    # text shown at the end of the command-line program
+    epilog = """
 For additional help, you can contact the developers at cctbxbb@phenix-online.org
 or https://github.com/cctbx/cctbx_project
 
-'''
+"""
 
-  # ---------------------------------------------------------------------------
-  # Reserved phil scope for output
-  # This will be automatically added to the master_phil_str.
-  # You should add your own output phil scope, but these parameters will be
-  # automatically added, so no need to redefine.
-  # The filename and file_name parameters refer to the same thing.
-  # Changing one will change the other. If multiple values are specified,
-  # the last one to be processed is kept.
-  output_phil_str = '''
+    # ---------------------------------------------------------------------------
+    # Reserved phil scope for output
+    # This will be automatically added to the master_phil_str.
+    # You should add your own output phil scope, but these parameters will be
+    # automatically added, so no need to redefine.
+    # The filename and file_name parameters refer to the same thing.
+    # Changing one will change the other. If multiple values are specified,
+    # the last one to be processed is kept.
+    output_phil_str = """
 output {
   filename = None
     .alias = file_name
@@ -122,347 +122,341 @@ output {
     .type = bool
     .help = Overwrite files when set to True
 }
-'''
+"""
 
-  # ---------------------------------------------------------------------------
-  # Advanced features
+    # ---------------------------------------------------------------------------
+    # Advanced features
 
-  # PHIL converters (in a list) for additional PHIL types
-  phil_converters = list()
+    # PHIL converters (in a list) for additional PHIL types
+    phil_converters = list()
 
-  # ---------------------------------------------------------------------------
-  # Convenience features
-  def _print(self, text):
-    '''
-    Print function that just replaces print(text, file=self.logger)
-    '''
-    print(text, file=self.logger)
+    # ---------------------------------------------------------------------------
+    # Convenience features
+    def _print(self, text):
+        """
+        Print function that just replaces print(text, file=self.logger)
+        """
+        print(text, file=self.logger)
 
-  def header(self, text):
-    self._print("-"*79)
-    self._print(text)
-    self._print("*"*len(text))
+    def header(self, text):
+        self._print("-" * 79)
+        self._print(text)
+        self._print("*" * len(text))
 
-  # ---------------------------------------------------------------------------
-  # Function for showing default citation for template
-  @staticmethod
-  def show_template_citation(text_width=80, logger=None,
-                             citation_format='default'):
-    assert logger is not None
+    # ---------------------------------------------------------------------------
+    # Function for showing default citation for template
+    @staticmethod
+    def show_template_citation(text_width=80, logger=None, citation_format="default"):
+        assert logger is not None
 
-    print('\nGeneral citation for CCTBX:', file=logger)
-    print('-'*text_width, file=logger)
-    print('', file=logger)
-    citations.show_citation(citations.citations_db['cctbx'], out=logger,
-                            format=citation_format)
+        print("\nGeneral citation for CCTBX:", file=logger)
+        print("-" * text_width, file=logger)
+        print("", file=logger)
+        citations.show_citation(
+            citations.citations_db["cctbx"], out=logger, format=citation_format
+        )
 
-  # ---------------------------------------------------------------------------
-  def __init__(self, data_manager, params, master_phil=None, logger=None):
-    '''
-    Common constructor for all programs
+    # ---------------------------------------------------------------------------
+    def __init__(self, data_manager, params, master_phil=None, logger=None):
+        """
+        Common constructor for all programs
 
-    This is supposed to be lightweight. Custom initialization, if necessary,
-    should be handled by the custom_init function. Developers should not need to
-    override this function.
+        This is supposed to be lightweight. Custom initialization, if necessary,
+        should be handled by the custom_init function. Developers should not need to
+        override this function.
 
-    Parameters
-    ----------
-    data_manager :
-      An instance of the DataManager (libtbx/data_manager.py) class containing
-      data structures from file input
-    params :
-      An instance of PHIL
-    logger :
-      Standard Python logger (from logging module), optional. A logger will be
-      created if it is not provided.
+        Parameters
+        ----------
+        data_manager :
+          An instance of the DataManager (libtbx/data_manager.py) class containing
+          data structures from file input
+        params :
+          An instance of PHIL
+        logger :
+          Standard Python logger (from logging module), optional. A logger will be
+          created if it is not provided.
 
-    '''
+        """
 
-    self.data_manager = data_manager
-    self.master_phil = master_phil
-    self.params = params
-    self.logger = logger
+        self.data_manager = data_manager
+        self.master_phil = master_phil
+        self.params = params
+        self.logger = logger
 
-    if self.logger is None:
-      self.logger = multi_out()
+        if self.logger is None:
+            self.logger = multi_out()
 
-    # master_phil should be provided by CCTBXParser or GUI because of
-    # potential PHIL extensions
-    if self.master_phil is None:
-      self.master_phil = libtbx.phil.parse(
-        self.master_phil_str, process_includes=True)
+        # master_phil should be provided by CCTBXParser or GUI because of
+        # potential PHIL extensions
+        if self.master_phil is None:
+            self.master_phil = libtbx.phil.parse(
+                self.master_phil_str, process_includes=True
+            )
 
-    # set DataManager defaults
-    if self.data_manager is not None:
-      self.data_manager.set_default_output_filename(
-        self.get_default_output_filename())
-      try:
-        self.data_manager.set_overwrite(self.params.output.overwrite)
-      except AttributeError:
+        # set DataManager defaults
+        if self.data_manager is not None:
+            self.data_manager.set_default_output_filename(
+                self.get_default_output_filename()
+            )
+            try:
+                self.data_manager.set_overwrite(self.params.output.overwrite)
+            except AttributeError:
+                pass
+            self.data_manager.set_program(self)
+
+        # optional initialization
+        self.custom_init()
+
+    # ---------------------------------------------------------------------------
+    def custom_init(self):
+        """
+        Optional initialization step
+
+        Developers should override this function if additional initialization is
+        needed. There should be no arguments because all necessary information
+        should be in self.data_manager (file input) and self.params (phil parameters)
+
+        Parameters
+        ----------
+        None
+        """
         pass
-      self.data_manager.set_program(self)
 
-    # optional initialization
-    self.custom_init()
+    # ---------------------------------------------------------------------------
+    def validate(self):
+        """ """
+        raise NotImplementedError('The "validate" function is required.')
 
-  # ---------------------------------------------------------------------------
-  def custom_init(self):
-    '''
-    Optional initialization step
+    # ---------------------------------------------------------------------------
+    def run(self):
+        """ """
+        raise NotImplementedError('The "run" function is required.')
 
-    Developers should override this function if additional initialization is
-    needed. There should be no arguments because all necessary information
-    should be in self.data_manager (file input) and self.params (phil parameters)
+    # ---------------------------------------------------------------------------
+    def clean_up(self):
+        """ """
+        pass
 
-    Parameters
-    ----------
-    None
-    '''
-    pass
+    # ---------------------------------------------------------------------------
+    def get_results(self):
+        """ """
+        return None
 
-  # ---------------------------------------------------------------------------
-  def validate(self):
-    '''
+    # ---------------------------------------------------------------------------
+    def get_results_as_JSON(self):
+        """ """
+        return None
 
-    '''
-    raise NotImplementedError('The "validate" function is required.')
+    # ---------------------------------------------------------------------------
+    def get_program_phil(self, diff=False):
+        """
+        Function for getting the PHIL extract of the Program
 
-  # ---------------------------------------------------------------------------
-  def run(self):
-    '''
+        Parameters
+        ----------
+        diff: bool
+          When set to True, only the differences from the master PHIL are returned
 
-    '''
-    raise NotImplementedError('The "run" function is required.')
+        Returns
+        -------
+        params: libtbx.phil.scope
+        """
+        working_phil = self.master_phil.format(python_object=self.params)
+        if diff:
+            working_phil = self.master_phil.fetch_diff(working_phil)
+        return working_phil
 
-  # ---------------------------------------------------------------------------
-  def clean_up(self):
-    '''
+    # ---------------------------------------------------------------------------
+    def get_data_phil(self, diff=False):
+        """
+        Function for getting the PHIL scope from the DataManager
 
-    '''
-    pass
+        Parameters
+        ----------
+        diff: bool
+          When set to True, only the differences from the master PHIL are returned
 
-  # ---------------------------------------------------------------------------
-  def get_results(self):
-    '''
+        Returns
+        -------
+        params: libtbx.phil.scope
+        """
+        if self.data_manager is None:
+            return libtbx.phil.parse("")
+        working_phil = self.data_manager.export_phil_scope()
+        if diff:
+            working_phil = self.data_manager.master_phil.fetch_diff(working_phil)
+        return working_phil
 
-    '''
-    return None
+    # ---------------------------------------------------------------------------
+    def get_program_extract(self, diff=False):
+        """
+        Function for getting the PHIL extract of the Program
 
-  # ---------------------------------------------------------------------------
-  def get_results_as_JSON(self):
-    '''
+        Parameters
+        ----------
+        diff: bool
+          When set to True, only the differences from the master PHIL are returned
 
-    '''
-    return None
+        Returns
+        -------
+        params: libtbx.phil.scope_extract
+        """
+        return self.get_program_phil(diff=diff).extract()
 
-  # ---------------------------------------------------------------------------
-  def get_program_phil(self, diff=False):
-    '''
-    Function for getting the PHIL extract of the Program
+    # ---------------------------------------------------------------------------
+    def get_data_extract(self, diff=False):
+        """
+        Function for getting the PHIL extract from the DataManager
 
-    Parameters
-    ----------
-    diff: bool
-      When set to True, only the differences from the master PHIL are returned
+        Parameters
+        ----------
+        diff: bool
+          When set to True, only the differences from the master PHIL are returned
 
-    Returns
-    -------
-    params: libtbx.phil.scope
-    '''
-    working_phil = self.master_phil.format(python_object=self.params)
-    if diff:
-      working_phil = self.master_phil.fetch_diff(working_phil)
-    return working_phil
+        Returns
+        -------
+        params: libtbx.phil.scope_extract
+        """
+        return self.get_data_phil(diff=diff).extract()
 
-  # ---------------------------------------------------------------------------
-  def get_data_phil(self, diff=False):
-    '''
-    Function for getting the PHIL scope from the DataManager
+    # ---------------------------------------------------------------------------
+    def get_program_phil_str(self, diff=False):
+        """
+        Function for getting the PHIL string of the Program
 
-    Parameters
-    ----------
-    diff: bool
-      When set to True, only the differences from the master PHIL are returned
+        Parameters
+        ----------
+        diff: bool
+          When set to True, only the differences from the master PHIL are returned
 
-    Returns
-    -------
-    params: libtbx.phil.scope
-    '''
-    if self.data_manager is None:
-      return libtbx.phil.parse('')
-    working_phil = self.data_manager.export_phil_scope()
-    if diff:
-      working_phil = self.data_manager.master_phil.fetch_diff(working_phil)
-    return working_phil
+        Returns
+        -------
+        params: str
+        """
+        return self.get_program_phil(diff=diff).as_str()
 
-  # ---------------------------------------------------------------------------
-  def get_program_extract(self, diff=False):
-    '''
-    Function for getting the PHIL extract of the Program
+    # ---------------------------------------------------------------------------
+    def get_data_phil_str(self, diff=False):
+        """
+        Function for getting the PHIL string from the DataManager
 
-    Parameters
-    ----------
-    diff: bool
-      When set to True, only the differences from the master PHIL are returned
+        Parameters
+        ----------
+        diff: bool
+          When set to True, only the differences from the master PHIL are returned
 
-    Returns
-    -------
-    params: libtbx.phil.scope_extract
-    '''
-    return self.get_program_phil(diff=diff).extract()
+        Returns
+        -------
+        params: str
+        """
+        return self.get_data_phil(diff=diff).as_str()
 
-  # ---------------------------------------------------------------------------
-  def get_data_extract(self, diff=False):
-    '''
-    Function for getting the PHIL extract from the DataManager
+    # ---------------------------------------------------------------------------
+    def get_full_phil_str(self, diff=False):
+        """
+        Function for getting the full PHIL string of the DataManager and Program
 
-    Parameters
-    ----------
-    diff: bool
-      When set to True, only the differences from the master PHIL are returned
+        Parameters
+        ----------
+        diff: bool
+          When set to True, only the differences from the master PHIL are returned
 
-    Returns
-    -------
-    params: libtbx.phil.scope_extract
-    '''
-    return self.get_data_phil(diff=diff).extract()
+        Returns
+        -------
+        params: str
+        """
+        return self.get_data_phil_str(diff=diff) + self.get_program_phil_str(diff=diff)
 
-  # ---------------------------------------------------------------------------
-  def get_program_phil_str(self, diff=False):
-    '''
-    Function for getting the PHIL string of the Program
+    # ---------------------------------------------------------------------------
+    def get_default_output_filename(
+        self, prefix=Auto, suffix=Auto, serial=Auto, filename=Auto
+    ):
+        """
+        Given the output.prefix, output.suffix, and output.serial PHIL parameters,
+        return the default output filename. The filename is constructed as
 
-    Parameters
-    ----------
-    diff: bool
-      When set to True, only the differences from the master PHIL are returned
+          {prefix}{suffix}_{serial:03d}
 
-    Returns
-    -------
-    params: str
-    '''
-    return self.get_program_phil(diff=diff).as_str()
+        However, if output.filename (or output.file_name), that value takes
+        precedence.
 
-  # ---------------------------------------------------------------------------
-  def get_data_phil_str(self, diff=False):
-    '''
-    Function for getting the PHIL string from the DataManager
+        Parameters
+        ----------
+        prefix: str
+          The prefix for the name, if set to Auto, the value from output.serial
+          is used.
+        suffix: str
+          The suffix for the name, if set to Auto, the value from output.suffix
+          is used.
+        serial: int
+          The serial number for the name, if set to Auto, the value from
+          output.serial is used. Leading zeroes will be added so that the
+          number uses 3 spaces.
+        filename: str
+          A name that overrides the automatically generated name. If set to
+          Auto, the value from output.filename is used.
 
-    Parameters
-    ----------
-    diff: bool
-      When set to True, only the differences from the master PHIL are returned
+        Returns
+        -------
+        filename: str
+          The default output filename without a file extension
+        """
 
-    Returns
-    -------
-    params: str
-    '''
-    return self.get_data_phil(diff=diff).as_str()
+        # set defaults
+        output = None
+        if hasattr(self.params, "output"):
+            output = self.params.output
 
-  # ---------------------------------------------------------------------------
-  def get_full_phil_str(self, diff=False):
-    '''
-    Function for getting the full PHIL string of the DataManager and Program
+        if prefix is Auto:
+            prefix = "cctbx_program"
+            if output and getattr(output, "prefix", None) is not None:
+                prefix = output.prefix
+        if suffix is Auto:
+            suffix = None
+            if output and getattr(output, "suffix", None) is not None:
+                suffix = output.suffix
+        if serial is Auto:
+            serial = None
+            if output and getattr(output, "serial", None) is not None:
+                serial = self.params.output.serial
+        else:
+            if not isinstance(serial, int):
+                raise ValueError("The serial argument should be an integer.")
 
-    Parameters
-    ----------
-    diff: bool
-      When set to True, only the differences from the master PHIL are returned
+        # create filename
+        if filename is Auto:
+            # override if necessary
+            if output and getattr(output, "filename", None) is not None:
+                filename = output.filename
+            else:
+                filename = prefix
+                if suffix is not None:
+                    filename += suffix
+                if serial is not None:
+                    filename += "_{serial:03d}".format(serial=serial)
 
-    Returns
-    -------
-    params: str
-    '''
-    return self.get_data_phil_str(diff=diff) + self.get_program_phil_str(diff=diff)
+        return filename
 
-  # ---------------------------------------------------------------------------
-  def get_default_output_filename(self, prefix=Auto, suffix=Auto, serial=Auto,
-    filename=Auto):
-    '''
-    Given the output.prefix, output.suffix, and output.serial PHIL parameters,
-    return the default output filename. The filename is constructed as
+    # ---------------------------------------------------------------------------
+    @classmethod
+    def get_version(cls):
+        """
+        Function for returning the version
 
-      {prefix}{suffix}_{serial:03d}
+        Parameters
+        ----------
+        None
 
-    However, if output.filename (or output.file_name), that value takes
-    precedence.
+        Returns
+        -------
+        version: str
+        """
+        # try the class first
+        if cls.version is not None:
+            return cls.version
 
-    Parameters
-    ----------
-    prefix: str
-      The prefix for the name, if set to Auto, the value from output.serial
-      is used.
-    suffix: str
-      The suffix for the name, if set to Auto, the value from output.suffix
-      is used.
-    serial: int
-      The serial number for the name, if set to Auto, the value from
-      output.serial is used. Leading zeroes will be added so that the
-      number uses 3 spaces.
-    filename: str
-      A name that overrides the automatically generated name. If set to
-      Auto, the value from output.filename is used.
+        # the default version
+        return get_version()
 
-    Returns
-    -------
-    filename: str
-      The default output filename without a file extension
-    '''
-
-    # set defaults
-    output = None
-    if hasattr(self.params, 'output'):
-      output = self.params.output
-
-    if prefix is Auto:
-      prefix = 'cctbx_program'
-      if output and getattr(output, 'prefix', None) is not None:
-        prefix = output.prefix
-    if suffix is Auto:
-      suffix = None
-      if output and getattr(output, 'suffix', None) is not None:
-        suffix = output.suffix
-    if serial is Auto:
-      serial = None
-      if output and getattr(output, 'serial', None) is not None:
-        serial = self.params.output.serial
-    else:
-      if not isinstance(serial, int):
-        raise ValueError('The serial argument should be an integer.')
-
-    # create filename
-    if filename is Auto:
-      # override if necessary
-      if output and getattr(output, 'filename', None) is not None:
-        filename = output.filename
-      else:
-        filename = prefix
-        if suffix is not None:
-          filename += suffix
-        if serial is not None:
-          filename += '_{serial:03d}'.format(serial=serial)
-
-    return filename
-
-  # ---------------------------------------------------------------------------
-  @classmethod
-  def get_version(cls):
-    '''
-    Function for returning the version
-
-    Parameters
-    ----------
-    None
-
-    Returns
-    -------
-    version: str
-    '''
-    # try the class first
-    if cls.version is not None:
-      return cls.version
-
-    # the default version
-    return get_version()
 
 # =============================================================================

@@ -3,17 +3,19 @@ from xfel.merging.application.postrefine.postrefinement_rs import postrefinement
 from xfel.merging.application.postrefine.postrefinement_rs2 import postrefinement_rs2
 from xfel.merging.application.worker import factory as factory_base
 
-class factory(factory_base):
-  """ Factory class for post-refining experiments. """
-  @staticmethod
-  def from_parameters(params, additional_info=None, mpi_helper=None, mpi_logger=None):
-    """ """
-    if params.postrefinement.algorithm in ['rs','eta_deff']:
-      return [postrefinement_rs(params, mpi_helper, mpi_logger)]
-    elif params.postrefinement.algorithm in ['rs2']:
-      return [postrefinement_rs2(params, mpi_helper, mpi_logger)]
 
-    '''
+class factory(factory_base):
+    """Factory class for post-refining experiments."""
+
+    @staticmethod
+    def from_parameters(params, additional_info=None, mpi_helper=None, mpi_logger=None):
+        """ """
+        if params.postrefinement.algorithm in ["rs", "eta_deff"]:
+            return [postrefinement_rs(params, mpi_helper, mpi_logger)]
+        elif params.postrefinement.algorithm in ["rs2"]:
+            return [postrefinement_rs2(params, mpi_helper, mpi_logger)]
+
+        """
     FROM CXI-MERGE
     if params.postrefinement.enable:
       if params.postrefinement.algorithm in ['rs','eta_deff']:
@@ -24,4 +26,4 @@ class factory(factory_base):
         from xfel.cxi.postrefinement_hybrid_rs import rs_hybrid as postrefinement_algorithm
       return [postrefinement_algorithm]
     return None
-    '''
+    """

@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.command_line import molprobity
 import iotbx.pdb.hierarchy
@@ -10,76 +9,78 @@ from six.moves import zip
 
 # test for corner cases (synthetic data okay)
 def exercise_synthetic():
-  from mmtbx.regression import tst_build_alt_confs
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=tst_build_alt_confs.pdb_raw)
-  xrs = pdb_in.input.xray_structure_simple()
-  fc = abs(xrs.structure_factors(d_min=1.5).f_calc())
-  flags = fc.resolution_filter(d_min=1.6).generate_r_free_flags()
-  ls = fc.lone_set(other=flags)
-  # case 1: no work set in high-res shell
-  flags2 = ls.array(data=flex.bool(ls.size(), True))
-  flags_all = flags.concatenate(other=flags2)
-  mtz_out = fc.as_mtz_dataset(column_root_label="F")
-  mtz_out.add_miller_array(flags_all, column_root_label="FreeR_flag")
-  mtz_out.mtz_object().write("tst_molprobity_1.mtz")
-  open("tst_molprobity_1.pdb", "w").write(tst_build_alt_confs.pdb_raw)
-  args = [
-    "tst_molprobity_1.pdb",
-    "tst_molprobity_1.mtz",
-    "--kinemage",
-    "--maps",
-    "flags.clashscore=False",
-    "flags.xtriage=True",
-  ]
-  result = molprobity.run(args=args,
-    ignore_missing_modules=True,
-    out=null_out()).validation
-  out = StringIO()
-  result.show(out=out)
-  # case 2: no test set in high-res shell
-  flags2 = ls.array(data=flex.bool(ls.size(), False))
-  flags_all = flags.concatenate(other=flags2)
-  mtz_out = fc.as_mtz_dataset(column_root_label="F")
-  mtz_out.add_miller_array(flags_all, column_root_label="FreeR_flag")
-  result = molprobity.run(args=args,
-    ignore_missing_modules=True,
-    out=null_out()).validation
-  out = StringIO()
-  result.show(out=out)
-  # case 3: multi-MODEL structure
-  # XXX This is not a very sophisticated test - it only ensures that the
-  # program does not crash.  We need a test for expected output...
-  hierarchy = pdb_in.hierarchy
-  model2 = hierarchy.only_model().detached_copy()
-  hierarchy.append_model(model2)
-  hierarchy.models()[0].id = "1"
-  hierarchy.models()[1].id = "2"
-  open("tst_molprobity_multi_model.pdb", "w").write(hierarchy.as_pdb_string())
-  args = [
-    "tst_molprobity_multi_model.pdb",
-    "tst_molprobity_1.mtz",
-    "--kinemage",
-    "--maps",
-  ]
-  result = molprobity.run(args=args,
-    ignore_missing_modules=True,
-    out=null_out()).validation
-  out = StringIO()
-  result.show(out=out)
-  # test rotamer distributions
-  open("tst_molprobity_misc1.pdb", "w").write(tst_build_alt_confs.pdb_raw)
-  args = [
-    "tst_molprobity_1.pdb",
-    "rotamer_library=8000",
-  ]
-  out = StringIO()
-  result = molprobity.run(args=args,
-    ignore_missing_modules=True,
-    out=null_out()).validation
-  result.show(outliers_only=False, out=out)
+    from mmtbx.regression import tst_build_alt_confs
+
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=tst_build_alt_confs.pdb_raw)
+    xrs = pdb_in.input.xray_structure_simple()
+    fc = abs(xrs.structure_factors(d_min=1.5).f_calc())
+    flags = fc.resolution_filter(d_min=1.6).generate_r_free_flags()
+    ls = fc.lone_set(other=flags)
+    # case 1: no work set in high-res shell
+    flags2 = ls.array(data=flex.bool(ls.size(), True))
+    flags_all = flags.concatenate(other=flags2)
+    mtz_out = fc.as_mtz_dataset(column_root_label="F")
+    mtz_out.add_miller_array(flags_all, column_root_label="FreeR_flag")
+    mtz_out.mtz_object().write("tst_molprobity_1.mtz")
+    open("tst_molprobity_1.pdb", "w").write(tst_build_alt_confs.pdb_raw)
+    args = [
+        "tst_molprobity_1.pdb",
+        "tst_molprobity_1.mtz",
+        "--kinemage",
+        "--maps",
+        "flags.clashscore=False",
+        "flags.xtriage=True",
+    ]
+    result = molprobity.run(
+        args=args, ignore_missing_modules=True, out=null_out()
+    ).validation
+    out = StringIO()
+    result.show(out=out)
+    # case 2: no test set in high-res shell
+    flags2 = ls.array(data=flex.bool(ls.size(), False))
+    flags_all = flags.concatenate(other=flags2)
+    mtz_out = fc.as_mtz_dataset(column_root_label="F")
+    mtz_out.add_miller_array(flags_all, column_root_label="FreeR_flag")
+    result = molprobity.run(
+        args=args, ignore_missing_modules=True, out=null_out()
+    ).validation
+    out = StringIO()
+    result.show(out=out)
+    # case 3: multi-MODEL structure
+    # XXX This is not a very sophisticated test - it only ensures that the
+    # program does not crash.  We need a test for expected output...
+    hierarchy = pdb_in.hierarchy
+    model2 = hierarchy.only_model().detached_copy()
+    hierarchy.append_model(model2)
+    hierarchy.models()[0].id = "1"
+    hierarchy.models()[1].id = "2"
+    open("tst_molprobity_multi_model.pdb", "w").write(hierarchy.as_pdb_string())
+    args = [
+        "tst_molprobity_multi_model.pdb",
+        "tst_molprobity_1.mtz",
+        "--kinemage",
+        "--maps",
+    ]
+    result = molprobity.run(
+        args=args, ignore_missing_modules=True, out=null_out()
+    ).validation
+    out = StringIO()
+    result.show(out=out)
+    # test rotamer distributions
+    open("tst_molprobity_misc1.pdb", "w").write(tst_build_alt_confs.pdb_raw)
+    args = [
+        "tst_molprobity_1.pdb",
+        "rotamer_library=8000",
+    ]
+    out = StringIO()
+    result = molprobity.run(
+        args=args, ignore_missing_modules=True, out=null_out()
+    ).validation
+    result.show(outliers_only=False, out=out)
+
 
 def exercise_cdl():
-  pdb_raw = """
+    pdb_raw = """
 ATOM   1270  N   LEU A 199       6.903  55.119  -0.416  1.00 25.48           N
 ATOM   1271  CA  LEU A 199       7.726  56.192  -0.941  1.00 25.93           C
 ATOM   1272  C   LEU A 199       6.996  56.972  -2.047  1.00 26.39           C
@@ -111,28 +112,37 @@ ATOM   1315  C   SER A 204       2.683  63.793  -3.199  1.00 28.16           C
 ATOM   1316  O   SER A 204       2.311  64.910  -3.605  1.00 28.25           O
 ATOM   1317  CB  SER A 204       1.962  61.780  -4.504  1.00 27.64           C
 """
-  pdb_raw_2 = """\
+    pdb_raw_2 = (
+        """\
 REMARK   3    GEOSTD + MON.LIB. + CDL v1.2
-""" + pdb_raw
-  open("tst_molprobity_cdl_1.pdb", "w").write(pdb_raw)
-  open("tst_molprobity_cdl_2.pdb", "w").write(pdb_raw_2)
-  files = ["tst_molprobity_cdl_1.pdb","tst_molprobity_cdl_2.pdb"]
-  rmsds = [0.9019, 0.8769]
-  for file_name, rmsd, cdl_expected in zip(files, rmsds, [False, True]):
-    result = molprobity.run(args=[file_name, "flags.clashscore=False"],
-      ignore_missing_modules=True,
-      out=null_out()).validation
-    assert approx_equal(result.rms_angles(), rmsd, eps=0.001), rmsd
-    if cdl_expected :
-      out = StringIO()
-      result.show(out=out)
-      assert ("Geometry Restraints Library: GeoStd + Monomer Library + CDL v1.2" in out.getvalue())
-    else:
-      out = StringIO()
-      result.show(out=out)
-      assert ("CDL" not in out.getvalue())
+"""
+        + pdb_raw
+    )
+    open("tst_molprobity_cdl_1.pdb", "w").write(pdb_raw)
+    open("tst_molprobity_cdl_2.pdb", "w").write(pdb_raw_2)
+    files = ["tst_molprobity_cdl_1.pdb", "tst_molprobity_cdl_2.pdb"]
+    rmsds = [0.9019, 0.8769]
+    for file_name, rmsd, cdl_expected in zip(files, rmsds, [False, True]):
+        result = molprobity.run(
+            args=[file_name, "flags.clashscore=False"],
+            ignore_missing_modules=True,
+            out=null_out(),
+        ).validation
+        assert approx_equal(result.rms_angles(), rmsd, eps=0.001), rmsd
+        if cdl_expected:
+            out = StringIO()
+            result.show(out=out)
+            assert (
+                "Geometry Restraints Library: GeoStd + Monomer Library + CDL v1.2"
+                in out.getvalue()
+            )
+        else:
+            out = StringIO()
+            result.show(out=out)
+            assert "CDL" not in out.getvalue()
 
-if (__name__ == "__main__"):
-  exercise_cdl()
-  exercise_synthetic()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_cdl()
+    exercise_synthetic()
+    print("OK")

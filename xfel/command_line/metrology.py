@@ -3,12 +3,12 @@
 #
 
 from __future__ import absolute_import, division, print_function
-from scipy.optimize import leastsq # special import
+from scipy.optimize import leastsq  # special import
 from xfel.metrology.mark10 import fit_translation4
 from libtbx.utils import Sorry
 import os.path
 
-master_phil="""
+master_phil = """
 data = None
   .type = path
   .multiple = True
@@ -49,71 +49,87 @@ diff_cutoff = 5
   .help = throw out image if any correction vector exceeds this length in pixels
 """
 
+
 def get_phil(args):
-  print(args)
+    print(args)
 
-  import iotbx.phil
-  phil = iotbx.phil.process_command_line(args=args, master_string=master_phil).show()
-  work_params = phil.work.extract()
+    import iotbx.phil
 
-  if work_params.show_plots is True:
-    from matplotlib import pyplot as plt # special import
-  return work_params
+    phil = iotbx.phil.process_command_line(args=args, master_string=master_phil).show()
+    work_params = phil.work.extract()
+
+    if work_params.show_plots is True:
+        from matplotlib import pyplot as plt  # special import
+    return work_params
+
 
 def validate_phil(wp):
-  if wp.data == []:
-    raise Sorry("need one or more data directories")
+    if wp.data == []:
+        raise Sorry("need one or more data directories")
 
-  #handle globs at this level:
-  import glob
-  provisional = []
-  for glob_item in wp.data:
-    provisional = provisional + glob.glob(glob_item)
-  wp.data = provisional
+    # handle globs at this level:
+    import glob
 
-  for item in wp.data:
-    if not os.path.isdir(item):
-      raise Sorry("can't stat directory",item)
+    provisional = []
+    for glob_item in wp.data:
+        provisional = provisional + glob.glob(glob_item)
+    wp.data = provisional
 
-  if wp.bravais_setting_id is None or \
-     wp.bravais_setting_id not in [1,2,5,9,12,22]:
-    raise Sorry("""must set the bravais_setting_id
+    for item in wp.data:
+        if not os.path.isdir(item):
+            raise Sorry("can't stat directory", item)
+
+    if wp.bravais_setting_id is None or wp.bravais_setting_id not in [
+        1,
+        2,
+        5,
+        9,
+        12,
+        22,
+    ]:
+        raise Sorry(
+            """must set the bravais_setting_id
   triclinic=1 monoclinic=2 orthorhombic=5 rhombohedral=5
-  tetragonal=9 hexagonal=12 cubic=22""")
+  tetragonal=9 hexagonal=12 cubic=22"""
+        )
+
 
 def run(args):
 
-  work_params = get_phil(args)
-  try:
-    validate_phil(work_params)
-  except Sorry as s:
-    raise s
-  except Exception as s:
-    raise s
+    work_params = get_phil(args)
+    try:
+        validate_phil(work_params)
+    except Sorry as s:
+        raise s
+    except Exception as s:
+        raise s
 
-  C = fit_translation4(work_params)
-  print("done constructor")
+    C = fit_translation4(work_params)
+    print("done constructor")
 
-  #parse a phil file from the args
-  for item in args:
-    if os.path.isfile(item):
-      from xfel.phil_preferences import load_cxi_phil
-      C.optional_params = load_cxi_phil(item,[])
-      break
+    # parse a phil file from the args
+    for item in args:
+        if os.path.isfile(item):
+            from xfel.phil_preferences import load_cxi_phil
 
-  print()
-  C.run_cycle_a()
-  C.run_cycle_b(0)
-  print()
-  C.run_cycle_a()
-  C.run_cycle_b(1)
-  print()
-  C.run_cycle_a()
+            C.optional_params = load_cxi_phil(item, [])
+            break
 
-if (__name__ == "__main__"):
-  import sys
-  run(args=sys.argv[1:])
+    print()
+    C.run_cycle_a()
+    C.run_cycle_b(0)
+    print()
+    C.run_cycle_a()
+    C.run_cycle_b(1)
+    print()
+    C.run_cycle_a()
 
-#cspad.metrology data=/reg/d/psdm/CXI/cxid9114/ftc/sauter/results/r010[2-9]/018/integration max_frames=300 bravais_setting_id=9
-#cspad.metrology data=/reg/d/psdm/CXI/cxid9114/ftc/brewster/results/r00[3-4]*/003/integration max_frames=300 bravais_setting_id=9
-#cspad.metrology data=/reg/d/psdm/CXI/cxid9114/ftc/brewster/results/r00[3-4]*/003/integration max_frames=300 bravais_setting_id=9 min_count=20
+
+if __name__ == "__main__":
+    import sys
+
+    run(args=sys.argv[1:])
+
+# cspad.metrology data=/reg/d/psdm/CXI/cxid9114/ftc/sauter/results/r010[2-9]/018/integration max_frames=300 bravais_setting_id=9
+# cspad.metrology data=/reg/d/psdm/CXI/cxid9114/ftc/brewster/results/r00[3-4]*/003/integration max_frames=300 bravais_setting_id=9
+# cspad.metrology data=/reg/d/psdm/CXI/cxid9114/ftc/brewster/results/r00[3-4]*/003/integration max_frames=300 bravais_setting_id=9 min_count=20

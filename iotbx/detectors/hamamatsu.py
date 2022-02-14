@@ -2,27 +2,31 @@ from __future__ import absolute_import, division, print_function
 from iotbx.detectors.adsc import ADSCImage
 from iotbx.detectors.detectorbase import DetectorImageBase
 
+
 class HamamatsuImage(ADSCImage):
-  """Hamamatsu CMOS Detector
-  Beamline BL32XU, SPring-8
-  RIKEN/SPring-8 Center
-  Research Infrastructure Group,
-  SR Life Science Instrumentation Unit
+    """Hamamatsu CMOS Detector
+    Beamline BL32XU, SPring-8
+    RIKEN/SPring-8 Center
+    Research Infrastructure Group,
+    SR Life Science Instrumentation Unit
 
-  1-1-1 Kouto Sayo-cho Sayo-gun
-  Hyogo, 679-5148 JAPAN
-  Contact: Kunio Hirata
-  """
-  def __init__(self,filename):
-    DetectorImageBase.__init__(self,filename)
-    self.vendortype = "Hamamatsu"
+    1-1-1 Kouto Sayo-cho Sayo-gun
+    Hyogo, 679-5148 JAPAN
+    Contact: Kunio Hirata
+    """
 
-  def readHeader(self):
-    ADSCImage.readHeader(self,external_keys=[("DETECTOR_NAME","DETECTOR_NAME",str)])
-    assert self.parameters["DETECTOR_NAME"].lower().find("hamamatsu")>=0
+    def __init__(self, filename):
+        DetectorImageBase.__init__(self, filename)
+        self.vendortype = "Hamamatsu"
 
-    #above code validates the Hamamatsu signature, as in
-    """HEADER_BYTES=512;
+    def readHeader(self):
+        ADSCImage.readHeader(
+            self, external_keys=[("DETECTOR_NAME", "DETECTOR_NAME", str)]
+        )
+        assert self.parameters["DETECTOR_NAME"].lower().find("hamamatsu") >= 0
+
+        # above code validates the Hamamatsu signature, as in
+        """HEADER_BYTES=512;
 DIM=2;
 BYTE_ORDER=little_endian;
 TYPE=unsigned_short;

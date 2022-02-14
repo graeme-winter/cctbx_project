@@ -53,58 +53,65 @@ TER      21      GLU A  59
 END
 """
 
+
 def tst_01():
-  o = mmtbx.clashes.from_pdb(pdb_str=pdb_good, clash_threshold=2.3)
-  o.show()
-  assert o.clashing_pairs() == [(9, 10), (18, 19), (3, 11)]
-  print()
-  o = mmtbx.clashes.from_pdb(pdb_str=pdb_poor, clash_threshold=1.5)
-  o.show()
-  expected_pairs = [(9, 18), (7, 19), (8, 19), (9, 19), (9, 17)]
-  found_pairs = o.clashing_pairs()
-  expected_pairs = sorted(expected_pairs)
-  found_pairs = sorted(found_pairs)
-  assert expected_pairs == found_pairs
+    o = mmtbx.clashes.from_pdb(pdb_str=pdb_good, clash_threshold=2.3)
+    o.show()
+    assert o.clashing_pairs() == [(9, 10), (18, 19), (3, 11)]
+    print()
+    o = mmtbx.clashes.from_pdb(pdb_str=pdb_poor, clash_threshold=1.5)
+    o.show()
+    expected_pairs = [(9, 18), (7, 19), (8, 19), (9, 19), (9, 17)]
+    found_pairs = o.clashing_pairs()
+    expected_pairs = sorted(expected_pairs)
+    found_pairs = sorted(found_pairs)
+    assert expected_pairs == found_pairs
+
 
 def tst_02():
-  # Test for remove_clashes
-  import mmtbx.model
-  from mmtbx.clashes import remove_clashes
-  import iotbx.pdb
-  import sys
-  pdb_inp = iotbx.pdb.input(lines=pdb_poor.splitlines(),source_info='None')
-  model= mmtbx.model.manager(model_input=pdb_inp)
-  model.process(make_restraints=True)
+    # Test for remove_clashes
+    import mmtbx.model
+    from mmtbx.clashes import remove_clashes
+    import iotbx.pdb
+    import sys
 
-  model.set_log(log = null_out())
+    pdb_inp = iotbx.pdb.input(lines=pdb_poor.splitlines(), source_info="None")
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
 
-  print("\n","-"*79)
-  print(" Summary of input model statistics ")
-  print("-"*79)
-  model.get_restraints_manager()
-  geometry = model.geometry_statistics()
-  geometry.show(log = sys.stdout)
+    model.set_log(log=null_out())
+
+    print("\n", "-" * 79)
+    print(" Summary of input model statistics ")
+    print("-" * 79)
+    model.get_restraints_manager()
+    geometry = model.geometry_statistics()
+    geometry.show(log=sys.stdout)
+
+    rc = remove_clashes(model=model)
+
+    print("\n", "-" * 79)
+    print(
+        "Starting residues: %d "
+        % (rc.model.get_hierarchy().overall_counts().n_residues)
+    )
+    print(
+        "Side-chains removed: %d    Residues removed: %d"
+        % (rc.side_chains_removed, rc.residues_removed)
+    )
+    print(
+        "Final residues: %d "
+        % (rc.new_model.get_hierarchy().overall_counts().n_residues)
+    )
+
+    rc.new_model.set_log(log=null_out())
+    rc.new_model.get_restraints_manager()
+    new_geometry = rc.new_model.geometry_statistics()
+    new_geometry.show(log=sys.stdout)
+    assert rc.side_chains_removed == 1
+    assert rc.residues_removed == 0
 
 
-  rc=remove_clashes(model=model)
-
-  print("\n","-"*79)
-  print("Starting residues: %d " % (
-     rc.model.get_hierarchy().overall_counts().n_residues))
-  print("Side-chains removed: %d    Residues removed: %d" %(
-     rc.side_chains_removed,
-     rc.residues_removed))
-  print("Final residues: %d " % (
-     rc.new_model.get_hierarchy().overall_counts().n_residues))
-
-  rc.new_model.set_log(log = null_out())
-  rc.new_model.get_restraints_manager()
-  new_geometry = rc.new_model.geometry_statistics()
-  new_geometry.show(log = sys.stdout)
-  assert rc.side_chains_removed==1
-  assert rc.residues_removed==0
-
-
-if (__name__ == "__main__"):
-  tst_01()
-  tst_02()
+if __name__ == "__main__":
+    tst_01()
+    tst_02()

@@ -41,14 +41,15 @@ loop_
 """
 # ------------------------------------------------------------------------------
 
+
 def exercise(prefix="tst_pdb_box_around_mol"):
-  # test pdb format
-  with open("%s.pdb" % prefix, 'w') as f:
-    f.write(pdb_str)
-  assert not easy_run.call("iotbx.pdb.box_around_molecule %s.pdb" % (
-      prefix))
-  assert_lines_in_file(file_name="%s_box_000.pdb" % prefix,
-    lines="""\
+    # test pdb format
+    with open("%s.pdb" % prefix, "w") as f:
+        f.write(pdb_str)
+    assert not easy_run.call("iotbx.pdb.box_around_molecule %s.pdb" % (prefix))
+    assert_lines_in_file(
+        file_name="%s_box_000.pdb" % prefix,
+        lines="""\
 CRYST1   10.847   12.316   12.145  90.00  90.00  90.00 P 1
 SCALE1      0.092191  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.081195  0.000000        0.00000
@@ -57,34 +58,36 @@ ATOM      1  N   SER 1  71       5.439   5.000   5.057  1.00300.00           N
 ATOM      2  CA  SER 1  71       5.000   6.424   5.000  1.00300.00           C
 ATOM      3  C   SER 1  71       5.847   7.316   5.915  1.00300.00           C
 ATOM      4  O   SER 1  71       5.736   7.242   7.145  1.00300.00           O
-TER""")
-  # test mmcif format
-  if libtbx.env.find_in_repositories(relative_path='chem_data') is not None:
-    with open("%s.cif" % prefix, 'w') as f:
-      f.write(cif_str)
-    assert not easy_run.call("iotbx.pdb.box_around_molecule %s.cif" % (
-        prefix))
-    # XXX temp fix for python3 failure
-    # XXX changes in python 3 because _cell.length_a and other order differs
+TER""",
+    )
+    # test mmcif format
+    if libtbx.env.find_in_repositories(relative_path="chem_data") is not None:
+        with open("%s.cif" % prefix, "w") as f:
+            f.write(cif_str)
+        assert not easy_run.call("iotbx.pdb.box_around_molecule %s.cif" % (prefix))
+        # XXX temp fix for python3 failure
+        # XXX changes in python 3 because _cell.length_a and other order differs
 
-    # Python 3 behavior looks better.
-    # Reason for this discrepancy is that starting from Python 3.7
-    # "the insertion-order preservation nature of dict objects has been
-    # declared to be an official part of the Python language spec."
-    # https://docs.python.org/3/whatsnew/3.7.html
-    # Basically, dict.keys() in Py3 preserves the order in which keys were added
-    # to the dict.
-    #
-    # Sorting of mmCIF keys here
-    # cctbx_project/iotbx/cif/__init__.py, def category_sort_function()
-    # should be improved to address such issues universally (sorting within
-    # category), note the diference in _space_group and _symmetry categories
-    # as well.
+        # Python 3 behavior looks better.
+        # Reason for this discrepancy is that starting from Python 3.7
+        # "the insertion-order preservation nature of dict objects has been
+        # declared to be an official part of the Python language spec."
+        # https://docs.python.org/3/whatsnew/3.7.html
+        # Basically, dict.keys() in Py3 preserves the order in which keys were added
+        # to the dict.
+        #
+        # Sorting of mmCIF keys here
+        # cctbx_project/iotbx/cif/__init__.py, def category_sort_function()
+        # should be improved to address such issues universally (sorting within
+        # category), note the diference in _space_group and _symmetry categories
+        # as well.
 
-    import sys
-    if sys.version.startswith("3.8"):
-      assert_lines_in_file(file_name="%s_box_000.cif" % prefix,
-      lines="""\
+        import sys
+
+        if sys.version.startswith("3.8"):
+            assert_lines_in_file(
+                file_name="%s_box_000.cif" % prefix,
+                lines="""\
 data_default
 _cell.length_a                    12.397
 _cell.length_b                    11.563
@@ -103,10 +106,12 @@ _symmetry.Int_Tables_number       1
 loop_
   _space_group_symop.id
   _space_group_symop.operation_xyz
-   1 x,y,z""")
-    else: # version 2.7
-      assert_lines_in_file(file_name="%s_box_000.cif" % prefix,
-      lines="""\
+   1 x,y,z""",
+            )
+        else:  # version 2.7
+            assert_lines_in_file(
+                file_name="%s_box_000.cif" % prefix,
+                lines="""\
 data_default
 _cell.angle_beta                  90.000
 _cell.angle_gamma                 90.000
@@ -125,14 +130,16 @@ _symmetry.space_group_name_Hall   ' P 1'
 loop_
   _space_group_symop.id
   _space_group_symop.operation_xyz
-   1 x,y,z""")
+   1 x,y,z""",
+            )
 
-  else:
-    print('chem_data is not available, skipping')
+    else:
+        print("chem_data is not available, skipping")
 
-  print("OK")
+    print("OK")
+
 
 # ------------------------------------------------------------------------------
 
-if __name__=="__main__":
-  exercise()
+if __name__ == "__main__":
+    exercise()

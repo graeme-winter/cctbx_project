@@ -1,28 +1,32 @@
-
 from __future__ import absolute_import, division, print_function
 from libtbx.utils import null_out
 from libtbx import easy_pickle
 from six.moves import cStringIO as StringIO
 
+
 def run_validation(pdb_file, ignore_hd=True):
-  from mmtbx.validation import restraints
-  import mmtbx.command_line
-  cmdline = mmtbx.command_line.load_model_and_data(
-    args=[pdb_file],
-    master_phil=mmtbx.command_line.generic_simple_input_phil(),
-    process_pdb_file=True,
-    require_data=False,
-    out=null_out())
-  validation = restraints.combined(
-    pdb_hierarchy=cmdline.pdb_hierarchy,
-    xray_structure=cmdline.xray_structure,
-    geometry_restraints_manager=cmdline.geometry,
-    ignore_hd=ignore_hd)
-  return validation
+    from mmtbx.validation import restraints
+    import mmtbx.command_line
+
+    cmdline = mmtbx.command_line.load_model_and_data(
+        args=[pdb_file],
+        master_phil=mmtbx.command_line.generic_simple_input_phil(),
+        process_pdb_file=True,
+        require_data=False,
+        out=null_out(),
+    )
+    validation = restraints.combined(
+        pdb_hierarchy=cmdline.pdb_hierarchy,
+        xray_structure=cmdline.xray_structure,
+        geometry_restraints_manager=cmdline.geometry,
+        ignore_hd=ignore_hd,
+    )
+    return validation
+
 
 def exercise_simple():
-  # extracted from 1lyz, with hydrogens from reduce
-  pdb_in = """
+    # extracted from 1lyz, with hydrogens from reduce
+    pdb_in = """
 ATOM      1  N   LYS A   1       3.296   9.888  10.739  1.00  7.00           N
 ATOM      2  CA  LYS A   1       2.439  10.217   9.791  1.00  6.00           C
 ATOM      3  C   LYS A   1       2.439  11.997   9.160  1.00  6.00           C
@@ -65,12 +69,12 @@ ATOM      0 HG22 VAL A   2       4.827  14.495   8.294  1.00  6.00           H
 ATOM      0 HG23 VAL A   2       4.620  12.960   7.962  1.00  6.00           H
 END
 """
-  pdb_file = "tst_validate_restraints_simple.pdb"
-  open(pdb_file, "w").write(pdb_in)
-  v1 = run_validation(pdb_file, ignore_hd=True)
-  out1 = StringIO()
-  v1.show(out=out1)
-  assert ("""
+    pdb_file = "tst_validate_restraints_simple.pdb"
+    open(pdb_file, "w").write(pdb_in)
+    v1 = run_validation(pdb_file, ignore_hd=True)
+    out1 = StringIO()
+    v1.show(out=out1)
+    assert """
                        ----------Chiral volumes----------
 
 atoms                   ideal    model    delta   sigma  residual   deviation
@@ -78,24 +82,28 @@ atoms                   ideal    model    delta   sigma  residual   deviation
  A   1  LYS  N
  A   1  LYS  C
  A   1  LYS  CB          2.57     1.12     1.45  2.00e-01  5.25e+01   7.2*sigma
-""" in "\n".join([ l.rstrip() for l in out1.getvalue().splitlines() ]))
-  s = easy_pickle.dumps(v1)
-  v1p = easy_pickle.loads(s)
-  out1p = StringIO()
-  v1p.show(out=out1p)
-  assert (out1.getvalue() == out1p.getvalue())
-  v2 = run_validation(pdb_file, ignore_hd=False)
-  out2 = StringIO()
-  v2.show(out=out2)
-  assert (out2.getvalue() != out1.getvalue())
-  assert ("""\
+""" in "\n".join(
+        [l.rstrip() for l in out1.getvalue().splitlines()]
+    )
+    s = easy_pickle.dumps(v1)
+    v1p = easy_pickle.loads(s)
+    out1p = StringIO()
+    v1p.show(out=out1p)
+    assert out1.getvalue() == out1p.getvalue()
+    v2 = run_validation(pdb_file, ignore_hd=False)
+    out2 = StringIO()
+    v2.show(out=out2)
+    assert out2.getvalue() != out1.getvalue()
+    assert """\
  A   1  LYS  HA        110.00    57.00    53.00  3.00e+00  3.12e+02  17.7*sigma
  A   1  LYS  N
  A   1  LYS  CA
-""" in "\n".join([ l.rstrip() for l in out2.getvalue().splitlines() ]))
-  #
-  # C-alpha-only model (from 3b5d)
-  pdb_raw = """\
+""" in "\n".join(
+        [l.rstrip() for l in out2.getvalue().splitlines()]
+    )
+    #
+    # C-alpha-only model (from 3b5d)
+    pdb_raw = """\
 CRYST1  115.100   43.700   76.400  90.00 108.10  90.00 C 1 2 1       8
 ATOM      1  CA  TYR A   6      -7.551 -11.355 -17.946  1.00148.04           C
 ATOM      2  CA  LEU A   7      -8.052  -8.804 -20.730  1.00310.75           C
@@ -106,10 +114,11 @@ ATOM      6  CA  ILE A  11      -7.024  -3.514 -18.905  1.00103.16           C
 ATOM      7  CA  LEU A  12     -10.023  -2.071 -17.056  1.00230.80           C
 ATOM      8  CA  ALA A  13      -7.313  -1.820 -14.420  1.00141.04           C
 """
-  pdb_file = "tst_validate_restraints_calpha.pdb"
-  open(pdb_file, "w").write(pdb_raw)
-  v1 = run_validation(pdb_file, ignore_hd=True)
+    pdb_file = "tst_validate_restraints_calpha.pdb"
+    open(pdb_file, "w").write(pdb_raw)
+    v1 = run_validation(pdb_file, ignore_hd=True)
 
-if (__name__ == "__main__"):
-  exercise_simple()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_simple()
+    print("OK")

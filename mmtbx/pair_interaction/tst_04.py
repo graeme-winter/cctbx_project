@@ -510,47 +510,81 @@ HETATM  492 ZN    ZN A 101      21.619  12.238  13.602  1.00  0.22          Zn
 TER
 END
 """
+
+
 def normalize(x):
-  r = []
-  for x_ in x:
-    x_ = list(x_)
-    x_.sort()
-    r.append(x_)
-  r.sort()
-  return r
+    r = []
+    for x_ in x:
+        x_ = list(x_)
+        x_.sort()
+        r.append(x_)
+    r.sort()
+    return r
+
 
 def run():
-  """
-  Exercise buffer region of cluster.
-  """
-  bc_clusters = [[1, 2],
-                 [3, 4, 5, 13, 14, 15, 16, 17, 18, 19, 20, 21],
-                 [6, 7, 8, 9, 10, 11, 12, 22, 23, 26, 31],
-                 [24, 25, 27, 28, 29, 30]]
-  bc_qms = [
-    [1, 2, 3, 4],
-    [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
-    [3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 31],
-    [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]]
+    """
+    Exercise buffer region of cluster.
+    """
+    bc_clusters = [
+        [1, 2],
+        [3, 4, 5, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+        [6, 7, 8, 9, 10, 11, 12, 22, 23, 26, 31],
+        [24, 25, 27, 28, 29, 30],
+    ]
+    bc_qms = [
+        [1, 2, 3, 4],
+        [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+        ],
+        [3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 31],
+        [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+    ]
 
-  qms_calculated = []
-  for i in range(len(bc_clusters)):
-    pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-    ph = pdb_inp.construct_hierarchy()
-    core_atoms, qm_atoms, qm_molecules = pair_interaction.run(ph, bc_clusters[i])
-    qms_calculated.append(list(qm_molecules))
-  bc_qms = normalize(bc_qms)
-  qms_calculated = normalize(qms_calculated)
-  assert approx_equal(bc_qms, qms_calculated)
+    qms_calculated = []
+    for i in range(len(bc_clusters)):
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+        ph = pdb_inp.construct_hierarchy()
+        core_atoms, qm_atoms, qm_molecules = pair_interaction.run(ph, bc_clusters[i])
+        qms_calculated.append(list(qm_molecules))
+    bc_qms = normalize(bc_qms)
+    qms_calculated = normalize(qms_calculated)
+    assert approx_equal(bc_qms, qms_calculated)
+
 
 def check_buffer(clusters, qms):
-  qms_calculated = []
-  for i in range(len(clusters)):
-    pdb_inp = iotbx.pdb.input(source_info=None, lines = pdb_str)
-    ph = pdb_inp.construct_hierarchy()
-    core_atoms,qm_atoms, qm_molecules = pair_interaction.run(ph,clusters[i])
-    qms_calculated.append(list(qm_molecules))
-    assert(len(set(qms[i])-set(qm_molecules))==0), len(set(qms[i])-set(qm_molecules))
+    qms_calculated = []
+    for i in range(len(clusters)):
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+        ph = pdb_inp.construct_hierarchy()
+        core_atoms, qm_atoms, qm_molecules = pair_interaction.run(ph, clusters[i])
+        qms_calculated.append(list(qm_molecules))
+        assert len(set(qms[i]) - set(qm_molecules)) == 0, len(
+            set(qms[i]) - set(qm_molecules)
+        )
 
-if(__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

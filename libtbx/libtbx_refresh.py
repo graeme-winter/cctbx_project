@@ -11,16 +11,16 @@ from libtbx.version import create_version_files
 # this will fail if git is not available
 filenames = []
 try:
-  filenames = create_version_files()
+    filenames = create_version_files()
 except Exception:
-  pass
+    pass
 
 # copy version file and header to build directory
 try:
-  shutil.copy(filenames[0], abs(libtbx.env.build_path))
-  cctbx_include = libtbx.env.under_build('include/cctbx')
-  if not os.path.exists(cctbx_include):
-    os.mkdir(cctbx_include)
-  shutil.copy(filenames[1], cctbx_include)
+    shutil.copy(filenames[0], abs(libtbx.env.build_path))
+    cctbx_include = libtbx.env.under_build("include/cctbx")
+    if not os.path.exists(cctbx_include):
+        os.mkdir(cctbx_include)
+    shutil.copy(filenames[1], cctbx_include)
 except Exception:
-  pass
+    pass

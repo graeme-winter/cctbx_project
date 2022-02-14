@@ -53,33 +53,38 @@ import sys
 from libtbx import easy_run
 from six.moves import cStringIO as StringIO
 
-def run():
-  f=open("tst_keep_hydrogens.pdb", "w")
-  f.write(pdb)
-  f.close()
-  #for keep in range(2):
-  for keep in [False,True]:
-    print("keep_hydrogens=", str(keep))
-    for prog in [
-      "phenix.clashscore",
-      "phenix.molprobity",
-      ]:
-      cmd = "%s tst_keep_hydrogens.pdb keep_hydrogens=%s" % (prog, keep)
-      print(cmd)
-      er = easy_run.fully_buffered(command=cmd)
-      std = StringIO()
-      er.show_stdout(out=std)
-      cs=None
-      for line in std.getvalue().splitlines():
-        if line.find("clashscore =")>-1:
-          cs = float(line.split()[2])
-          break
-      print('clashscore',cs)
-      if cs is None: continue
-      if keep: assert cs==44.44, "%s: clashscore is not 44.44 %s" % (prog, cs)
-      else: assert cs==0, "%s: clashscore is not 0 %s" % (prog, cs)
 
-if __name__=="__main__":
-  args = sys.argv[1:]
-  del sys.argv[1:]
-  run(*tuple(args))
+def run():
+    f = open("tst_keep_hydrogens.pdb", "w")
+    f.write(pdb)
+    f.close()
+    # for keep in range(2):
+    for keep in [False, True]:
+        print("keep_hydrogens=", str(keep))
+        for prog in [
+            "phenix.clashscore",
+            "phenix.molprobity",
+        ]:
+            cmd = "%s tst_keep_hydrogens.pdb keep_hydrogens=%s" % (prog, keep)
+            print(cmd)
+            er = easy_run.fully_buffered(command=cmd)
+            std = StringIO()
+            er.show_stdout(out=std)
+            cs = None
+            for line in std.getvalue().splitlines():
+                if line.find("clashscore =") > -1:
+                    cs = float(line.split()[2])
+                    break
+            print("clashscore", cs)
+            if cs is None:
+                continue
+            if keep:
+                assert cs == 44.44, "%s: clashscore is not 44.44 %s" % (prog, cs)
+            else:
+                assert cs == 0, "%s: clashscore is not 0 %s" % (prog, cs)
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    del sys.argv[1:]
+    run(*tuple(args))

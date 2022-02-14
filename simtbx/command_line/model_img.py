@@ -23,21 +23,25 @@ def extract_background_from_data(data, njobs, filt_shape=None):
     """
     extracted_bg = np.zeros_like(data)
     if filt_shape is None:
-        filt_shape = 10,10
+        filt_shape = 10, 10
+
     def get_bg(jid, njobs):
         bgs = {}
         for pid, p in enumerate(data):
             if pid % njobs != jid:
                 continue
             bg = median_filter(p, filt_shape)
-            if jid==0:
-                print("processing panel %d / %d" % (pid, len(data)) )
+            if jid == 0:
+                print("processing panel %d / %d" % (pid, len(data)))
             bgs[pid] = bg
         return bgs
-    results = Parallel(n_jobs=njobs)(delayed(get_bg)(jid,njobs) for jid in range(njobs))
+
+    results = Parallel(n_jobs=njobs)(
+        delayed(get_bg)(jid, njobs) for jid in range(njobs)
+    )
     for bgs in results:
         for pid in bgs:
-            extracted_bg[pid]+= bgs[pid]
+            extracted_bg[pid] += bgs[pid]
     return extracted_bg
 
 
@@ -48,26 +52,55 @@ def get_pandas_name_from_mod_name(mod_name):
     fnames = glob.glob(pd_glob)
     basename = os.path.basename(mod_name).split("_indexed_modeler.npy")[0]
     pd_name = [f for f in fnames if basename in f]
-    assert len(pd_name)==1
+    assert len(pd_name) == 1
     pd_name = pd_name[0]
     return pd_name
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
-    parser.add_argument("--mod", type=str, help="path to the data modeler file", required=True)
-    parser.add_argument("--cudaDevice", type=int, default=None, help="use this gpu device (if not provided, will not use CUDA and will instead use OpenMP)")
+    parser.add_argument(
+        "--mod", type=str, help="path to the data modeler file", required=True
+    )
+    parser.add_argument(
+        "--cudaDevice",
+        type=int,
+        default=None,
+        help="use this gpu device (if not provided, will not use CUDA and will instead use OpenMP)",
+    )
     parser.add_argument("--out", type=str, help="output file name", required=True)
-    parser.add_argument("--plotSpec", action="store_true", help="plot the energy spectrum")
-    parser.add_argument("--compareData", action="store_true", help="include the data image in the plot")
-    parser.add_argument("--j", type=int, default=8,
-                        help="number of processes to use for background extraction, only relevant if --compareData flag is present")
-    parser.add_argument("--filtsz", type=int, default=10,
-                        help="the median filter used to extract backgroun will have this dimension, pixel units, higher values are slower")
-    parser.add_argument("--specFile", type=str, default=None, help="Path to the spectrum .lam file. If None, then assume hopper_process output tree and try to autolocate ")
-    parser.add_argument("--pandaFile", type=str, default=None, help="Path to the pandas model file. If None, then assume hopper_process output tree and try to autolocate ")
+    parser.add_argument(
+        "--plotSpec", action="store_true", help="plot the energy spectrum"
+    )
+    parser.add_argument(
+        "--compareData", action="store_true", help="include the data image in the plot"
+    )
+    parser.add_argument(
+        "--j",
+        type=int,
+        default=8,
+        help="number of processes to use for background extraction, only relevant if --compareData flag is present",
+    )
+    parser.add_argument(
+        "--filtsz",
+        type=int,
+        default=10,
+        help="the median filter used to extract backgroun will have this dimension, pixel units, higher values are slower",
+    )
+    parser.add_argument(
+        "--specFile",
+        type=str,
+        default=None,
+        help="Path to the spectrum .lam file. If None, then assume hopper_process output tree and try to autolocate ",
+    )
+    parser.add_argument(
+        "--pandaFile",
+        type=str,
+        default=None,
+        help="Path to the pandas model file. If None, then assume hopper_process output tree and try to autolocate ",
+    )
 
     args = parser.parse_args()
 
@@ -84,8 +117,9 @@ if __name__=="__main__":
     if args.plotSpec:
         import pylab as plt
         from simtbx.nanoBragg.utils import ENERGY_CONV
-        wave,wt = zip(*spec)
-        en = ENERGY_CONV/ np.array(wave)
+
+        wave, wt = zip(*spec)
+        en = ENERGY_CONV / np.array(wave)
         plt.plot(en, wt)
         plt.xlabel("spectrum energy (ev)")
         plt.ylabel("spectrum fluence")
@@ -102,7 +136,10 @@ if __name__=="__main__":
     print("Will use mtz file %s, column %s" % (Fname, Fcol))
     print("no detector thickness=%s" % str(no_det_thick))
     print("Loaded data frame:")
-    print("Wil simulate %d energy channels loaded from %s (add --plotSpec to display the spectrum)" % (len(spec), spec_file))
+    print(
+        "Wil simulate %d energy channels loaded from %s (add --plotSpec to display the spectrum)"
+        % (len(spec), spec_file)
+    )
 
     cuda = False
     dev = 0
@@ -111,12 +148,19 @@ if __name__=="__main__":
         dev = args.cudaDevice
         print("Will use cuda GPU device %d" % dev)
     else:
-        print("Will not use cuda, but will use openmp, control with env var OMP_NUM_THREADS")
+        print(
+            "Will not use cuda, but will use openmp, control with env var OMP_NUM_THREADS"
+        )
     imgs, expt = forward_models.model_spots_from_pandas(
-            df, mtz_file=Fname, mtz_col=Fcol,
-            spectrum_override=spec, cuda=cuda, device_Id=dev,
-            force_no_detector_thickness=no_det_thick,
-            use_db=True)
+        df,
+        mtz_file=Fname,
+        mtz_col=Fcol,
+        spectrum_override=spec,
+        cuda=cuda,
+        device_Id=dev,
+        force_no_detector_thickness=no_det_thick,
+        use_db=True,
+    )
 
     if args.compareData:
         print("Extracting data from experiment list %s..." % df.exp_name.values[0])
@@ -129,17 +173,19 @@ if __name__=="__main__":
         # extract the background:
         print("Extracting background from data ...")
         bg = extract_background_from_data(data, args.j, (args.filtsz, args.filtsz))
-        imgs_w_bg  = imgs + bg  # this image is the extracted background and the optimized forward Bragg model
+        imgs_w_bg = (
+            imgs + bg
+        )  # this image is the extracted background and the optimized forward Bragg model
 
         # this image inclues data except for those pixels that were modeled during stage 1
         imgs2 = data.copy()
         P = M.all_pid
         F = M.all_fast
         S = M.all_slow
-        imgs2[P,S,F] = M.best_model + M.all_background
+        imgs2[P, S, F] = M.best_model + M.all_background
 
     comp_args = {"compression": "gzip", "compression_opts": 9}
-    kwargs ={
+    kwargs = {
         "filename": args.out,
         "image_shape": imgs.shape,
         "num_images": 5 if args.compareData else 1,

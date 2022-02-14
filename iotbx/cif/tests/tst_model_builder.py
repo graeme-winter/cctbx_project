@@ -5,7 +5,7 @@ from libtbx.test_utils import show_diff
 
 
 def test_repeated_loop_1():
-  cif_txt_1 = """\
+    cif_txt_1 = """\
 data_test
 loop_
   _geom_bond_atom_site_label_1
@@ -15,7 +15,7 @@ loop_
   Si  O  1.6160  4_554
   Si  O  1.6160  2_554
   """
-  cif_txt_2 = """\
+    cif_txt_2 = """\
 loop_
   _geom_bond_atom_site_label_1
   _geom_bond_atom_site_label_2
@@ -24,16 +24,20 @@ loop_
   Si  O  1.6160  3_664
   Si  O  1.6160  5_664
   """
-  r = iotbx.cif.reader(input_string=cif_txt_1)
-  try:
-    r = iotbx.cif.reader(input_string=cif_txt_1+cif_txt_2)
-  except Sorry as e:
-    assert not show_diff(str(e), "Loop containing tags _geom_bond_atom_site_label_1, _geom_bond_atom_site_label_2, _geom_bond_distance, _geom_bond_site_symmetry_2 appears repeated")
-  else:
-    assert 0, "Sorry must be raised above."
+    r = iotbx.cif.reader(input_string=cif_txt_1)
+    try:
+        r = iotbx.cif.reader(input_string=cif_txt_1 + cif_txt_2)
+    except Sorry as e:
+        assert not show_diff(
+            str(e),
+            "Loop containing tags _geom_bond_atom_site_label_1, _geom_bond_atom_site_label_2, _geom_bond_distance, _geom_bond_site_symmetry_2 appears repeated",
+        )
+    else:
+        assert 0, "Sorry must be raised above."
+
 
 def test_repeated_loop_2():
-  cif_txt_1 = """\
+    cif_txt_1 = """\
 data_test
 loop_
   _atom_site_label
@@ -50,15 +54,19 @@ loop_
   Rb1 0.5(2)
   Rb2 0.5(3)
   """
-  try:
-    r = iotbx.cif.reader(input_string=cif_txt_1)
-  except Sorry as e:
-    assert not show_diff(str(e), "Loop containing tags _atom_site_label, _atom_site_U_iso_or_equiv appears repeated")
-  else:
-    assert 0, "Sorry must be raised above."
+    try:
+        r = iotbx.cif.reader(input_string=cif_txt_1)
+    except Sorry as e:
+        assert not show_diff(
+            str(e),
+            "Loop containing tags _atom_site_label, _atom_site_U_iso_or_equiv appears repeated",
+        )
+    else:
+        assert 0, "Sorry must be raised above."
+
 
 def test_repeated_loop_3_with_typo():
-  cif_txt_1 = """\
+    cif_txt_1 = """\
   data_test
 loop_
   _atom_site_displace_Fourier_id
@@ -79,31 +87,38 @@ loop_
   Rb2y1   -0.0027(2)           0
   Rb2z1            0   0.0001(1)
   """
-  try:
-    r = iotbx.cif.reader(input_string=cif_txt_1)
-  except Sorry as e:
-    assert not show_diff(str(e), "Loop containing tags _atom_site_displace_Fourier_parm_id, _atom_site_displace_Fourier_param_cos, _atom_site_displace_Fourier_param_sin appears repeated")
-  else:
-    assert 0, "Sorry must be raised above."
+    try:
+        r = iotbx.cif.reader(input_string=cif_txt_1)
+    except Sorry as e:
+        assert not show_diff(
+            str(e),
+            "Loop containing tags _atom_site_displace_Fourier_parm_id, _atom_site_displace_Fourier_param_cos, _atom_site_displace_Fourier_param_sin appears repeated",
+        )
+    else:
+        assert 0, "Sorry must be raised above."
+
 
 def test_repeated_tags():
-  cif_txt_1 = """\
+    cif_txt_1 = """\
 data_RbMo
 _audit_block_code                 RbMo
 
 _diffrn_ambient_temperature 200
 _diffrn_ambient_temperature 300
   """
-  try:
-    r = iotbx.cif.reader(input_string=cif_txt_1)
-  except Sorry as e:
-    assert not show_diff(str(e), "Data item _diffrn_ambient_temperature received multiple values")
-  else:
-    assert 0, "Sorry must be raised above."
+    try:
+        r = iotbx.cif.reader(input_string=cif_txt_1)
+    except Sorry as e:
+        assert not show_diff(
+            str(e), "Data item _diffrn_ambient_temperature received multiple values"
+        )
+    else:
+        assert 0, "Sorry must be raised above."
 
-if __name__ == '__main__':
-  # from: https://github.com/cctbx/cctbx_project/issues/662
-  test_repeated_loop_1()
-  test_repeated_loop_2()
-  test_repeated_loop_3_with_typo()
-  test_repeated_tags()
+
+if __name__ == "__main__":
+    # from: https://github.com/cctbx/cctbx_project/issues/662
+    test_repeated_loop_1()
+    test_repeated_loop_2()
+    test_repeated_loop_3_with_typo()
+    test_repeated_tags()

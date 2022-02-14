@@ -114,45 +114,58 @@ ATOM    143  CB  SER L  20      25.863 -74.436  68.344  1.00 29.31           C
 ATOM    144  OG  SER L  20      26.505 -73.254  68.779  1.00 39.96           O
 """
 
-def run(pdb_str, expected_ids):
-  get_class = iotbx.pdb.common_residue_names_get_class
-  mon_lib_srv = mmtbx.monomer_library.server.server()
-  rotamer_manager = RotamerEval()
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  result_ids = []
-  for residue_group in pdb_hierarchy.residue_groups():
-    for conformer in residue_group.conformers():
-      for residue in conformer.residues():
-        sites_cart = residue.atoms().extract_xyz()
-        rotamer_name = rotamer_manager.evaluate_residue(residue=residue)
-        print(residue.resname, residue.resseq, rotamer_name)
-        result_ids.append(rotamer_name)
-        if(get_class(residue.resname) == "common_amino_acid"):
-          rotamer_iterator = mon_lib_srv.rotamer_iterator(
-              fine_sampling = True,
-              comp_id       = residue.resname,
-              atom_names    = residue.atoms().extract_name(),
-              sites_cart    = sites_cart)
-          if(rotamer_iterator is None or
-             rotamer_iterator.problem_message is not None or
-             rotamer_iterator.rotamer_info is None):
-            rotamer_iterator = None
-          if(rotamer_iterator is not None):
-            d1_min, d2_min = 1.e+9, 1.e+9
-            for r, rotamer_sites_cart in rotamer_iterator:
-              sites_cart_rot = rotamer_manager.nearest_rotamer_sites_cart(
-                residue=residue)
-              d1= flex.mean(flex.sqrt((sites_cart - sites_cart_rot).dot()))
-              d2= flex.mean(flex.sqrt((sites_cart - rotamer_sites_cart).dot()))
-              if(d1 < d1_min):
-                d1_min = d1
-              if(d2 < d2_min):
-                d2_min = d2
-            assert approx_equal(d1_min, d2_min)
-  assert result_ids == expected_ids
 
-if(__name__ == "__main__"):
-  run(pdb_str = pdb_str1, expected_ids=['m-80', 'OUTLIER', 'm100', 'OUTLIER', None, 'm-80', 'p'])
-  run(pdb_str = pdb_str2, expected_ids=['Cg_endo'])
-  run(pdb_str = pdb_str3, expected_ids=['Cg_endo', 'EXCEPTION', 't'])
+def run(pdb_str, expected_ids):
+    get_class = iotbx.pdb.common_residue_names_get_class
+    mon_lib_srv = mmtbx.monomer_library.server.server()
+    rotamer_manager = RotamerEval()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str)
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    result_ids = []
+    for residue_group in pdb_hierarchy.residue_groups():
+        for conformer in residue_group.conformers():
+            for residue in conformer.residues():
+                sites_cart = residue.atoms().extract_xyz()
+                rotamer_name = rotamer_manager.evaluate_residue(residue=residue)
+                print(residue.resname, residue.resseq, rotamer_name)
+                result_ids.append(rotamer_name)
+                if get_class(residue.resname) == "common_amino_acid":
+                    rotamer_iterator = mon_lib_srv.rotamer_iterator(
+                        fine_sampling=True,
+                        comp_id=residue.resname,
+                        atom_names=residue.atoms().extract_name(),
+                        sites_cart=sites_cart,
+                    )
+                    if (
+                        rotamer_iterator is None
+                        or rotamer_iterator.problem_message is not None
+                        or rotamer_iterator.rotamer_info is None
+                    ):
+                        rotamer_iterator = None
+                    if rotamer_iterator is not None:
+                        d1_min, d2_min = 1.0e9, 1.0e9
+                        for r, rotamer_sites_cart in rotamer_iterator:
+                            sites_cart_rot = rotamer_manager.nearest_rotamer_sites_cart(
+                                residue=residue
+                            )
+                            d1 = flex.mean(
+                                flex.sqrt((sites_cart - sites_cart_rot).dot())
+                            )
+                            d2 = flex.mean(
+                                flex.sqrt((sites_cart - rotamer_sites_cart).dot())
+                            )
+                            if d1 < d1_min:
+                                d1_min = d1
+                            if d2 < d2_min:
+                                d2_min = d2
+                        assert approx_equal(d1_min, d2_min)
+    assert result_ids == expected_ids
+
+
+if __name__ == "__main__":
+    run(
+        pdb_str=pdb_str1,
+        expected_ids=["m-80", "OUTLIER", "m100", "OUTLIER", None, "m-80", "p"],
+    )
+    run(pdb_str=pdb_str2, expected_ids=["Cg_endo"])
+    run(pdb_str=pdb_str3, expected_ids=["Cg_endo", "EXCEPTION", "t"])

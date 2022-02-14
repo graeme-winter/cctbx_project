@@ -4,8 +4,9 @@ import iotbx.pdb
 from libtbx.utils import Sorry
 import mmtbx.model
 
+
 def exercise_presence_of_h():
-  tst_pdb_1 = """\
+    tst_pdb_1 = """\
 HELIX    2   2 GLY A  100  TRP A  101  1                                   2
 ATOM    866  N   GLY A 100    -128.903-139.939-104.460  1.00 27.58           N
 ATOM    867  CA  GLY A 100    -128.223-140.890-103.603  1.00 27.58           C
@@ -28,20 +29,20 @@ ATOM    883  CZ3 TRP A 101    -124.899-148.528 -99.725  1.00 42.04           C
 ATOM    884  CH2 TRP A 101    -124.581-149.703-100.415  1.00 42.04           C
 ATOM    885  H   TRP A 101    -126.863-142.797-102.745  1.00 42.04           H
 """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_1)
-  ann = pdb_inp.extract_secondary_structure()
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
-  rm = ssb.substitute_ss(
-      model,
-      )
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_1)
+    ann = pdb_inp.extract_secondary_structure()
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
+    rm = ssb.substitute_ss(
+        model,
+    )
+
 
 def exercise_ca_absent():
-  # should raise Sorry
-  """ CA from 101 residue are absent. We don't handle it at the moment."""
-  tst_pdb_1 = """\
+    # should raise Sorry
+    """CA from 101 residue are absent. We don't handle it at the moment."""
+    tst_pdb_1 = """\
 HELIX    2   2 GLY A  100  TRP A  101  1                                   2
 ATOM    866  N   GLY A 100    -128.903-139.939-104.460  1.00 27.58           N
 ATOM    867  CA  GLY A 100    -128.223-140.890-103.603  1.00 27.58           C
@@ -63,26 +64,25 @@ ATOM    883  CZ3 TRP A 101    -124.899-148.528 -99.725  1.00 42.04           C
 ATOM    884  CH2 TRP A 101    -124.581-149.703-100.415  1.00 42.04           C
 ATOM    885  H   TRP A 101    -126.863-142.797-102.745  1.00 42.04           H
 """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_1)
-  ann = pdb_inp.extract_secondary_structure()
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
-  try:
-    rm = ssb.substitute_ss(
-        model)
-    rm.run()
-  except Sorry as e:
-    assert e.args[0].startswith("C, CA or N")
-  except Exception:
-    assert 0, "Error: This test failed"
-  else:
-    assert 0, "Error: This test failed"
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_1)
+    ann = pdb_inp.extract_secondary_structure()
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
+    try:
+        rm = ssb.substitute_ss(model)
+        rm.run()
+    except Sorry as e:
+        assert e.args[0].startswith("C, CA or N")
+    except Exception:
+        assert 0, "Error: This test failed"
+    else:
+        assert 0, "Error: This test failed"
+
 
 def exercise_some_atoms_are_absent():
-  """ CD1, CD2 from 101 residue are absent"""
-  tst_pdb_2 = """\
+    """CD1, CD2 from 101 residue are absent"""
+    tst_pdb_2 = """\
 HELIX    2   2 GLY A  100  TRP A  101  1                                   2
 ATOM    866  N   GLY A 100    -128.903-139.939-104.460  1.00 27.58           N
 ATOM    867  CA  GLY A 100    -128.223-140.890-103.603  1.00 27.58           C
@@ -98,22 +98,21 @@ ATOM    879  NE1 TRP A 101    -125.663-148.557-103.751  1.00 42.04           N
 ATOM    880  CE2 TRP A 101    -125.347-148.723-102.429  1.00 42.04           C
 ATOM    881  CE3 TRP A 101    -125.446-147.437-100.384  1.00 42.04           C
 """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_2)
-  ann = pdb_inp.extract_secondary_structure()
-  model = mmtbx.model.manager(
-    model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.set_ss_annotation(ann)
-  rm = ssb.substitute_ss(
-      model)
-  rm.run()
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_2)
+    ann = pdb_inp.extract_secondary_structure()
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.set_ss_annotation(ann)
+    rm = ssb.substitute_ss(model)
+    rm.run()
 
 
 def exercise():
-  exercise_presence_of_h()
-  exercise_ca_absent()
-  exercise_some_atoms_are_absent()
-  print("OK")
+    exercise_presence_of_h()
+    exercise_ca_absent()
+    exercise_some_atoms_are_absent()
+    print("OK")
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

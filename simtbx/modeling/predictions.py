@@ -5,6 +5,7 @@ from simtbx.diffBragg.utils import refls_to_hkl, refls_from_sims
 from dials.array_family import flex
 from scipy.spatial import cKDTree, distance
 from dials.algorithms.shoebox import MaskCode
+
 SIGNAL_MASK = MaskCode.Valid + MaskCode.Foreground
 import numpy as np
 from numpy import logical_or as logi_or
@@ -13,7 +14,9 @@ from dxtbx.model import ExperimentList
 from numpy import logical_not as logi_not
 
 
-def get_predicted_from_pandas(df, params, strong, eid='', device_Id=0, spectrum_override=None):
+def get_predicted_from_pandas(
+    df, params, strong, eid="", device_Id=0, spectrum_override=None
+):
     """
     :param df: pandas dataframe, stage1_df attribute of simtbx.command_line.hopper_process.HopperProcess
     :param params: instance of diffBragg/phil.py phil params
@@ -38,24 +41,31 @@ def get_predicted_from_pandas(df, params, strong, eid='', device_Id=0, spectrum_
         spectrum_override=spectrum_override,
         defaultF=defaultF,
         device_Id=device_Id,
-        mtz_file=mtz_file, mtz_col=mtz_col,
+        mtz_file=mtz_file,
+        mtz_col=mtz_col,
         d_max=params.predictions.resolution_range[1],
         d_min=params.predictions.resolution_range[0],
         symbol_override=params.predictions.symbol_override,
         force_no_detector_thickness=params.simulator.detector.force_zero_thickness,
         use_exascale_api=params.predictions.method == "exascale",
-        use_db=params.predictions.method == "diffbragg")
+        use_db=params.predictions.method == "diffbragg",
+    )
 
-    predictions = refls_from_sims(panel_images, expt.detector, expt.beam, thresh=params.predictions.threshold,
-                                  max_spot_size=1000)
-    print("Found %d Bragg peak predictions above the threshold" %len(predictions))
+    predictions = refls_from_sims(
+        panel_images,
+        expt.detector,
+        expt.beam,
+        thresh=params.predictions.threshold,
+        max_spot_size=1000,
+    )
+    print("Found %d Bragg peak predictions above the threshold" % len(predictions))
 
     # TODO: pulled these from comparing to a normal stills_process prediction table, not sure what they imply
     # TODO: multiple experiments per shot
-    predictions['flags'] = flex.size_t(len(predictions), 1)
-    predictions['id'] = flex.int(len(predictions), 0)
-    predictions['entering'] = flex.bool(len(predictions), False)
-    predictions['delpsical.rad'] = flex.double(len(predictions), 0)
+    predictions["flags"] = flex.size_t(len(predictions), 1)
+    predictions["id"] = flex.int(len(predictions), 0)
+    predictions["entering"] = flex.bool(len(predictions), False)
+    predictions["delpsical.rad"] = flex.double(len(predictions), 0)
     if eid:
         predictions.experiment_identifiers()[0] = eid
 
@@ -68,13 +78,17 @@ def get_predicted_from_pandas(df, params, strong, eid='', device_Id=0, spectrum_
     strong.map_centroids_to_reciprocal_space(El)
 
     refls_to_hkl(predictions, expt.detector, expt.beam, expt.crystal, update_table=True)
-    predictions['xyzcal.px'] = predictions['xyzobs.px.value']
-    predictions['xyzcal.mm'] = predictions['xyzobs.mm.value']
-    predictions["num_pixels"] = numpix = predictions["shoebox"].count_mask_values(SIGNAL_MASK)
-    predictions['scatter'] = predictions["intensity.sum.value"] / flex.double(np.array(numpix, np.float64))
+    predictions["xyzcal.px"] = predictions["xyzobs.px.value"]
+    predictions["xyzcal.mm"] = predictions["xyzobs.mm.value"]
+    predictions["num_pixels"] = numpix = predictions["shoebox"].count_mask_values(
+        SIGNAL_MASK
+    )
+    predictions["scatter"] = predictions["intensity.sum.value"] / flex.double(
+        np.array(numpix, np.float64)
+    )
 
     # separate out the weak from the strong
-    label_weak_predictions(predictions, strong,params.predictions.qcut)
+    label_weak_predictions(predictions, strong, params.predictions.qcut)
     n_weak = sum(predictions["is_weak"])
     predictions["is_strong"] = flex.bool(np.logical_not(predictions["is_weak"]))
     n_pred = len(predictions)
@@ -94,14 +108,14 @@ def label_weak_predictions(predictions, strong, q_cutoff=0.005):
     :param strong: strong observed spots (reflection table)
     :param q_cutoff: distance in RLP space - arbitrary, increasing will bring in more candidates, 0.005 seems reasonable
     """
-    strong_tree = cKDTree(strong['rlp'])
-    predicted_tree = cKDTree(predictions['rlp'])
+    strong_tree = cKDTree(strong["rlp"])
+    predicted_tree = cKDTree(predictions["rlp"])
 
     # for each strong refl, find all predictions within q_cutoff of the strong rlp
     pred_idx_candidates = strong_tree.query_ball_tree(predicted_tree, q_cutoff)
 
     is_weak = flex.bool(len(predictions), True)
-    xyz_obs = [(-1,-1,-1)]*len(predictions)
+    xyz_obs = [(-1, -1, -1)] * len(predictions)
     for i_idx, cands in enumerate(pred_idx_candidates):
         if not cands:
             continue
@@ -127,25 +141,33 @@ def label_weak_spots_for_integration(fraction, predictions, num_res_bins=10):
     :param predictions: dials.flex.reflections_table
     :param num_res_bins: number of resolution bins
     """
-    res = 1. / np.linalg.norm(predictions["rlp"], axis=1)
+    res = 1.0 / np.linalg.norm(predictions["rlp"], axis=1)
     res_sort = np.sort(res)
-    res_bins = [rb[0]-1e-6 for rb in np.array_split( res_sort, num_res_bins)] + [res_sort[-1]+1e-6]
+    res_bins = [rb[0] - 1e-6 for rb in np.array_split(res_sort, num_res_bins)] + [
+        res_sort[-1] + 1e-6
+    ]
     res_bin_assigments = np.digitize(res, res_bins)
     is_weak_but_integratable = np.zeros(len(predictions)).astype(np.bool)
-    for i_res in range(1, num_res_bins+1):
+    for i_res in range(1, num_res_bins + 1):
         # grab weak spots in this res bin
-        is_weak_and_in_bin = logi_and(res_bin_assigments == i_res, predictions["is_weak"])
+        is_weak_and_in_bin = logi_and(
+            res_bin_assigments == i_res, predictions["is_weak"]
+        )
         refls_in_bin = predictions.select(flex.bool(is_weak_and_in_bin))
-        if len(refls_in_bin)==0:
+        if len(refls_in_bin) == 0:
             continue
 
         # determine which weak spots are closer to the Ewald sphere, based on the scatter value
-        signal_cutoff_in_bin = np.percentile(refls_in_bin['scatter'], (1.-fraction)*100)
+        signal_cutoff_in_bin = np.percentile(
+            refls_in_bin["scatter"], (1.0 - fraction) * 100
+        )
         is_above_cutoff = predictions["scatter"] >= signal_cutoff_in_bin
 
         is_integratable = logi_and(is_weak_and_in_bin, is_above_cutoff)
         is_weak_but_integratable[is_integratable] = True
-    predictions['is_for_integration'] = flex.bool(logi_or(logi_not(predictions["is_weak"]), is_weak_but_integratable))
+    predictions["is_for_integration"] = flex.bool(
+        logi_or(logi_not(predictions["is_weak"]), is_weak_but_integratable)
+    )
 
 
 def normalize_by_partiality(refls, model, default_F=1, gain=1):
@@ -157,17 +179,17 @@ def normalize_by_partiality(refls, model, default_F=1, gain=1):
     :return: updated reflection table
     """
     nref = len(refls)
-    F2 = default_F**2
+    F2 = default_F ** 2
     partials = flex.double()
     new_Isum = flex.double()
     new_Ivar = flex.double()
     for i_ref in range(nref):
         refl = refls[i_ref]
-        sb = refl['shoebox']
-        pid = refl['panel']
+        sb = refl["shoebox"]
+        pid = refl["panel"]
         mask = sb.mask.as_numpy_array()[0]
         data = sb.data.as_numpy_array()[0] / gain
-        x1,x2,y1,y2,_,_ = sb.bbox
+        x1, x2, y1, y2, _, _ = sb.bbox
         was_integrated = mask == SIGNAL_MASK
         Y, X = np.where(was_integrated)
         Y += y1
@@ -178,13 +200,13 @@ def normalize_by_partiality(refls, model, default_F=1, gain=1):
 
         par_sum = par.sum()
         data_sum = corrected.sum()
-        data_var = corrected.std()**2
+        data_var = corrected.std() ** 2
         partials.append(par_sum)
         new_Isum.append(data_sum)
         new_Ivar.append(data_var)
-    refls['dials.intensity.sum.value'] = refls['intensity.sum.value']
-    refls['dials.intensity.sum.variance'] = refls['intensity.sum.variance']
-    refls['diffBragg_partials'] = partials
-    refls['intensity.sum.value'] = new_Isum
-    refls['intensity.sum.variance'] = new_Ivar
+    refls["dials.intensity.sum.value"] = refls["intensity.sum.value"]
+    refls["dials.intensity.sum.variance"] = refls["intensity.sum.variance"]
+    refls["diffBragg_partials"] = partials
+    refls["intensity.sum.value"] = new_Isum
+    refls["intensity.sum.variance"] = new_Ivar
     return refls

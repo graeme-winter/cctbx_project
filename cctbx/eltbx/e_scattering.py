@@ -106,30 +106,39 @@ Cf 98 1.2089 2.7391 4.3482 4.0047 4.6497 0.2421 1.7487 6.7262 23.2153 80.3108
 """.splitlines()
 
 __cache = None
+
+
 def __get_cache():
-  global __cache
-  if (__cache is None):
-    from cctbx.eltbx.xray_scattering import get_standard_label
-    from libtbx.containers import OrderedDict
-    __cache = OrderedDict()
-    assert len(ito_vol_c_2011_table_4_3_2_2) == 98
-    for line in ito_vol_c_2011_table_4_3_2_2:
-      flds = line.split()
-      assert len(flds) == 12
-      std_lbl = get_standard_label(flds[0], exact=True)
-      assert flds[0] == std_lbl
-      assert std_lbl not in __cache
-      assert flds[1] == str(len(__cache)+1)
-      def vals(i,j): return [float(s) for s in flds[i:j]]
-      array_of_a = vals(2,7)
-      array_of_b = vals(7,12)
-      __cache[std_lbl] = gaussian(array_of_a, array_of_b)
-  return __cache
+    global __cache
+    if __cache is None:
+        from cctbx.eltbx.xray_scattering import get_standard_label
+        from libtbx.containers import OrderedDict
+
+        __cache = OrderedDict()
+        assert len(ito_vol_c_2011_table_4_3_2_2) == 98
+        for line in ito_vol_c_2011_table_4_3_2_2:
+            flds = line.split()
+            assert len(flds) == 12
+            std_lbl = get_standard_label(flds[0], exact=True)
+            assert flds[0] == std_lbl
+            assert std_lbl not in __cache
+            assert flds[1] == str(len(__cache) + 1)
+
+            def vals(i, j):
+                return [float(s) for s in flds[i:j]]
+
+            array_of_a = vals(2, 7)
+            array_of_b = vals(7, 12)
+            __cache[std_lbl] = gaussian(array_of_a, array_of_b)
+    return __cache
+
 
 def ito_vol_c_2011_table_4_3_2_2_elements():
-  return list(__get_cache().keys())
+    return list(__get_cache().keys())
+
 
 def ito_vol_c_2011_table_4_3_2_2_entry_as_gaussian(label, exact=False):
-  from cctbx.eltbx import xray_scattering
-  std_lbl = xray_scattering.get_standard_label(label=label, exact=exact)
-  return __get_cache().get(std_lbl)
+    from cctbx.eltbx import xray_scattering
+
+    std_lbl = xray_scattering.get_standard_label(label=label, exact=exact)
+    return __get_cache().get(std_lbl)

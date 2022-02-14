@@ -173,77 +173,87 @@ x,-x+1/2,x+1/2 NO_FVAR
 
 """
 
+
 def test_case_generator():
-  from cctbx.sgtbx import space_group_info
-  lines = test_cases.splitlines()
-  assert len(lines) % 4 == 0
-  for i in range(0, len(lines), 4):
-    assert len(lines[i+3]) == 0
-    expr = lines[i+2]
-    j = expr.find(" NO_FVAR")
-    no_fvar = (j >= 0)
-    if (no_fvar):
-      expr = expr[:j]
-    yield \
-      space_group_info(symbol=lines[i]), \
-      eval(lines[i+1]), \
-      expr, \
-      no_fvar
+    from cctbx.sgtbx import space_group_info
+
+    lines = test_cases.splitlines()
+    assert len(lines) % 4 == 0
+    for i in range(0, len(lines), 4):
+        assert len(lines[i + 3]) == 0
+        expr = lines[i + 2]
+        j = expr.find(" NO_FVAR")
+        no_fvar = j >= 0
+        if no_fvar:
+            expr = expr[:j]
+        yield space_group_info(symbol=lines[i]), eval(lines[i + 1]), expr, no_fvar
+
 
 def exercise():
-  from scitbx.array_family import flex
-  from scitbx import matrix
-  from libtbx.test_utils import approx_equal, show_diff
-  import libtbx.load_env
-  if (libtbx.env.has_module(name="iotbx")):
-    from iotbx.shelx.parsers import decode_variables
-    import iotbx.shelx.errors
-  else:
-    decode_variables = None
-  mt = flex.mersenne_twister(seed=0)
-  for sgi,site,expected_expr,no_fvar in test_case_generator():
-    sps = sgi.any_compatible_crystal_symmetry(volume=1000) \
-      .special_position_settings()
-    ss = sps.site_symmetry(site)
-    assert approx_equal(ss.exact_site(), site)
-    sos = ss.special_op_simplified()
-    expr = str(sos)
-    assert not show_diff(expr, expected_expr)
-    def check(site):
-      ns = dict(zip("xyz", site))
-      expr_site = eval(expr, ns, {})
-      assert approx_equal(expr_site, site, 1e-4)
-      #
-      shifted_site = (
-        matrix.col(site) + matrix.col(mt.random_double_point_on_sphere()))
-      ns = dict(zip("xyz", shifted_site))
-      expr_shifted_site = eval(expr, ns, {})
-      expr_shifted_site_exact = ss.special_op() * expr_shifted_site
-      assert approx_equal(expr_shifted_site, expr_shifted_site_exact)
-    check(site)
-    for i_trial in range(3):
-      shifted_site = ss.special_op() * (
-        matrix.col(site) + matrix.col(mt.random_double_point_on_sphere()))
-      check(shifted_site)
-    fvars = [None] # placeholder for scale factor
-    if (decode_variables is not None):
-      try:
-        coded_variables = ss.shelx_fvar_encoding(site=site, fvars=fvars)
-      except iotbx.shelx.errors.error:
-        if (not no_fvar): raise
-      else:
-        assert not no_fvar
-      if (not no_fvar):
-        values, behaviors = decode_variables(
-          free_variable=fvars, coded_variables=coded_variables)
-        mismatch = sps.unit_cell().mod_short_distance(site, values)
-        assert mismatch < 1e-10
+    from scitbx.array_family import flex
+    from scitbx import matrix
+    from libtbx.test_utils import approx_equal, show_diff
+    import libtbx.load_env
+
+    if libtbx.env.has_module(name="iotbx"):
+        from iotbx.shelx.parsers import decode_variables
+        import iotbx.shelx.errors
+    else:
+        decode_variables = None
+    mt = flex.mersenne_twister(seed=0)
+    for sgi, site, expected_expr, no_fvar in test_case_generator():
+        sps = sgi.any_compatible_crystal_symmetry(
+            volume=1000
+        ).special_position_settings()
+        ss = sps.site_symmetry(site)
+        assert approx_equal(ss.exact_site(), site)
+        sos = ss.special_op_simplified()
+        expr = str(sos)
+        assert not show_diff(expr, expected_expr)
+
+        def check(site):
+            ns = dict(zip("xyz", site))
+            expr_site = eval(expr, ns, {})
+            assert approx_equal(expr_site, site, 1e-4)
+            #
+            shifted_site = matrix.col(site) + matrix.col(
+                mt.random_double_point_on_sphere()
+            )
+            ns = dict(zip("xyz", shifted_site))
+            expr_shifted_site = eval(expr, ns, {})
+            expr_shifted_site_exact = ss.special_op() * expr_shifted_site
+            assert approx_equal(expr_shifted_site, expr_shifted_site_exact)
+
+        check(site)
+        for i_trial in range(3):
+            shifted_site = ss.special_op() * (
+                matrix.col(site) + matrix.col(mt.random_double_point_on_sphere())
+            )
+            check(shifted_site)
+        fvars = [None]  # placeholder for scale factor
+        if decode_variables is not None:
+            try:
+                coded_variables = ss.shelx_fvar_encoding(site=site, fvars=fvars)
+            except iotbx.shelx.errors.error:
+                if not no_fvar:
+                    raise
+            else:
+                assert not no_fvar
+            if not no_fvar:
+                values, behaviors = decode_variables(
+                    free_variable=fvars, coded_variables=coded_variables
+                )
+                mismatch = sps.unit_cell().mod_short_distance(site, values)
+                assert mismatch < 1e-10
+
 
 def run(args):
-  assert len(args) == 0
-  exercise()
-  print("OK")
+    assert len(args) == 0
+    exercise()
+    print("OK")
 
-if (__name__ == "__main__"):
-  import sys
-  run(args=sys.argv[1:])
+
+if __name__ == "__main__":
+    import sys
+
+    run(args=sys.argv[1:])

@@ -1,12 +1,15 @@
 from __future__ import absolute_import, division, print_function
 import sys
 
+
 def create_script(
-      bundle,
-      top_modules,
-      test_py="`libtbx.show_dist_paths boost_adaptbx`/tst_rational.py",
-      minimum_python_version="2.3"):
-  return """\
+    bundle,
+    top_modules,
+    test_py="`libtbx.show_dist_paths boost_adaptbx`/tst_rational.py",
+    minimum_python_version="2.3",
+):
+    return (
+        """\
 #! /bin/csh -f
 
 set install_root="$cwd"
@@ -414,8 +417,11 @@ cat << EOT
 ***     You may want to add this line to your .profile or .bashrc file.
 ***
 EOT
-""" % vars()
+"""
+        % vars()
+    )
 
-if (__name__ == "__main__"):
-  assert len(sys.argv) == 3
-  sys.stdout.write(create_script(sys.argv[1], sys.argv[2]))
+
+if __name__ == "__main__":
+    assert len(sys.argv) == 3
+    sys.stdout.write(create_script(sys.argv[1], sys.argv[2]))

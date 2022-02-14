@@ -37,52 +37,74 @@ REMARK 290
 REMARK 290 REMARK: NULL
 """
 
+
 def _nnnmmm_operator(record, expected_nnn):
-  if (not record.startswith("REMARK 290     ")): return None
-  flds = record.split()
-  if (len(flds) != 4): return None
-  nnnmmm = flds[2]
-  if (len(nnnmmm) < 4): return None
-  nnn,mmm = nnnmmm[:-3], nnnmmm[-3:]
-  if (mmm != "555"): return None
-  try: nnn = int(nnn)
-  except ValueError: return None
-  if (nnn != expected_nnn): return None
-  try: return sgtbx.rt_mx(flds[3])
-  except RuntimeError: return None
+    if not record.startswith("REMARK 290     "):
+        return None
+    flds = record.split()
+    if len(flds) != 4:
+        return None
+    nnnmmm = flds[2]
+    if len(nnnmmm) < 4:
+        return None
+    nnn, mmm = nnnmmm[:-3], nnnmmm[-3:]
+    if mmm != "555":
+        return None
+    try:
+        nnn = int(nnn)
+    except ValueError:
+        return None
+    if nnn != expected_nnn:
+        return None
+    try:
+        return sgtbx.rt_mx(flds[3])
+    except RuntimeError:
+        return None
+
 
 def extract_symmetry_operators(remark_290_records):
-  symmetry_operators = []
-  status = 0
-  for record in remark_290_records:
-    if (record.startswith("REMARK 290     ")):
-      symmetry_operator = _nnnmmm_operator(
-        record=record,
-        expected_nnn=len(symmetry_operators)+1)
-      if (symmetry_operator is not None):
-        if (status == 2): return None
-        symmetry_operators.append(symmetry_operator)
-        status = 1
-      elif (status == 1):
-        status == 2
-  if (len(symmetry_operators) == 0): return None
-  return symmetry_operators
+    symmetry_operators = []
+    status = 0
+    for record in remark_290_records:
+        if record.startswith("REMARK 290     "):
+            symmetry_operator = _nnnmmm_operator(
+                record=record, expected_nnn=len(symmetry_operators) + 1
+            )
+            if symmetry_operator is not None:
+                if status == 2:
+                    return None
+                symmetry_operators.append(symmetry_operator)
+                status = 1
+            elif status == 1:
+                status == 2
+    if len(symmetry_operators) == 0:
+        return None
+    return symmetry_operators
+
 
 def get_link_symmetry_operator(symmetry_operators, link_sym):
-  if (symmetry_operators is None): return None
-  link_sym = link_sym.strip()
-  if (len(link_sym) < 4): return None
-  if (link_sym[-4] == "_"):
-    link_sym = link_sym[:-4] + link_sym[-3:]
-    if (len(link_sym) < 4): return None
-  nnn = link_sym[:-3]
-  try: nnn = int(nnn)
-  except ValueError: return None
-  if (nnn < 1 or nnn > len(symmetry_operators)): return None
-  shifts = []
-  for m in link_sym[-3:]:
-    try: s = int(m)
-    except ValueError: return None
-    assert 0 <= s <= 9
-    shifts.append(s-5)
-  return symmetry_operators[nnn-1] + shifts
+    if symmetry_operators is None:
+        return None
+    link_sym = link_sym.strip()
+    if len(link_sym) < 4:
+        return None
+    if link_sym[-4] == "_":
+        link_sym = link_sym[:-4] + link_sym[-3:]
+        if len(link_sym) < 4:
+            return None
+    nnn = link_sym[:-3]
+    try:
+        nnn = int(nnn)
+    except ValueError:
+        return None
+    if nnn < 1 or nnn > len(symmetry_operators):
+        return None
+    shifts = []
+    for m in link_sym[-3:]:
+        try:
+            s = int(m)
+        except ValueError:
+            return None
+        assert 0 <= s <= 9
+        shifts.append(s - 5)
+    return symmetry_operators[nnn - 1] + shifts

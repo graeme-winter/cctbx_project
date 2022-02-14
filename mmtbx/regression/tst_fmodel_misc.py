@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.regression import make_fake_anomalous_data
 from mmtbx.command_line import fmodel
@@ -10,75 +9,81 @@ from libtbx.utils import null_out, Sorry
 from libtbx import easy_run
 import os
 
+
 def exercise():
-  if (os.path.isfile("tst_fmodel_anomalous.mtz")):
-    os.remove("tst_fmodel_anomalous.mtz")
-  pdb_file = make_fake_anomalous_data.write_pdb_input_cd_cl(
-    file_base="tst_fmodel_anomalous")
-  # phenix.fmodel (with wavelength)
-  args = [
-    pdb_file,
-    "high_resolution=1.0",
-    "wavelength=1.116",
-    "label=F",
-    "type=real",
-    "output.file_name=tst_fmodel_anomalous.mtz",
-    "r_free_flags_fraction=0.1",
-  ]
-  fmodel.run(args=args, log=null_out())
-  assert os.path.isfile("tst_fmodel_anomalous.mtz")
-  mtz_in = file_reader.any_file("tst_fmodel_anomalous.mtz")
-  array = mtz_in.file_server.miller_arrays[0]
-  assert (array.anomalous_flag())
-  anom_diffs = array.anomalous_differences()
-  assert approx_equal(flex.max(anom_diffs.data()), 5.72, eps=0.01)
-  # mmtbx.fmodel_simple
-  result = easy_run.call(
-    "mmtbx.fmodel_simple \"%s\" tst_fmodel_anomalous.mtz high_resolution=2.0"
-      % pdb_file)
-  print("OK")
+    if os.path.isfile("tst_fmodel_anomalous.mtz"):
+        os.remove("tst_fmodel_anomalous.mtz")
+    pdb_file = make_fake_anomalous_data.write_pdb_input_cd_cl(
+        file_base="tst_fmodel_anomalous"
+    )
+    # phenix.fmodel (with wavelength)
+    args = [
+        pdb_file,
+        "high_resolution=1.0",
+        "wavelength=1.116",
+        "label=F",
+        "type=real",
+        "output.file_name=tst_fmodel_anomalous.mtz",
+        "r_free_flags_fraction=0.1",
+    ]
+    fmodel.run(args=args, log=null_out())
+    assert os.path.isfile("tst_fmodel_anomalous.mtz")
+    mtz_in = file_reader.any_file("tst_fmodel_anomalous.mtz")
+    array = mtz_in.file_server.miller_arrays[0]
+    assert array.anomalous_flag()
+    anom_diffs = array.anomalous_differences()
+    assert approx_equal(flex.max(anom_diffs.data()), 5.72, eps=0.01)
+    # mmtbx.fmodel_simple
+    result = easy_run.call(
+        'mmtbx.fmodel_simple "%s" tst_fmodel_anomalous.mtz high_resolution=2.0'
+        % pdb_file
+    )
+    print("OK")
+
 
 def exercise_intensity_output():
-  if (os.path.isfile("tst_fmodel_anomalous.mtz")):
-    os.remove("tst_fmodel_anomalous.mtz")
-  pdb_file = make_fake_anomalous_data.write_pdb_input_cd_cl(
-    file_base="tst_fmodel_anomalous")
-  # phenix.fmodel (with wavelength)
-  args = [
-    pdb_file,
-    "high_resolution=1.0",
-    "wavelength=1.116",
-    "obs_type=intensities",
-    "type=real",
-    "output.file_name=tst_fmodel_intensity.mtz",
-    "r_free_flags_fraction=0.1",
-  ]
-  args2 = args + ["label=Imodel"]
-  fmodel.run(args=args2, log=null_out())
-  assert os.path.isfile("tst_fmodel_intensity.mtz")
-  mtz_in = file_reader.any_file("tst_fmodel_intensity.mtz")
-  assert mtz_in.file_server.miller_arrays[0].is_xray_intensity_array()
-  try :
-    fmodel.run(args=args, log=null_out())
-  except Sorry :
-    pass
-  else :
-    raise Exception_expected
-  try :
-    fmodel.run(args=args+["format=cns"], log=null_out())
-  except Sorry :
-    pass
-  else :
-    raise Exception_expected
+    if os.path.isfile("tst_fmodel_anomalous.mtz"):
+        os.remove("tst_fmodel_anomalous.mtz")
+    pdb_file = make_fake_anomalous_data.write_pdb_input_cd_cl(
+        file_base="tst_fmodel_anomalous"
+    )
+    # phenix.fmodel (with wavelength)
+    args = [
+        pdb_file,
+        "high_resolution=1.0",
+        "wavelength=1.116",
+        "obs_type=intensities",
+        "type=real",
+        "output.file_name=tst_fmodel_intensity.mtz",
+        "r_free_flags_fraction=0.1",
+    ]
+    args2 = args + ["label=Imodel"]
+    fmodel.run(args=args2, log=null_out())
+    assert os.path.isfile("tst_fmodel_intensity.mtz")
+    mtz_in = file_reader.any_file("tst_fmodel_intensity.mtz")
+    assert mtz_in.file_server.miller_arrays[0].is_xray_intensity_array()
+    try:
+        fmodel.run(args=args, log=null_out())
+    except Sorry:
+        pass
+    else:
+        raise Exception_expected
+    try:
+        fmodel.run(args=args + ["format=cns"], log=null_out())
+    except Sorry:
+        pass
+    else:
+        raise Exception_expected
+
 
 def exercise_selection_consistency():
-  """
-  Test that the atom selections for anomalous scatterers actually correspond
-  to the intended xray scatterers.  This will be dependent on any re-ordering
-  done by pdb_inp.construct_hierarchy(), which will move the SE atom in the
-  structure below.
-  """
-  pdb_str = """\
+    """
+    Test that the atom selections for anomalous scatterers actually correspond
+    to the intended xray scatterers.  This will be dependent on any re-ordering
+    done by pdb_inp.construct_hierarchy(), which will move the SE atom in the
+    structure below.
+    """
+    pdb_str = """\
 ATOM    920  N   LYS A 123      -3.350   9.199  20.988  1.00 21.23           N
 ATOM    921  CA  LYS A 123      -2.285   8.581  20.226  1.00 21.43           C
 ATOM    922  C   LYS A 123      -1.116   9.544  20.127  1.00 21.24           C
@@ -105,8 +110,9 @@ ATOM    947  CG  LEU A 125       5.197  11.005  15.504  1.00 22.27           C
 ATOM    948  CD1 LEU A 125       4.812  11.903  14.306  1.00 22.88           C
 ATOM    949  CD2 LEU A 125       6.533  11.408  15.996  1.00 26.02           C
 """
-  open("tst_fmodel_misc.pdb", "w").write(pdb_str)
-  open("tst_fmodel_misc.eff", "w").write("""\
+    open("tst_fmodel_misc.pdb", "w").write(pdb_str)
+    open("tst_fmodel_misc.eff", "w").write(
+        """\
 pdb_file = tst_fmodel_misc.pdb
 high_resolution = 1.0
 output.file_name = tst_fmodel_misc.mtz
@@ -118,32 +124,32 @@ anomalous_scatterers {
     f_double_prime = 4.5
   }
 }
-""")
-  fmodel.run(args=["tst_fmodel_misc.eff"], log=null_out())
-  mtz_in = file_reader.any_file("tst_fmodel_misc.mtz")
-  f_model = mtz_in.file_server.miller_arrays[0]
-  dano = abs(f_model).anomalous_differences()
-  f_model = f_model.average_bijvoet_mates()
-  dano, f_model = dano.common_sets(other=f_model)
-  map_coeffs = dano.phase_transfer(phase_source=f_model)
-  map_coeffs = miller.array(
-    miller_set=map_coeffs,
-    data=map_coeffs.data()/(2j))
-  map_coeffs.as_mtz_dataset(column_root_label="ANOM").mtz_object().write("anom.mtz")
-  fft_map = map_coeffs.fft_map(resolution_factor=0.25).apply_sigma_scaling()
-  real_map = fft_map.real_map_unpadded()
-  pdb_in = file_reader.any_file("tst_fmodel_misc.pdb")
-  for atom in pdb_in.file_object.hierarchy.atoms():
-    if (atom.element == "SE"):
-      site = f_model.unit_cell().fractionalize(site_cart=atom.xyz)
-      map_val = real_map.eight_point_interpolation(site)
-      assert (map_val > 100)
-    elif (atom.element.strip() == "O"):
-      site = f_model.unit_cell().fractionalize(site_cart=atom.xyz)
-      map_val = real_map.eight_point_interpolation(site)
-      assert (map_val < 5)
+"""
+    )
+    fmodel.run(args=["tst_fmodel_misc.eff"], log=null_out())
+    mtz_in = file_reader.any_file("tst_fmodel_misc.mtz")
+    f_model = mtz_in.file_server.miller_arrays[0]
+    dano = abs(f_model).anomalous_differences()
+    f_model = f_model.average_bijvoet_mates()
+    dano, f_model = dano.common_sets(other=f_model)
+    map_coeffs = dano.phase_transfer(phase_source=f_model)
+    map_coeffs = miller.array(miller_set=map_coeffs, data=map_coeffs.data() / (2j))
+    map_coeffs.as_mtz_dataset(column_root_label="ANOM").mtz_object().write("anom.mtz")
+    fft_map = map_coeffs.fft_map(resolution_factor=0.25).apply_sigma_scaling()
+    real_map = fft_map.real_map_unpadded()
+    pdb_in = file_reader.any_file("tst_fmodel_misc.pdb")
+    for atom in pdb_in.file_object.hierarchy.atoms():
+        if atom.element == "SE":
+            site = f_model.unit_cell().fractionalize(site_cart=atom.xyz)
+            map_val = real_map.eight_point_interpolation(site)
+            assert map_val > 100
+        elif atom.element.strip() == "O":
+            site = f_model.unit_cell().fractionalize(site_cart=atom.xyz)
+            map_val = real_map.eight_point_interpolation(site)
+            assert map_val < 5
 
-if (__name__ == "__main__"):
-  exercise_intensity_output()
-  exercise_selection_consistency()
-  exercise()
+
+if __name__ == "__main__":
+    exercise_intensity_output()
+    exercise_selection_consistency()
+    exercise()

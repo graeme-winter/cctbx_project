@@ -2,82 +2,84 @@ from __future__ import absolute_import, division, print_function
 
 
 def exercise_unused_imports():
-  from libtbx.python_code_parsing import unused_imports, imported_name
-  unused = unused_imports(unused_imports_test_case_1_1)
-  assert unused.names == set((
-    'foo', 'far', 'close', 'baz', 'barbar', 'bozboz' ))
-  unused = unused_imports(unused_imports_test_case_1_2)
-  assert unused.names == set((
-    'far', 'close', 'baz', 'barbar', 'bozboz' ))
-  unused = unused_imports(unused_imports_test_case_1_3)
-  assert unused.names == set((
-    'foo', 'far', 'close', 'barbar', 'bozboz' ))
-  unused = unused_imports(unused_imports_test_case_1_4)
-  assert unused.names == set((
-    'far', 'close', 'barbar', 'bozboz' ))
-  unused = unused_imports(unused_imports_test_case_1_5)
-  assert unused.names == set((
-    'far', 'close', 'baz', 'barbar', 'bozboz' ))
-  unused = unused_imports(unused_imports_test_case_2)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_3)
-  assert set(unused) == set(( imported_name('foo', lineno=1), ))
-  unused = unused_imports(unused_imports_test_case_4)
-  assert set(unused) == set(( imported_name('foo', lineno=4), ))
-  unused = unused_imports(unused_imports_test_case_5)
-  assert set(unused) == set(( imported_name('foo', lineno=4), ))
-  unused = unused_imports(unused_imports_test_case_6)
-  assert set(unused) == set(( imported_name('bar', lineno=1), ))
-  unused = unused_imports(unused_imports_test_case_7)
-  assert set(unused) == set(( imported_name('bar', lineno=1),
-                              imported_name('foo', lineno=6), ))
-  unused = unused_imports(unused_imports_test_case_7_bis)
-  assert set(unused) == set(( imported_name('bar', lineno=1), ))
-  unused = unused_imports(unused_imports_test_case_8)
-  assert set(unused) == set(( imported_name('foo', lineno=1), ))
-  unused = unused_imports(unused_imports_test_case_9)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_10)
-  assert set(unused) == set(( imported_name('foo', lineno=10), ))
-  unused = unused_imports(unused_imports_test_case_11)
-  assert unused
-  unused = unused_imports(unused_imports_test_case_11,
-                          ignored_imports=('libtbx.load_env',))
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_12)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_13)
-  assert set(unused) == set(( imported_name('bar', lineno=1), ))
-  unused = unused_imports(unused_imports_test_case_14)
-  assert set(unused) == set(( imported_name('bar', lineno=1), ))
-  unused = unused_imports(unused_imports_test_case_15)
-  assert set(unused) == set(( imported_name('bar', lineno=1), ))
-  unused = unused_imports(unused_imports_test_case_16)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_17)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_18)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_19)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_20)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_21)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_22)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_23)
-  assert unused
-  unused = unused_imports(
-    unused_imports_test_case_23,
-    ignore_imports_flagged_by_comments=('# import dependency',))
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_24)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_25)
-  assert not unused
-  unused = unused_imports(unused_imports_test_case_26)
-  assert not unused
+    from libtbx.python_code_parsing import unused_imports, imported_name
+
+    unused = unused_imports(unused_imports_test_case_1_1)
+    assert unused.names == set(("foo", "far", "close", "baz", "barbar", "bozboz"))
+    unused = unused_imports(unused_imports_test_case_1_2)
+    assert unused.names == set(("far", "close", "baz", "barbar", "bozboz"))
+    unused = unused_imports(unused_imports_test_case_1_3)
+    assert unused.names == set(("foo", "far", "close", "barbar", "bozboz"))
+    unused = unused_imports(unused_imports_test_case_1_4)
+    assert unused.names == set(("far", "close", "barbar", "bozboz"))
+    unused = unused_imports(unused_imports_test_case_1_5)
+    assert unused.names == set(("far", "close", "baz", "barbar", "bozboz"))
+    unused = unused_imports(unused_imports_test_case_2)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_3)
+    assert set(unused) == set((imported_name("foo", lineno=1),))
+    unused = unused_imports(unused_imports_test_case_4)
+    assert set(unused) == set((imported_name("foo", lineno=4),))
+    unused = unused_imports(unused_imports_test_case_5)
+    assert set(unused) == set((imported_name("foo", lineno=4),))
+    unused = unused_imports(unused_imports_test_case_6)
+    assert set(unused) == set((imported_name("bar", lineno=1),))
+    unused = unused_imports(unused_imports_test_case_7)
+    assert set(unused) == set(
+        (
+            imported_name("bar", lineno=1),
+            imported_name("foo", lineno=6),
+        )
+    )
+    unused = unused_imports(unused_imports_test_case_7_bis)
+    assert set(unused) == set((imported_name("bar", lineno=1),))
+    unused = unused_imports(unused_imports_test_case_8)
+    assert set(unused) == set((imported_name("foo", lineno=1),))
+    unused = unused_imports(unused_imports_test_case_9)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_10)
+    assert set(unused) == set((imported_name("foo", lineno=10),))
+    unused = unused_imports(unused_imports_test_case_11)
+    assert unused
+    unused = unused_imports(
+        unused_imports_test_case_11, ignored_imports=("libtbx.load_env",)
+    )
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_12)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_13)
+    assert set(unused) == set((imported_name("bar", lineno=1),))
+    unused = unused_imports(unused_imports_test_case_14)
+    assert set(unused) == set((imported_name("bar", lineno=1),))
+    unused = unused_imports(unused_imports_test_case_15)
+    assert set(unused) == set((imported_name("bar", lineno=1),))
+    unused = unused_imports(unused_imports_test_case_16)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_17)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_18)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_19)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_20)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_21)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_22)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_23)
+    assert unused
+    unused = unused_imports(
+        unused_imports_test_case_23,
+        ignore_imports_flagged_by_comments=("# import dependency",),
+    )
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_24)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_25)
+    assert not unused
+    unused = unused_imports(unused_imports_test_case_26)
+    assert not unused
 
 
 unused_imports_test_case_1_header = """\
@@ -88,30 +90,45 @@ from foobar import barbar, bazbaz as bozboz
 from buz import *
 """
 
-unused_imports_test_case_1_1 = """\
+unused_imports_test_case_1_1 = (
+    """\
 %s
-""" % unused_imports_test_case_1_header
+"""
+    % unused_imports_test_case_1_header
+)
 
-unused_imports_test_case_1_2 = """\
-%s
-type(foo.z)
-""" % unused_imports_test_case_1_header
-
-unused_imports_test_case_1_3 = """\
-%s
-type(baz.x)
-""" % unused_imports_test_case_1_header
-
-unused_imports_test_case_1_4 = """\
+unused_imports_test_case_1_2 = (
+    """\
 %s
 type(foo.z)
-type(baz.x)
-""" % unused_imports_test_case_1_header
+"""
+    % unused_imports_test_case_1_header
+)
 
-unused_imports_test_case_1_5 = """\
+unused_imports_test_case_1_3 = (
+    """\
+%s
+type(baz.x)
+"""
+    % unused_imports_test_case_1_header
+)
+
+unused_imports_test_case_1_4 = (
+    """\
+%s
+type(foo.z)
+type(baz.x)
+"""
+    % unused_imports_test_case_1_header
+)
+
+unused_imports_test_case_1_5 = (
+    """\
 %s
 type(foo.baz)
-""" % unused_imports_test_case_1_header
+"""
+    % unused_imports_test_case_1_header
+)
 
 
 unused_imports_test_case_2 = """\
@@ -308,19 +325,23 @@ def h():
   return g[fooo.baz.x:1000]
 """
 
+
 def exercise_old_style_classes():
-  from libtbx.python_code_parsing import find_old_style_classes, old_style_class
-  old_style = find_old_style_classes(old_style_class_test_case_1)
-  assert old_style.names == set(('foo',))
-  old_style = find_old_style_classes(old_style_class_test_case_2)
-  assert old_style.names == set()
-  old_style = find_old_style_classes(old_style_class_test_case_3)
-  assert old_style.names == set(('bar',))
-  old_style = find_old_style_classes(old_style_class_test_case_4)
-  assert set(old_style) == set((old_style_class(name='foo', lineno=4),
-                                old_style_class(name='bar', lineno=1)))
-  old_style = find_old_style_classes(old_style_class_test_case_5)
-  assert old_style.names == set(('foo',))
+    from libtbx.python_code_parsing import find_old_style_classes, old_style_class
+
+    old_style = find_old_style_classes(old_style_class_test_case_1)
+    assert old_style.names == set(("foo",))
+    old_style = find_old_style_classes(old_style_class_test_case_2)
+    assert old_style.names == set()
+    old_style = find_old_style_classes(old_style_class_test_case_3)
+    assert old_style.names == set(("bar",))
+    old_style = find_old_style_classes(old_style_class_test_case_4)
+    assert set(old_style) == set(
+        (old_style_class(name="foo", lineno=4), old_style_class(name="bar", lineno=1))
+    )
+    old_style = find_old_style_classes(old_style_class_test_case_5)
+    assert old_style.names == set(("foo",))
+
 
 old_style_class_test_case_1 = """\
 class foo:
@@ -354,10 +375,12 @@ def bar():
     pass
 """
 
-def run():
-  exercise_unused_imports()
-  exercise_old_style_classes()
-  print('OK')
 
-if __name__ == '__main__':
-  run()
+def run():
+    exercise_unused_imports()
+    exercise_old_style_classes()
+    print("OK")
+
+
+if __name__ == "__main__":
+    run()

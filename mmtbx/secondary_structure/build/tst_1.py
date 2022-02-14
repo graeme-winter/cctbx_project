@@ -198,7 +198,7 @@ ATOM    167  OH  TYR A  20     -13.705  -8.433 -21.187  1.00  0.00           O
 TER
 """
 
-alpha_helix_template="""\
+alpha_helix_template = """\
 ATOM      1  N   ALA     1      -1.204  -0.514   0.643  1.00  0.00           N
 ATOM      2  CA  ALA     1       0.000   0.000   0.000  1.00  0.00           C
 ATOM      3  CB  ALA     1       0.808   0.860   0.974  1.00  0.00           C
@@ -211,7 +211,7 @@ ATOM      9  C   ALA     2       1.258  -3.963  -1.472  1.00  0.00           C
 ATOM     10  O   ALA     2       2.047  -4.366  -2.327  1.00  0.00           O
 """
 
-alpha_helix_answer="""\
+alpha_helix_answer = """\
 ATOM      1  N   ALA     1      -1.204  -0.514   0.643  1.00  0.00           N
 ATOM      2  CA  ALA     1       0.000   0.000   0.000  1.00  0.00           C
 ATOM      3  CB  ALA     1       0.808   0.860   0.974  1.00  0.00           C
@@ -276,7 +276,7 @@ TER
 END
 """
 
-beta_strand_template="""\
+beta_strand_template = """\
 ATOM      1  N   ALA A   1     -34.967   0.361   0.480  1.00 30.00           N
 ATOM      2  CA  ALA A   1     -33.700   0.830  -0.121  1.00 30.00           C
 ATOM      3  C   ALA A   1     -32.491   0.227   0.567  1.00 30.00           C
@@ -289,7 +289,7 @@ ATOM      9  O   ALA A   2     -29.024   0.723  -1.359  1.00 30.00           O
 ATOM     10  CB  ALA A   2     -29.837  -2.178  -0.470  1.00 30.00           C
 """
 
-beta_strand_answer="""\
+beta_strand_answer = """\
 ATOM      1  N   ALA A   1     -34.967   0.361   0.480  1.00 30.00           N
 ATOM      2  CA  ALA A   1     -33.700   0.830  -0.121  1.00 30.00           C
 ATOM      3  C   ALA A   1     -32.491   0.227   0.567  1.00 30.00           C
@@ -403,90 +403,129 @@ ATOM         CB  ALA A  22      38.061   4.716   0.996  1.00  0.00           C
 TER
 """
 
+
 def exercise_00(prefix="exercise_00"):
-  "Build poly-ALA alpha helix"
-  ph = ssb.secondary_structure_from_sequence(
-    alpha_helix_template, "".join(["A"]*12))
-  ph.atoms().reset_i_seq()
-  #ph.write_pdb_file(file_name="%s_result.pdb"%prefix)
-  sites_1 = ph.atoms().extract_xyz()
-  sites_2 = iotbx.pdb.input(source_info=None,
-    lines=alpha_helix_answer).construct_hierarchy().atoms().extract_xyz()
-  #of = open("1.pdb","w")
-  #print >> of, alpha_helix_answer
-  #of.close()
-  assert sites_1.size()==sites_2.size(), [sites_1.size(),sites_2.size()]
-  d1 = flex.sqrt((sites_1 - sites_2).dot())
-  rmsd = ssb.calculate_rmsd_smart(ph, iotbx.pdb.input(source_info=None,
-    lines=alpha_helix_answer).construct_hierarchy())
-  assert rmsd < 0.1, rmsd
+    "Build poly-ALA alpha helix"
+    ph = ssb.secondary_structure_from_sequence(
+        alpha_helix_template, "".join(["A"] * 12)
+    )
+    ph.atoms().reset_i_seq()
+    # ph.write_pdb_file(file_name="%s_result.pdb"%prefix)
+    sites_1 = ph.atoms().extract_xyz()
+    sites_2 = (
+        iotbx.pdb.input(source_info=None, lines=alpha_helix_answer)
+        .construct_hierarchy()
+        .atoms()
+        .extract_xyz()
+    )
+    # of = open("1.pdb","w")
+    # print >> of, alpha_helix_answer
+    # of.close()
+    assert sites_1.size() == sites_2.size(), [sites_1.size(), sites_2.size()]
+    d1 = flex.sqrt((sites_1 - sites_2).dot())
+    rmsd = ssb.calculate_rmsd_smart(
+        ph,
+        iotbx.pdb.input(
+            source_info=None, lines=alpha_helix_answer
+        ).construct_hierarchy(),
+    )
+    assert rmsd < 0.1, rmsd
+
 
 def exercise_01(prefix="exercise_01"):
-  "Build poly-ALA beta strand"
-  ph = ssb.secondary_structure_from_sequence(
-    beta_strand_template, "".join(["A"]*22))
-  sites_1 = ph.atoms().extract_xyz()
-  sites_2 = iotbx.pdb.input(source_info=None,
-    lines=beta_strand_answer).construct_hierarchy().atoms().extract_xyz()
-  assert sites_1.size()==sites_2.size()
-  assert approx_equal(sites_1, sites_2, eps=0.002)
+    "Build poly-ALA beta strand"
+    ph = ssb.secondary_structure_from_sequence(
+        beta_strand_template, "".join(["A"] * 22)
+    )
+    sites_1 = ph.atoms().extract_xyz()
+    sites_2 = (
+        iotbx.pdb.input(source_info=None, lines=beta_strand_answer)
+        .construct_hierarchy()
+        .atoms()
+        .extract_xyz()
+    )
+    assert sites_1.size() == sites_2.size()
+    assert approx_equal(sites_1, sites_2, eps=0.002)
+
 
 def exercise_r_t_matrices():
-  r,t = ssb.get_r_t_matrices_from_structure(alpha_pdb_str)
-  assert approx_equal(r.elems,
-                      (-0.02358, 0.96052,  0.27720,
-                       -0.86374, -0.15919, 0.47811,
-                        0.50337, -0.22815, 0.83340),
-                      eps = 0.0001)
-  assert approx_equal(t.elems,
-                      (1.6740, -1.2223, -2.0756),
-                      eps = 0.0001)
-  try: ssb.get_r_t_matrices_from_structure(t_pdb_str)
-  except Exception as e:
-    assert str(e) == "pdb_str should contain at least 2 residues"
+    r, t = ssb.get_r_t_matrices_from_structure(alpha_pdb_str)
+    assert approx_equal(
+        r.elems,
+        (
+            -0.02358,
+            0.96052,
+            0.27720,
+            -0.86374,
+            -0.15919,
+            0.47811,
+            0.50337,
+            -0.22815,
+            0.83340,
+        ),
+        eps=0.0001,
+    )
+    assert approx_equal(t.elems, (1.6740, -1.2223, -2.0756), eps=0.0001)
+    try:
+        ssb.get_r_t_matrices_from_structure(t_pdb_str)
+    except Exception as e:
+        assert str(e) == "pdb_str should contain at least 2 residues"
+
 
 def exercise_secondary_structure_from_sequence():
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=correct_answer)
-  cs = pdb_inp.xray_structure_simple().crystal_symmetry()
-  correct_h = pdb_inp.construct_hierarchy()
-  test_h = ssb.secondary_structure_from_sequence(alpha_pdb_str,
-    sequence="ACEDGFIHKMLNQPSRTWVY")
-  test_h.atoms().reset_serial()
-  # correct_h.write_pdb_file("correct_h.pdb")
-  # test_h.write_pdb_file("test_h.pdb")
-  # why this passes...
-  for m1, m2 in zip(correct_h.models(), test_h.models()):
-    m1.is_similar_hierarchy(  other=m2)
-    m1.is_identical_hierarchy(other=m2)
-    for c1, c2 in zip(m1.chains(), m2.chains()):
-      c1.is_similar_hierarchy(  other=c2)
-      c1.is_identical_hierarchy(other=c2)
-      for rg1, rg2 in zip(c1.residue_groups(), c2.residue_groups()):
-        rg1.is_similar_hierarchy(  other=rg2)
-        rg1.is_identical_hierarchy(other=rg2)
-  f1 = correct_h.extract_xray_structure(crystal_symmetry=cs).structure_factors(
-    algorithm="direct", d_min=2).f_calc().data()
-  f2 = test_h.extract_xray_structure(crystal_symmetry=cs).structure_factors(
-    algorithm="direct", d_min=2).f_calc().data()
-  assert approx_equal(f1, f2)
-  assert test_h.as_str() == correct_h.as_str()
-  #correct_h.write_pdb_file(file_name="tst_1_ex_last_correct.pdb")
-  #test_h.write_pdb_file(file_name="tst_1_ex_last_out.pdb")
-  # ...and this fails ?
-  # assert correct_h.is_similar_hierarchy(other=test_h)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=correct_answer)
+    cs = pdb_inp.xray_structure_simple().crystal_symmetry()
+    correct_h = pdb_inp.construct_hierarchy()
+    test_h = ssb.secondary_structure_from_sequence(
+        alpha_pdb_str, sequence="ACEDGFIHKMLNQPSRTWVY"
+    )
+    test_h.atoms().reset_serial()
+    # correct_h.write_pdb_file("correct_h.pdb")
+    # test_h.write_pdb_file("test_h.pdb")
+    # why this passes...
+    for m1, m2 in zip(correct_h.models(), test_h.models()):
+        m1.is_similar_hierarchy(other=m2)
+        m1.is_identical_hierarchy(other=m2)
+        for c1, c2 in zip(m1.chains(), m2.chains()):
+            c1.is_similar_hierarchy(other=c2)
+            c1.is_identical_hierarchy(other=c2)
+            for rg1, rg2 in zip(c1.residue_groups(), c2.residue_groups()):
+                rg1.is_similar_hierarchy(other=rg2)
+                rg1.is_identical_hierarchy(other=rg2)
+    f1 = (
+        correct_h.extract_xray_structure(crystal_symmetry=cs)
+        .structure_factors(algorithm="direct", d_min=2)
+        .f_calc()
+        .data()
+    )
+    f2 = (
+        test_h.extract_xray_structure(crystal_symmetry=cs)
+        .structure_factors(algorithm="direct", d_min=2)
+        .f_calc()
+        .data()
+    )
+    assert approx_equal(f1, f2)
+    assert test_h.as_str() == correct_h.as_str()
+    # correct_h.write_pdb_file(file_name="tst_1_ex_last_correct.pdb")
+    # test_h.write_pdb_file(file_name="tst_1_ex_last_out.pdb")
+    # ...and this fails ?
+    # assert correct_h.is_similar_hierarchy(other=test_h)
 
-  assert approx_equal(test_h.atoms().extract_xyz(),
-                      correct_h.atoms().extract_xyz(), eps=0.002)
-  try: ssb.secondary_structure_from_sequence(alpha_pdb_str, sequence="")
-  except Exception as e:
-    assert str(e) == "sequence should contain at least one residue."
+    assert approx_equal(
+        test_h.atoms().extract_xyz(), correct_h.atoms().extract_xyz(), eps=0.002
+    )
+    try:
+        ssb.secondary_structure_from_sequence(alpha_pdb_str, sequence="")
+    except Exception as e:
+        assert str(e) == "sequence should contain at least one residue."
 
 
 def exercise():
-  exercise_00()
-  exercise_01()
-  exercise_r_t_matrices()
-  exercise_secondary_structure_from_sequence()
+    exercise_00()
+    exercise_01()
+    exercise_r_t_matrices()
+    exercise_secondary_structure_from_sequence()
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

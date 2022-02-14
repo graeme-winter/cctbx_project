@@ -1,4 +1,3 @@
-
 from __future__ import division
 import scitbx
 from abc import ABCMeta, abstractmethod
@@ -10,8 +9,10 @@ from scitbx.lbfgs import core_parameters
 class BreakToUseCurvatures(Exception):
     pass
 
+
 class BreakBecauseSignal(Exception):
     pass
+
 
 class ReachedMaxIterations(Exception):
     pass
@@ -28,31 +29,37 @@ class BaseRefiner:
     run_on_init = False
 
     def __init__(self):
-        self.hit_break_signal = False  # internal flag in case of hitting the beak signal
-        self.S = None   # instance of simtbx.nanoBragg.sim_data.SimData
-        self.ignore_line_search_failed_step_at_lower_bound = False  # TODO: why is this sometimes necessary ?
+        self.hit_break_signal = (
+            False  # internal flag in case of hitting the beak signal
+        )
+        self.S = None  # instance of simtbx.nanoBragg.sim_data.SimData
+        self.ignore_line_search_failed_step_at_lower_bound = (
+            False  # TODO: why is this sometimes necessary ?
+        )
         self.refine_lambda0 = False  # spectrea offset
         self.refine_lambda1 = False  # spectra scale factor
         self.m = 5  # LBFGS default core parameters
         self.maxfev = 20  # LBFGS default core parameters
         self.gtol = 0.9  # LBFGS default core parameters
-        self.xtol = 1.e-16  # LBFGS default core parameters
-        self.stpmin = 1.e-20  # LBFGS default core parameters
-        self.stpmax = 1.e20  # LBFGS default core parameters
+        self.xtol = 1.0e-16  # LBFGS default core parameters
+        self.stpmin = 1.0e-20  # LBFGS default core parameters
+        self.stpmax = 1.0e20  # LBFGS default core parameters
         self.trad_conv_eps = 0.05  # LBFGS terminator param converges whern |g| <= max(|x|,1) * trad_conv_eps
         self.drop_conv_max_eps = 1e-5  # LBFGS terminator param not sure, used in the other scitbx lbfgs convergence test
         self.mn_iter = 0  # LBFGS terminator param not sure used in lbfgs
         self.mx_iter = None  # LBFGS terminator param not sure used in lbfgs
         self.max_calls = 100000  # LBFGS terminator param how many overall iterations
         self.diag_mode = "always"  # LBFGS refiner property, whether to update curvatures at each iteration
-        self.d = None   # place holder for a second derivative diagonal
+        self.d = None  # place holder for a second derivative diagonal
         self.binner_dmin = 2  # if Fref is not None, then this defines R-factor and CC resolution binner
         self.binner_dmax = 999  # if Fref is not None, then this defines R-factor and CC resolution binner
         self.binner_nbin = 10  # if Fref is not None, then this defines R-factor and CC resolution binner
         self.Fref = None  # place holder for Fhkl reference (for computing R factors during refinement)
         self.use_curvatures = False  # whether to use the curvatures
         self.multi_panel = False  # whether the camera is multi panel or single panel
-        self.hit_break_to_use_curvatures = False  # internal flag if calculating curvatures
+        self.hit_break_to_use_curvatures = (
+            False  # internal flag if calculating curvatures
+        )
         self.has_pre_cached_roi_data = False  # only for use in global refinement mode
         self.curv = None  # curvatures array used internally
         self.gradient_only = False  # parameter for LBFGS run method (internal to the Fortran code, see scitbx.lbfgs.__init__.py method run_c_plus_plus
@@ -96,8 +103,10 @@ class BaseRefiner:
 
     @S.setter
     def S(self, val):
-        if not hasattr(val, 'D'):
-            print("S should be an instance of SimData after running SimData.instantiate_diffBragg()")
+        if not hasattr(val, "D"):
+            print(
+                "S should be an instance of SimData after running SimData.instantiate_diffBragg()"
+            )
         self._S = val
 
     @property
@@ -151,12 +160,13 @@ class BaseRefiner:
     @property
     def _terminator(self):
         return scitbx.lbfgs.termination_parameters(
-                    traditional_convergence_test=self.trad_conv,
-                    traditional_convergence_test_eps=self.trad_conv_eps,
-                    drop_convergence_test_max_drop_eps=self.drop_conv_max_eps,
-                    min_iterations=self.mn_iter,
-                    max_iterations=self.mx_iter,
-                    max_calls=self.max_calls)
+            traditional_convergence_test=self.trad_conv,
+            traditional_convergence_test_eps=self.trad_conv_eps,
+            drop_convergence_test_max_drop_eps=self.drop_conv_max_eps,
+            min_iterations=self.mn_iter,
+            max_iterations=self.mx_iter,
+            max_calls=self.max_calls,
+        )
 
     @property
     def _core_param(self):
@@ -172,8 +182,8 @@ class BaseRefiner:
     @property
     def _handler(self):
         return scitbx.lbfgs.exception_handling_parameters(
-            ignore_line_search_failed_step_at_lower_bound=\
-                self.ignore_line_search_failed_step_at_lower_bound)
+            ignore_line_search_failed_step_at_lower_bound=self.ignore_line_search_failed_step_at_lower_bound
+        )
 
     def _setup(self):
         """
@@ -200,7 +210,8 @@ class BaseRefiner:
                     core_params=self._core_param,
                     exception_handling_params=self._handler,
                     termination_params=self._terminator,
-                    gradient_only=self.gradient_only)
+                    gradient_only=self.gradient_only,
+                )
             except BreakToUseCurvatures:
                 self.hit_break_to_use_curvatures = True
             except BreakBecauseSignal:
@@ -215,7 +226,8 @@ class BaseRefiner:
                     core_params=self._core_param,
                     exception_handling_params=self._handler,
                     termination_params=self._terminator,
-                    gradient_only=self.gradient_only)
+                    gradient_only=self.gradient_only,
+                )
             except BreakToUseCurvatures:
                 self.hit_break_to_use_curvatures = True
                 pass
@@ -240,8 +252,9 @@ class BaseRefiner:
         return self.f, self.g, self.d
 
     def _verify_diag(self):
-        sel = (self.g != 0)
+        sel = self.g != 0
         from IPython import embed
+
         embed()
         self.d.set_selected(~sel, 1000)
         assert self.d.select(sel).all_gt(0)

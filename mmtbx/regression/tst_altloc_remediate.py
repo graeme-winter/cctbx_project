@@ -4,8 +4,9 @@ from six.moves import cStringIO as StringIO
 from six.moves import range
 
 pdbs = [
-  # 0
-  ["""
+    # 0
+    [
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      2  H   ALA A   1      -1.675   4.606   1.277  1.00 20.00      A    H
 ATOM      3  H2  ALA A   1      -2.026   3.996  -0.045  1.00 20.00      A    H
@@ -39,7 +40,8 @@ ATOM     30  HB3 ALA A   3       3.045  -2.163  -3.211  1.00 20.00      A    H
 ATOM     31  C   ALA A   3       3.187  -3.395  -0.790  1.00 20.00      A    C
 ATOM     32  O   ALA A   3       2.646  -4.306  -1.466  1.00 20.00      A    O
 ATOM     33  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
-""", """
+""",
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      2  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      3  C   ALA A   1      -1.551   1.486   0.458  1.00 20.00      A    C
@@ -73,9 +75,11 @@ ATOM     30  HA  ALA A   3       3.432  -1.386  -0.509  1.00 20.00      A    H
 ATOM     31  HB1 ALA A   3       4.474  -1.845  -2.568  1.00 20.00      A    H
 ATOM     32  HB2 ALA A   3       3.393  -0.674  -2.732  1.00 20.00      A    H
 ATOM     33  HB3 ALA A   3       3.045  -2.163  -3.211  1.00 20.00      A    H
-"""],
-# no H
-  ["""
+""",
+    ],
+    # no H
+    [
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      5  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      7  CB  ALA A   1      -3.346   2.715   1.747  1.00 20.00      A    C
@@ -92,7 +96,8 @@ ATOM     27  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     31  C   ALA A   3       3.187  -3.395  -0.790  1.00 20.00      A    C
 ATOM     32  O   ALA A   3       2.646  -4.306  -1.466  1.00 20.00      A    O
 ATOM     33  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
-""", """
+""",
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      2  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      3  C   ALA A   1      -1.551   1.486   0.458  1.00 20.00      A    C
@@ -109,9 +114,11 @@ ATOM     13  C   ALA A   3       3.187  -3.395  -0.790  1.00 20.00      A    C
 ATOM     14  O   ALA A   3       2.646  -4.306  -1.466  1.00 20.00      A    O
 ATOM     15  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     16  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
-"""],
-# just CB
-  ["""
+""",
+    ],
+    # just CB
+    [
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      5  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      7  CB  ALA A   1      -3.346   2.715   1.747  1.00 20.00      A    C
@@ -129,7 +136,8 @@ ATOM     27  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     31  C   ALA A   3       3.187  -3.395  -0.790  1.00 20.00      A    C
 ATOM     32  O   ALA A   3       2.646  -4.306  -1.466  1.00 20.00      A    O
 ATOM     33  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
-""", """
+""",
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      2  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      3  C   ALA A   1      -1.551   1.486   0.458  1.00 20.00      A    C
@@ -147,9 +155,11 @@ ATOM     14  C   ALA A   3       3.187  -3.395  -0.790  1.00 20.00      A    C
 ATOM     15  O   ALA A   3       2.646  -4.306  -1.466  1.00 20.00      A    O
 ATOM     16  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     17  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
-"""],
-# just CB diff
-  ["""
+""",
+    ],
+    # just CB diff
+    [
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      5  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      7  CB  ALA A   1      -3.346   2.715   1.747  1.00 20.00      A    C
@@ -167,7 +177,8 @@ ATOM     27  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     31  C   ALA A   3       3.187  -3.395  -0.790  1.00 20.00      A    C
 ATOM     32  O   ALA A   3       2.646  -4.306  -1.466  1.00 20.00      A    O
 ATOM     33  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
-""", """
+""",
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      2  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      3  CB  ALA A   1      -3.346   2.715   1.747  1.00 20.00      A    C
@@ -192,9 +203,11 @@ ATOM     21  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     22  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
 ATOM     23  N  AALA A   3       1.569  -1.642  -1.120  0.50 20.00      A    N
 ATOM     24  N  BALA A   3       1.569  -1.642  -1.120  0.50 20.00      A    N
-"""],
-# all 2
-  ["""
+""",
+    ],
+    # all 2
+    [
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      5  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      7  CB  ALA A   1      -3.346   2.715   1.747  1.00 20.00      A    C
@@ -216,7 +229,8 @@ ATOM     27  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     31  C   ALA A   3       3.187  -3.395  -0.790  1.00 20.00      A    C
 ATOM     32  O   ALA A   3       2.646  -4.306  -1.466  1.00 20.00      A    O
 ATOM     33  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
-""", """
+""",
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      2  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      3  CB  ALA A   1      -3.346   2.715   1.747  1.00 20.00      A    C
@@ -241,9 +255,11 @@ ATOM     21  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     22  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
 ATOM     23  N  AALA A   3       1.569  -1.642  -1.120  0.50 20.00      A    N
 ATOM     24  N  BALA A   3       1.569  -1.642  -1.120  0.50 20.00      A    N
-"""],
-# all 2 interlocked
-  ["""
+""",
+    ],
+    # all 2 interlocked
+    [
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      5  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      7  CB  ALA A   1      -3.346   2.715   1.747  1.00 20.00      A    C
@@ -265,7 +281,8 @@ ATOM     27  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     31  C   ALA A   3       3.187  -3.395  -0.790  1.00 20.00      A    C
 ATOM     32  O   ALA A   3       2.646  -4.306  -1.466  1.00 20.00      A    O
 ATOM     33  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
-""", """
+""",
+        """
 ATOM      1  N   ALA A   1      -1.521   3.898   0.713  1.00 20.00      A    N+1
 ATOM      2  CA  ALA A   1      -1.879   2.678   1.370  1.00 20.00      A    C
 ATOM      3  CB  ALA A   1      -3.346   2.715   1.747  1.00 20.00      A    C
@@ -290,9 +307,11 @@ ATOM     21  CB  ALA A   3       3.520  -1.630  -2.540  1.00 20.00      A    C
 ATOM     22  OXT ALA A   3       3.917  -3.690   0.195  1.00 20.00      A    O-1
 ATOM     23  N  AALA A   3       1.569  -1.642  -1.120  0.50 20.00      A    N
 ATOM     24  N  BALA A   3       1.569  -1.642  -1.120  0.50 20.00      A    N
-"""],
-# correcting partials
-  ["""
+""",
+    ],
+    # correcting partials
+    [
+        """
 ATOM    757  N   GLY A 103      21.999  10.712   0.961  1.00  4.33           N
 ATOM    758  CA  GLY A 103      21.040  11.791   1.055  1.00  4.23           C
 ATOM    759  C   GLY A 103      19.704  11.419   0.439  1.00  3.85           C
@@ -345,7 +364,8 @@ ATOM    805  O   PRO A 108      23.746  16.255  -2.804  1.00  4.51           O
 ATOM    806  CB  PRO A 108      23.413  19.264  -1.990  1.00  4.85           C
 ATOM    807  CG  PRO A 108      22.520  19.852  -0.907  1.00  5.00           C
 ATOM    808  CD  PRO A 108      21.676  18.668  -0.477  1.00  4.48           C
-""", """
+""",
+        """
 ATOM      1  N   GLY A 103      21.999  10.712   0.961  1.00  4.33           N
 ATOM      2  CA  GLY A 103      21.040  11.791   1.055  1.00  4.23           C
 ATOM      3  C   GLY A 103      19.704  11.419   0.439  1.00  3.85           C
@@ -399,8 +419,9 @@ ATOM     50  O   PRO A 108      23.746  16.255  -2.804  1.00  4.51           O
 ATOM     51  CB  PRO A 108      23.413  19.264  -1.990  1.00  4.85           C
 ATOM     52  CG  PRO A 108      22.520  19.852  -0.907  1.00  5.00           C
 ATOM     53  CD  PRO A 108      21.676  18.668  -0.477  1.00  4.48           C
-"""],
-  ]
+""",
+    ],
+]
 
 ala_cif = """
 data_comp_list
@@ -465,117 +486,134 @@ params_str = """pdb_interpretation {
 }
   """
 params = [
-  [params_str % ("ALA_different.cif", "chain A and resseq 2"),
-   params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
-   ],
-  [params_str % ("ALA_different.cif", "chain A and resseq 2"),
-   params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
-   ],
-  [params_str % ("ALA_different.cif", "chain A and resseq 2"),
-   params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
-   ],
-  [params_str % ("ALA_different.cif", "chain A and resseq 2"),
-   params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
-   ],
-  [params_str % ("ALA_different.cif", "chain A and resseq 2"),
-   params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
-   ],
-  [params_str % ("ALA_different.cif", "chain A and resseq 2"),
-   params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
-   ],
+    [
+        params_str % ("ALA_different.cif", "chain A and resseq 2"),
+        params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
+    ],
+    [
+        params_str % ("ALA_different.cif", "chain A and resseq 2"),
+        params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
+    ],
+    [
+        params_str % ("ALA_different.cif", "chain A and resseq 2"),
+        params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
+    ],
+    [
+        params_str % ("ALA_different.cif", "chain A and resseq 2"),
+        params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
+    ],
+    [
+        params_str % ("ALA_different.cif", "chain A and resseq 2"),
+        params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
+    ],
+    [
+        params_str % ("ALA_different.cif", "chain A and resseq 2"),
+        params_str % ("ALA_different.cif", 'chain A and resseq 2 and altloc "A"'),
+    ],
 ]
 success = [
-  [1,0],
-  [1,0],
-  [0,0],
-  [0,0],
-  [0,1],
-  [0,1],
-  ]
+    [1, 0],
+    [1, 0],
+    [0, 0],
+    [0, 0],
+    [0, 1],
+    [0, 1],
+]
 
 from libtbx import easy_run
 
+
 def assert_lines(s1, s2):
-  def generate_lines(string):
-    for line in string.split("\n"):
-      if line.find("TER")>-1: continue
-      if not line.strip(): continue
-      yield line.strip()
-  #
-  for l1 in generate_lines(s1):
-    for l2 in generate_lines(s2):
-      if l1==l2: break
-    else:
-      print(l1)
-      print(l2)
-      assert 0
+    def generate_lines(string):
+        for line in string.split("\n"):
+            if line.find("TER") > -1:
+                continue
+            if not line.strip():
+                continue
+            yield line.strip()
+
+    #
+    for l1 in generate_lines(s1):
+        for l2 in generate_lines(s2):
+            if l1 == l2:
+                break
+        else:
+            print(l1)
+            print(l2)
+            assert 0
+
 
 def run():
-  f=open("ALA_different.cif", "w")
-  f.write(ala_cif)
-  f.close()
-  for i, (input_str, output_str) in enumerate(pdbs):
-    if i==6: break
-    preamble = "tst_altloc_specific_restraints_%02d" % i
-    print('-'*80)
-    print(input_str)
-    print('-'*80)
-    print(output_str)
-    print('-'*80)
-    for j in range(2):
-      f=open("%s.pdb" % preamble, "w")
-      f.write(input_str)
-      f.close()
-      f=open("%s_%02d.params" % (preamble, j), "w")
-      f.write(params[i][j])
-      f.close()
-      cmd = "phenix.pdb_interpretation %s %s" % ("%s.pdb" % preamble,
-                                                 "%s_%02d.params" % (preamble,j),
-        )
-      cmd += " write_geo=1 cdl=0"
-      print("\n  ~> %s\n" % cmd)
-      lines=StringIO()
-      rc = easy_run.fully_buffered(cmd)
-      rc.show_stdout(out=lines)
-      finding=None
-      not_finding=None
-      if success[i][j]==0:
-        finding = "were not modified by"
-      elif success[i][j]==1:
-        not_finding = "were not modified by"
-      for line in lines.getvalue().split("\n"):
-        if finding:
-          if line.find(finding)>-1:
-            finding = True
+    f = open("ALA_different.cif", "w")
+    f.write(ala_cif)
+    f.close()
+    for i, (input_str, output_str) in enumerate(pdbs):
+        if i == 6:
             break
-        if not_finding:
-          if line.find(not_finding)>-1:
-            print(line)
-            assert 0
-      if finding is not None:
-        if finding==True: pass
-        else: assert 0
+        preamble = "tst_altloc_specific_restraints_%02d" % i
+        print("-" * 80)
+        print(input_str)
+        print("-" * 80)
+        print(output_str)
+        print("-" * 80)
+        for j in range(2):
+            f = open("%s.pdb" % preamble, "w")
+            f.write(input_str)
+            f.close()
+            f = open("%s_%02d.params" % (preamble, j), "w")
+            f.write(params[i][j])
+            f.close()
+            cmd = "phenix.pdb_interpretation %s %s" % (
+                "%s.pdb" % preamble,
+                "%s_%02d.params" % (preamble, j),
+            )
+            cmd += " write_geo=1 cdl=0"
+            print("\n  ~> %s\n" % cmd)
+            lines = StringIO()
+            rc = easy_run.fully_buffered(cmd)
+            rc.show_stdout(out=lines)
+            finding = None
+            not_finding = None
+            if success[i][j] == 0:
+                finding = "were not modified by"
+            elif success[i][j] == 1:
+                not_finding = "were not modified by"
+            for line in lines.getvalue().split("\n"):
+                if finding:
+                    if line.find(finding) > -1:
+                        finding = True
+                        break
+                if not_finding:
+                    if line.find(not_finding) > -1:
+                        print(line)
+                        assert 0
+            if finding is not None:
+                if finding == True:
+                    pass
+                else:
+                    assert 0
 
-  for i, (input_str, output_str) in enumerate(pdbs):
-    preamble = "tst_altloc_remediate_%02d" % i
-    print('-'*80)
-    print(input_str)
-    print('-'*80)
-    print(output_str)
-    print('-'*80)
-    f=open("%s.pdb" % preamble, "w")
-    f.write(input_str)
-    f.close()
-    cmd = "mmtbx.altloc_remediate %s" % "%s.pdb" % preamble
-    print(cmd)
-    easy_run.call(cmd)
-    f=open("%s_correct.pdb" % preamble, "r")
-    lines = f.read()
-    f.close()
-    print(lines)
-    print(output_str)
-    assert_lines(lines, output_str)
-  print("OK")
+    for i, (input_str, output_str) in enumerate(pdbs):
+        preamble = "tst_altloc_remediate_%02d" % i
+        print("-" * 80)
+        print(input_str)
+        print("-" * 80)
+        print(output_str)
+        print("-" * 80)
+        f = open("%s.pdb" % preamble, "w")
+        f.write(input_str)
+        f.close()
+        cmd = "mmtbx.altloc_remediate %s" % "%s.pdb" % preamble
+        print(cmd)
+        easy_run.call(cmd)
+        f = open("%s_correct.pdb" % preamble, "r")
+        lines = f.read()
+        f.close()
+        print(lines)
+        print(output_str)
+        assert_lines(lines, output_str)
+    print("OK")
 
-if __name__=="__main__":
-  run()#sys.argv[1])
+
+if __name__ == "__main__":
+    run()  # sys.argv[1])

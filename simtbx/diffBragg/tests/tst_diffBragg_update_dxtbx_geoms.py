@@ -11,7 +11,9 @@ from simtbx.nanoBragg import sim_data
 from dxtbx.model import Panel
 
 # make a simple detector
-det = sim_data.SimData.simple_detector(detector_distance_mm=150, pixelsize_mm=0.1, image_shape=(512, 512))
+det = sim_data.SimData.simple_detector(
+    detector_distance_mm=150, pixelsize_mm=0.1, image_shape=(512, 512)
+)
 
 SIM = sim_data.SimData(use_default_crystal=True)
 # snag the beam for later use
@@ -27,7 +29,9 @@ D.raw_pixels *= 0  # reset
 
 # update the geom to the same thing as it already is (sanity check)
 D.update_dxtbx_geoms(det, B, 0)
-D.update_dxtbx_geoms(det, B, 0)  # do it a few times to ensure no beam center isnt walking
+D.update_dxtbx_geoms(
+    det, B, 0
+)  # do it a few times to ensure no beam center isnt walking
 D.update_dxtbx_geoms(det, B, 0)
 D.add_diffBragg_spots()
 img2 = D.raw_pixels.as_numpy_array()
@@ -36,7 +40,9 @@ assert np.allclose(img, img2)
 D.raw_pixels *= 0  # reset the pixels
 
 # make a new detector with shifted detector distance
-det2 = sim_data.SimData.simple_detector(detector_distance_mm=151, pixelsize_mm=0.1, image_shape=(512, 512))
+det2 = sim_data.SimData.simple_detector(
+    detector_distance_mm=151, pixelsize_mm=0.1, image_shape=(512, 512)
+)
 D.update_dxtbx_geoms(det2, B, 0)
 # simulate the new pattern
 D.add_diffBragg_spots()

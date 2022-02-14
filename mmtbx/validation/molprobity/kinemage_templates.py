@@ -1,7 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
+
 def cbetadev_bullseye(pdbid=""):
-  return """@text
+    return (
+        """@text
 From Simon Lovell's 'CBdev_histogram_peptide.kip3'
   edited 200420 jsr
 
@@ -480,4 +482,6 @@ From Simon Lovell's 'CBdev_histogram_peptide.kip3'
 { HB2}0.496 -0.77 0.313
 { HB3}0.422 0.803 0.339
 {0.5A}-0.213 0.452 0
-""" % pdbid
+"""
+        % pdbid
+    )

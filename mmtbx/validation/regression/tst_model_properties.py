@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.monomer_library import pdb_interpretation
 from mmtbx.monomer_library import server
@@ -9,8 +8,9 @@ from libtbx.easy_pickle import loads, dumps
 from libtbx.utils import null_out
 from six.moves import cStringIO as StringIO
 
+
 def exercise_1():
-  pdb_raw = """\
+    pdb_raw = """\
 ATOM   1134  N   LYS A  82       5.933  36.285  21.572  1.00 70.94           N
 ATOM   1135  CA  LYS A  82       6.564  37.423  20.931  1.00 76.69           C
 ATOM   1136  C   LYS A  82       5.553  38.547  20.756  1.00 78.75           C
@@ -96,26 +96,30 @@ HETATM  122  O   HOH S   1       5.334   8.357   8.032  1.00  0.00           O
 HETATM  123  O   HOH S   2       5.396  15.243  10.734  1.00202.95           O
 HETATM  124  O   HOH S   3     -25.334  18.357  18.032  0.00 20.00           O
 """
-  mon_lib_srv = server.server()
-  ener_lib = server.ener_lib()
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
-  xrs = pdb_in.input.xray_structure_simple()
-  processed_pdb_file = pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    raw_records=pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs),
-    crystal_symmetry=xrs,
-    log=null_out())
-  pdb_in.hierarchy.atoms().reset_i_seq()
-  mstats = model_properties.model_statistics(
-    pdb_hierarchy=pdb_in.hierarchy,
-    xray_structure=xrs,
-    all_chain_proxies=processed_pdb_file.all_chain_proxies,
-    ignore_hd=True)
-  out = StringIO()
-  mstats.show(out=out)
-  #print out.getvalue()
-  assert not show_diff(out.getvalue(), """\
+    mon_lib_srv = server.server()
+    ener_lib = server.ener_lib()
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
+    xrs = pdb_in.input.xray_structure_simple()
+    processed_pdb_file = pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        raw_records=pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs),
+        crystal_symmetry=xrs,
+        log=null_out(),
+    )
+    pdb_in.hierarchy.atoms().reset_i_seq()
+    mstats = model_properties.model_statistics(
+        pdb_hierarchy=pdb_in.hierarchy,
+        xray_structure=xrs,
+        all_chain_proxies=processed_pdb_file.all_chain_proxies,
+        ignore_hd=True,
+    )
+    out = StringIO()
+    mstats.show(out=out)
+    # print out.getvalue()
+    assert not show_diff(
+        out.getvalue(),
+        """\
 Overall:
   Number of atoms = 50  (anisotropic = 0)
   B_iso: mean =  96.0  max = 269.8  min =   0.0
@@ -153,39 +157,43 @@ Waters:
     warning: 1 atoms with zero occupancy
   4 total B-factor or occupancy problem(s) detected
 (Hydrogen atoms not included in overall counts.)
-""")
-  assert (len(mstats.all.bad_adps) == 1)
-  assert (mstats.all.n_zero_b == 1)
-  mstats2 = loads(dumps(mstats))
-  out1 = StringIO()
-  out2 = StringIO()
-  mstats.show(out=out1)
-  mstats2.show(out=out2)
-  assert (out1.getvalue() == out2.getvalue())
-  # now with ignore_hd=False
-  mstats3 = model_properties.model_statistics(
-    pdb_hierarchy=pdb_in.hierarchy,
-    xray_structure=xrs,
-    all_chain_proxies=processed_pdb_file.all_chain_proxies,
-    ignore_hd=False)
-  out2 = StringIO()
-  mstats3.show(out=out2)
-  assert (out2.getvalue() != out.getvalue())
-  assert ("""   LYS A  83   HZ3   occ=0.00""" in out2.getvalue())
-  outliers = mstats3.all.as_gui_table_data(include_zoom=True)
-  assert (len(outliers) == 86)
-  # test with all_chain_proxies undefined
-  mstats4 = model_properties.model_statistics(
-    pdb_hierarchy=pdb_in.hierarchy,
-    xray_structure=xrs,
-    all_chain_proxies=None,
-    ignore_hd=False)
-  outliers = mstats4.all.as_gui_table_data(include_zoom=True)
-  assert (len(outliers) == 86)
+""",
+    )
+    assert len(mstats.all.bad_adps) == 1
+    assert mstats.all.n_zero_b == 1
+    mstats2 = loads(dumps(mstats))
+    out1 = StringIO()
+    out2 = StringIO()
+    mstats.show(out=out1)
+    mstats2.show(out=out2)
+    assert out1.getvalue() == out2.getvalue()
+    # now with ignore_hd=False
+    mstats3 = model_properties.model_statistics(
+        pdb_hierarchy=pdb_in.hierarchy,
+        xray_structure=xrs,
+        all_chain_proxies=processed_pdb_file.all_chain_proxies,
+        ignore_hd=False,
+    )
+    out2 = StringIO()
+    mstats3.show(out=out2)
+    assert out2.getvalue() != out.getvalue()
+    assert """   LYS A  83   HZ3   occ=0.00""" in out2.getvalue()
+    outliers = mstats3.all.as_gui_table_data(include_zoom=True)
+    assert len(outliers) == 86
+    # test with all_chain_proxies undefined
+    mstats4 = model_properties.model_statistics(
+        pdb_hierarchy=pdb_in.hierarchy,
+        xray_structure=xrs,
+        all_chain_proxies=None,
+        ignore_hd=False,
+    )
+    outliers = mstats4.all.as_gui_table_data(include_zoom=True)
+    assert len(outliers) == 86
+
 
 # corner case: deuterium as ligand (from 3qza)
 def exercise_2():
-  pdb_raw = """\
+    pdb_raw = """\
 ATOM   6407  N   GLY A 388      -0.783   9.368 -16.436  1.00 51.96           N
 ATOM   6408  CA  GLY A 388      -0.227   9.888 -15.197  1.00 54.04           C
 ATOM   6409  C   GLY A 388      -0.637  11.320 -14.897  1.00 55.86           C
@@ -200,15 +208,16 @@ HETATM 6417  O   DOD A1001      -4.151  -5.107 -38.592  1.00 13.40           O
 HETATM 6418  D1  DOD A1001      -4.760  -5.026 -39.326  1.00 15.45           D
 HETATM 6419  D2  DOD A1001      -4.625  -4.741 -37.845  1.00 14.81           D
 """
-  mstats = get_mstats(pdb_raw)
-  out = StringIO()
-  mstats.show(out=out)
-  assert ("Ligands:" in out.getvalue())
-  assert ("B_iso: mean =  15.2  max =  15.2  min =  15.2" in out.getvalue())
+    mstats = get_mstats(pdb_raw)
+    out = StringIO()
+    mstats.show(out=out)
+    assert "Ligands:" in out.getvalue()
+    assert "B_iso: mean =  15.2  max =  15.2  min =  15.2" in out.getvalue()
+
 
 # explicitly specified ligand selection
 def exercise_3():
-  pdb_raw = """\
+    pdb_raw = """\
 ATOM      1  CA  GLY A   1      -0.227   9.888 -15.197  1.00 54.04           C
 ATOM      2  CA  GLY A   2      -0.227   9.888 -15.197  1.00 54.04           C
 ATOM      3  CA  GLY A   3      -0.227   9.888 -15.197  1.00 54.04           C
@@ -230,62 +239,69 @@ HETATM   19  O1P SEP A  11       2.139   1.462   2.140  1.00 20.00      A    O
 HETATM   20  O2P SEP A  11       3.259  -0.703   1.767  1.00 20.00      A    O-1
 HETATM   21  O3P SEP A  11       1.127  -0.614   3.002  1.00 20.00      A    O-1
 END"""
-  mon_lib_srv = server.server()
-  ener_lib = server.ener_lib()
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
-  xrs = pdb_in.input.xray_structure_simple()
-  processed_pdb_file = pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    raw_records=pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs),
-    crystal_symmetry=xrs,
-    log=null_out())
-  pdb_in.hierarchy.atoms().reset_i_seq()
-  ligand_sel = pdb_in.hierarchy.atom_selection_cache().selection("resname SEP")
-  mstats = model_properties.model_statistics(
-    pdb_hierarchy=pdb_in.hierarchy,
-    xray_structure=xrs,
-    all_chain_proxies=processed_pdb_file.all_chain_proxies,
-    ligand_selection=ligand_sel,
-    ignore_hd=True)
-  out = StringIO()
-  mstats.show(out=out)
-  assert (mstats.n_protein == 10)
-  assert ("Ligands:" in out.getvalue())
-  assert approx_equal(mstats.macromolecules.b_mean, 54.04)
-  # now with just the raw selection string
-  mstats = model_properties.model_statistics(
-    pdb_hierarchy=pdb_in.hierarchy,
-    xray_structure=xrs,
-    all_chain_proxies=processed_pdb_file.all_chain_proxies,
-    ligand_selection="resname SEP",
-    ignore_hd=True)
-  out = StringIO()
-  mstats.show(out=out)
-  assert (mstats.n_protein == 10)
-  assert ("Ligands:" in out.getvalue())
+    mon_lib_srv = server.server()
+    ener_lib = server.ener_lib()
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
+    xrs = pdb_in.input.xray_structure_simple()
+    processed_pdb_file = pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        raw_records=pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs),
+        crystal_symmetry=xrs,
+        log=null_out(),
+    )
+    pdb_in.hierarchy.atoms().reset_i_seq()
+    ligand_sel = pdb_in.hierarchy.atom_selection_cache().selection("resname SEP")
+    mstats = model_properties.model_statistics(
+        pdb_hierarchy=pdb_in.hierarchy,
+        xray_structure=xrs,
+        all_chain_proxies=processed_pdb_file.all_chain_proxies,
+        ligand_selection=ligand_sel,
+        ignore_hd=True,
+    )
+    out = StringIO()
+    mstats.show(out=out)
+    assert mstats.n_protein == 10
+    assert "Ligands:" in out.getvalue()
+    assert approx_equal(mstats.macromolecules.b_mean, 54.04)
+    # now with just the raw selection string
+    mstats = model_properties.model_statistics(
+        pdb_hierarchy=pdb_in.hierarchy,
+        xray_structure=xrs,
+        all_chain_proxies=processed_pdb_file.all_chain_proxies,
+        ligand_selection="resname SEP",
+        ignore_hd=True,
+    )
+    out = StringIO()
+    mstats.show(out=out)
+    assert mstats.n_protein == 10
+    assert "Ligands:" in out.getvalue()
+
 
 def get_mstats(pdb_raw):
-  mon_lib_srv = server.server()
-  ener_lib = server.ener_lib()
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
-  xrs = pdb_in.input.xray_structure_simple()
-  processed_pdb_file = pdb_interpretation.process(
-    mon_lib_srv=mon_lib_srv,
-    ener_lib=ener_lib,
-    raw_records=pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs),
-    crystal_symmetry=xrs,
-    log=null_out())
-  pdb_in.hierarchy.atoms().reset_i_seq()
-  mstats = model_properties.model_statistics(
-    pdb_hierarchy=pdb_in.hierarchy,
-    xray_structure=xrs,
-    all_chain_proxies=processed_pdb_file.all_chain_proxies,
-    ignore_hd=True)
-  return mstats
+    mon_lib_srv = server.server()
+    ener_lib = server.ener_lib()
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
+    xrs = pdb_in.input.xray_structure_simple()
+    processed_pdb_file = pdb_interpretation.process(
+        mon_lib_srv=mon_lib_srv,
+        ener_lib=ener_lib,
+        raw_records=pdb_in.hierarchy.as_pdb_string(crystal_symmetry=xrs),
+        crystal_symmetry=xrs,
+        log=null_out(),
+    )
+    pdb_in.hierarchy.atoms().reset_i_seq()
+    mstats = model_properties.model_statistics(
+        pdb_hierarchy=pdb_in.hierarchy,
+        xray_structure=xrs,
+        all_chain_proxies=processed_pdb_file.all_chain_proxies,
+        ignore_hd=True,
+    )
+    return mstats
+
 
 def test_zero_occupancy():
-  pdb_raw = '''\
+    pdb_raw = """\
 ATOM    100  N   LYS A  82       5.933  36.285  21.572  0.00 70.94           N
 ATOM    101  CA  LYS A  82       6.564  37.423  20.931  1.00 76.69           C
 ATOM    102  C   LYS A  82       5.553  38.547  20.756  1.00 78.75           C
@@ -308,16 +324,17 @@ ATOM    118  HE3 LYS A  82      10.453  39.662  20.854  1.00 77.33           H
 ATOM    119  HZ1 LYS A  82      11.237  40.666  18.977  1.00 73.75           H
 ATOM    120  HZ2 LYS A  82      10.523  39.738  18.123  1.00 73.75           H
 ATOM    121  HZ3 LYS A  82      11.621  39.269  18.944  1.00 73.75           H
-'''
-  mstats = get_mstats(pdb_raw)
-  assert (mstats.all.n_outliers == 3)           # atom 100 has 0 occupancy
-  assert (len(mstats.all.zero_occ) == 1)        # zero occupancy
-  assert (len(mstats.all.partial_occ) == 1)     # occupancy < 1
-  assert (len(mstats.all.different_occ) == 1)   # occupancies in residue differ
-  return True
+"""
+    mstats = get_mstats(pdb_raw)
+    assert mstats.all.n_outliers == 3  # atom 100 has 0 occupancy
+    assert len(mstats.all.zero_occ) == 1  # zero occupancy
+    assert len(mstats.all.partial_occ) == 1  # occupancy < 1
+    assert len(mstats.all.different_occ) == 1  # occupancies in residue differ
+    return True
+
 
 def test_partial_occupancy():
-  pdb_raw = '''\
+    pdb_raw = """\
 ATOM    100  N   LYS A  82       5.933  36.285  21.572  1.00 70.94           N
 ATOM    101  CA  LYS A  82       6.564  37.423  20.931  1.00 76.69           C
 ATOM    102  C   LYS A  82       5.553  38.547  20.756  1.00 78.75           C
@@ -358,17 +375,18 @@ ATOM    136  HE3BLYS A  82      10.453  39.662  20.854  0.60 77.33           H
 ATOM    137  HZ1BLYS A  82      11.237  40.666  18.977  0.60 73.75           H
 ATOM    138  HZ2BLYS A  82      10.523  39.738  18.123  0.60 73.75           H
 ATOM    139  HZ3BLYS A  82      11.621  39.269  18.944  0.50 73.75           H
-'''
-  mstats = get_mstats(pdb_raw)                 # atom 121, 139 sum < 1
-  assert (mstats.all.n_outliers == 3)
-  assert (len(mstats.all.partial_occ) == 2)    # occupancy < 1
-  assert (len(mstats.all.different_occ) == 1)  # occupancies in residue differ
-  return True
+"""
+    mstats = get_mstats(pdb_raw)  # atom 121, 139 sum < 1
+    assert mstats.all.n_outliers == 3
+    assert len(mstats.all.partial_occ) == 2  # occupancy < 1
+    assert len(mstats.all.different_occ) == 1  # occupancies in residue differ
+    return True
 
-if (__name__ == "__main__"):
-  exercise_1()
-  exercise_2()
-  exercise_3()
-  test_zero_occupancy()
-  test_partial_occupancy()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise_1()
+    exercise_2()
+    exercise_3()
+    test_zero_occupancy()
+    test_partial_occupancy()
+    print("OK")

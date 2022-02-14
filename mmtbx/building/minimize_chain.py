@@ -1,5 +1,5 @@
 from __future__ import absolute_import, division, print_function
-import sys,os
+import sys, os
 import iotbx.pdb
 import mmtbx.utils
 from scitbx.array_family import flex
@@ -8,7 +8,8 @@ import iotbx.phil
 import mmtbx.refinement.real_space.explode_and_refine
 from mmtbx import monomer_library
 
-master_phil = iotbx.phil.parse("""
+master_phil = iotbx.phil.parse(
+    """
 
   input_files {
     map_coeffs_file = None
@@ -127,48 +128,62 @@ master_phil = iotbx.phil.parse("""
         .help = Number of processors to use
 
   }
-""", process_includes=True)
+""",
+    process_includes=True,
+)
 master_params = master_phil
 
-def get_params(args,out=sys.stdout):
-  command_line = iotbx.phil.process_command_line_with_files(
-    reflection_file_def="input_files.map_coeffs_file",
-    map_file_def="input_files.map_file",
-    pdb_file_def="input_files.pdb_in",
-    args=args,
-    master_phil=master_phil)
-  params = command_line.work.extract()
-  print("\nMinimize_chain ... optimize a coarse-grain model in EM or low-resolution X-ray map", file=out)
-  master_phil.format(python_object=params).show(out=out)
-  return params
+
+def get_params(args, out=sys.stdout):
+    command_line = iotbx.phil.process_command_line_with_files(
+        reflection_file_def="input_files.map_coeffs_file",
+        map_file_def="input_files.map_file",
+        pdb_file_def="input_files.pdb_in",
+        args=args,
+        master_phil=master_phil,
+    )
+    params = command_line.work.extract()
+    print(
+        "\nMinimize_chain ... optimize a coarse-grain model in EM or low-resolution X-ray map",
+        file=out,
+    )
+    master_phil.format(python_object=params).show(out=out)
+    return params
+
 
 def ccp4_map(crystal_symmetry, file_name, map_data):
-  from iotbx import mrcfile
-  mrcfile.write_ccp4_map(
-      file_name=file_name,
-      unit_cell=crystal_symmetry.unit_cell(),
-      space_group=crystal_symmetry.space_group(),
-      #gridding_first=(0,0,0),# This causes a bug (map gets shifted)
-      #gridding_last=n_real,  # This causes a bug (map gets shifted)
-      map_data=map_data,
-      labels=flex.std_string([""]))
+    from iotbx import mrcfile
 
-def get_map_coeffs(
-        map_coeffs_file=None,
-        map_coeffs_labels=None):
-  if not map_coeffs_file:
-    return
-  if not os.path.isfile(map_coeffs_file):
-    raise Sorry("Unable to find the map coeffs file %s" %(map_coeffs_file))
-  from iotbx import reflection_file_reader
-  reflection_file=reflection_file_reader.any_reflection_file(map_coeffs_file)
-  miller_arrays=reflection_file.as_miller_arrays()
-  for ma in miller_arrays:
-    if not ma.is_complex_array: continue
-    if not map_coeffs_labels or map_coeffs_labels==ma.info().labels[0]:
-      return ma
-  raise Sorry("Unable to find map coeffs in the file %s with labels %s" %(
-      map_coeffs_file,str(map_coeffs_labels)))
+    mrcfile.write_ccp4_map(
+        file_name=file_name,
+        unit_cell=crystal_symmetry.unit_cell(),
+        space_group=crystal_symmetry.space_group(),
+        # gridding_first=(0,0,0),# This causes a bug (map gets shifted)
+        # gridding_last=n_real,  # This causes a bug (map gets shifted)
+        map_data=map_data,
+        labels=flex.std_string([""]),
+    )
+
+
+def get_map_coeffs(map_coeffs_file=None, map_coeffs_labels=None):
+    if not map_coeffs_file:
+        return
+    if not os.path.isfile(map_coeffs_file):
+        raise Sorry("Unable to find the map coeffs file %s" % (map_coeffs_file))
+    from iotbx import reflection_file_reader
+
+    reflection_file = reflection_file_reader.any_reflection_file(map_coeffs_file)
+    miller_arrays = reflection_file.as_miller_arrays()
+    for ma in miller_arrays:
+        if not ma.is_complex_array:
+            continue
+        if not map_coeffs_labels or map_coeffs_labels == ma.info().labels[0]:
+            return ma
+    raise Sorry(
+        "Unable to find map coeffs in the file %s with labels %s"
+        % (map_coeffs_file, str(map_coeffs_labels))
+    )
+
 
 def get_map_data_and_symmetry(
     crystal_symmetry=None,
@@ -177,56 +192,63 @@ def get_map_data_and_symmetry(
     map_file=None,
     map_coeffs_file=None,
     map_coeffs_labels=None,
-    out=sys.stdout):
+    out=sys.stdout,
+):
 
-  if map_file:
-    from cctbx.maptbx.segment_and_split_map import get_map_object
-    map_data,space_group,unit_cell,crystal_symmetry,origin_frac,acc,\
-      original_crystal_symmetry,original_unit_cell_grid=\
-        get_map_object(file_name=map_file,out=out)
-    map_data=map_data.as_double()
+    if map_file:
+        from cctbx.maptbx.segment_and_split_map import get_map_object
 
-  if not map_data:
-    if not map_coeffs:
-      map_coeffs=get_map_coeffs(
-        map_coeffs_file=map_coeffs_file,
-        map_coeffs_labels=map_coeffs_labels)
-    if not map_coeffs:
-      raise Sorry("Need map_coeffs_file")
+        (
+            map_data,
+            space_group,
+            unit_cell,
+            crystal_symmetry,
+            origin_frac,
+            acc,
+            original_crystal_symmetry,
+            original_unit_cell_grid,
+        ) = get_map_object(file_name=map_file, out=out)
+        map_data = map_data.as_double()
 
-    fft_map = map_coeffs.fft_map(resolution_factor = 0.25)
-    fft_map.apply_sigma_scaling()
-    map_data = fft_map.real_map_unpadded()
-  if map_coeffs and not crystal_symmetry:
-    crystal_symmetry=map_coeffs.crystal_symmetry()
-  assert crystal_symmetry is not None
-  return map_data,map_coeffs,crystal_symmetry
+    if not map_data:
+        if not map_coeffs:
+            map_coeffs = get_map_coeffs(
+                map_coeffs_file=map_coeffs_file, map_coeffs_labels=map_coeffs_labels
+            )
+        if not map_coeffs:
+            raise Sorry("Need map_coeffs_file")
 
-def get_pdb_inp(
-  crystal_symmetry=None,
-  pdb_inp=None,
-  pdb_string=None,
-  pdb_in=None):
+        fft_map = map_coeffs.fft_map(resolution_factor=0.25)
+        fft_map.apply_sigma_scaling()
+        map_data = fft_map.real_map_unpadded()
+    if map_coeffs and not crystal_symmetry:
+        crystal_symmetry = map_coeffs.crystal_symmetry()
+    assert crystal_symmetry is not None
+    return map_data, map_coeffs, crystal_symmetry
 
-  if pdb_inp is None:
-    if not pdb_string:
-      if pdb_in:
-        pdb_string=open(pdb_in).read()
-      else:
-        raise Sorry("Need an input PDB file")
-    pdb_inp=iotbx.pdb.input(source_info=None, lines = pdb_string)
-    cryst1_line=iotbx.pdb.format_cryst1_record(
-         crystal_symmetry=crystal_symmetry)
-    if not pdb_inp.crystal_symmetry(): # get it
-      from six.moves import cStringIO as StringIO
-      f=StringIO()
-      print(cryst1_line, file=f)
-      print(pdb_string, file=f)
-      pdb_string=f.getvalue()
-      pdb_inp=iotbx.pdb.input(source_info=None, lines = pdb_string)
-  if pdb_string is None:
-    pdb_string=pdb_inp.as_pdb_string()
-  return pdb_inp,cryst1_line,pdb_string
+
+def get_pdb_inp(crystal_symmetry=None, pdb_inp=None, pdb_string=None, pdb_in=None):
+
+    if pdb_inp is None:
+        if not pdb_string:
+            if pdb_in:
+                pdb_string = open(pdb_in).read()
+            else:
+                raise Sorry("Need an input PDB file")
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_string)
+        cryst1_line = iotbx.pdb.format_cryst1_record(crystal_symmetry=crystal_symmetry)
+        if not pdb_inp.crystal_symmetry():  # get it
+            from six.moves import cStringIO as StringIO
+
+            f = StringIO()
+            print(cryst1_line, file=f)
+            print(pdb_string, file=f)
+            pdb_string = f.getvalue()
+            pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_string)
+    if pdb_string is None:
+        pdb_string = pdb_inp.as_pdb_string()
+    return pdb_inp, cryst1_line, pdb_string
+
 
 def run_one_cycle(
     params=None,
@@ -236,100 +258,108 @@ def run_one_cycle(
     pdb_string=None,
     crystal_symmetry=None,
     params_edits=None,
-    out=sys.stdout):
-  hierarchy=pdb_inp.construct_hierarchy()
-  hierarchy.atoms().reset_i_seq()
-  xrs=pdb_inp.xray_structure_simple()
-  if not pdb_string:
-    pdb_string=hierarchy.as_pdb_string()
-  # Initialize states accumulator
-  states = mmtbx.utils.states(pdb_hierarchy=hierarchy)
-  states.add(sites_cart = xrs.sites_cart())
-  pdb_inp_params = monomer_library.pdb_interpretation.master_params.extract()
-  pdb_inp_params.clash_guard.nonbonded_distance_threshold=None
-  pdb_inp_params.max_reasonable_bond_distance=None
-  pdb_inp_params.proceed_with_excessive_length_bonds=True
-  processed_pdb_file = monomer_library.pdb_interpretation.process(
-    mon_lib_srv              = monomer_library.server.server(),
-    ener_lib                 = monomer_library.server.ener_lib(),
-    raw_records              = pdb_string,
-    params                   = pdb_inp_params,
-    strict_conflict_handling = True,
-    force_symmetry           = True,
-    log                      = out)
-  geometry = processed_pdb_file.geometry_restraints_manager(
-    show_energies                = False,
-    plain_pairs_radius           = 5,
-    assume_hydrogens_all_missing = True)
-  restraints_manager = mmtbx.restraints.manager(
-    geometry      = geometry,
-    normalization = True)
-  ear = mmtbx.refinement.real_space.explode_and_refine.run(
-    xray_structure     = xrs,
-    pdb_hierarchy      = hierarchy,
-    map_data           = map_data,
-    restraints_manager = restraints_manager,
-    states             = states,
-    resolution         = params.crystal_info.resolution,
-    mode               = params.control.mode,
-    nproc              = params.control.nproc,
-    show               = False,
-    log                = out)
-  return ear.pdb_hierarchy_overall_best(), \
-         ear.ensemble_pdb_hierarchy_refined()
+    out=sys.stdout,
+):
+    hierarchy = pdb_inp.construct_hierarchy()
+    hierarchy.atoms().reset_i_seq()
+    xrs = pdb_inp.xray_structure_simple()
+    if not pdb_string:
+        pdb_string = hierarchy.as_pdb_string()
+    # Initialize states accumulator
+    states = mmtbx.utils.states(pdb_hierarchy=hierarchy)
+    states.add(sites_cart=xrs.sites_cart())
+    pdb_inp_params = monomer_library.pdb_interpretation.master_params.extract()
+    pdb_inp_params.clash_guard.nonbonded_distance_threshold = None
+    pdb_inp_params.max_reasonable_bond_distance = None
+    pdb_inp_params.proceed_with_excessive_length_bonds = True
+    processed_pdb_file = monomer_library.pdb_interpretation.process(
+        mon_lib_srv=monomer_library.server.server(),
+        ener_lib=monomer_library.server.ener_lib(),
+        raw_records=pdb_string,
+        params=pdb_inp_params,
+        strict_conflict_handling=True,
+        force_symmetry=True,
+        log=out,
+    )
+    geometry = processed_pdb_file.geometry_restraints_manager(
+        show_energies=False, plain_pairs_radius=5, assume_hydrogens_all_missing=True
+    )
+    restraints_manager = mmtbx.restraints.manager(geometry=geometry, normalization=True)
+    ear = mmtbx.refinement.real_space.explode_and_refine.run(
+        xray_structure=xrs,
+        pdb_hierarchy=hierarchy,
+        map_data=map_data,
+        restraints_manager=restraints_manager,
+        states=states,
+        resolution=params.crystal_info.resolution,
+        mode=params.control.mode,
+        nproc=params.control.nproc,
+        show=False,
+        log=out,
+    )
+    return ear.pdb_hierarchy_overall_best(), ear.ensemble_pdb_hierarchy_refined()
 
-def run(args,
+
+def run(
+    args,
     map_data=None,
     map_coeffs=None,
     pdb_inp=None,
     pdb_string=None,
     crystal_symmetry=None,
     params_edits=None,
-    out=sys.stdout):
+    out=sys.stdout,
+):
 
-  # Get the parameters
-  params=get_params(args=args,out=out)
+    # Get the parameters
+    params = get_params(args=args, out=out)
 
-  if params.control.random_seed:
-    import random
-    random.seed(params.control.random_seed)
-    flex.set_random_seed(params.control.random_seed)
-    print("\nUsing random seed of %d" %(params.control.random_seed), file=out)
+    if params.control.random_seed:
+        import random
 
-  # Get map_data if not present
-  map_data,map_coeffs,crystal_symmetry=get_map_data_and_symmetry(
-    crystal_symmetry=crystal_symmetry,
-    map_data=map_data,
-    map_coeffs=map_coeffs,
-    map_file=params.input_files.map_file,
-    map_coeffs_file=params.input_files.map_coeffs_file,
-    map_coeffs_labels=params.input_files.map_coeffs_labels,out=out)
+        random.seed(params.control.random_seed)
+        flex.set_random_seed(params.control.random_seed)
+        print("\nUsing random seed of %d" % (params.control.random_seed), file=out)
 
-  # Get the starting model
-  pdb_inp,cryst1_line,pdb_string=get_pdb_inp(
-    crystal_symmetry=crystal_symmetry,
-    pdb_inp=pdb_inp,
-    pdb_string=pdb_string,
-    pdb_in=params.input_files.pdb_in)
+    # Get map_data if not present
+    map_data, map_coeffs, crystal_symmetry = get_map_data_and_symmetry(
+        crystal_symmetry=crystal_symmetry,
+        map_data=map_data,
+        map_coeffs=map_coeffs,
+        map_file=params.input_files.map_file,
+        map_coeffs_file=params.input_files.map_coeffs_file,
+        map_coeffs_labels=params.input_files.map_coeffs_labels,
+        out=out,
+    )
 
-  pdb_hierarchy,multiple_models_hierarchy=run_one_cycle(
-    params=params,
-    map_data=map_data,
-    pdb_inp=pdb_inp,
-    pdb_string=pdb_string,
-    crystal_symmetry=crystal_symmetry,
-    params_edits=params_edits,
-    out=out)
+    # Get the starting model
+    pdb_inp, cryst1_line, pdb_string = get_pdb_inp(
+        crystal_symmetry=crystal_symmetry,
+        pdb_inp=pdb_inp,
+        pdb_string=pdb_string,
+        pdb_in=params.input_files.pdb_in,
+    )
 
-  if params.output_files.pdb_out:
-    f=open(params.output_files.pdb_out,'w')
-    print(cryst1_line, file=f)
-    print(pdb_hierarchy.as_pdb_string(), file=f)
-    print("\nWrote output model to %s" %(params.output_files.pdb_out), file=out)
-    f.close()
-  # all done
-  return pdb_hierarchy,multiple_models_hierarchy
+    pdb_hierarchy, multiple_models_hierarchy = run_one_cycle(
+        params=params,
+        map_data=map_data,
+        pdb_inp=pdb_inp,
+        pdb_string=pdb_string,
+        crystal_symmetry=crystal_symmetry,
+        params_edits=params_edits,
+        out=out,
+    )
 
-if   (__name__ == "__main__"):
-  args=sys.argv[1:]
-  run(args=args)
+    if params.output_files.pdb_out:
+        f = open(params.output_files.pdb_out, "w")
+        print(cryst1_line, file=f)
+        print(pdb_hierarchy.as_pdb_string(), file=f)
+        print("\nWrote output model to %s" % (params.output_files.pdb_out), file=out)
+        f.close()
+    # all done
+    return pdb_hierarchy, multiple_models_hierarchy
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    run(args=args)

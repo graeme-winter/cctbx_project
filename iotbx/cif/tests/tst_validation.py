@@ -12,158 +12,197 @@ import sys
 cif_core_dic_url = "ftp://ftp.iucr.org/pub/cif_core.dic"
 cif_mm_dic_url = "ftp://ftp.iucr.org/pub/cif_mm.dic"
 
+
 def exercise(args):
-  import socket
-  if socket.getdefaulttimeout() is None:
-    socket.setdefaulttimeout(5)
-  show_timings = "--show_timings" in args
-  exercise_url = "--exercise_url" in args
-  try:
-    exercise_smart_load(show_timings=show_timings, exercise_url=exercise_url)
-  except URLError:
-    print("Skipping tst_validation.exercise_smart_load() because of URLError.")
-  exercise_dictionary_merging()
-  exercise_validation()
+    import socket
+
+    if socket.getdefaulttimeout() is None:
+        socket.setdefaulttimeout(5)
+    show_timings = "--show_timings" in args
+    exercise_url = "--exercise_url" in args
+    try:
+        exercise_smart_load(show_timings=show_timings, exercise_url=exercise_url)
+    except URLError:
+        print("Skipping tst_validation.exercise_smart_load() because of URLError.")
+    exercise_dictionary_merging()
+    exercise_validation()
+
 
 def exercise_validation():
-  cd = validation.smart_load_dictionary(name="cif_core.dic")
-  assert isinstance(cd.deepcopy(), validation.dictionary)
-  assert cd.deepcopy() == cd
-  assert isinstance(cd.copy(), validation.dictionary)
-  assert cd.copy() == cd
-  #
-  cm_invalid = cif.reader(input_string=cif_invalid).model()
-  s = StringIO()
-  cm_invalid.validate(cd, out=s)
-  assert sorted(cd.err.errors.keys()) == [
-    2001, 2002, 2101, 2102, 2501, 2503, 2504, 2505, 2506]
-  assert sorted(cd.err.warnings.keys()) == [1001, 1002, 1003]
-  cm_valid = cif.reader(input_string=cif_valid).model()
-  cd.err.reset()
-  s = StringIO()
-  cm_valid.validate(cd, out=s)
-  assert len(list(cd.err.errors.keys())) == 0
-  assert len(list(cd.err.warnings.keys())) == 0
-  cd2 = validation.smart_load_dictionary(name="cif_mm.dic")
-  cm_invalid_2 = cif.reader(input_string=cif_invalid_2).model()
-  s = StringIO()
-  cm_invalid_2.validate(cd2, out=s)
-  assert sorted(cd2.err.errors.keys()) == [
-    2001, 2101, 2102, 2201, 2202, 2203, 2301, 2503, 2504]
-  assert cd2.err.error_count == 12
-  assert sorted(cd2.err.warnings.keys()) == [1001, 1002]
+    cd = validation.smart_load_dictionary(name="cif_core.dic")
+    assert isinstance(cd.deepcopy(), validation.dictionary)
+    assert cd.deepcopy() == cd
+    assert isinstance(cd.copy(), validation.dictionary)
+    assert cd.copy() == cd
+    #
+    cm_invalid = cif.reader(input_string=cif_invalid).model()
+    s = StringIO()
+    cm_invalid.validate(cd, out=s)
+    assert sorted(cd.err.errors.keys()) == [
+        2001,
+        2002,
+        2101,
+        2102,
+        2501,
+        2503,
+        2504,
+        2505,
+        2506,
+    ]
+    assert sorted(cd.err.warnings.keys()) == [1001, 1002, 1003]
+    cm_valid = cif.reader(input_string=cif_valid).model()
+    cd.err.reset()
+    s = StringIO()
+    cm_valid.validate(cd, out=s)
+    assert len(list(cd.err.errors.keys())) == 0
+    assert len(list(cd.err.warnings.keys())) == 0
+    cd2 = validation.smart_load_dictionary(name="cif_mm.dic")
+    cm_invalid_2 = cif.reader(input_string=cif_invalid_2).model()
+    s = StringIO()
+    cm_invalid_2.validate(cd2, out=s)
+    assert sorted(cd2.err.errors.keys()) == [
+        2001,
+        2101,
+        2102,
+        2201,
+        2202,
+        2203,
+        2301,
+        2503,
+        2504,
+    ]
+    assert cd2.err.error_count == 12
+    assert sorted(cd2.err.warnings.keys()) == [1001, 1002]
+
 
 def exercise_smart_load(show_timings=False, exercise_url=False):
-  from libtbx.test_utils import open_tmp_directory
-  from libtbx.utils import time_log
-  import libtbx
-  import os, shutil
-  name = ["cif_core.dic", "cif_mm.dic"][0]
-  url = [cif_core_dic_url, cif_mm_dic_url][0]
-  # from gz
-  gz_timer = time_log("from gz").start()
-  cd = validation.smart_load_dictionary(name=name)
-  gz_timer.stop()
-  if exercise_url:
-    tempdir = open_tmp_directory()
-    store_dir = libtbx.env.under_dist(
-      module_name='iotbx', path='cif/dictionaries')
-    file_path = os.path.join(store_dir, name) + '.gz'
-    shutil.copy(os.path.join(store_dir, name) + '.gz', tempdir)
-    # from url
-    url_timer = time_log("from url").start()
-    cd = validation.smart_load_dictionary(url=url, store_dir=tempdir)
-    url_timer.stop()
-    # from url to file
-    url_to_file_timer = time_log("url to file").start()
-    cd = validation.smart_load_dictionary(
-      url=url, save_local=True, store_dir=tempdir)
-    url_to_file_timer.stop()
-    # read local file
-    file_timer = time_log("from file").start()
-    cd = validation.smart_load_dictionary(file_path=os.path.join(tempdir, name))
-    file_timer.stop()
-  if show_timings:
-    print(time_log.legend)
-    print(gz_timer.report())
+    from libtbx.test_utils import open_tmp_directory
+    from libtbx.utils import time_log
+    import libtbx
+    import os, shutil
+
+    name = ["cif_core.dic", "cif_mm.dic"][0]
+    url = [cif_core_dic_url, cif_mm_dic_url][0]
+    # from gz
+    gz_timer = time_log("from gz").start()
+    cd = validation.smart_load_dictionary(name=name)
+    gz_timer.stop()
     if exercise_url:
-      print(url_timer.report())
-      print(url_to_file_timer.report())
-      print(file_timer.report())
+        tempdir = open_tmp_directory()
+        store_dir = libtbx.env.under_dist(module_name="iotbx", path="cif/dictionaries")
+        file_path = os.path.join(store_dir, name) + ".gz"
+        shutil.copy(os.path.join(store_dir, name) + ".gz", tempdir)
+        # from url
+        url_timer = time_log("from url").start()
+        cd = validation.smart_load_dictionary(url=url, store_dir=tempdir)
+        url_timer.stop()
+        # from url to file
+        url_to_file_timer = time_log("url to file").start()
+        cd = validation.smart_load_dictionary(
+            url=url, save_local=True, store_dir=tempdir
+        )
+        url_to_file_timer.stop()
+        # read local file
+        file_timer = time_log("from file").start()
+        cd = validation.smart_load_dictionary(file_path=os.path.join(tempdir, name))
+        file_timer.stop()
+    if show_timings:
+        print(time_log.legend)
+        print(gz_timer.report())
+        if exercise_url:
+            print(url_timer.report())
+            print(url_to_file_timer.report())
+            print(file_timer.report())
+
 
 def exercise_dictionary_merging():
-  #
-  # DDL1 merging
-  #
-  def cif_dic_from_str(string):
-    on_this_dict = """
+    #
+    # DDL1 merging
+    #
+    def cif_dic_from_str(string):
+        on_this_dict = """
     data_on_this_dictionary
     _dictionary_name dummy
     _dictionary_version 1.0
     """
-    return validation.dictionary(
-      cif.reader(input_string=on_this_dict+string).model())
-  test_cif = cif.reader(input_string="""
+        return validation.dictionary(
+            cif.reader(input_string=on_this_dict + string).model()
+        )
+
+    test_cif = cif.reader(
+        input_string="""
   data_test
   _dummy 1234.5
-  """).model()
-  dict_official = cif_dic_from_str("""
+  """
+    ).model()
+    dict_official = cif_dic_from_str(
+        """
   data_dummy
   _name '_dummy'
   _type numb
   _enumeration_range 0: # i.e. any positive number
-  """)
-  dict_a = cif_dic_from_str("""
+  """
+    )
+    dict_a = cif_dic_from_str(
+        """
   data_dummy_modified
   _name '_dummy'
   _enumeration_range 0:1000
-  """)
-  dict_b = cif_dic_from_str("""
+  """
+    )
+    dict_b = cif_dic_from_str(
+        """
   data_dummy
   _name '_dummy'
   _type_extended integer
-  """)
-  dict_c = cif_dic_from_str("""
+  """
+    )
+    dict_c = cif_dic_from_str(
+        """
   data_dummy
   _name '_dummy'
   _type char
-  """)
-  test_cif.validate(dict_official)
-  try: dict_official.deepcopy().update(other=dict_a, mode="strict")
-  except AssertionError: pass
-  else: raise Exception_expected
-  dict_oa = dict_official.deepcopy()
-  dict_oa.update(other=dict_a, mode="overlay")
-  assert dict_oa["dummy"]["_type"] == "numb"
-  assert dict_oa["dummy"]["_enumeration_range"] == "0:1000"
-  assert test_cif.validate(dict_oa, out=StringIO()).error_count == 1
-  dict_ao = dict_a.deepcopy()
-  dict_ao.update(other=dict_official, mode="overlay")
-  assert dict_ao["dummy_modified"]["_type"] == "numb"
-  assert dict_ao["dummy_modified"]["_enumeration_range"] == "0:"
-  assert test_cif.validate(dict_ao).error_count == 0
-  dict_ob = dict_official.deepcopy()
-  dict_ob.update(other=dict_b, mode="overlay")
-  assert dict_ob["dummy"]["_type"] == "numb"
-  assert dict_ob["dummy"]["_type_extended"] == "integer"
-  assert test_cif.validate(dict_ob).error_count == 0
-  dict_ob = dict_official.deepcopy()
-  dict_ob.update(other=dict_b, mode="replace")
-  assert "_type" not in dict_ob["dummy"]
-  assert dict_ob["dummy"]["_type_extended"] == "integer"
-  assert test_cif.validate(dict_ob).error_count == 0
-  dict_oc = dict_official.deepcopy()
-  dict_oc.update(other=dict_c, mode="replace")
-  assert dict_oc["dummy"]["_type"] == "char"
-  assert test_cif.validate(dict_oc).error_count == 0
-  dict_oc = dict_official.deepcopy()
-  dict_oc.update(other=dict_c, mode="overlay")
-  errors = test_cif.validate(dict_oc)
-  #
-  # DDL2 merging
-  #
-  def cif_dic_from_str(string):
-    header = """\
+  """
+    )
+    test_cif.validate(dict_official)
+    try:
+        dict_official.deepcopy().update(other=dict_a, mode="strict")
+    except AssertionError:
+        pass
+    else:
+        raise Exception_expected
+    dict_oa = dict_official.deepcopy()
+    dict_oa.update(other=dict_a, mode="overlay")
+    assert dict_oa["dummy"]["_type"] == "numb"
+    assert dict_oa["dummy"]["_enumeration_range"] == "0:1000"
+    assert test_cif.validate(dict_oa, out=StringIO()).error_count == 1
+    dict_ao = dict_a.deepcopy()
+    dict_ao.update(other=dict_official, mode="overlay")
+    assert dict_ao["dummy_modified"]["_type"] == "numb"
+    assert dict_ao["dummy_modified"]["_enumeration_range"] == "0:"
+    assert test_cif.validate(dict_ao).error_count == 0
+    dict_ob = dict_official.deepcopy()
+    dict_ob.update(other=dict_b, mode="overlay")
+    assert dict_ob["dummy"]["_type"] == "numb"
+    assert dict_ob["dummy"]["_type_extended"] == "integer"
+    assert test_cif.validate(dict_ob).error_count == 0
+    dict_ob = dict_official.deepcopy()
+    dict_ob.update(other=dict_b, mode="replace")
+    assert "_type" not in dict_ob["dummy"]
+    assert dict_ob["dummy"]["_type_extended"] == "integer"
+    assert test_cif.validate(dict_ob).error_count == 0
+    dict_oc = dict_official.deepcopy()
+    dict_oc.update(other=dict_c, mode="replace")
+    assert dict_oc["dummy"]["_type"] == "char"
+    assert test_cif.validate(dict_oc).error_count == 0
+    dict_oc = dict_official.deepcopy()
+    dict_oc.update(other=dict_c, mode="overlay")
+    errors = test_cif.validate(dict_oc)
+    #
+    # DDL2 merging
+    #
+    def cif_dic_from_str(string):
+        header = """\
 data_test.dic
     _dictionary.title           test.dic
     _dictionary.version         1
@@ -178,19 +217,20 @@ data_test.dic
 ;              code item types/single words ...
 ;
 """
-    return validation.dictionary(
-      cif.reader(input_string=header+string).model())
-  dic_a = cif_dic_from_str(
-    """
+        return validation.dictionary(cif.reader(input_string=header + string).model())
+
+    dic_a = cif_dic_from_str(
+        """
 save_fred
     _category.description       'a description'
     _category.id                  fred
     _category.mandatory_code      no
     _category_key.name          'fred.id'
      save_
-    """)
-  dic_b = cif_dic_from_str(
     """
+    )
+    dic_b = cif_dic_from_str(
+        """
 save_fred
     _category.id                  fred
     _category.mandatory_code      yes
@@ -199,33 +239,38 @@ save_fred
     _category_group.id           'inclusive_group'
                                  'atom_group'
      save_
-""")
-  dic_c = cif_dic_from_str(
-    """
+"""
+    )
+    dic_c = cif_dic_from_str(
+        """
 save_bob
     _category.id                  bob
     _category.mandatory_code      yes
     _category_key.name          'bob.id'
      save_
-""")
-  assert dic_a.deepcopy() == dic_a
-  assert dic_a.copy() == dic_a
-  try: dic_a.deepcopy().update(dic_b, mode="strict")
-  except AssertionError: pass
-  else: raise Exception_expected
-  dic_ab = dic_a.deepcopy()
-  dic_ab.update(dic_b, mode="replace")
-  assert dic_ab == dic_b
-  dic_ab = dic_a.deepcopy()
-  dic_ab.update(dic_b, mode="overlay")
-  assert dic_ab['test.dic']['fred']['_category.mandatory_code'] == 'yes'
-  assert '_category.description' in dic_ab['test.dic']['fred']
-  assert '_category_group.id' in dic_ab['test.dic']['fred']
-  for mode in ("strict", "replace", "overlay"):
-    dic_ac = dic_a.deepcopy()
-    dic_ac.update(dic_c, mode=mode)
-    assert 'fred' in dic_ac['test.dic']
-    assert 'bob' in dic_ac['test.dic']
+"""
+    )
+    assert dic_a.deepcopy() == dic_a
+    assert dic_a.copy() == dic_a
+    try:
+        dic_a.deepcopy().update(dic_b, mode="strict")
+    except AssertionError:
+        pass
+    else:
+        raise Exception_expected
+    dic_ab = dic_a.deepcopy()
+    dic_ab.update(dic_b, mode="replace")
+    assert dic_ab == dic_b
+    dic_ab = dic_a.deepcopy()
+    dic_ab.update(dic_b, mode="overlay")
+    assert dic_ab["test.dic"]["fred"]["_category.mandatory_code"] == "yes"
+    assert "_category.description" in dic_ab["test.dic"]["fred"]
+    assert "_category_group.id" in dic_ab["test.dic"]["fred"]
+    for mode in ("strict", "replace", "overlay"):
+        dic_ac = dic_a.deepcopy()
+        dic_ac.update(dic_c, mode=mode)
+        assert "fred" in dic_ac["test.dic"]
+        assert "bob" in dic_ac["test.dic"]
 
 
 cif_invalid = """data_1
@@ -324,5 +369,5 @@ x,y,z
 """
 
 if __name__ == "__main__":
-  exercise(sys.argv[1:])
-  print("OK")
+    exercise(sys.argv[1:])
+    print("OK")

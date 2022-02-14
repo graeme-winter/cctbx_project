@@ -5,12 +5,14 @@ from __future__ import absolute_import, division, print_function
 import boost_adaptbx.boost.python as bp
 import sys
 
-def run(args):
-  assert len(args) == 0
-  print("Now dereferencing null-pointer ...")
-  sys.stdout.flush()
-  result = bp.ext.dereference_char_pointer(None)
-  print("Result:", result)
 
-if (__name__ == "__main__"):
-  run(sys.argv[1:])
+def run(args):
+    assert len(args) == 0
+    print("Now dereferencing null-pointer ...")
+    sys.stdout.flush()
+    result = bp.ext.dereference_char_pointer(None)
+    print("Result:", result)
+
+
+if __name__ == "__main__":
+    run(sys.argv[1:])

@@ -2,19 +2,21 @@ from __future__ import division, print_function
 import sys
 import ast
 
+
 def class_has_show_but_not_repr(node):
     found_repr = False
     found_show = False
 
     for obj in node.body:
         if isinstance(obj, ast.FunctionDef):
-            if obj.name == '__repr__':
+            if obj.name == "__repr__":
                 found_repr = True
-            if obj.name == '__str__':
+            if obj.name == "__str__":
                 found_repr = True
-            if obj.name == 'show':
+            if obj.name == "show":
                 found_show = True
     return found_show and not found_repr
+
 
 class rummage(ast.NodeVisitor):
     def __init__(self, node):
@@ -29,7 +31,8 @@ class rummage(ast.NodeVisitor):
     def offenders(self):
         return self.__offenders
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     for arg in sys.argv:
         with open(arg) as f:
             tree = ast.parse(f.read())
@@ -37,6 +40,6 @@ if __name__ == '__main__':
         r = rummage(tree)
         off = r.offenders()
         if off:
-            print('File: %s' % arg)
+            print("File: %s" % arg)
             for o in off:
-                print('Class: %s' % o)
+                print("Class: %s" % o)

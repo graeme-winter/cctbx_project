@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from libtbx import easy_run
 
-pdb_str_1 = '''
+pdb_str_1 = """
 CRYST1  230.463  123.139  153.201  90.00 131.05  90.00 C 1 2 1
 SCALE1      0.004339  0.000000  0.003779        0.00000
 SCALE2      0.000000  0.008121  0.000000        0.00000
@@ -38,7 +38,7 @@ ATOM     28  NE2 HIS A1060     -12.911 -21.303  78.702  1.00135.21           N
 TER
 HETATM   29 ZN    ZN A2083     -15.163 -21.423  79.459  1.00340.34          Zn
 END
-'''
+"""
 
 pdb_str_2 = """
 ATOM  41609  N   ARG L 107     336.348 327.647 268.798  1.00 73.69           N
@@ -343,18 +343,20 @@ TER
 END
 """
 
-def main():
-  for i, pdb_str in enumerate([pdb_str_1, pdb_str_2]):
-    print (i)
-    fn = 'tst_mcl_%d.pdb'%i
-    with open(fn, 'w') as f:
-      f.write(pdb_str)
-    cmd = 'phenix.pdb_interpretation %s write_geo=true'%fn
-    print (cmd)
-    rc = easy_run.go(cmd)
-    assert os.path.exists('%s.geo'%fn)
-    assert not rc.return_code
 
-if __name__ == '__main__':
-  main()
-  print('OK')
+def main():
+    for i, pdb_str in enumerate([pdb_str_1, pdb_str_2]):
+        print(i)
+        fn = "tst_mcl_%d.pdb" % i
+        with open(fn, "w") as f:
+            f.write(pdb_str)
+        cmd = "phenix.pdb_interpretation %s write_geo=true" % fn
+        print(cmd)
+        rc = easy_run.go(cmd)
+        assert os.path.exists("%s.geo" % fn)
+        assert not rc.return_code
+
+
+if __name__ == "__main__":
+    main()
+    print("OK")

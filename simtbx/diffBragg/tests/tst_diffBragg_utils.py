@@ -7,6 +7,7 @@ PARAMS = phil_scope.extract()
 
 import logging
 import sys
+
 logger = logging.getLogger()
 handler = logging.StreamHandler(sys.stdout)
 format = "%(filename)s:%(funcName)s >> %(message)s"

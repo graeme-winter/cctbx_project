@@ -6,6 +6,7 @@ from simtbx.diffBragg import hopper_utils
 from dxtbx.model.experiment_list import ExperimentListFactory
 import h5py
 from dxtbx.model.experiment_list import ExperimentList
+
 try:
     import pandas
 except ImportError:
@@ -28,7 +29,8 @@ DETZ_ID = 10
 # LIBTBX_SET_DISPATCHER_NAME simtbx.diffBragg.hopper
 
 import numpy as np
-np.seterr(invalid='ignore')
+
+np.seterr(invalid="ignore")
 import os
 from dials.array_family import flex
 from libtbx.mpi4py import MPI
@@ -71,7 +73,8 @@ class Script:
                 read_experiments=True,
                 read_reflections=True,
                 check_format=False,
-                epilog="PyCuties")
+                epilog="PyCuties",
+            )
             self.params, _ = self.parser.parse_args(show_diff_phil=True)
             assert self.params.outdir is not None
         self.params = COMM.bcast(self.params)
@@ -85,6 +88,7 @@ class Script:
         if self.params.profile_name is None:
             self.params.profile_name = "prof_stage1.log"
         from simtbx.diffBragg import mpi_logger
+
         mpi_logger.setup_logging_from_params(self.params)
 
     def run(self):
@@ -95,9 +99,9 @@ class Script:
         if COMM.rank == 0:
             input_lines = open(self.params.exp_ref_spec_file, "r").readlines()
             if self.params.skip is not None:
-                input_lines = input_lines[self.params.skip:]
+                input_lines = input_lines[self.params.skip :]
             if self.params.first_n is not None:
-                input_lines = input_lines[:self.params.first_n]
+                input_lines = input_lines[: self.params.first_n]
             if self.params.sanity_test_input:
                 hopper_utils.sanity_test_input_lines(input_lines)
 
@@ -107,15 +111,20 @@ class Script:
 
             if self.params.dump_gathers:
                 if self.params.gathers_dir is None:
-                    raise ValueError("Need to provide a file dir path in order to dump_gathers")
+                    raise ValueError(
+                        "Need to provide a file dir path in order to dump_gathers"
+                    )
                 utils.safe_makedirs(self.params.gathers_dir)
         input_lines = COMM.bcast(input_lines)
         best_models = COMM.bcast(best_models)
 
         if self.params.ignore_existing:
-            exp_names_already =None
-            if COMM.rank==0:
-                exp_names_already = {os.path.basename(f) for f in glob.glob("%s/expers/rank*/*.expt" % self.params.outdir)}
+            exp_names_already = None
+            if COMM.rank == 0:
+                exp_names_already = {
+                    os.path.basename(f)
+                    for f in glob.glob("%s/expers/rank*/*.expt" % self.params.outdir)
+                }
             exp_names_already = COMM.bcast(exp_names_already)
 
         exp_gatheredRef_spec = []  # optional list of expt, refls, spectra
@@ -125,7 +134,10 @@ class Script:
             if i_exp % COMM.size != COMM.rank:
                 continue
 
-            logging.info("COMM.rank %d on shot  %d / %d" % (COMM.rank, i_exp + 1, len(input_lines)))
+            logging.info(
+                "COMM.rank %d on shot  %d / %d"
+                % (COMM.rank, i_exp + 1, len(input_lines))
+            )
             line_fields = line.strip().split()
             assert len(line_fields) in [2, 3]
             if len(line_fields) == 2:
@@ -146,7 +158,10 @@ class Script:
                 if len(best) == 0:
                     best = best_models.query("opt_exp_name=='%s'" % exp)
                 if len(best) != 1:
-                    raise ValueError("Should be 1 entry for exp %s in best pickle %s" % (exp, self.params.best_pickle))
+                    raise ValueError(
+                        "Should be 1 entry for exp %s in best pickle %s"
+                        % (exp, self.params.best_pickle)
+                    )
             self.params.simulator.spectrum.filename = spec
             MAIN_LOGGER.info("Modeling %s" % exp)
             Modeler = hopper_utils.DataModeler(self.params)
@@ -155,13 +170,17 @@ class Script:
             else:
                 gathered = Modeler.GatherFromExperiment(exp, ref)
             if not gathered:
-                logging.warning("No refls in %s; CONTINUE; COMM.rank=%d" % (ref, COMM.rank))
+                logging.warning(
+                    "No refls in %s; CONTINUE; COMM.rank=%d" % (ref, COMM.rank)
+                )
                 continue
             if self.params.dump_gathers:
                 output_name = os.path.splitext(os.path.basename(exp))[0]
                 output_name += "_withData.refl"
                 output_name = os.path.join(self.params.gathers_dir, output_name)
-                Modeler.dump_gathered_to_refl(output_name, do_xyobs_sanity_check=True)  # NOTE do this is modelin strong spots only
+                Modeler.dump_gathered_to_refl(
+                    output_name, do_xyobs_sanity_check=True
+                )  # NOTE do this is modelin strong spots only
                 if self.params.test_gathered_file:
                     all_data = Modeler.all_data.copy()
                     all_roi_id = Modeler.roi_id.copy()
@@ -183,11 +202,13 @@ class Script:
                     continue
 
             if self.params.refiner.reference_geom is not None:
-                detector = ExperimentListFactory.from_json_file(self.params.refiner.reference_geom, check_format=False)[0].detector
+                detector = ExperimentListFactory.from_json_file(
+                    self.params.refiner.reference_geom, check_format=False
+                )[0].detector
                 Modeler.E.detector = detector
             Modeler.SimulatorFromExperiment(best)
             Modeler.SIM.D.store_ave_wavelength_image = True
-            if self.params.refiner.verbose is not None and COMM.rank==0:
+            if self.params.refiner.verbose is not None and COMM.rank == 0:
                 Modeler.SIM.D.verbose = self.params.refiner.verbose
             if self.params.profile:
                 Modeler.SIM.record_timings = True
@@ -197,10 +218,16 @@ class Script:
 
             if self.params.refiner.randomize_devices:
                 dev = np.random.choice(self.params.refiner.num_devices)
-                logging.info("Rank %d will use randomly chosen device %d on host %s" % (COMM.rank, dev, socket.gethostname()))
+                logging.info(
+                    "Rank %d will use randomly chosen device %d on host %s"
+                    % (COMM.rank, dev, socket.gethostname())
+                )
             else:
                 dev = COMM.rank % self.params.refiner.num_devices
-                logging.info("Rank %d will use device %d on host %s" % (COMM.rank, dev, socket.gethostname()))
+                logging.info(
+                    "Rank %d will use device %d on host %s"
+                    % (COMM.rank, dev, socket.gethostname())
+                )
 
             Modeler.SIM.D.device_Id = dev
 
@@ -208,7 +235,7 @@ class Script:
             x0 = [1] * nparam
             x = Modeler.Minimize(x0)
             if self.params.profile:
-                Modeler.SIM.D.show_timings(COMM.rank) #, out)
+                Modeler.SIM.D.show_timings(COMM.rank)  # , out)
             save_up(Modeler, x, exp, i_exp, ref)
 
         if self.params.dump_gathers and self.params.gathered_output_file is not None:
@@ -217,15 +244,17 @@ class Script:
                 o = open(self.params.gathered_output_file, "w")
                 for e, r, s in exp_gatheredRef_spec:
                     if s is not None:
-                        o.write("%s %s %s\n" % (e,r,s))
+                        o.write("%s %s %s\n" % (e, r, s))
                     else:
-                        o.write("%s %s\n" % (e,r))
+                        o.write("%s %s\n" % (e, r))
                 o.close()
 
 
 def save_up(Modeler, x, exp, i_exp, input_refls):
     LOGGER = logging.getLogger("refine")
-    Modeler.best_model, _ = hopper_utils.model(x, Modeler.SIM, Modeler.pan_fast_slow, compute_grad=False)
+    Modeler.best_model, _ = hopper_utils.model(
+        x, Modeler.SIM, Modeler.pan_fast_slow, compute_grad=False
+    )
     Modeler.best_model_includes_background = False
     LOGGER.info("Optimized values for i_exp %d:" % i_exp)
     hopper_utils.look_at_x(x, Modeler.SIM)
@@ -236,31 +265,46 @@ def save_up(Modeler, x, exp, i_exp, input_refls):
     rank_spectra_outdir = make_rank_outdir(Modeler.params.outdir, "spectra")
 
     basename = os.path.splitext(os.path.basename(exp))[0]
-    img_path = os.path.join(rank_imgs_outdir, "%s_%s_%d.h5" % (Modeler.params.tag, basename, i_exp))
-    SIMlog_path = os.path.join(rank_SIMlog_outdir, "%s_%s_%d.txt" % (Modeler.params.tag, basename, i_exp))
-    new_refls_file = os.path.join(rank_refls_outdir, "%s_%s_%d.refl" % (Modeler.params.tag, basename, i_exp))
-    spectra_path = os.path.join(rank_spectra_outdir, "%s_%s_%d.lam" % (Modeler.params.tag, basename, i_exp))
+    img_path = os.path.join(
+        rank_imgs_outdir, "%s_%s_%d.h5" % (Modeler.params.tag, basename, i_exp)
+    )
+    SIMlog_path = os.path.join(
+        rank_SIMlog_outdir, "%s_%s_%d.txt" % (Modeler.params.tag, basename, i_exp)
+    )
+    new_refls_file = os.path.join(
+        rank_refls_outdir, "%s_%s_%d.refl" % (Modeler.params.tag, basename, i_exp)
+    )
+    spectra_path = os.path.join(
+        rank_spectra_outdir, "%s_%s_%d.lam" % (Modeler.params.tag, basename, i_exp)
+    )
 
     if Modeler.SIM.num_xtals == 1:
-        save_to_pandas(x, Modeler.SIM, exp, Modeler.params, Modeler.E, i_exp, input_refls, img_path)
+        save_to_pandas(
+            x, Modeler.SIM, exp, Modeler.params, Modeler.E, i_exp, input_refls, img_path
+        )
 
-    data_subimg, model_subimg, trusted_subimg, bragg_subimg = Modeler.get_data_model_pairs()
+    (
+        data_subimg,
+        model_subimg,
+        trusted_subimg,
+        bragg_subimg,
+    ) = Modeler.get_data_model_pairs()
 
     wavelen_subimg = []
     if Modeler.SIM.D.store_ave_wavelength_image:
         bm = Modeler.best_model.copy()
         Modeler.best_model = Modeler.SIM.D.ave_wavelength_image().as_numpy_array()
         Modeler.best_model_includes_background = True
-        _, wavelen_subimg, _,_ = Modeler.get_data_model_pairs()
+        _, wavelen_subimg, _, _ = Modeler.get_data_model_pairs()
         Modeler.best_model = bm
         Modeler.best_model_includes_background = False
 
     comp = {"compression": "lzf"}
     new_refls = deepcopy(Modeler.refls)
-    has_xyzcal = 'xyzcal.px' in list(new_refls.keys())
+    has_xyzcal = "xyzcal.px" in list(new_refls.keys())
     if has_xyzcal:
-        new_refls['dials.xyzcal.px'] = deepcopy(new_refls['xyzcal.px'])
-    new_xycalcs = flex.vec3_double(len(Modeler.refls), (np.nan,np.nan,np.nan))
+        new_refls["dials.xyzcal.px"] = deepcopy(new_refls["xyzcal.px"])
+    new_xycalcs = flex.vec3_double(len(Modeler.refls), (np.nan, np.nan, np.nan))
     h5_roi_id = flex.int(len(Modeler.refls), -1)
     with h5py.File(img_path, "w") as h5:
         sigmaZs = []
@@ -268,26 +312,30 @@ def save_up(Modeler, x, exp, i_exp, input_refls):
             dat = data_subimg[i_roi]
             fit = model_subimg[i_roi]
             trust = trusted_subimg[i_roi]
-            sig = np.sqrt(fit + Modeler.sigma_rdout**2)
+            sig = np.sqrt(fit + Modeler.sigma_rdout ** 2)
             Z = (dat - fit) / sig
             sigmaZ = Z[trust].std()
             sigmaZs.append(sigmaZ)
             h5.create_dataset("data/roi%d" % i_roi, data=data_subimg[i_roi], **comp)
             h5.create_dataset("model/roi%d" % i_roi, data=model_subimg[i_roi], **comp)
             if wavelen_subimg:
-                h5.create_dataset("wavelength/roi%d" % i_roi, data=wavelen_subimg[i_roi], **comp)
+                h5.create_dataset(
+                    "wavelength/roi%d" % i_roi, data=wavelen_subimg[i_roi], **comp
+                )
             if bragg_subimg[0] is not None:
-                h5.create_dataset("bragg/roi%d" % i_roi, data=bragg_subimg[i_roi], **comp)
+                h5.create_dataset(
+                    "bragg/roi%d" % i_roi, data=bragg_subimg[i_roi], **comp
+                )
                 if np.any(bragg_subimg[i_roi] > 0):
                     I = bragg_subimg[i_roi]
-                    Y,X = np.indices(bragg_subimg[i_roi].shape)
-                    x1,_,y1,_ = Modeler.rois[i_roi]
+                    Y, X = np.indices(bragg_subimg[i_roi].shape)
+                    x1, _, y1, _ = Modeler.rois[i_roi]
                     X += x1
                     Y += y1
                     Isum = I.sum()
-                    xcom = (X*I).sum() / Isum
-                    ycom = (Y*I).sum() / Isum
-                    com = xcom+.5, ycom+.5, 0
+                    xcom = (X * I).sum() / Isum
+                    ycom = (Y * I).sum() / Isum
+                    com = xcom + 0.5, ycom + 0.5, 0
                     ref_idx = Modeler.refls_idx[i_roi]
                     h5_roi_id[ref_idx] = i_roi
                     new_xycalcs[ref_idx] = com
@@ -302,36 +350,68 @@ def save_up(Modeler, x, exp, i_exp, input_refls):
     new_refls["xyzcal.px"] = new_xycalcs
     new_refls["h5_roi_idx"] = h5_roi_id
     if Modeler.params.filter_unpredicted_refls_in_output:
-        sel = [not np.isnan(x) for x,y,z in new_xycalcs]
+        sel = [not np.isnan(x) for x, y, z in new_xycalcs]
         new_refls = new_refls.select(flex.bool(sel))
     new_refls.as_file(new_refls_file)
 
     if Modeler.params.refiner.debug_pixel_panelfastslow is not None:
         # TODO separate diffBragg logger
-        utils.show_diffBragg_state(Modeler.SIM.D, Modeler.params.refiner.debug_pixel_panelfastslow)
+        utils.show_diffBragg_state(
+            Modeler.SIM.D, Modeler.params.refiner.debug_pixel_panelfastslow
+        )
         print("Refiner scale=%f" % Modeler.SIM.Scale_params[0].get_val(x[0]))
 
     hopper_utils.finalize_SIM(Modeler.SIM, log=SIMlog_path, lam=spectra_path)
 
 
-def save_to_pandas(x, SIM, orig_exp_name, params, expt, rank_exp_idx, stg1_refls, stg1_img_path):
+def save_to_pandas(
+    x, SIM, orig_exp_name, params, expt, rank_exp_idx, stg1_refls, stg1_img_path
+):
     LOGGER = logging.getLogger("refine")
     rank_exper_outdir = make_rank_outdir(params.outdir, "expers")
-    rank_pandas_outdir =make_rank_outdir(params.outdir, "pandas")
+    rank_pandas_outdir = make_rank_outdir(params.outdir, "pandas")
 
-    #if SIM.num_xtals > 1:
+    # if SIM.num_xtals > 1:
     #    raise NotImplemented("cant save pandas for multiple crystals yet")
-    scale, rotX, rotY, rotZ, Na, Nb, Nc,diff_gam_a, diff_gam_b, diff_gam_c, diff_sig_a, diff_sig_b, diff_sig_c, a,b,c,al,be,ga,detz_shift = hopper_utils.get_param_from_x(x, SIM)
+    (
+        scale,
+        rotX,
+        rotY,
+        rotZ,
+        Na,
+        Nb,
+        Nc,
+        diff_gam_a,
+        diff_gam_b,
+        diff_gam_c,
+        diff_sig_a,
+        diff_sig_b,
+        diff_sig_c,
+        a,
+        b,
+        c,
+        al,
+        be,
+        ga,
+        detz_shift,
+    ) = hopper_utils.get_param_from_x(x, SIM)
     if params.isotropic.diffuse_gamma:
         diff_gam_b = diff_gam_c = diff_gam_a
     if params.isotropic.diffuse_sigma:
         diff_sig_b = diff_sig_c = diff_sig_a
     shift = np.nan
-    #if SIM.shift_param is not None:
+    # if SIM.shift_param is not None:
     #    shift = SIM.shift_param.get_val(x[-1])
     xtal_scales = [scale]
     eta_a, eta_b, eta_c = hopper_utils.get_mosaicity_from_x(x, SIM)
-    a_init, b_init, c_init, al_init, be_init, ga_init = SIM.crystal.dxtbx_crystal.get_unit_cell().parameters()
+    (
+        a_init,
+        b_init,
+        c_init,
+        al_init,
+        be_init,
+        ga_init,
+    ) = SIM.crystal.dxtbx_crystal.get_unit_cell().parameters()
 
     xax = col((-1, 0, 0))
     yax = col((0, -1, 0))
@@ -354,45 +434,67 @@ def save_to_pandas(x, SIM, orig_exp_name, params, expt, rank_exp_idx, stg1_refls
     eta = [0]
     lam0 = [-1]
     lam1 = [-1]
-    df = pandas.DataFrame({
-        # "panX": list(panX), "panY": list(panY), "panZ": list(panZ),
-        # "panO": list(panO), "panF": list(panF), "panS": list(panS),
-        "spot_scales": xtal_scales, "Amats": Amats, "ncells": ncells_vals,
-        "eta_abc": [(eta_a, eta_b, eta_c)],
-        "detz_shift_mm": [detz_shift * 1e3],
-        "ncells_def": ncells_def_vals,
-        "diffuse_gamma": [(diff_gam_a, diff_gam_b, diff_gam_c)],
-        "diffuse_sigma": [(diff_sig_a, diff_sig_b, diff_sig_c)],
-        "fp_fdp_shift": [shift],
-        "use_diffuse_models": [params.use_diffuse_models],
-        "gamma_miller_units": [params.gamma_miller_units],
-        # "bgplanes": bgplanes, "image_corr": image_corr,
-        # "init_image_corr": init_img_corr,
-        # "fcell_xstart": fcell_xstart,
-        # "ucell_xstart": ucell_xstart,
-        # "init_misorient": init_misori, "final_misorient": final_misori,
-        # "bg_coef": bg_coef,
-        "eta": eta,
-        "rotX": rotX,
-        "rotY": rotY,
-        "rotZ": rotZ,
-        "a": a, "b": b, "c": c, "al": al, "be": be, "ga": ga,
-        "a_init": a_init, "b_init": b_init, "c_init": c_init, "al_init": al_init,
-        "lam0": lam0, "lam1": lam1,
-        "be_init": be_init, "ga_init": ga_init})
+    df = pandas.DataFrame(
+        {
+            # "panX": list(panX), "panY": list(panY), "panZ": list(panZ),
+            # "panO": list(panO), "panF": list(panF), "panS": list(panS),
+            "spot_scales": xtal_scales,
+            "Amats": Amats,
+            "ncells": ncells_vals,
+            "eta_abc": [(eta_a, eta_b, eta_c)],
+            "detz_shift_mm": [detz_shift * 1e3],
+            "ncells_def": ncells_def_vals,
+            "diffuse_gamma": [(diff_gam_a, diff_gam_b, diff_gam_c)],
+            "diffuse_sigma": [(diff_sig_a, diff_sig_b, diff_sig_c)],
+            "fp_fdp_shift": [shift],
+            "use_diffuse_models": [params.use_diffuse_models],
+            "gamma_miller_units": [params.gamma_miller_units],
+            # "bgplanes": bgplanes, "image_corr": image_corr,
+            # "init_image_corr": init_img_corr,
+            # "fcell_xstart": fcell_xstart,
+            # "ucell_xstart": ucell_xstart,
+            # "init_misorient": init_misori, "final_misorient": final_misori,
+            # "bg_coef": bg_coef,
+            "eta": eta,
+            "rotX": rotX,
+            "rotY": rotY,
+            "rotZ": rotZ,
+            "a": a,
+            "b": b,
+            "c": c,
+            "al": al,
+            "be": be,
+            "ga": ga,
+            "a_init": a_init,
+            "b_init": b_init,
+            "c_init": c_init,
+            "al_init": al_init,
+            "lam0": lam0,
+            "lam1": lam1,
+            "be_init": be_init,
+            "ga_init": ga_init,
+        }
+    )
     # "scale_xpos": scale_xpos,
     # "ncells_xpos": ncells_xstart,
     # "bgplanes_xpos": bgplane_xpos})
 
     basename = os.path.splitext(os.path.basename(orig_exp_name))[0]
-    opt_exp_path = os.path.join(rank_exper_outdir, "%s_%s_%d.expt" % (params.tag, basename, rank_exp_idx))
-    pandas_path = os.path.join(rank_pandas_outdir, "%s_%s_%d.pkl" % (params.tag, basename, rank_exp_idx))
+    opt_exp_path = os.path.join(
+        rank_exper_outdir, "%s_%s_%d.expt" % (params.tag, basename, rank_exp_idx)
+    )
+    pandas_path = os.path.join(
+        rank_pandas_outdir, "%s_%s_%d.pkl" % (params.tag, basename, rank_exp_idx)
+    )
     expt.crystal = SIM.crystal.dxtbx_crystal
     # expt.detector = refiner.get_optimized_detector()
     new_exp_list = ExperimentList()
     new_exp_list.append(expt)
     new_exp_list.as_file(opt_exp_path)
-    LOGGER.debug("saved opt_exp %s with wavelength %f" % (opt_exp_path, expt.beam.get_wavelength()))
+    LOGGER.debug(
+        "saved opt_exp %s with wavelength %f"
+        % (opt_exp_path, expt.beam.get_wavelength())
+    )
 
     spec_file = None
     if params.simulator.spectrum.filename is not None:
@@ -415,7 +517,7 @@ def save_to_pandas(x, SIM, orig_exp_name, params, expt, rank_exp_idx, stg1_refls
     return df
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from dials.util import show_mail_on_error
 
     with show_mail_on_error():
@@ -428,7 +530,9 @@ if __name__ == '__main__':
             lp.add_function(hopper_utils.target_func)
             RUN = lp(script.run)
         elif script.params.profile:
-            print("Install line_profiler in order to use logging: libtbx.python -m pip install line_profiler")
+            print(
+                "Install line_profiler in order to use logging: libtbx.python -m pip install line_profiler"
+            )
 
         RUN()
 

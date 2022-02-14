@@ -5,14 +5,15 @@ import time
 import os
 from libtbx.test_utils import show_diff
 
-def exercise_1(prefix="tst_sort_atoms_1"):
-  """
-  In an ideal world, this program should preserve everything that was in
-  input pdb file: HEADER, TITLE, REMARKs, CONNECT, etc.
-  Right now it preserves only atoms, CRYST1 and HELIX/SHEET records.
-  """
 
-  input_pdb_str = """\
+def exercise_1(prefix="tst_sort_atoms_1"):
+    """
+    In an ideal world, this program should preserve everything that was in
+    input pdb file: HEADER, TITLE, REMARKs, CONNECT, etc.
+    Right now it preserves only atoms, CRYST1 and HELIX/SHEET records.
+    """
+
+    input_pdb_str = """\
 HEADER    UNKNOWN FUNCTION                        17-FEB-05   1YWF
 TITLE     CRYSTAL STRUCTURE OF MYCOBACTERIUM TUBERCULOSIS PROTEIN
 TITLE    2 TYROSINE PHOSPHATASE PTPB
@@ -662,7 +663,7 @@ CONECT 1864 1860
 END
 """
 
-  result_pdb_str = """\
+    result_pdb_str = """\
 CRYST1  113.068  113.068   53.292  90.00  90.00  90.00 I 41
 SCALE1      0.008844  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.008844  0.000000        0.00000
@@ -795,23 +796,26 @@ HETATM  124  O   HOH A 541      16.397  56.900  23.573  1.00 58.46           O
 END
 """
 
-  in_f = open("%s.pdb" % prefix, 'w')
-  in_f.write(input_pdb_str)
-  in_f.close()
-  cmd = " ".join([
-      "iotbx.pdb.sort_atoms",
-      "%s.pdb" % prefix,
-      ])
-  print(cmd)
-  easy_run.call(cmd)
-  assert os.path.isfile("%s_sorted.pdb" % prefix)
-  out_f = open("%s_sorted.pdb" % prefix, 'r')
-  out_str = out_f.read()
-  assert not show_diff(result_pdb_str, out_str)
-  out_f.close()
+    in_f = open("%s.pdb" % prefix, "w")
+    in_f.write(input_pdb_str)
+    in_f.close()
+    cmd = " ".join(
+        [
+            "iotbx.pdb.sort_atoms",
+            "%s.pdb" % prefix,
+        ]
+    )
+    print(cmd)
+    easy_run.call(cmd)
+    assert os.path.isfile("%s_sorted.pdb" % prefix)
+    out_f = open("%s_sorted.pdb" % prefix, "r")
+    out_str = out_f.read()
+    assert not show_diff(result_pdb_str, out_str)
+    out_f.close()
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise_1()
-  print("Time: %6.4f"%(time.time()-t0))
-  print("OK")
+
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise_1()
+    print("Time: %6.4f" % (time.time() - t0))
+    print("OK")

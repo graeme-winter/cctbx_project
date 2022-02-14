@@ -5,232 +5,190 @@ import unittest
 import sys
 from six.moves import zip
 
-residue_basket="ACCDDDEEEE"
+residue_basket = "ACCDDDEEEE"
 sequence1 = "VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS"
 sequence2 = "LVKFYGRKFVLLFMDQKTFDKYESKLETSGYEKFFIFCMASPISPA"
 name1 = "gi|159164330|pdb|2E6P|A"
 name2 = "Q8E5Q5_STRA3"
 description_tmplt = "Chain %s, Solution Structure Of The Ig-Like Domain"
 
+
 class test_sequence(unittest.TestCase):
+    def testEquality(self):
 
-  def testEquality(self):
+        seq1 = bioinformatics.sequence(sequence=sequence1, name=name1)
 
-    seq1 = bioinformatics.sequence(
-      sequence = sequence1,
-      name = name1
-      )
+        seq2 = bioinformatics.sequence(sequence=sequence1, name=name2)
 
-    seq2 = bioinformatics.sequence(
-      sequence = sequence1,
-      name = name2
-      )
+        fasta1 = bioinformatics.fasta_sequence(
+            sequence=sequence1, name=name2, description=description_tmplt % "A"
+        )
 
-    fasta1 = bioinformatics.fasta_sequence(
-      sequence = sequence1,
-      name = name2,
-      description = description_tmplt % "A"
-      )
+        fasta2 = bioinformatics.fasta_sequence(
+            sequence=sequence1, name=name2, description=description_tmplt % "B"
+        )
 
-    fasta2 = bioinformatics.fasta_sequence(
-      sequence = sequence1,
-      name = name2,
-      description = description_tmplt % "B"
-      )
+        pir1 = bioinformatics.pir_sequence(
+            sequence=sequence1,
+            name=name2,
+            type="P1",
+            description=description_tmplt % "C",
+        )
 
-    pir1 = bioinformatics.pir_sequence(
-      sequence = sequence1,
-      name = name2,
-      type = "P1",
-      description = description_tmplt % "C"
-      )
+        self.assertEqual(seq1, seq2)
+        self.assertEqual(seq1, fasta1)
+        self.assertEqual(seq1, fasta2)
+        self.assertEqual(seq1, pir1)
 
-    self.assertEqual( seq1, seq2 )
-    self.assertEqual( seq1, fasta1 )
-    self.assertEqual( seq1, fasta2 )
-    self.assertEqual( seq1, pir1 )
+        self.assertEqual(seq2, fasta1)
+        self.assertEqual(seq2, fasta2)
+        self.assertEqual(seq2, pir1)
 
-    self.assertEqual( seq2, fasta1 )
-    self.assertEqual( seq2, fasta2 )
-    self.assertEqual( seq2, pir1 )
+        self.assertEqual(fasta1, fasta2)
+        self.assertEqual(fasta1, pir1)
 
-    self.assertEqual( fasta1, fasta2 )
-    self.assertEqual( fasta1, pir1 )
+        self.assertEqual(fasta2, pir1)
 
-    self.assertEqual( fasta2, pir1 )
+    def testNonEquality(self):
 
+        seq1 = bioinformatics.sequence(sequence=sequence1, name=name1)
 
-  def testNonEquality(self):
+        seq2 = bioinformatics.sequence(sequence=sequence2, name=name1)
 
-    seq1 = bioinformatics.sequence(
-      sequence = sequence1,
-      name = name1
-      )
+        seq3 = bioinformatics.sequence(sequence=sequence1 + "A", name=name1)
 
-    seq2 = bioinformatics.sequence(
-      sequence = sequence2,
-      name = name1
-      )
+        fasta1 = bioinformatics.fasta_sequence(
+            sequence=sequence2, name=name1, description=description_tmplt % "A"
+        )
 
-    seq3 = bioinformatics.sequence(
-      sequence = sequence1 + "A",
-      name = name1
-      )
+        pir1 = bioinformatics.pir_sequence(
+            sequence=sequence2,
+            name=name1,
+            type="P1",
+            description=description_tmplt % "A",
+        )
 
-    fasta1 = bioinformatics.fasta_sequence(
-      sequence = sequence2,
-      name = name1,
-      description = description_tmplt % "A"
-      )
-
-    pir1 = bioinformatics.pir_sequence(
-      sequence = sequence2,
-      name = name1,
-      type = "P1",
-      description = description_tmplt % "A"
-      )
-
-    self.assertTrue( seq1 != seq2 )
-    self.assertTrue( seq1 != seq3 )
-    self.assertTrue( seq1 != fasta1 )
-    self.assertTrue( seq1 != pir1 )
+        self.assertTrue(seq1 != seq2)
+        self.assertTrue(seq1 != seq3)
+        self.assertTrue(seq1 != fasta1)
+        self.assertTrue(seq1 != pir1)
 
 
 class test_fasta_sequence(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.short = bioinformatics.fasta_sequence(
+            sequence=sequence1, name=name1, description=description_tmplt % "A"
+        )
+        self.long = bioinformatics.fasta_sequence(
+            sequence=sequence1 * 4, name=name1, description=description_tmplt % "A"
+        )
 
-    self.short = bioinformatics.fasta_sequence(
-      sequence = sequence1,
-      name = name1,
-      description = description_tmplt % "A"
-      )
-    self.long = bioinformatics.fasta_sequence(
-      sequence = sequence1 * 4,
-      name = name1,
-      description = description_tmplt % "A"
-      )
+    def testFormat(self):
 
+        self.assertEqual(
+            self.short.format(70),
+            ">gi|159164330|pdb|2E6P|A Chain A, Solution Structure Of The Ig-Like Do\n"
+            + "VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS",
+        )
 
-  def testFormat(self):
+        self.assertEqual(
+            self.short.format(20),
+            ">gi|159164330|pdb|2E\n"
+            + "VVKMDGRKHRLILPEAKVQD\n"
+            + "SGEFECRTEGVSAFFGVTVQ\n"
+            + "DPSGPS",
+        )
 
-    self.assertEqual(
-      self.short.format( 70 ),
-      ">gi|159164330|pdb|2E6P|A Chain A, Solution Structure Of The Ig-Like Do\n"
-      + "VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS"
-      )
+    def testStr(self):
 
-    self.assertEqual(
-      self.short.format( 20 ),
-      ">gi|159164330|pdb|2E\n"
-      + "VVKMDGRKHRLILPEAKVQD\n"
-      + "SGEFECRTEGVSAFFGVTVQ\n"
-      + "DPSGPS"
-      )
+        self.assertEqual(
+            str(self.short),
+            ">gi|159164330|pdb|2E6P|A Chain A, Solution Structure Of The Ig-Like Do\n"
+            + "VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS",
+        )
 
-
-  def testStr(self):
-
-    self.assertEqual(
-      str( self.short ),
-      ">gi|159164330|pdb|2E6P|A Chain A, Solution Structure Of The Ig-Like Do\n"
-      + "VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS"
-      )
-
-    self.assertEqual(
-      str( self.long ),
-      ">gi|159164330|pdb|2E6P|A Chain A, Solution Structure Of The Ig-Like Do\n"
-      + "VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPSVVKMDGRKHRLILPEAKVQDSGEF\n"
-      + "ECRTEGVSAFFGVTVQDPSGPSVVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPSVV\n"
-      + "KMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS"
-      )
+        self.assertEqual(
+            str(self.long),
+            ">gi|159164330|pdb|2E6P|A Chain A, Solution Structure Of The Ig-Like Do\n"
+            + "VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPSVVKMDGRKHRLILPEAKVQDSGEF\n"
+            + "ECRTEGVSAFFGVTVQDPSGPSVVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPSVV\n"
+            + "KMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS",
+        )
 
 
 class test_pir_sequence(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.short = bioinformatics.pir_sequence(
+            sequence=sequence1,
+            name=name1,
+            type="P1",
+            description=description_tmplt % "A",
+        )
+        self.long = bioinformatics.pir_sequence(
+            sequence=sequence1 * 4,
+            name=name1,
+            type="P1",
+            description=description_tmplt % "A",
+        )
 
-    self.short = bioinformatics.pir_sequence(
-      sequence = sequence1,
-      name = name1,
-      type = "P1",
-      description = description_tmplt % "A"
-      )
-    self.long = bioinformatics.pir_sequence(
-      sequence = sequence1 * 4,
-      name = name1,
-      type = "P1",
-      description = description_tmplt % "A"
-      )
+    def testFormat(self):
 
+        self.assertEqual(
+            self.short.format(70),
+            ">P1;gi|159164330|pdb|2E6P|A\n"
+            + "Chain A, Solution Structure Of The Ig-Like Domain\n"
+            + "  VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS*",
+        )
 
-  def testFormat(self):
+        self.assertEqual(
+            self.short.format(20),
+            ">P1;gi|159164330|pdb\n"
+            + "Chain A, Solution St\n"
+            + "  VVKMDGRKHRLILPEAKV\n"
+            + "  QDSGEFECRTEGVSAFFG\n"
+            + "  VTVQDPSGPS*",
+        )
 
-    self.assertEqual(
-      self.short.format( 70 ),
-      ">P1;gi|159164330|pdb|2E6P|A\n"
-      + "Chain A, Solution Structure Of The Ig-Like Domain\n"
-      + "  VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS*"
-      )
+    def testStr(self):
 
-    self.assertEqual(
-      self.short.format( 20 ),
-      ">P1;gi|159164330|pdb\n"
-      + "Chain A, Solution St\n"
-      + "  VVKMDGRKHRLILPEAKV\n"
-      + "  QDSGEFECRTEGVSAFFG\n"
-                + "  VTVQDPSGPS*"
-      )
+        self.assertEqual(
+            str(self.short),
+            ">P1;gi|159164330|pdb|2E6P|A\n"
+            + "Chain A, Solution Structure Of The Ig-Like Domain\n"
+            + "  VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS*",
+        )
 
-
-  def testStr(self):
-
-    self.assertEqual(
-      str( self.short ),
-      ">P1;gi|159164330|pdb|2E6P|A\n"
-      + "Chain A, Solution Structure Of The Ig-Like Domain\n"
-      + "  VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS*"
-      )
-
-    self.assertEqual(
-      str( self.long ),
-      ">P1;gi|159164330|pdb|2E6P|A\n"
-      + "Chain A, Solution Structure Of The Ig-Like Domain\n"
-      + "  VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPSVVKMDGRKHRLILPEAKVQDSG\n"
-      + "  EFECRTEGVSAFFGVTVQDPSGPSVVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSG\n"
-      + "  PSVVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS*"
-      )
+        self.assertEqual(
+            str(self.long),
+            ">P1;gi|159164330|pdb|2E6P|A\n"
+            + "Chain A, Solution Structure Of The Ig-Like Domain\n"
+            + "  VVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPSVVKMDGRKHRLILPEAKVQDSG\n"
+            + "  EFECRTEGVSAFFGVTVQDPSGPSVVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSG\n"
+            + "  PSVVKMDGRKHRLILPEAKVQDSGEFECRTEGVSAFFGVTVQDPSGPS*",
+        )
 
 
 class test_midline(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.midline = bioinformatics.midline(identical="#")
 
-    self.midline = bioinformatics.midline( identical = "#" )
+    def testConservationCode(self):
 
+        self.assertEqual(
+            self.midline.conservation_code(["A", "A", "A", "A"]), self.midline.identical
+        )
+        self.assertEqual(
+            self.midline.conservation_code(["A", "A", "A", "B"]), self.midline.differ
+        )
 
-  def testConservationCode(self):
+    def testMidline(self):
 
-    self.assertEqual(
-      self.midline.conservation_code( [ "A", "A", "A", "A" ] ),
-      self.midline.identical
-      )
-    self.assertEqual(
-      self.midline.conservation_code( [ "A", "A", "A", "B" ] ),
-      self.midline.differ
-      )
+        self.assertEqual(self.midline.compare(["ABCD-EFGH", "ABD--EKGH"]), "##   # ##")
+        self.assertEqual(self.midline.compare([]), "")
 
-
-  def testMidline(self):
-
-    self.assertEqual(
-      self.midline.compare( [ "ABCD-EFGH", "ABD--EKGH" ] ),
-      "##   # ##"
-      )
-    self.assertEqual(
-      self.midline.compare( [] ),
-      ""
-      )
 
 ali_1hml = "-KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQISNKLWCKSSQVPQSR"
 ali_1hfy = "-EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQINNKIWCKDDQNPHSR"
@@ -240,343 +198,316 @@ ali_empt = "--------------------------------------------------------------------
 
 
 class test_alignment(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.alignment1 = bioinformatics.alignment(
+            alignments=[ali_1hml, ali_1hfy], names=["1hml", "1hfy"]
+        )
+        self.alignment2 = bioinformatics.alignment(
+            alignments=[ali_1hml, ali_1hfy, ali_1ghl, ali_1lz3],
+            names=["1hml", "1hfya", "1ghla", "1lz3"],
+        )
+        self.alignment3 = bioinformatics.alignment(alignments=[], names=[])
+        self.alignment4 = bioinformatics.alignment(
+            alignments=[ali_1hfy, ali_1ghl, ali_empt], names=["1hfya", "1ghla", "empty"]
+        )
 
-    self.alignment1 = bioinformatics.alignment(
-      alignments = [ ali_1hml, ali_1hfy ],
-      names = [ "1hml", "1hfy" ]
-      )
-    self.alignment2 = bioinformatics.alignment(
-      alignments = [ ali_1hml, ali_1hfy, ali_1ghl, ali_1lz3 ],
-      names = [ "1hml", "1hfya", "1ghla", "1lz3" ]
-      )
-    self.alignment3 = bioinformatics.alignment(
-      alignments = [],
-      names = []
-      )
-    self.alignment4 = bioinformatics.alignment(
-      alignments = [ ali_1hfy, ali_1ghl, ali_empt ],
-      names = [ "1hfya", "1ghla", "empty" ]
-      )
+    def test_error(self):
 
+        self.assertRaises(
+            ValueError,
+            bioinformatics.alignment,
+            [ali_1hml, ali_1hml + "A"],
+            ["1hml", "1hfy"],
+        )
+        self.assertRaises(
+            ValueError,
+            bioinformatics.alignment,
+            [ali_1hml, ali_1hml],
+            ["1hml", "1hfy", "1ghla"],
+        )
 
-  def test_error(self):
+    def test_identity_count(self):
 
-    self.assertRaises(
-      ValueError,
-      bioinformatics.alignment,
-      [ ali_1hml, ali_1hml + "A" ],
-      [ "1hml", "1hfy" ]
-      )
-    self.assertRaises(
-      ValueError,
-      bioinformatics.alignment,
-      [ ali_1hml, ali_1hml ],
-      [ "1hml", "1hfy", "1ghla" ]
-      )
+        self.assertEqual(self.alignment1.identity_count(), 49)
+        self.assertEqual(self.alignment2.identity_count(), 21)
+        self.assertEqual(self.alignment3.identity_count(), 0)
+        self.assertEqual(self.alignment4.identity_count(), 0)
 
+    def test_identity_fraction(self):
 
-  def test_identity_count(self):
+        self.assertAlmostEqual(self.alignment1.identity_fraction(), 0.700, 3)
+        self.assertAlmostEqual(self.alignment2.identity_fraction(), 0.300, 3)
+        self.assertAlmostEqual(self.alignment3.identity_fraction(), 1.000, 3)
+        self.assertAlmostEqual(self.alignment4.identity_fraction(), 1.000, 3)
 
-    self.assertEqual( self.alignment1.identity_count(), 49 )
-    self.assertEqual( self.alignment2.identity_count(), 21 )
-    self.assertEqual( self.alignment3.identity_count(), 0 )
-    self.assertEqual( self.alignment4.identity_count(), 0 )
+    def test_multiplicity(self):
 
+        self.assertEqual(self.alignment1.multiplicity(), 2)
+        self.assertEqual(self.alignment2.multiplicity(), 4)
+        self.assertEqual(self.alignment3.multiplicity(), 0)
+        self.assertEqual(self.alignment4.multiplicity(), 3)
 
-  def test_identity_fraction(self):
+    def test_length(self):
 
-    self.assertAlmostEqual( self.alignment1.identity_fraction(), 0.700, 3 )
-    self.assertAlmostEqual( self.alignment2.identity_fraction(), 0.300, 3 )
-    self.assertAlmostEqual( self.alignment3.identity_fraction(), 1.000, 3 )
-    self.assertAlmostEqual( self.alignment4.identity_fraction(), 1.000, 3 )
+        self.assertEqual(self.alignment1.length(), 75)
+        self.assertEqual(self.alignment2.length(), 75)
+        self.assertEqual(self.alignment3.length(), 0)
+        self.assertEqual(self.alignment4.length(), 75)
 
+    def test_copy(self):
 
-  def test_multiplicity(self):
+        c = self.alignment1.copy(alignments=["AB", "BA"], names=["XY", "YX"], gap="#")
 
-    self.assertEqual( self.alignment1.multiplicity(), 2 )
-    self.assertEqual( self.alignment2.multiplicity(), 4 )
-    self.assertEqual( self.alignment3.multiplicity(), 0 )
-    self.assertEqual( self.alignment4.multiplicity(), 3 )
+        self.assertTrue(c is not self.alignment1)
+        self.assertEqual(c.alignments, ["AB", "BA"])
+        self.assertEqual(c.names, ["XY", "YX"])
+        self.assertEqual(c.gap, "#")
 
+    def test__str__(self):
+        self.assertEqual(
+            str(self.alignment1),
+            ">1hml\n"
+            + "-KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQISNKLWCKSSQ\n"
+            + "VPQSR\n\n"
+            + ">1hfy\n"
+            + "-EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQINNKIWCKDDQ\n"
+            + "NPHSR",
+        )
 
-  def test_length(self):
+    def test_extend(self):
 
-    self.assertEqual( self.alignment1.length(), 75 )
-    self.assertEqual( self.alignment2.length(), 75 )
-    self.assertEqual( self.alignment3.length(), 0 )
-    self.assertEqual( self.alignment4.length(), 75 )
-
-
-  def test_copy(self):
-
-    c = self.alignment1.copy(
-      alignments = [ "AB", "BA" ],
-      names = [ "XY", "YX" ],
-      gap = "#"
-      )
-
-    self.assertTrue( c is not self.alignment1 )
-    self.assertEqual( c.alignments, [ "AB", "BA" ] )
-    self.assertEqual( c.names, [ "XY", "YX" ] )
-    self.assertEqual( c.gap, "#" )
-
-
-  def test__str__(self):
-    self.assertEqual(
-      str( self.alignment1 ),
-      ">1hml\n"
-      + "-KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQISNKLWCKSSQ\n"
-      + "VPQSR\n\n"
-      + ">1hfy\n"
-      + "-EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQINNKIWCKDDQ\n"
-      + "NPHSR"
-      )
-
-  def test_extend(self):
-
-    sequences = [
-      "ABKQFTKCELSQLLKDIDGYGGIALPELICTMFHTSGYDTQAIVENNESTEYGLFQISNKLWCKSSQVPQSRNOPQR",
-      "CDEEQLTKCEVFQKLKDLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNNDSTEYGLFQINNKIWCKDDQNPHSRSTUV",
-      "FGHIGKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFNTGATNRNTDGSTDYGILQINSRWWCNDGRTPGSKXYZ",
-      "JKILMKVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFDTHATNRNTDGSTDYGILQINSRWWCNDGRTPGSKAB",
-      ]
-    ali = self.alignment2.copy()
-    ali.extend( sequences = sequences )
-    self.assertEqual( ali.names, self.alignment2.names )
-    self.assertEqual( ali.gap, self.alignment2.gap )
-    self.assertEqual(
-      ali.alignments,
-      [
-        "AB------------" + self.alignment2.alignments[0] + "NOPQR---------",
-        "--CDE---------" + self.alignment2.alignments[1] + "-----STUV-----",
-        "-----FGHI-----" + self.alignment2.alignments[2] + "---------XYZ--",
-        "---------JKILM" + self.alignment2.alignments[3] + "------------AB",
+        sequences = [
+            "ABKQFTKCELSQLLKDIDGYGGIALPELICTMFHTSGYDTQAIVENNESTEYGLFQISNKLWCKSSQVPQSRNOPQR",
+            "CDEEQLTKCEVFQKLKDLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNNDSTEYGLFQINNKIWCKDDQNPHSRSTUV",
+            "FGHIGKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFNTGATNRNTDGSTDYGILQINSRWWCNDGRTPGSKXYZ",
+            "JKILMKVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFDTHATNRNTDGSTDYGILQINSRWWCNDGRTPGSKAB",
         ]
-      )
+        ali = self.alignment2.copy()
+        ali.extend(sequences=sequences)
+        self.assertEqual(ali.names, self.alignment2.names)
+        self.assertEqual(ali.gap, self.alignment2.gap)
+        self.assertEqual(
+            ali.alignments,
+            [
+                "AB------------" + self.alignment2.alignments[0] + "NOPQR---------",
+                "--CDE---------" + self.alignment2.alignments[1] + "-----STUV-----",
+                "-----FGHI-----" + self.alignment2.alignments[2] + "---------XYZ--",
+                "---------JKILM" + self.alignment2.alignments[3] + "------------AB",
+            ],
+        )
 
 
 class test_fasta_alignment(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.alignment = bioinformatics.fasta_alignment(
+            alignments=[ali_1hml, ali_1hfy, ali_1ghl, ali_1lz3],
+            names=["1hml", "1hfya", "1ghla", "1lz3"],
+            descriptions=[
+                "alpha lactalbumin:Homo sapiens",
+                "alpha-lactalbumin:Capra hircus",
+                "lysozyme:Phasianus colchicus",
+                "lysozyme:Meleagris gallopavo",
+            ],
+        )
 
-    self.alignment = bioinformatics.fasta_alignment(
-      alignments = [ ali_1hml, ali_1hfy, ali_1ghl, ali_1lz3 ],
-      names = [ "1hml", "1hfya", "1ghla", "1lz3" ],
-      descriptions = [
-        "alpha lactalbumin:Homo sapiens",
-        "alpha-lactalbumin:Capra hircus",
-        "lysozyme:Phasianus colchicus",
-        "lysozyme:Meleagris gallopavo",
-        ]
-      )
+    def test_error(self):
 
-  def test_error(self):
+        self.assertRaises(
+            ValueError,
+            bioinformatics.fasta_alignment,
+            [ali_1hml, ali_1hml],
+            ["1hml", "1hfy"],
+            [
+                "alpha lactalbumin:Homo sapiens",
+                "alpha-lactalbumin:Capra hircus",
+                "lysozyme:Phasianus colchicus",
+            ],
+        )
 
-    self.assertRaises(
-      ValueError,
-      bioinformatics.fasta_alignment,
-      [ ali_1hml, ali_1hml ],
-      [ "1hml", "1hfy" ],
-      [
-        "alpha lactalbumin:Homo sapiens",
-        "alpha-lactalbumin:Capra hircus",
-        "lysozyme:Phasianus colchicus",
-        ]
-      )
+    def test_format(self):
 
+        self.assertEqual(
+            self.alignment.format(40),
+            ">1hml alpha lactalbumin:Homo sapiens\n"
+            + "-KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYD\n"
+            + "TQAIVENN--ESTEYGLFQISNKLWCKSSQVPQSR\n\n"
+            + ">1hfya alpha-lactalbumin:Capra hircus\n"
+            + "-EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYD\n"
+            + "TQAIVQNN--DSTEYGLFQINNKIWCKDDQNPHSR\n\n"
+            + ">1ghla lysozyme:Phasianus colchicus\n"
+            + "GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFN\n"
+            + "TGATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK\n\n"
+            + ">1lz3 lysozyme:Meleagris gallopavo\n"
+            + "-KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFD\n"
+            + "THATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK",
+        )
 
-  def test_format(self):
+    def test__str__(self):
+        self.assertEqual(
+            str(self.alignment),
+            ">1hml alpha lactalbumin:Homo sapiens\n"
+            + "-KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQISNKLWCKSSQ\n"
+            + "VPQSR\n\n"
+            + ">1hfya alpha-lactalbumin:Capra hircus\n"
+            + "-EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQINNKIWCKDDQ\n"
+            + "NPHSR\n\n"
+            + ">1ghla lysozyme:Phasianus colchicus\n"
+            + "GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFNTGATNRNT-DGSTDYGILQINSRWWCNDGR\n"
+            + "TPGSK\n\n"
+            + ">1lz3 lysozyme:Meleagris gallopavo\n"
+            + "-KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFDTHATNRNT-DGSTDYGILQINSRWWCNDGR\n"
+            + "TPGSK",
+        )
 
-    self.assertEqual(
-      self.alignment.format( 40 ),
-      ">1hml alpha lactalbumin:Homo sapiens\n"
-      + "-KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYD\n"
-      + "TQAIVENN--ESTEYGLFQISNKLWCKSSQVPQSR\n\n"
-      + ">1hfya alpha-lactalbumin:Capra hircus\n"
-      + "-EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYD\n"
-      + "TQAIVQNN--DSTEYGLFQINNKIWCKDDQNPHSR\n\n"
-      + ">1ghla lysozyme:Phasianus colchicus\n"
-      + "GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFN\n"
-      + "TGATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK\n\n"
-      + ">1lz3 lysozyme:Meleagris gallopavo\n"
-      + "-KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFD\n"
-      + "THATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK"
-      )
+    def test_copy(self):
 
-
-  def test__str__(self):
-    self.assertEqual(
-      str( self.alignment ),
-      ">1hml alpha lactalbumin:Homo sapiens\n"
-      + "-KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQISNKLWCKSSQ\n"
-      + "VPQSR\n\n"
-      + ">1hfya alpha-lactalbumin:Capra hircus\n"
-      + "-EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQINNKIWCKDDQ\n"
-      + "NPHSR\n\n"
-      + ">1ghla lysozyme:Phasianus colchicus\n"
-      + "GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFNTGATNRNT-DGSTDYGILQINSRWWCNDGR\n"
-      + "TPGSK\n\n"
-      + ">1lz3 lysozyme:Meleagris gallopavo\n"
-      + "-KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFDTHATNRNT-DGSTDYGILQINSRWWCNDGR\n"
-      + "TPGSK"
-      )
-
-
-  def test_copy(self):
-
-    c = self.alignment.copy( descriptions = [ "A", "B", "C", "D" ] )
-    self.assertEqual( c.descriptions, [ "A", "B", "C", "D" ] )
-    self.assertEqual( c.alignments, self.alignment.alignments )
-    self.assertEqual( c.names, self.alignment.names )
-    self.assertEqual( c.gap, self.alignment.gap )
+        c = self.alignment.copy(descriptions=["A", "B", "C", "D"])
+        self.assertEqual(c.descriptions, ["A", "B", "C", "D"])
+        self.assertEqual(c.alignments, self.alignment.alignments)
+        self.assertEqual(c.names, self.alignment.names)
+        self.assertEqual(c.gap, self.alignment.gap)
 
 
 class test_pir_alignment(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.alignment = bioinformatics.pir_alignment(
+            alignments=[ali_1hml, ali_1hfy, ali_1ghl, ali_1lz3],
+            names=["1hml", "1hfya", "1ghla", "1lz3"],
+            types=["P1"] * 4,
+            descriptions=[
+                "alpha lactalbumin:Homo sapiens",
+                "alpha-lactalbumin:Capra hircus",
+                "lysozyme:Phasianus colchicus",
+                "lysozyme:Meleagris gallopavo",
+            ],
+        )
 
-    self.alignment = bioinformatics.pir_alignment(
-      alignments = [ ali_1hml, ali_1hfy, ali_1ghl, ali_1lz3 ],
-      names = [ "1hml", "1hfya", "1ghla", "1lz3" ],
-      types = [ "P1" ] * 4,
-      descriptions = [
-        "alpha lactalbumin:Homo sapiens",
-        "alpha-lactalbumin:Capra hircus",
-        "lysozyme:Phasianus colchicus",
-        "lysozyme:Meleagris gallopavo",
-        ]
-      )
+    def test_error(self):
 
-  def test_error(self):
+        self.assertRaises(
+            ValueError,
+            bioinformatics.pir_alignment,
+            [ali_1hml, ali_1hml],
+            ["1hml", "1hfy"],
+            ["P1", "P1", "P1"],
+            [
+                "alpha lactalbumin:Homo sapiens",
+                "alpha-lactalbumin:Capra hircus",
+            ],
+        )
+        self.assertRaises(
+            ValueError,
+            bioinformatics.pir_alignment,
+            [ali_1hml, ali_1hml],
+            ["1hml", "1hfy"],
+            ["P1", "P1"],
+            [
+                "alpha lactalbumin:Homo sapiens",
+                "alpha-lactalbumin:Capra hircus",
+                "lysozyme:Phasianus colchicus",
+            ],
+        )
 
-    self.assertRaises(
-      ValueError,
-      bioinformatics.pir_alignment,
-      [ ali_1hml, ali_1hml ],
-      [ "1hml", "1hfy" ],
-      [ "P1", "P1", "P1" ],
-      [
-        "alpha lactalbumin:Homo sapiens",
-        "alpha-lactalbumin:Capra hircus",
-        ]
-      )
-    self.assertRaises(
-      ValueError,
-      bioinformatics.pir_alignment,
-      [ ali_1hml, ali_1hml ],
-      [ "1hml", "1hfy" ],
-      [ "P1", "P1" ],
-      [
-        "alpha lactalbumin:Homo sapiens",
-        "alpha-lactalbumin:Capra hircus",
-        "lysozyme:Phasianus colchicus",
-        ]
-      )
+    def test_format(self):
 
+        self.assertEqual(
+            self.alignment.format(40),
+            ">P1;1hml\nalpha lactalbumin:Homo sapiens\n"
+            + "  -KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSG\n"
+            + "  YDTQAIVENN--ESTEYGLFQISNKLWCKSSQVPQSR*\n\n"
+            + ">P1;1hfya\nalpha-lactalbumin:Capra hircus\n"
+            + "  -EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSG\n"
+            + "  YDTQAIVQNN--DSTEYGLFQINNKIWCKDDQNPHSR*\n\n"
+            + ">P1;1ghla\nlysozyme:Phasianus colchicus\n"
+            + "  GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESN\n"
+            + "  FNTGATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK*\n\n"
+            + ">P1;1lz3\nlysozyme:Meleagris gallopavo\n"
+            + "  -KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESN\n"
+            + "  FDTHATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK*",
+        )
 
-  def test_format(self):
+    def test__str__(self):
+        self.assertEqual(
+            str(self.alignment),
+            ">P1;1hml\nalpha lactalbumin:Homo sapiens\n"
+            + "  -KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQISNKLWCKS\n"
+            + "  SQVPQSR*\n\n"
+            + ">P1;1hfya\nalpha-lactalbumin:Capra hircus\n"
+            + "  -EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQINNKIWCKD\n"
+            + "  DQNPHSR*\n\n"
+            + ">P1;1ghla\nlysozyme:Phasianus colchicus\n"
+            + "  GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFNTGATNRNT-DGSTDYGILQINSRWWCND\n"
+            + "  GRTPGSK*\n\n"
+            + ">P1;1lz3\nlysozyme:Meleagris gallopavo\n"
+            + "  -KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFDTHATNRNT-DGSTDYGILQINSRWWCND\n"
+            + "  GRTPGSK*",
+        )
 
-    self.assertEqual(
-      self.alignment.format( 40 ),
-      ">P1;1hml\nalpha lactalbumin:Homo sapiens\n"
-      + "  -KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSG\n"
-      + "  YDTQAIVENN--ESTEYGLFQISNKLWCKSSQVPQSR*\n\n"
-      + ">P1;1hfya\nalpha-lactalbumin:Capra hircus\n"
-      + "  -EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSG\n"
-      + "  YDTQAIVQNN--DSTEYGLFQINNKIWCKDDQNPHSR*\n\n"
-      + ">P1;1ghla\nlysozyme:Phasianus colchicus\n"
-      + "  GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESN\n"
-      + "  FNTGATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK*\n\n"
-      + ">P1;1lz3\nlysozyme:Meleagris gallopavo\n"
-      + "  -KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESN\n"
-      + "  FDTHATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK*"
-      )
+    def test_copy(self):
 
-
-  def test__str__(self):
-    self.assertEqual(
-      str( self.alignment ),
-      ">P1;1hml\nalpha lactalbumin:Homo sapiens\n"
-      + "  -KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQISNKLWCKS\n"
-      + "  SQVPQSR*\n\n"
-      + ">P1;1hfya\nalpha-lactalbumin:Capra hircus\n"
-      + "  -EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQINNKIWCKD\n"
-      + "  DQNPHSR*\n\n"
-      + ">P1;1ghla\nlysozyme:Phasianus colchicus\n"
-      + "  GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFNTGATNRNT-DGSTDYGILQINSRWWCND\n"
-      + "  GRTPGSK*\n\n"
-      + ">P1;1lz3\nlysozyme:Meleagris gallopavo\n"
-      + "  -KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFDTHATNRNT-DGSTDYGILQINSRWWCND\n"
-      + "  GRTPGSK*"
-      )
-
-  def test_copy(self):
-
-    c = self.alignment.copy(
-      descriptions = [ "A", "B", "C", "D" ],
-      types = [ "P1", "P2", "P3", "P4" ]
-      )
-    self.assertEqual( c.descriptions, [ "A", "B", "C", "D" ] )
-    self.assertEqual( c.types, [ "P1", "P2", "P3", "P4" ] )
-    self.assertEqual( c.alignments, self.alignment.alignments )
-    self.assertEqual( c.names, self.alignment.names )
-    self.assertEqual( c.gap, self.alignment.gap )
+        c = self.alignment.copy(
+            descriptions=["A", "B", "C", "D"], types=["P1", "P2", "P3", "P4"]
+        )
+        self.assertEqual(c.descriptions, ["A", "B", "C", "D"])
+        self.assertEqual(c.types, ["P1", "P2", "P3", "P4"])
+        self.assertEqual(c.alignments, self.alignment.alignments)
+        self.assertEqual(c.names, self.alignment.names)
+        self.assertEqual(c.gap, self.alignment.gap)
 
 
 class test_clustal_alignment(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.alignment = bioinformatics.clustal_alignment(
+            alignments=[ali_1hml, ali_1hfy, ali_1ghl, ali_1lz3],
+            names=["1hml", "1hfya", "1ghla", "1lz3"],
+            program="CLUSTAL X 1.35",
+        )
 
-    self.alignment = bioinformatics.clustal_alignment(
-      alignments = [ ali_1hml, ali_1hfy, ali_1ghl, ali_1lz3 ],
-      names = [ "1hml", "1hfya", "1ghla", "1lz3" ],
-      program = "CLUSTAL X 1.35"
-      )
+    def test_format(self):
 
-  def test_format(self):
+        self.assertEqual(
+            self.alignment.format(40, 10),
+            "CLUSTAL X 1.35 multiple sequence alignment\n\n"
+            + "1hml       -KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYD 37\n"
+            + "1hfya      -EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYD 37\n"
+            + "1ghla      GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFN 40\n"
+            + "1lz3       -KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFD 39\n"
+            + "                 **     *      * *  *    *     *   \n\n"
+            + "1hml       TQAIVENN--ESTEYGLFQISNKLWCKSSQVPQSR 70\n"
+            + "1hfya      TQAIVQNN--DSTEYGLFQINNKIWCKDDQNPHSR 70\n"
+            + "1ghla      TGATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK 74\n"
+            + "1lz3       THATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK 73\n"
+            + "           * *   *    ** **  **    **     * * ",
+        )
 
-    self.assertEqual(
-      self.alignment.format( 40, 10 ),
-      "CLUSTAL X 1.35 multiple sequence alignment\n\n"
-      + "1hml       -KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYD 37\n"
-      + "1hfya      -EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYD 37\n"
-      + "1ghla      GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFN 40\n"
-      + "1lz3       -KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFD 39\n"
-      + "                 **     *      * *  *    *     *   \n\n"
-      + "1hml       TQAIVENN--ESTEYGLFQISNKLWCKSSQVPQSR 70\n"
-      + "1hfya      TQAIVQNN--DSTEYGLFQINNKIWCKDDQNPHSR 70\n"
-      + "1ghla      TGATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK 74\n"
-      + "1lz3       THATNRNT-DGSTDYGILQINSRWWCNDGRTPGSK 73\n"
-      + "           * *   *    ** **  **    **     * * "
-      )
+    def test__str__(self):
 
+        self.assertEqual(
+            str(self.alignment),
+            "CLUSTAL X 1.35 multiple sequence alignment\n\n"
+            + "1hml            -KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQI 55\n"
+            + "1hfya           -EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQI 55\n"
+            + "1ghla           GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFNTGATNRNT-DGSTDYGILQI 59\n"
+            + "1lz3            -KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFDTHATNRNT-DGSTDYGILQI 58\n"
+            + "                      **     *      * *  *    *     *   * *   *    ** **  **\n\n"
+            + "1hml            SNKLWCKSSQVPQSR 70\n"
+            + "1hfya           NNKIWCKDDQNPHSR 70\n"
+            + "1ghla           NSRWWCNDGRTPGSK 74\n"
+            + "1lz3            NSRWWCNDGRTPGSK 73\n"
+            + "                    **     * * ",
+        )
 
-  def test__str__(self):
+    def test_copy(self):
 
-    self.assertEqual(
-      str( self.alignment ),
-      "CLUSTAL X 1.35 multiple sequence alignment\n\n"
-      + "1hml            -KQFTKCELSQLLK--DIDGYGGIALPELICTMFHTSGYDTQAIVENN--ESTEYGLFQI 55\n"
-      + "1hfya           -EQLTKCEVFQKLK--DLKDYGGVSLPEWVCTAFHTSGYDTQAIVQNN--DSTEYGLFQI 55\n"
-      + "1ghla           GKVYGRCELAAAMKRMGLDNYRGYSLGNWVCAAKFESNFNTGATNRNT-DGSTDYGILQI 59\n"
-      + "1lz3            -KVYGRCELAAAMKRLGLDNYRGYSLGNWVCAAKFESNFDTHATNRNT-DGSTDYGILQI 58\n"
-      + "                      **     *      * *  *    *     *   * *   *    ** **  **\n\n"
-      + "1hml            SNKLWCKSSQVPQSR 70\n"
-      + "1hfya           NNKIWCKDDQNPHSR 70\n"
-      + "1ghla           NSRWWCNDGRTPGSK 74\n"
-      + "1lz3            NSRWWCNDGRTPGSK 73\n"
-      + "                    **     * * "
-      )
-
-  def test_copy(self):
-
-    c = self.alignment.copy( program = "Foo" )
-    self.assertEqual( c.program, "Foo" )
-    self.assertEqual( c.alignments, self.alignment.alignments )
-    self.assertEqual( c.names, self.alignment.names )
-    self.assertEqual( c.gap, self.alignment.gap )
+        c = self.alignment.copy(program="Foo")
+        self.assertEqual(c.program, "Foo")
+        self.assertEqual(c.alignments, self.alignment.alignments)
+        self.assertEqual(c.names, self.alignment.names)
+        self.assertEqual(c.gap, self.alignment.gap)
 
 
 seq = """
@@ -635,7 +566,7 @@ fasta_sequence = (
     + "DRLQAETDQLEEEKAELESEIAELQKEKERLEFVLVAHKPGCKIPYEEGPGPGPLAEVRD"
     + "LPGSTSAKEDGFGWLLPPPPPPPLPFQSSRDAPPNLTASLFTHSEVQVLGDPFPVVSPSY"
     + "TSSFVLTCPEVSAFAGAQRTSGSEQPSDPLNSPSLLAL"
-    )
+)
 
 pir = """
 Error
@@ -774,23 +705,25 @@ pir_sequence = (
     + "SPIFRMPSWLETGLSEMRLEKDKFSVNLDVKHFSPEELKVKVLGDMVEIH"
     + "GKHEERQDEHGFIAREFNRKYRIPADVDPLTITSSLSLDGVLTVSAPRKQ"
     + "SDVPERSIPITREEKPAIAGAQRK"
-    )
+)
 
 # Break string to preserve syntactic whitespace
-clustal1 = ( """CLUSTAL 2.0.10 multiple sequence alignment
+clustal1 = (
+    """CLUSTAL 2.0.10 multiple sequence alignment
 
 
 Horse           VLSAADKTNVKAAWSKVGGHAGEYGAEALERMFLGFPTTKTYFPHFDLSHGSAQVKA--- 57
 chain_A         VLSEGEWQLVLHVWAKVEADVAGHGQDILIRLFKSHPETLEKFDRFKHLKTEAEMKASED 60
                 *** .:   *  .*:** .... :* : * *:* ..* *   * :*.  : .*::**   \n"""
-+ """
+    + """
 Horse           ---HGKKVGDALTLAVGHLDDLPGALSDLSNLHAHKLRVDPVNFKLLSHCLLSTLAVHLP 114
 chain_A         LKKHGVTVLTALGAILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISEAIIHVLHSRHP 120
                    ** .*  **   : : ..  . *. *:: ** * ::    ::::*..:: .*  : *
 
 Horse           NDFTPAVHASLDKFLSSVSTVLTSKYR------ 141
 chain_A         GDFGADAQGAMNKALELFRKDIAAKYKELGYQG 153
-                .** . .:.:::* *. . . :::**:      """ )
+                .** . .:.:::* *. . . :::**:      """
+)
 
 clustal2 = """CLUSTAL X (1.81) multiple sequence alignment
 
@@ -917,572 +850,434 @@ THYLE----------------------------GNGEELYDXKKDPGERK
 NLAKDPKYSKILAEHRALLDDYITRSKDDY
 """
 
+
 class test_sequence_parse(unittest.TestCase):
+    def testSequence(self):
 
-  def testSequence(self):
+        (sequences, unknowns) = bioinformatics.seq_sequence_parse(seq)
 
-    ( sequences, unknowns ) = bioinformatics.seq_sequence_parse( seq )
+        self.assertEqual(len(sequences), 4)
+        self.assertEqual(unknowns, ["\nError\n", ">chain_A"])
 
-    self.assertEqual( len( sequences ), 4 )
-    self.assertEqual( unknowns, [ "\nError\n", ">chain_A" ] )
+        self.assertEqual(sequences[0].name, "chain_A")
+        self.assertEqual(sequences[0].sequence, seq_sequence)
 
-    self.assertEqual(
-      sequences[0].name,
-      "chain_A"
-      )
-    self.assertEqual(
-      sequences[0].sequence,
-      seq_sequence
-      )
+        self.assertEqual(sequences[1].name, "chain A")
+        self.assertEqual(sequences[1].sequence, seq_sequence)
 
-    self.assertEqual(
-      sequences[1].name,
-      "chain A"
-      )
-    self.assertEqual(
-      sequences[1].sequence,
-       seq_sequence
-       )
+        self.assertEqual(sequences[2].name, "chain_A")
+        self.assertEqual(sequences[2].sequence, seq_sequence)
 
-    self.assertEqual(
-      sequences[2].name,
-      "chain_A"
-      )
-    self.assertEqual(
-      sequences[2].sequence,
-      seq_sequence
-      )
+        self.assertEqual(sequences[3].name, "")
+        self.assertEqual(sequences[3].sequence, seq_sequence)
 
-    self.assertEqual(
-      sequences[3].name,
-      ''
-    )
-    self.assertEqual(
-      sequences[3].sequence,
-      seq_sequence
-    )
+        (fastas, unknowns) = bioinformatics.seq_sequence_parse(fasta)
 
-    ( fastas, unknowns ) = bioinformatics.seq_sequence_parse( fasta )
+        self.assertEqual(len(fastas), 3)
+        self.assertEqual(unknowns, ["\nError\n"])
 
-    self.assertEqual( len( fastas ), 3 )
-    self.assertEqual( unknowns, [ "\nError\n" ] )
+        self.assertEqual(fastas[0].name, "FOSB_MOUSE Protein fosB. 338 bp")
+        self.assertEqual(fastas[0].sequence, fasta_sequence)
 
-    self.assertEqual(
-      fastas[0].name,
-      "FOSB_MOUSE Protein fosB. 338 bp"
-      )
-    self.assertEqual(
-      fastas[0].sequence,
-      fasta_sequence
-      )
+        self.assertEqual(fastas[1].name, "FOSB_MOUSE Protein fosB. 338 bp")
+        self.assertEqual(fastas[1].sequence, fasta_sequence)
 
-    self.assertEqual(
-      fastas[1].name,
-      "FOSB_MOUSE Protein fosB. 338 bp"
-      )
-    self.assertEqual(
-      fastas[1].sequence,
-      fasta_sequence
-      )
+        self.assertEqual(fastas[2].name, "1YJP:A|PDBID|CHAIN|SEQUENCE")
+        self.assertEqual(fastas[2].sequence, fasta_sequence)
 
-    self.assertEqual(
-      fastas[2].name,
-      "1YJP:A|PDBID|CHAIN|SEQUENCE"
-      )
-    self.assertEqual(
-      fastas[2].sequence,
-      fasta_sequence
-      )
+    def testFasta(self):
 
-  def testFasta(self):
+        (fastas, unknowns) = bioinformatics.fasta_sequence_parse(fasta)
 
-    ( fastas, unknowns ) = bioinformatics.fasta_sequence_parse( fasta )
-
-    self.assertEqual( len( fastas ), 3 )
-    self.assertEqual(
-      unknowns,
-      [
-        "\nError\n",
-        ] )
-
-    self.assertEqual(
-      fastas[0].name,
-      "FOSB_MOUSE"
-      )
-    self.assertEqual(
-      fastas[0].sequence,
-      fasta_sequence
-      )
-    self.assertEqual(
-      fastas[0].description,
-      "Protein fosB. 338 bp"
-      )
-
-    self.assertEqual(
-      fastas[1].name,
-      "FOSB_MOUSE"
-      )
-    self.assertEqual(
-      fastas[1].sequence,
-      fasta_sequence
-      )
-    self.assertEqual(
-      fastas[1].description,
-      "Protein fosB. 338 bp"
-      )
-
-    self.assertEqual(
-      fastas[2].name,
-      "1YJP"
-      )
-    self.assertEqual(
-      fastas[2].description,
-      "A|PDBID|CHAIN|SEQUENCE"
-      )
-    self.assertEqual(
-      fastas[2].sequence,
-      fasta_sequence
-      )
-
-
-  def testPir(self):
-
-    ( pirs, unknowns ) = bioinformatics.pir_sequence_parse( pir )
-
-    self.assertEqual( len( pirs ), 2 )
-    self.assertEqual( unknowns, [ "\nError\n", pir[490:] ] )
-
-    self.assertEqual(
-      pirs[0].name,
-      "CRAB_ANAPL"
-      )
-    self.assertEqual(
-      pirs[0].type,
-      "P1"
-      )
-    self.assertEqual(
-      pirs[0].description,
-      "ALPHA CRYSTALLIN B CHAIN (ALPHA(B)-CRYSTALLIN)."
-      )
-    self.assertEqual(
-      pirs[0].sequence,
-      pir_sequence
-      )
-
-    self.assertEqual(
-      pirs[1].name,
-      "CRAB_ANAPL"
-      )
-    self.assertEqual(
-      pirs[1].type,
-      "P1"
-      )
-    self.assertEqual(
-      pirs[1].description,
-      ""
-      )
-    self.assertEqual(
-      pirs[1].sequence,
-      pir_sequence
-      )
-
-
-  def testTolerantPir(self):
-
-    ( pirs, unknowns ) = bioinformatics.tolerant_pir_sequence_parse( tolerant_pir )
-
-    self.assertEqual( len( pirs ), 3 )
-    self.assertEqual( unknowns, [ "\nError\n", "Error2\n\n" ] )
-
-    self.assertEqual(
-      pirs[0].name,
-      "P1;CRAB_ANAPL"
-      )
-    self.assertEqual(
-      pirs[0].type,
-      "P1"
-      )
-    self.assertEqual(
-      pirs[0].description,
-      "ALPHA CRYSTALLIN B CHAIN (ALPHA(B)-CRYSTALLIN)."
-      )
-    self.assertEqual(
-      pirs[0].sequence,
-      pir_sequence
-      )
-
-    self.assertEqual(
-      pirs[1].name,
-      "CRAB_ANAPL"
-      )
-    self.assertEqual(
-      pirs[1].type,
-      "P1"
-      )
-    self.assertEqual(
-      pirs[1].description,
-      "ALPHA CRYSTALLIN B CHAIN (ALPHA(B)-CRYSTALLIN)."
-      )
-    self.assertEqual(
-      pirs[1].sequence,
-      pir_sequence
-      )
-    self.assertEqual(
-      pirs[2].name,
-      "CRAB_ANAPL"
-      )
-    self.assertEqual(
-      pirs[2].type,
-      "P1"
-      )
-    self.assertEqual(
-      pirs[2].description,
-      ""
-      )
-    self.assertEqual(
-      pirs[2].sequence,
-      pir_sequence
-      )
-
-
-  def test_tf_parse(self):
-
-    ( seqs, unknowns ) = bioinformatics.tf_sequence_parse( text = tf )
-    self.assertEqual( unknowns, [] )
-    self.assertEqual( len( seqs ), 3 )
-    self.assertEqual( seqs[0].name, "anb.pdb" )
-    self.assertEqual(
-      seqs[0].sequence,
-      "AAKDVKFGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVASKANDAAGDGTT"
-      + "TATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVGKLIAEAMDKV"
-      + "GKEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLEAVAKAGKPLL"
-      + "IIAEDVEGEALATLVVNTMRGIVKVAAVKAPGFGDRRKAMLQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINK"
-      + "DTTTIIDGVGEEAAIQGRVAQIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAA"
-      + "VEEGVVAGGGVALIRVASKLADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGEEPSVVANTVKGGDGNYGYNAATEEY"
-      + "GNMIDMGILDPTKVTRSALQYAASVAGLMITTECMVTDLP"
-      )
-    self.assertEqual( seqs[1].name, "anb.pdb" )
-    self.assertEqual(
-      seqs[1].sequence,
-      "AAKDVKFGNDARVKMLRGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVASK"
-      + "ANDAAGDGTTTATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVG"
-      + "KLIAEAMDKVGKEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLE"
-      + "AVAKAGKPLLIIAEDVEGEALQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINKDTTTIIDGVGEEAAIQGRVA"
-      + "QIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAAVEEGVVAGGGVALIRVASKL"
-      + "ADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGEEPSVVANTVKGGDGNYGYNAATEEYGNMIDMGILDPTKVTRSALQ"
-      + "YAASVAGLMITTECMVTDLP"
-      )
-    self.assertEqual( seqs[2].name, "anb.pdb" )
-    self.assertEqual(
-      seqs[2].sequence,
-      "AAKDVKFGNDARVKMLRGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVAST"
-      + "ATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVGKLIAEAMDKVG"
-      + "KEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLEAVAKAGKPLLI"
-      + "IAEDVEGEALATLVVNTMRGIVKVAAVKAPGFGDRRKAMLQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINKD"
-      + "TTTIIDGVGEEAAIQGRVAQIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAAV"
-      + "EEGVVAGGGVALIRVASKLADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGKGGDGNYGYNAATEEYGNMIDMGILDP"
-      + "TKVTRSALQYAASVAGLMITTECMVTDLP"
-      )
-
-
-  def test_ls_parse(self):
-
-    ( seqs, unknowns ) = bioinformatics.lineseparated_sequence_parse.parse(
-      text = lineseparated,
-      name = "foo"
-      )
-    self.assertEqual( unknowns, [] )
-    self.assertEqual( len( seqs ), 2 )
-    self.assertEqual( seqs[0].name, "foo" )
-    self.assertEqual(
-      seqs[0].sequence,
-      "AAKDVKFGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVASKANDAAGDGTT"
-      + "TATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVGKLIAEAMDKV"
-      + "GKEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLEAVAKAGKPLL"
-      + "IIAEDVEGEALATLVVNTMRGIVKVAAVKAPGFGDRRKAMLQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINK"
-      + "DTTTIIDGVGEEAAIQGRVAQIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAA"
-      + "VEEGVVAGGGVALIRVASKLADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGEEPSVVANTVKGGDGNYGYNAATEEY"
-      + "GNMIDMGILDPTKVTRSALQYAASVAGLMITTECMVTDLP"
-      )
-    self.assertEqual( seqs[1].name, "foo" )
-    self.assertEqual(
-      seqs[1].sequence,
-      "AAKDVKFGNDARVKMLRGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVASK"
-      + "ANDAAGDGTTTATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVG"
-      + "KLIAEAMDKVGKEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLE"
-      + "AVAKAGKPLLIIAEDVEGEALQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINKDTTTIIDGVGEEAAIQGRVA"
-      + "QIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAAVEEGVVAGGGVALIRVASKL"
-      + "ADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGEEPSVVANTVKGGDGNYGYNAATEEYGNMIDMGILDPTKVTRSALQ"
-      + "YAASVAGLMITTECMVTDLP"
-      )
-
-
-  def test_dbfetch_parse(self):
-
-      ( seqs, unknowns ) = bioinformatics.dbfetch_sequence_parse(
-        text = dbfetch
+        self.assertEqual(len(fastas), 3)
+        self.assertEqual(
+            unknowns,
+            [
+                "\nError\n",
+            ],
         )
-      self.assertEqual( unknowns, [] )
-      self.assertEqual( len( seqs ), 2 )
-      self.assertEqual( seqs[0].name, "1GAG" )
-      self.assertEqual( seqs[0].chain, "A" )
-      self.assertEqual(
-        seqs[0].sequence,
-        "VFPSSVFVPDEWEVSREKITLLRELGQGSFGMVYEGNARDIIKGEAETRVAVKTVNESAS"
-        + "LRERIEFLNEASVMKGFTCHHVVRLLGVVSKGQPTLVVMELMAHGDLKSYLRSLRPEAEN"
-        + "NPGRPPPTLQEMIQMAAEIADGMAYLNAKKFVHRDLAARNCMVAHDFTVKIGDFGMTRDI"
-        + "XETDXXRKGGKGLLPVRWMAPESLKDGVFTTSSDMWSFGVVLWEITSLAEQPYQGLSNEQ"
-        + "VLKFVMDGGYLDQPDNCPERVTDLMRMCWQFNPKMRPTFLEIVNLLKDDLHPSFPEVSFF"
-        + "HSEENK"
+
+        self.assertEqual(fastas[0].name, "FOSB_MOUSE")
+        self.assertEqual(fastas[0].sequence, fasta_sequence)
+        self.assertEqual(fastas[0].description, "Protein fosB. 338 bp")
+
+        self.assertEqual(fastas[1].name, "FOSB_MOUSE")
+        self.assertEqual(fastas[1].sequence, fasta_sequence)
+        self.assertEqual(fastas[1].description, "Protein fosB. 338 bp")
+
+        self.assertEqual(fastas[2].name, "1YJP")
+        self.assertEqual(fastas[2].description, "A|PDBID|CHAIN|SEQUENCE")
+        self.assertEqual(fastas[2].sequence, fasta_sequence)
+
+    def testPir(self):
+
+        (pirs, unknowns) = bioinformatics.pir_sequence_parse(pir)
+
+        self.assertEqual(len(pirs), 2)
+        self.assertEqual(unknowns, ["\nError\n", pir[490:]])
+
+        self.assertEqual(pirs[0].name, "CRAB_ANAPL")
+        self.assertEqual(pirs[0].type, "P1")
+        self.assertEqual(
+            pirs[0].description, "ALPHA CRYSTALLIN B CHAIN (ALPHA(B)-CRYSTALLIN)."
         )
-      self.assertEqual( seqs[1].name, "1GAG" )
-      self.assertEqual( seqs[1].chain, "B" )
-      self.assertEqual( seqs[1].sequence, "PATGDFMNMSPVG" )
+        self.assertEqual(pirs[0].sequence, pir_sequence)
 
+        self.assertEqual(pirs[1].name, "CRAB_ANAPL")
+        self.assertEqual(pirs[1].type, "P1")
+        self.assertEqual(pirs[1].description, "")
+        self.assertEqual(pirs[1].sequence, pir_sequence)
 
-  def test_filename_selection(self):
+    def testTolerantPir(self):
 
-    self.assertEqual(
-      bioinformatics.sequence_parser_for( "dummy.pir" ),
-      bioinformatics.pir_sequence_parse
-      )
-    self.assertEqual( bioinformatics.sequence_parser_for( "seq" ), None )
+        (pirs, unknowns) = bioinformatics.tolerant_pir_sequence_parse(tolerant_pir)
 
+        self.assertEqual(len(pirs), 3)
+        self.assertEqual(unknowns, ["\nError\n", "Error2\n\n"])
 
-  def test_known_formats(self):
-    self.assertEqual(
-      sorted( bioinformatics.known_sequence_formats() ),
-      ['.dat', '.fa', '.faa', '.fasta', '.pir', '.seq']
-      )
+        self.assertEqual(pirs[0].name, "P1;CRAB_ANAPL")
+        self.assertEqual(pirs[0].type, "P1")
+        self.assertEqual(
+            pirs[0].description, "ALPHA CRYSTALLIN B CHAIN (ALPHA(B)-CRYSTALLIN)."
+        )
+        self.assertEqual(pirs[0].sequence, pir_sequence)
+
+        self.assertEqual(pirs[1].name, "CRAB_ANAPL")
+        self.assertEqual(pirs[1].type, "P1")
+        self.assertEqual(
+            pirs[1].description, "ALPHA CRYSTALLIN B CHAIN (ALPHA(B)-CRYSTALLIN)."
+        )
+        self.assertEqual(pirs[1].sequence, pir_sequence)
+        self.assertEqual(pirs[2].name, "CRAB_ANAPL")
+        self.assertEqual(pirs[2].type, "P1")
+        self.assertEqual(pirs[2].description, "")
+        self.assertEqual(pirs[2].sequence, pir_sequence)
+
+    def test_tf_parse(self):
+
+        (seqs, unknowns) = bioinformatics.tf_sequence_parse(text=tf)
+        self.assertEqual(unknowns, [])
+        self.assertEqual(len(seqs), 3)
+        self.assertEqual(seqs[0].name, "anb.pdb")
+        self.assertEqual(
+            seqs[0].sequence,
+            "AAKDVKFGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVASKANDAAGDGTT"
+            + "TATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVGKLIAEAMDKV"
+            + "GKEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLEAVAKAGKPLL"
+            + "IIAEDVEGEALATLVVNTMRGIVKVAAVKAPGFGDRRKAMLQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINK"
+            + "DTTTIIDGVGEEAAIQGRVAQIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAA"
+            + "VEEGVVAGGGVALIRVASKLADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGEEPSVVANTVKGGDGNYGYNAATEEY"
+            + "GNMIDMGILDPTKVTRSALQYAASVAGLMITTECMVTDLP",
+        )
+        self.assertEqual(seqs[1].name, "anb.pdb")
+        self.assertEqual(
+            seqs[1].sequence,
+            "AAKDVKFGNDARVKMLRGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVASK"
+            + "ANDAAGDGTTTATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVG"
+            + "KLIAEAMDKVGKEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLE"
+            + "AVAKAGKPLLIIAEDVEGEALQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINKDTTTIIDGVGEEAAIQGRVA"
+            + "QIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAAVEEGVVAGGGVALIRVASKL"
+            + "ADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGEEPSVVANTVKGGDGNYGYNAATEEYGNMIDMGILDPTKVTRSALQ"
+            + "YAASVAGLMITTECMVTDLP",
+        )
+        self.assertEqual(seqs[2].name, "anb.pdb")
+        self.assertEqual(
+            seqs[2].sequence,
+            "AAKDVKFGNDARVKMLRGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVAST"
+            + "ATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVGKLIAEAMDKVG"
+            + "KEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLEAVAKAGKPLLI"
+            + "IAEDVEGEALATLVVNTMRGIVKVAAVKAPGFGDRRKAMLQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINKD"
+            + "TTTIIDGVGEEAAIQGRVAQIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAAV"
+            + "EEGVVAGGGVALIRVASKLADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGKGGDGNYGYNAATEEYGNMIDMGILDP"
+            + "TKVTRSALQYAASVAGLMITTECMVTDLP",
+        )
+
+    def test_ls_parse(self):
+
+        (seqs, unknowns) = bioinformatics.lineseparated_sequence_parse.parse(
+            text=lineseparated, name="foo"
+        )
+        self.assertEqual(unknowns, [])
+        self.assertEqual(len(seqs), 2)
+        self.assertEqual(seqs[0].name, "foo")
+        self.assertEqual(
+            seqs[0].sequence,
+            "AAKDVKFGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVASKANDAAGDGTT"
+            + "TATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVGKLIAEAMDKV"
+            + "GKEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLEAVAKAGKPLL"
+            + "IIAEDVEGEALATLVVNTMRGIVKVAAVKAPGFGDRRKAMLQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINK"
+            + "DTTTIIDGVGEEAAIQGRVAQIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAA"
+            + "VEEGVVAGGGVALIRVASKLADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGEEPSVVANTVKGGDGNYGYNAATEEY"
+            + "GNMIDMGILDPTKVTRSALQYAASVAGLMITTECMVTDLP",
+        )
+        self.assertEqual(seqs[1].name, "foo")
+        self.assertEqual(
+            seqs[1].sequence,
+            "AAKDVKFGNDARVKMLRGVNVLADAVKVTLGPKGRNVVLDKSFGAPTITKDGVSVAREIELEDKFENMGAQMVKEVASK"
+            + "ANDAAGDGTTTATVLAQAIITEGLKAVAAGMNPMDLKRGIDKAVTAAVEELKALSVPCSDSKAIAQVGTISANSDETVG"
+            + "KLIAEAMDKVGKEGVITVEDGTGLQDELDVVEGMQFDRGYLSPYFINKPETGAVELESPFILLADKKISNIREMLPVLE"
+            + "AVAKAGKPLLIIAEDVEGEALQDIATLTGGTVISEEIGMELEKATLEDLGQAKRVVINKDTTTIIDGVGEEAAIQGRVA"
+            + "QIRQQIEEATSDYDREKLQERVAKLAGGVAVIKVGAATEVEMKEKKARVEDALHATRAAVEEGVVAGGGVALIRVASKL"
+            + "ADLRGQNEDQNVGIKVALRAMEAPLRQIVLNCGEEPSVVANTVKGGDGNYGYNAATEEYGNMIDMGILDPTKVTRSALQ"
+            + "YAASVAGLMITTECMVTDLP",
+        )
+
+    def test_dbfetch_parse(self):
+
+        (seqs, unknowns) = bioinformatics.dbfetch_sequence_parse(text=dbfetch)
+        self.assertEqual(unknowns, [])
+        self.assertEqual(len(seqs), 2)
+        self.assertEqual(seqs[0].name, "1GAG")
+        self.assertEqual(seqs[0].chain, "A")
+        self.assertEqual(
+            seqs[0].sequence,
+            "VFPSSVFVPDEWEVSREKITLLRELGQGSFGMVYEGNARDIIKGEAETRVAVKTVNESAS"
+            + "LRERIEFLNEASVMKGFTCHHVVRLLGVVSKGQPTLVVMELMAHGDLKSYLRSLRPEAEN"
+            + "NPGRPPPTLQEMIQMAAEIADGMAYLNAKKFVHRDLAARNCMVAHDFTVKIGDFGMTRDI"
+            + "XETDXXRKGGKGLLPVRWMAPESLKDGVFTTSSDMWSFGVVLWEITSLAEQPYQGLSNEQ"
+            + "VLKFVMDGGYLDQPDNCPERVTDLMRMCWQFNPKMRPTFLEIVNLLKDDLHPSFPEVSFF"
+            + "HSEENK",
+        )
+        self.assertEqual(seqs[1].name, "1GAG")
+        self.assertEqual(seqs[1].chain, "B")
+        self.assertEqual(seqs[1].sequence, "PATGDFMNMSPVG")
+
+    def test_filename_selection(self):
+
+        self.assertEqual(
+            bioinformatics.sequence_parser_for("dummy.pir"),
+            bioinformatics.pir_sequence_parse,
+        )
+        self.assertEqual(bioinformatics.sequence_parser_for("seq"), None)
+
+    def test_known_formats(self):
+        self.assertEqual(
+            sorted(bioinformatics.known_sequence_formats()),
+            [".dat", ".fa", ".faa", ".fasta", ".pir", ".seq"],
+        )
 
 
 class test_alignment_parse(unittest.TestCase):
+    def testClustal(self):
 
-  def testClustal(self):
+        (ali, unknowns) = bioinformatics.clustal_alignment_parse(clustal1)
 
-    ( ali, unknowns ) = bioinformatics.clustal_alignment_parse( clustal1 )
+        self.assertEqual(unknowns, "")
 
-    self.assertEqual( unknowns, "" )
+        self.assertEqual(ali.program, "CLUSTAL 2.0.10")
+        self.assertEqual(ali.names, ["Horse", "chain_A"])
+        self.assertEqual(
+            ali.alignments,
+            [
+                "VLSAADKTNVKAAWSKVGGHAGEYGAEALERMFLGFPTTKTYFPHFDLSHGSAQVKA---"
+                + "---HGKKVGDALTLAVGHLDDLPGALSDLSNLHAHKLRVDPVNFKLLSHCLLSTLAVHLP"
+                + "NDFTPAVHASLDKFLSSVSTVLTSKYR------",
+                "VLSEGEWQLVLHVWAKVEADVAGHGQDILIRLFKSHPETLEKFDRFKHLKTEAEMKASED"
+                + "LKKHGVTVLTALGAILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISEAIIHVLHSRHP"
+                + "GDFGADAQGAMNKALELFRKDIAAKYKELGYQG",
+            ],
+        )
 
-    self.assertEqual( ali.program, "CLUSTAL 2.0.10" )
-    self.assertEqual( ali.names, [ "Horse", "chain_A" ] )
-    self.assertEqual(
-      ali.alignments,
-      [
-        "VLSAADKTNVKAAWSKVGGHAGEYGAEALERMFLGFPTTKTYFPHFDLSHGSAQVKA---"
-        + "---HGKKVGDALTLAVGHLDDLPGALSDLSNLHAHKLRVDPVNFKLLSHCLLSTLAVHLP"
-        + "NDFTPAVHASLDKFLSSVSTVLTSKYR------",
-        "VLSEGEWQLVLHVWAKVEADVAGHGQDILIRLFKSHPETLEKFDRFKHLKTEAEMKASED"
-        + "LKKHGVTVLTALGAILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISEAIIHVLHSRHP"
-        + "GDFGADAQGAMNKALELFRKDIAAKYKELGYQG"
-        ]
-      )
+        (ali, unknowns) = bioinformatics.clustal_alignment_parse(clustal2)
 
-    ( ali, unknowns ) = bioinformatics.clustal_alignment_parse( clustal2 )
+        self.assertEqual(unknowns, "")
 
-    self.assertEqual( unknowns, "" )
+        self.assertEqual(ali.program, "CLUSTAL X (1.81)")
+        self.assertEqual(ali.names, ["1vkk", "1ahq"])
+        self.assertEqual(
+            ali.alignments,
+            [
+                "VVCEVDPELKETLRKFRFR---KETNNAAIIMKVD--KDRQMVVLEDELQ-NISPEELKL"
+                + "ELPERQPRFVVYSYKYVH--DDGRVSYPLCFIFSSPVGCKPEQQMMYAGSKNRLVQTAE-"
+                + "L-TKVFEIRTTDD-LTETWLKEKLAFFR",
+                "-GIAVSDDCVQKFNELKLGHQH-----RYVTFKMNASN--TEVVVEHVGGPNATYEDFKS"
+                + "QLPERDCRYAIFDYEFQVDG---GQRNKITFILWAPDSAPIKSKMMYTSTKDSIKKKLVG"
+                + "IQ-VEVQATD-AAEISEDAVSERAKK--",
+            ],
+        )
 
-    self.assertEqual( ali.program, "CLUSTAL X (1.81)" )
-    self.assertEqual( ali.names, [ "1vkk", "1ahq" ] )
-    self.assertEqual(
-      ali.alignments,
-      [
-        "VVCEVDPELKETLRKFRFR---KETNNAAIIMKVD--KDRQMVVLEDELQ-NISPEELKL"
-        + "ELPERQPRFVVYSYKYVH--DDGRVSYPLCFIFSSPVGCKPEQQMMYAGSKNRLVQTAE-"
-        + "L-TKVFEIRTTDD-LTETWLKEKLAFFR",
-        "-GIAVSDDCVQKFNELKLGHQH-----RYVTFKMNASN--TEVVVEHVGGPNATYEDFKS"
-        + "QLPERDCRYAIFDYEFQVDG---GQRNKITFILWAPDSAPIKSKMMYTSTKDSIKKKLVG"
-        + "IQ-VEVQATD-AAEISEDAVSERAKK--"
-        ]
-      )
+        (ali, unknowns) = bioinformatics.clustal_alignment_parse(clustal3)
 
-    ( ali, unknowns ) = bioinformatics.clustal_alignment_parse( clustal3 )
+        self.assertEqual(unknowns, "")
 
-    self.assertEqual( unknowns, "" )
+        self.assertEqual(ali.program, "MUSCLE (3.8)")
+        self.assertEqual(ali.names, ["1mru_A", "2h34_A"])
+        self.assertEqual(
+            ali.alignments,
+            [
+                "-----------------GSHMTTPSHLSD-----RYELGEILGFGGMSEVHLARDLRLHR"
+                + "DVAVKVLRADLARDPSFYLRFRREAQNAAALNHPAIVAVYDTGEAETPAGPLPYIVMEYV",
+                "MGSSHHHHHHSSGLVPRGSHMDGTAESREGTQFGPYRLRRLVGRGGMGDVYEAEDTVRER"
+                + "IVALKLMSETLSSDPVFRTRMQREARTAGRLQEPHVVPIHDFGEID---GQL-YVDMRLI",
+            ],
+        )
 
-    self.assertEqual( ali.program, "MUSCLE (3.8)" )
-    self.assertEqual( ali.names, [ "1mru_A", "2h34_A" ] )
-    self.assertEqual(
-      ali.alignments,
-      [
-        "-----------------GSHMTTPSHLSD-----RYELGEILGFGGMSEVHLARDLRLHR"
-        + "DVAVKVLRADLARDPSFYLRFRREAQNAAALNHPAIVAVYDTGEAETPAGPLPYIVMEYV",
-        "MGSSHHHHHHSSGLVPRGSHMDGTAESREGTQFGPYRLRRLVGRGGMGDVYEAEDTVRER"
-        + "IVALKLMSETLSSDPVFRTRMQREARTAGRLQEPHVVPIHDFGEID---GQL-YVDMRLI",
-        ]
-      )
+        # Bad format
+        badaln = "Blah\nBlah\n" + clustal2
+        (ali, unknowns) = bioinformatics.clustal_alignment_parse(badaln)
 
-    # Bad format
-    badaln = "Blah\nBlah\n" + clustal2
-    ( ali, unknowns ) = bioinformatics.clustal_alignment_parse( badaln )
+        self.assertEqual(unknowns, badaln)
+        self.assertEqual(ali, None)
 
-    self.assertEqual( unknowns, badaln )
-    self.assertEqual( ali, None )
+        (ali, unknowns) = bioinformatics.clustal_alignment_parse(bad_clustal1)
 
-    ( ali, unknowns ) = bioinformatics.clustal_alignment_parse( bad_clustal1 )
+        self.assertEqual(unknowns, bad_clustal1)
+        self.assertEqual(ali, None)
 
-    self.assertEqual( unknowns, bad_clustal1 )
-    self.assertEqual( ali, None )
+        (ali, unknowns) = bioinformatics.clustal_alignment_parse(bad_clustal2)
 
-    ( ali, unknowns ) = bioinformatics.clustal_alignment_parse( bad_clustal2 )
+        self.assertEqual(unknowns, bad_clustal2)
+        self.assertEqual(ali, None)
 
-    self.assertEqual( unknowns, bad_clustal2 )
-    self.assertEqual( ali, None )
+        # Empty alignment
+        (ali, unknowns) = bioinformatics.clustal_alignment_parse(
+            "CLUSTAL 2.0.10 multiple sequence alignment\n\n"
+        )
 
-    # Empty alignment
-    ( ali, unknowns ) = bioinformatics.clustal_alignment_parse(
-      "CLUSTAL 2.0.10 multiple sequence alignment\n\n"
-      )
+        self.assertEqual(unknowns, "")
+        self.assertEqual(ali.program, "CLUSTAL 2.0.10")
+        self.assertEqual(ali.names, [])
+        self.assertEqual(ali.alignments, [])
 
-    self.assertEqual( unknowns, "" )
-    self.assertEqual( ali.program, "CLUSTAL 2.0.10" )
-    self.assertEqual( ali.names, [] )
-    self.assertEqual( ali.alignments, [] )
+    def testPir(self):
 
+        (ali, unknowns) = bioinformatics.pir_alignment_parse(pir_ali1)
 
-  def testPir(self):
+        self.assertEqual(unknowns, "")
 
-    ( ali, unknowns ) = bioinformatics.pir_alignment_parse( pir_ali1 )
+        self.assertEqual(ali.names, ["Horse", "chain_A"])
+        self.assertEqual(ali.types, ["P1", "P3"])
+        self.assertEqual(ali.descriptions, ["", ""])
+        self.assertEqual(
+            ali.alignments,
+            [
+                "VLSAADKTNVKAAWSKVGGHAGEYGAEALERMFLGFPTTKTYFPHFDLSHGSAQVKA---"
+                + "---HGKKVGDALTLAVGHLDDLPGALSDLSNLHAHKLRVDPVNFKLLSHCLLSTLAVHLP"
+                + "NDFTPAVHASLDKFLSSVSTVLTSKYR------",
+                "VLSEGEWQLVLHVWAKVEADVAGHGQDILIRLFKSHPETLEKFDRFKHLKTEAEMKASED"
+                + "LKKHGVTVLTALGAILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISEAIIHVLHSRHP"
+                + "GDFGADAQGAMNKALELFRKDIAAKYKELGYQG",
+            ],
+        )
 
-    self.assertEqual( unknowns, "" )
+        # Bad format
+        (ali, unknowns) = bioinformatics.pir_alignment_parse("\n" + clustal2)
 
-    self.assertEqual( ali.names, [ "Horse", "chain_A" ] )
-    self.assertEqual( ali.types, [ "P1", "P3" ] )
-    self.assertEqual( ali.descriptions, [ "", "" ] )
-    self.assertEqual(
-      ali.alignments,
-      [
-        "VLSAADKTNVKAAWSKVGGHAGEYGAEALERMFLGFPTTKTYFPHFDLSHGSAQVKA---"
-        + "---HGKKVGDALTLAVGHLDDLPGALSDLSNLHAHKLRVDPVNFKLLSHCLLSTLAVHLP"
-        + "NDFTPAVHASLDKFLSSVSTVLTSKYR------",
-        "VLSEGEWQLVLHVWAKVEADVAGHGQDILIRLFKSHPETLEKFDRFKHLKTEAEMKASED"
-        + "LKKHGVTVLTALGAILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISEAIIHVLHSRHP"
-        + "GDFGADAQGAMNKALELFRKDIAAKYKELGYQG"
-        ]
-      )
+        self.assertEqual(unknowns, "\n" + clustal2)
+        self.assertEqual(ali, None)
 
-    # Bad format
-    ( ali, unknowns ) = bioinformatics.pir_alignment_parse( "\n" + clustal2 )
+        # Empty alignment
+        (ali, unknowns) = bioinformatics.pir_alignment_parse("")
 
-    self.assertEqual( unknowns, "\n" + clustal2 )
-    self.assertEqual( ali, None )
+        self.assertEqual(unknowns, "")
 
-    # Empty alignment
-    ( ali, unknowns ) = bioinformatics.pir_alignment_parse( "" )
+        self.assertEqual(ali.names, [])
+        self.assertEqual(ali.types, [])
+        self.assertEqual(ali.descriptions, [])
+        self.assertEqual(ali.alignments, [])
 
-    self.assertEqual( unknowns, "" )
+    def testFasta(self):
 
-    self.assertEqual( ali.names, [] )
-    self.assertEqual( ali.types, [] )
-    self.assertEqual( ali.descriptions, [] )
-    self.assertEqual( ali.alignments, [] )
+        (ali, unknowns) = bioinformatics.fasta_alignment_parse(fasta_ali1)
 
+        self.assertEqual(unknowns, "")
 
-  def testFasta(self):
+        self.assertEqual(ali.names, ["2QZU:A", "3B5Q:B"])
+        self.assertEqual(
+            ali.descriptions,
+            [
+                "Putative sulfatase from B. fragilis",
+                "Putative sulfatase from B. thetaiotaomicron",
+            ],
+        )
+        self.assertEqual(
+            ali.alignments,
+            [
+                "QPTPNLVFIXADQYRGDAIGCIGKEPVKTPHLDKLASEGINFTNAISSYP"
+                + "VSSPARGXLXTGXYPIGSKVT-GNCNSETAPYGVELSQNARCWSDVLKDQ"
+                + "GYNXGYIGKWHLDAPYKPYVDTYNNRGKVAWNEWCP---PERRHGFDHWI"
+                + "AYGTYDY-----------------------------H-LKPXYWNTTAPR"
+                + "DSFYYVNQ-----------WGPEYEASKAIEYINGQKDQKQPFALVVSXN"
+                + "PPHTGYE--------------LVPDRYKEIYKDLDVEALCKGRPDIP---"
+                + "-------------------AKG----------------------TEXGDY"
+                + "FRNNIRNYYACITGVDENVGRIIEALKQNNLFDNTIVVFTSDHGICXG--"
+                + "---------------AHENAGKD-IFYEESXRIPXILSWPDQIKPRKSDP"
+                + "--LXIAFA-DLYPTLLSXXGFSKEIPETVQTFDLSNEVLTGKNKKD-LVQ"
+                + "PYYFVKF--------DNHA------------------TGYRGLRTDRYTY"
+                + "AVHAT-DGK------------------------IDNVILFDRTNDPHEXN"
+                + "NIASQ--QLKLTHTFNRQLKTWLEKTNDPF",
+                "-EKPNFLIIQCDHLTQRVVGAYGQTQGCTLPIDEVASRGVIFSNAYVGCP"
+                + "LSQPSRAALWSGXXPHQTNVR-SNSS---EPVNTRLPENVPTLGSLFSES"
+                + "GYEAVHFGKTHDX---------------------------GSLRGFKHKE"
+                + "P-------------------------------------------------"
+                + "---VAKPFTDPEFPVNNDSFLDVGTCEDAVAYLSNP--PKEPFICIADFQ"
+                + "NPHNICGFIGENAGVHTDRPI----------SGPLPEL----PDNFDVED"
+                + "WSNIPTPVQYICCSHRRXT---QAA-------------------HWNEEN"
+                + "YRHYIAAFQHYTKXVSKQVDSVLKALYSTPAGRNTIVVIXADHGDGXA--"
+                + "---------------SHRXVTKHISFYDEXTNVPFIFAG-PGIKQQKKPV"
+                + "DHLLTQPTLDLLPTLCDLAGIA--VPAEKAGISLAPTLRGEKQKKSHPYV"
+                + "VSEWHSEYEYVT-------------------------TPGRXVRGPRYKY"
+                + "THYLE----------------------------GNGEELYDXKKDPGERK"
+                + "NLAKDPKYSKILAEHRALLDDYITRSKDDY",
+            ],
+        )
 
-    ( ali, unknowns ) = bioinformatics.fasta_alignment_parse( fasta_ali1 )
+    def testAli(self):
 
-    self.assertEqual( unknowns, "" )
+        (ali, unknowns) = bioinformatics.ali_alignment_parse(ali_ali1)
 
-    self.assertEqual( ali.names, [ "2QZU:A", "3B5Q:B" ] )
-    self.assertEqual(
-      ali.descriptions,
-      [
-        "Putative sulfatase from B. fragilis",
-        "Putative sulfatase from B. thetaiotaomicron",
-        ]
-      )
-    self.assertEqual(
-      ali.alignments,
-      [
-        "QPTPNLVFIXADQYRGDAIGCIGKEPVKTPHLDKLASEGINFTNAISSYP"
-        + "VSSPARGXLXTGXYPIGSKVT-GNCNSETAPYGVELSQNARCWSDVLKDQ"
-        + "GYNXGYIGKWHLDAPYKPYVDTYNNRGKVAWNEWCP---PERRHGFDHWI"
-        + "AYGTYDY-----------------------------H-LKPXYWNTTAPR"
-        + "DSFYYVNQ-----------WGPEYEASKAIEYINGQKDQKQPFALVVSXN"
-        + "PPHTGYE--------------LVPDRYKEIYKDLDVEALCKGRPDIP---"
-        + "-------------------AKG----------------------TEXGDY"
-        + "FRNNIRNYYACITGVDENVGRIIEALKQNNLFDNTIVVFTSDHGICXG--"
-        + "---------------AHENAGKD-IFYEESXRIPXILSWPDQIKPRKSDP"
-        + "--LXIAFA-DLYPTLLSXXGFSKEIPETVQTFDLSNEVLTGKNKKD-LVQ"
-        + "PYYFVKF--------DNHA------------------TGYRGLRTDRYTY"
-        + "AVHAT-DGK------------------------IDNVILFDRTNDPHEXN"
-        + "NIASQ--QLKLTHTFNRQLKTWLEKTNDPF",
-        "-EKPNFLIIQCDHLTQRVVGAYGQTQGCTLPIDEVASRGVIFSNAYVGCP"
-        + "LSQPSRAALWSGXXPHQTNVR-SNSS---EPVNTRLPENVPTLGSLFSES"
-        + "GYEAVHFGKTHDX---------------------------GSLRGFKHKE"
-        + "P-------------------------------------------------"
-        + "---VAKPFTDPEFPVNNDSFLDVGTCEDAVAYLSNP--PKEPFICIADFQ"
-        + "NPHNICGFIGENAGVHTDRPI----------SGPLPEL----PDNFDVED"
-        + "WSNIPTPVQYICCSHRRXT---QAA-------------------HWNEEN"
-        + "YRHYIAAFQHYTKXVSKQVDSVLKALYSTPAGRNTIVVIXADHGDGXA--"
-        + "---------------SHRXVTKHISFYDEXTNVPFIFAG-PGIKQQKKPV"
-        + "DHLLTQPTLDLLPTLCDLAGIA--VPAEKAGISLAPTLRGEKQKKSHPYV"
-        + "VSEWHSEYEYVT-------------------------TPGRXVRGPRYKY"
-        + "THYLE----------------------------GNGEELYDXKKDPGERK"
-        + "NLAKDPKYSKILAEHRALLDDYITRSKDDY",
-        ]
-      )
+        self.assertEqual(unknowns, "")
 
+        self.assertEqual(ali.names, ["2QZU:A", "3B5Q:B"])
+        self.assertEqual(
+            ali.alignments,
+            [
+                "QPTPNLVFIXADQYRGDAIGCIGKEPVKTPHLDKLASEGINFTNAISSYP"
+                + "VSSPARGXLXTGXYPIGSKVT-GNCNSETAPYGVELSQNARCWSDVLKDQ"
+                + "GYNXGYIGKWHLDAPYKPYVDTYNNRGKVAWNEWCP---PERRHGFDHWI"
+                + "AYGTYDY-----------------------------H-LKPXYWNTTAPR"
+                + "DSFYYVNQ-----------WGPEYEASKAIEYINGQKDQKQPFALVVSXN"
+                + "PPHTGYE--------------LVPDRYKEIYKDLDVEALCKGRPDIP---"
+                + "-------------------AKG----------------------TEXGDY"
+                + "FRNNIRNYYACITGVDENVGRIIEALKQNNLFDNTIVVFTSDHGICXG--"
+                + "---------------AHENAGKD-IFYEESXRIPXILSWPDQIKPRKSDP"
+                + "--LXIAFA-DLYPTLLSXXGFSKEIPETVQTFDLSNEVLTGKNKKD-LVQ"
+                + "PYYFVKF--------DNHA------------------TGYRGLRTDRYTY"
+                + "AVHAT-DGK------------------------IDNVILFDRTNDPHEXN"
+                + "NIASQ--QLKLTHTFNRQLKTWLEKTNDPF",
+                "-EKPNFLIIQCDHLTQRVVGAYGQTQGCTLPIDEVASRGVIFSNAYVGCP"
+                + "LSQPSRAALWSGXXPHQTNVR-SNSS---EPVNTRLPENVPTLGSLFSES"
+                + "GYEAVHFGKTHDX---------------------------GSLRGFKHKE"
+                + "P-------------------------------------------------"
+                + "---VAKPFTDPEFPVNNDSFLDVGTCEDAVAYLSNP--PKEPFICIADFQ"
+                + "NPHNICGFIGENAGVHTDRPI----------SGPLPEL----PDNFDVED"
+                + "WSNIPTPVQYICCSHRRXT---QAA-------------------HWNEEN"
+                + "YRHYIAAFQHYTKXVSKQVDSVLKALYSTPAGRNTIVVIXADHGDGXA--"
+                + "---------------SHRXVTKHISFYDEXTNVPFIFAG-PGIKQQKKPV"
+                + "DHLLTQPTLDLLPTLCDLAGIA--VPAEKAGISLAPTLRGEKQKKSHPYV"
+                + "VSEWHSEYEYVT-------------------------TPGRXVRGPRYKY"
+                + "THYLE----------------------------GNGEELYDXKKDPGERK"
+                + "NLAKDPKYSKILAEHRALLDDYITRSKDDY",
+            ],
+        )
 
-  def testAli(self):
+    def test_filename_selection(self):
 
-    ( ali, unknowns ) = bioinformatics.ali_alignment_parse( ali_ali1 )
+        self.assertEqual(
+            bioinformatics.alignment_parser_for("dummy.pir"),
+            bioinformatics.pir_alignment_parse,
+        )
+        self.assertEqual(bioinformatics.alignment_parser_for("clustal"), None)
 
-    self.assertEqual( unknowns, "" )
+    def test_known_formats(self):
 
-    self.assertEqual( ali.names, [ "2QZU:A", "3B5Q:B" ] )
-    self.assertEqual(
-      ali.alignments,
-      [
-        "QPTPNLVFIXADQYRGDAIGCIGKEPVKTPHLDKLASEGINFTNAISSYP"
-        + "VSSPARGXLXTGXYPIGSKVT-GNCNSETAPYGVELSQNARCWSDVLKDQ"
-        + "GYNXGYIGKWHLDAPYKPYVDTYNNRGKVAWNEWCP---PERRHGFDHWI"
-        + "AYGTYDY-----------------------------H-LKPXYWNTTAPR"
-        + "DSFYYVNQ-----------WGPEYEASKAIEYINGQKDQKQPFALVVSXN"
-        + "PPHTGYE--------------LVPDRYKEIYKDLDVEALCKGRPDIP---"
-        + "-------------------AKG----------------------TEXGDY"
-        + "FRNNIRNYYACITGVDENVGRIIEALKQNNLFDNTIVVFTSDHGICXG--"
-        + "---------------AHENAGKD-IFYEESXRIPXILSWPDQIKPRKSDP"
-        + "--LXIAFA-DLYPTLLSXXGFSKEIPETVQTFDLSNEVLTGKNKKD-LVQ"
-        + "PYYFVKF--------DNHA------------------TGYRGLRTDRYTY"
-        + "AVHAT-DGK------------------------IDNVILFDRTNDPHEXN"
-        + "NIASQ--QLKLTHTFNRQLKTWLEKTNDPF",
-        "-EKPNFLIIQCDHLTQRVVGAYGQTQGCTLPIDEVASRGVIFSNAYVGCP"
-        + "LSQPSRAALWSGXXPHQTNVR-SNSS---EPVNTRLPENVPTLGSLFSES"
-        + "GYEAVHFGKTHDX---------------------------GSLRGFKHKE"
-        + "P-------------------------------------------------"
-        + "---VAKPFTDPEFPVNNDSFLDVGTCEDAVAYLSNP--PKEPFICIADFQ"
-        + "NPHNICGFIGENAGVHTDRPI----------SGPLPEL----PDNFDVED"
-        + "WSNIPTPVQYICCSHRRXT---QAA-------------------HWNEEN"
-        + "YRHYIAAFQHYTKXVSKQVDSVLKALYSTPAGRNTIVVIXADHGDGXA--"
-        + "---------------SHRXVTKHISFYDEXTNVPFIFAG-PGIKQQKKPV"
-        + "DHLLTQPTLDLLPTLCDLAGIA--VPAEKAGISLAPTLRGEKQKKSHPYV"
-        + "VSEWHSEYEYVT-------------------------TPGRXVRGPRYKY"
-        + "THYLE----------------------------GNGEELYDXKKDPGERK"
-        + "NLAKDPKYSKILAEHRALLDDYITRSKDDY",
-        ]
-      )
-
-  def test_filename_selection(self):
-
-    self.assertEqual(
-      bioinformatics.alignment_parser_for( "dummy.pir" ),
-      bioinformatics.pir_alignment_parse
-      )
-    self.assertEqual( bioinformatics.alignment_parser_for( "clustal" ), None )
-
-
-  def test_known_formats(self):
-
-    self.assertEqual(
-      sorted( bioinformatics.known_alignment_formats() ),
-      [ ".ali", ".aln", ".clustal", ".fa", ".fasta", ".hhr", ".pir" ]
-      )
+        self.assertEqual(
+            sorted(bioinformatics.known_alignment_formats()),
+            [".ali", ".aln", ".clustal", ".fa", ".fasta", ".hhr", ".pir"],
+        )
 
 
-hhsearchout = \
-"""
+hhsearchout = """
 Query         Thu_Sep_09_20:47:04_+0200_2010
 Match_columns 205
 No_of_seqs    280 out of 1436
@@ -1600,245 +1395,241 @@ Done!
 
 
 class test_hhsearch_parser(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.hss = bioinformatics.hhsearch_parser(output=hhsearchout)
 
-    self.hss = bioinformatics.hhsearch_parser( output = hhsearchout )
+    def test_process_header(self):
 
-
-  def test_process_header(self):
-
-    self.assertEqual( self.hss.query, "Thu_Sep_09_20:47:04_+0200_2010" )
-    self.assertEqual( self.hss.match_columns, 205 )
-    self.assertEqual( self.hss.no_of_sequences, ( 280, 1436 ) )
-    self.assertEqual( self.hss.neff, "7.1" )
-    self.assertEqual( self.hss.searched_hmms, 22773 )
-    self.assertEqual( self.hss.date, "Thu Sep  9 20:51:32 2010" )
-    self.assertEqual(
-      self.hss.command,
-      "/cluster/toolkit/production/bioprogs/hhpred/hhsearch -cpu 4 -v 1 -i /cluster/toolkit/production/tmp/production/426773/3338418.hhm -d /cluster/toolkit/production/databases/hhpred/new_dbs/pdb70_9Sep10/db/pdb.hhm -o /cluster/toolkit/production/tmp/production/426773/3338418.hhr -p 20 -P 20 -Z 100 -B 100 -seq 1 -aliw 80 -local -ssm 2 -norealign -sc 1 -dbstrlen 10000 -cs /cluster/toolkit/production/bioprogs/csblast/data/clusters.prf"
-      )
-
-
-  def test_process_hits(self):
-
-    self.assertEqual( self.hss.indices, [ 1, 2 ] )
-    self.assertEqual( self.hss.pdbs, [ "3CNG", "3I7U" ] )
-    self.assertEqual( self.hss.chains, [ "A", "A" ] )
-    self.assertEqual(
-      self.hss.annotations,
-      [
-        "Nudix hydrolase; structural genomics, APC7497, PSI-2, protein structure initiative, midwest center for structural genomics; 2.00A {Nitrosomonas europaea atcc 19718}",
-        "AP4A hydrolase; nudix protein, diadenosine polyphosphate, structural genomics, NPPSFA; HET: PGE; 1.80A {Aquifex aeolicus} PDB: 2pq1_A* 3i7u_A* 3i7v_A*",
-        ]
+        self.assertEqual(self.hss.query, "Thu_Sep_09_20:47:04_+0200_2010")
+        self.assertEqual(self.hss.match_columns, 205)
+        self.assertEqual(self.hss.no_of_sequences, (280, 1436))
+        self.assertEqual(self.hss.neff, "7.1")
+        self.assertEqual(self.hss.searched_hmms, 22773)
+        self.assertEqual(self.hss.date, "Thu Sep  9 20:51:32 2010")
+        self.assertEqual(
+            self.hss.command,
+            "/cluster/toolkit/production/bioprogs/hhpred/hhsearch -cpu 4 -v 1 -i /cluster/toolkit/production/tmp/production/426773/3338418.hhm -d /cluster/toolkit/production/databases/hhpred/new_dbs/pdb70_9Sep10/db/pdb.hhm -o /cluster/toolkit/production/tmp/production/426773/3338418.hhr -p 20 -P 20 -Z 100 -B 100 -seq 1 -aliw 80 -local -ssm 2 -norealign -sc 1 -dbstrlen 10000 -cs /cluster/toolkit/production/bioprogs/csblast/data/clusters.prf",
         )
 
-    self.assertIterablesAlmostEqual( self.hss.probabs, [ 99.96, 99.95 ], 2 )
-    self.assertIterablesAlmostEqual( self.hss.e_values, [ 4.5e-28, 1.4e-27 ], 28 )
-    self.assertIterablesAlmostEqual( self.hss.scores, [ 196.52, 182.17 ], 2 )
-    self.assertEqual( self.hss.aligned_cols, [ 139, 127 ] )
-    self.assertIterablesAlmostEqual( self.hss.identities, [ 21, 20 ], 1 )
-    self.assertEqual( self.hss.query_starts, [ 59, 69 ] )
-    self.assertEqual( self.hss.query_ends, [ 204, 196 ] )
-    self.assertEqual( self.hss.query_others, [ 205, 205 ] )
-    self.assertEqual(
-      self.hss.query_alignments,
-      [
-        "FCNETG---YQTPKLDTRAAIFQEDKILLVQEND----GLWSLPGGWCDVDQSVKDNVVKEVKEEAGLDVEAQRVVAILD"
-          + "KHKNNPAKSAHRVTKVFILCRLLGGEFQPNSETVASGFFSLDDLPPLYLGKNTAEQLALCLEASRSEHWETRF",
-        "KLDTRAAIFQEDKILLVQENDGLWSLPGGWCDVDQSVKDNVVKEVKEEAGLDVEAQRVVAILDKHKNNPAKSAHRVTKVF"
-          + "ILCRLLGGEFQPNSETVASGFFSLDDLPPLYLGKNTAEQLALCLEASR",
-        ]
-      )
+    def test_process_hits(self):
 
-    self.assertEqual( self.hss.hit_starts, [ 27, 4 ] )
-    self.assertEqual( self.hss.hit_ends, [ 172, 130 ] )
-    self.assertEqual( self.hss.hit_others, [ 189, 134 ] )
-    self.assertEqual(
-      self.hss.hit_alignments,
-      [
-        "ICPKCHTIHYQNPKVIVGCIPEWENKVLLCKRAIAPYRGKWTLPAGFMENNETLVQGAARETLEEANARVEIRELYAVYS"
-          + "LPHI-------SQVYMLFRAKLLDLDFFPGIESLEVRLFGEQEIPWNDIAFRVIHDPLKRYMEERHHGQPAFH",
-        "EFSAGGVLFKDGEVLLIKTPSNVWSFPKGNIEPGEKPEETAVREVWEETGVKGEILDYIGEIHYW-YTLKGERIFKTVKY"
-          + "YLMKYKEGEPRPSWEVKDAKFFPIKEAKKLLKYKGDKEIFEKALKLKE",
-        ]
-      )
+        self.assertEqual(self.hss.indices, [1, 2])
+        self.assertEqual(self.hss.pdbs, ["3CNG", "3I7U"])
+        self.assertEqual(self.hss.chains, ["A", "A"])
+        self.assertEqual(
+            self.hss.annotations,
+            [
+                "Nudix hydrolase; structural genomics, APC7497, PSI-2, protein structure initiative, midwest center for structural genomics; 2.00A {Nitrosomonas europaea atcc 19718}",
+                "AP4A hydrolase; nudix protein, diadenosine polyphosphate, structural genomics, NPPSFA; HET: PGE; 1.80A {Aquifex aeolicus} PDB: 2pq1_A* 3i7u_A* 3i7v_A*",
+            ],
+        )
 
+        self.assertIterablesAlmostEqual(self.hss.probabs, [99.96, 99.95], 2)
+        self.assertIterablesAlmostEqual(self.hss.e_values, [4.5e-28, 1.4e-27], 28)
+        self.assertIterablesAlmostEqual(self.hss.scores, [196.52, 182.17], 2)
+        self.assertEqual(self.hss.aligned_cols, [139, 127])
+        self.assertIterablesAlmostEqual(self.hss.identities, [21, 20], 1)
+        self.assertEqual(self.hss.query_starts, [59, 69])
+        self.assertEqual(self.hss.query_ends, [204, 196])
+        self.assertEqual(self.hss.query_others, [205, 205])
+        self.assertEqual(
+            self.hss.query_alignments,
+            [
+                "FCNETG---YQTPKLDTRAAIFQEDKILLVQEND----GLWSLPGGWCDVDQSVKDNVVKEVKEEAGLDVEAQRVVAILD"
+                + "KHKNNPAKSAHRVTKVFILCRLLGGEFQPNSETVASGFFSLDDLPPLYLGKNTAEQLALCLEASRSEHWETRF",
+                "KLDTRAAIFQEDKILLVQENDGLWSLPGGWCDVDQSVKDNVVKEVKEEAGLDVEAQRVVAILDKHKNNPAKSAHRVTKVF"
+                + "ILCRLLGGEFQPNSETVASGFFSLDDLPPLYLGKNTAEQLALCLEASR",
+            ],
+        )
 
-  def assertIterablesAlmostEqual(self, i1, i2, digits):
+        self.assertEqual(self.hss.hit_starts, [27, 4])
+        self.assertEqual(self.hss.hit_ends, [172, 130])
+        self.assertEqual(self.hss.hit_others, [189, 134])
+        self.assertEqual(
+            self.hss.hit_alignments,
+            [
+                "ICPKCHTIHYQNPKVIVGCIPEWENKVLLCKRAIAPYRGKWTLPAGFMENNETLVQGAARETLEEANARVEIRELYAVYS"
+                + "LPHI-------SQVYMLFRAKLLDLDFFPGIESLEVRLFGEQEIPWNDIAFRVIHDPLKRYMEERHHGQPAFH",
+                "EFSAGGVLFKDGEVLLIKTPSNVWSFPKGNIEPGEKPEETAVREVWEETGVKGEILDYIGEIHYW-YTLKGERIFKTVKY"
+                + "YLMKYKEGEPRPSWEVKDAKFFPIKEAKKLLKYKGDKEIFEKALKLKE",
+            ],
+        )
 
-    self.assertEqual( len( i1 ), len( i2 ) )
+    def assertIterablesAlmostEqual(self, i1, i2, digits):
 
-    for ( o, e ) in zip( i1, i2 ):
-      self.assertAlmostEqual( o, e, digits )
+        self.assertEqual(len(i1), len(i2))
+
+        for (o, e) in zip(i1, i2):
+            self.assertAlmostEqual(o, e, digits)
 
 
 class test_hhalign_parser(unittest.TestCase):
+    def setUp(self):
 
-  def setUp(self):
+        self.hss = bioinformatics.hhalign_parser(output=hhalignout)
 
-    self.hss = bioinformatics.hhalign_parser( output = hhalignout )
+    def test_process_header(self):
 
+        self.assertEqual(self.hss.query, "1XVQ.pdb")
+        self.assertEqual(self.hss.match_columns, 155)
+        self.assertEqual(self.hss.no_of_sequences, (111, 3723))
+        self.assertEqual(self.hss.neff, "9.0")
+        self.assertEqual(self.hss.searched_hmms, 0)
+        self.assertEqual(self.hss.date, "Tue Jul 13 19:50:02 2010")
+        self.assertEqual(
+            self.hss.command,
+            "/work/dimaio/sequence/hhsearch/hhalign -i 1XVQ.hhm -t 1FOH.hhm -glob -o 1FOH_1XVQ.hhr",
+        )
 
-  def test_process_header(self):
+    def test_process_hits(self):
 
-    self.assertEqual( self.hss.query, "1XVQ.pdb" )
-    self.assertEqual( self.hss.match_columns, 155 )
-    self.assertEqual( self.hss.no_of_sequences, ( 111, 3723 ) )
-    self.assertEqual( self.hss.neff, "9.0" )
-    self.assertEqual( self.hss.searched_hmms, 0 )
-    self.assertEqual( self.hss.date, "Tue Jul 13 19:50:02 2010" )
-    self.assertEqual(
-      self.hss.command,
-      "/work/dimaio/sequence/hhsearch/hhalign -i 1XVQ.hhm -t 1FOH.hhm -glob -o 1FOH_1XVQ.hhr"
-      )
+        self.assertEqual(self.hss.indices, [1])
+        self.assertEqual(self.hss.annotations, ["1FOH_aln.pdb"])
 
+        self.assertIterablesAlmostEqual(self.hss.probabs, [1.0], 2)
+        self.assertIterablesAlmostEqual(self.hss.e_values, [1.0], 2)
+        self.assertIterablesAlmostEqual(self.hss.scores, [56.09], 2)
+        self.assertEqual(self.hss.aligned_cols, [141])
+        self.assertIterablesAlmostEqual(self.hss.identities, [11], 1)
+        self.assertEqual(self.hss.query_starts, [1])
+        self.assertEqual(self.hss.query_ends, [155])
+        self.assertEqual(self.hss.query_others, [155])
+        self.assertEqual(
+            self.hss.query_alignments,
+            [
+                "TVGELPAVGSPAPAFTLTG-GDLGVISSDQ-FR--GKSVLLNIFPSVDTPVCATSVRTFDERAAAS--------------"
+                + "--GATVLCVSKDLPF-----AQKRFCGAEGTEN------VMPASAFRDSFGEDYGVTIADGPMAGLLARAIVVIGADGNV"
+                + "AYTELVPEIAQEPNYEAALAALGATS",
+            ],
+        )
+        self.assertEqual(
+            self.hss.query_consensi,
+            [
+                "~~~~~p~vG~~aPdF~l~~-~~G~~v~ls~-~~--Gk~vvl~f~~~~~~p~c~~~~~~l~~~~~~~--------------"
+                + "--g~~v~~i~~~~~~-----~~~~~~~~~~~~~------~~~~~d~~~~~~~~~g~~~~~~~~~~~~~p~~fiID~~G~I"
+                + "~~~~~~~~~~~~~~~~~il~~lkal~",
+            ],
+        )
+        self.assertEqual(
+            self.hss.query_ss_preds,
+            [
+                "CCCCCCCCCCCCCCEEEEC-CCCCEEEHHH-HC--CCEEEEEEECCCCCCCHHHHHHHHHHHHHHC--------------"
+                + "--CEEECCCCCCCHH-----HHHHHHHHHCCCC------EEECCCCCHHHHHHCCCCCCCCCCCCCEEEEEEEECCCCEE"
+                + "EEEEECCCCCCCCCHHHHHHHHHHHC",
+            ],
+        )
+        self.assertEqual(
+            self.hss.query_ss_confs,
+            [
+                "9988554688178517897-9997764889-69--9848999832437711126669999998420--------------"
+                + "--1000023467889-----9999999828975------11014433488997077344565557101279998699839"
+                + "99998178888889999999998519",
+            ],
+        )
 
-  def test_process_hits(self):
+        self.assertEqual(
+            self.hss.midlines,
+            [
+                "-...-+.+|..+|+.-+.. .+|....+.+ +.  |++.++.|......+.-...+..+.+..................."
+                + "  .+.++.|......     .............      .....|........||+..+        ..+.+||=|||-|"
+                + ".++.  +    .-+.+++.+.+...=",
+            ],
+        )
 
-    self.assertEqual( self.hss.indices, [ 1 ] )
-    self.assertEqual( self.hss.annotations, [ "1FOH_aln.pdb" ] )
+        self.assertEqual(self.hss.hit_starts, [460])
+        self.assertEqual(self.hss.hit_ends, [631])
+        self.assertEqual(self.hss.hit_others, [649])
+        self.assertEqual(
+            self.hss.hit_ss_preds,
+            [
+                "CCCCCCCCCCCCCCCCEEECCCCCCCCHHHHHCCCCCEEEEEECCCCCCCHHHHHHHHHHHHHCCCCCEEEECCCCCCCC"
+                + "CCCEEEEEEECCCCCCCCHHHCHHHHCCCCCCCEEEEECCCCCCCCCHHHHHHHCCCHH--------CCEEEEECCCCEE"
+                + "EEEE--C----HHHHHHHHHHHHHHC",
+            ],
+        )
+        self.assertEqual(
+            self.hss.hit_ss_confs,
+            [
+                "33688888864688503532788831125541278837999943888761135678888875204563011022466766"
+                + "56168999854776544233320200246742016650444444667789998098711--------4379998699558"
+                + "9997--3----013589999999742",
+            ],
+        )
+        self.assertEqual(
+            self.hss.hit_consensi,
+            [
+                "~~~~~~~~G~r~p~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+                + "~~~~~~~~v~~~~~~~~~~~~~~~~~~~~~~~~~~v~~~~~~~~~~~~~~~~~~g~~~~--------~~~~vlVRPD~~V"
+                + "a~~~--~----~~~~~~l~~~~~~~l",
+            ],
+        )
+        self.assertEqual(
+            self.hss.hit_alignments,
+            [
+                "ELAKNCVVGTRFKSQPVVRHSEGLWMHFGDRLVTDGRFRIIVFAGKATDATQMSRIKKFSAYLDSENSVISLYTPKVSDR"
+                + "NSRIDVITIHSCHRDDIEMHDFPAPALHPKWQYDFIYADCDSWHHPHPKSYQAWGVDET--------KGAVVVVRPDGYT"
+                + "SLVT--D----LEGTAEIDRYFSGIL",
+            ],
+        )
 
-    self.assertIterablesAlmostEqual( self.hss.probabs, [ 1.0 ], 2 )
-    self.assertIterablesAlmostEqual( self.hss.e_values, [ 1.0 ], 2 )
-    self.assertIterablesAlmostEqual( self.hss.scores, [ 56.09 ], 2 )
-    self.assertEqual( self.hss.aligned_cols, [ 141 ] )
-    self.assertIterablesAlmostEqual( self.hss.identities, [ 11 ], 1 )
-    self.assertEqual( self.hss.query_starts, [ 1 ] )
-    self.assertEqual( self.hss.query_ends, [ 155 ] )
-    self.assertEqual( self.hss.query_others, [ 155 ] )
-    self.assertEqual(
-      self.hss.query_alignments,
-      [
-        "TVGELPAVGSPAPAFTLTG-GDLGVISSDQ-FR--GKSVLLNIFPSVDTPVCATSVRTFDERAAAS--------------"
-          + "--GATVLCVSKDLPF-----AQKRFCGAEGTEN------VMPASAFRDSFGEDYGVTIADGPMAGLLARAIVVIGADGNV"
-          + "AYTELVPEIAQEPNYEAALAALGATS",
-        ]
-      )
-    self.assertEqual(
-      self.hss.query_consensi,
-      [
-        "~~~~~p~vG~~aPdF~l~~-~~G~~v~ls~-~~--Gk~vvl~f~~~~~~p~c~~~~~~l~~~~~~~--------------"
-          + "--g~~v~~i~~~~~~-----~~~~~~~~~~~~~------~~~~~d~~~~~~~~~g~~~~~~~~~~~~~p~~fiID~~G~I"
-          + "~~~~~~~~~~~~~~~~~il~~lkal~",
-        ]
-      )
-    self.assertEqual(
-      self.hss.query_ss_preds,
-      [
-        "CCCCCCCCCCCCCCEEEEC-CCCCEEEHHH-HC--CCEEEEEEECCCCCCCHHHHHHHHHHHHHHC--------------"
-          + "--CEEECCCCCCCHH-----HHHHHHHHHCCCC------EEECCCCCHHHHHHCCCCCCCCCCCCCEEEEEEEECCCCEE"
-          + "EEEEECCCCCCCCCHHHHHHHHHHHC",
-        ]
-      )
-    self.assertEqual(
-      self.hss.query_ss_confs,
-      [
-        "9988554688178517897-9997764889-69--9848999832437711126669999998420--------------"
-          + "--1000023467889-----9999999828975------11014433488997077344565557101279998699839"
-          + "99998178888889999999998519",
-        ]
-      )
+    def assertIterablesAlmostEqual(self, i1, i2, digits):
 
-    self.assertEqual(
-      self.hss.midlines,
-      [
-        "-...-+.+|..+|+.-+.. .+|....+.+ +.  |++.++.|......+.-...+..+.+..................."
-          + "  .+.++.|......     .............      .....|........||+..+        ..+.+||=|||-|"
-          + ".++.  +    .-+.+++.+.+...=",
-        ]
-      )
+        self.assertEqual(len(i1), len(i2))
 
-    self.assertEqual( self.hss.hit_starts, [ 460 ] )
-    self.assertEqual( self.hss.hit_ends, [ 631 ] )
-    self.assertEqual( self.hss.hit_others, [ 649 ] )
-    self.assertEqual(
-      self.hss.hit_ss_preds,
-      [
-        "CCCCCCCCCCCCCCCCEEECCCCCCCCHHHHHCCCCCEEEEEECCCCCCCHHHHHHHHHHHHHCCCCCEEEECCCCCCCC"
-          + "CCCEEEEEEECCCCCCCCHHHCHHHHCCCCCCCEEEEECCCCCCCCCHHHHHHHCCCHH--------CCEEEEECCCCEE"
-          + "EEEE--C----HHHHHHHHHHHHHHC",
-        ]
-      )
-    self.assertEqual(
-      self.hss.hit_ss_confs,
-      [
-        "33688888864688503532788831125541278837999943888761135678888875204563011022466766"
-          + "56168999854776544233320200246742016650444444667789998098711--------4379998699558"
-          + "9997--3----013589999999742",
-        ]
-      )
-    self.assertEqual(
-      self.hss.hit_consensi,
-      [
-        "~~~~~~~~G~r~p~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-          + "~~~~~~~~v~~~~~~~~~~~~~~~~~~~~~~~~~~v~~~~~~~~~~~~~~~~~~g~~~~--------~~~~vlVRPD~~V"
-          + "a~~~--~----~~~~~~l~~~~~~~l",
-        ]
-      )
-    self.assertEqual(
-      self.hss.hit_alignments,
-      [
-        "ELAKNCVVGTRFKSQPVVRHSEGLWMHFGDRLVTDGRFRIIVFAGKATDATQMSRIKKFSAYLDSENSVISLYTPKVSDR"
-          + "NSRIDVITIHSCHRDDIEMHDFPAPALHPKWQYDFIYADCDSWHHPHPKSYQAWGVDET--------KGAVVVVRPDGYT"
-          + "SLVT--D----LEGTAEIDRYFSGIL",
-        ]
-      )
+        for (o, e) in zip(i1, i2):
+            self.assertAlmostEqual(o, e, digits)
 
-
-  def assertIterablesAlmostEqual(self, i1, i2, digits):
-
-    self.assertEqual( len( i1 ), len( i2 ) )
-
-    for ( o, e ) in zip( i1, i2 ):
-      self.assertAlmostEqual( o, e, digits )
 
 def exercise_guess_chain_types():
-  from iotbx.bioinformatics import \
-     guess_chain_types_from_sequences,text_from_chains_matching_chain_type,\
-     get_sequence_from_pdb
-  print("Testing guess_chain_types ...", end=' ')
-  text_rna="""
+    from iotbx.bioinformatics import (
+        guess_chain_types_from_sequences,
+        text_from_chains_matching_chain_type,
+        get_sequence_from_pdb,
+    )
+
+    print("Testing guess_chain_types ...", end=" ")
+    text_rna = """
 >4a17.pdb|Chain=2
 AGAAAAUUUUCAACGGUGGAUAUCUAGGUUCCCGUGACGAUGAAGAACGCAGCGAAAUGCGAUACGCAAUGCGAAUUGCA
 GAACCGCGAGUCAUCAGAUCUUUGAACGCAAGUGGUGGAGGUGUAAAAACCUUCAUGUUUGUUUCAGUGUGGAA
   """
-  text_ambiguous="""
+    text_ambiguous = """
 >4a17.pdb|Chain=A
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   """
-  text_ambiguous_a="""
+    text_ambiguous_a = """
 >4a17.pdb|Chain=A
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   """
-  text_ambiguous_ag="""
+    text_ambiguous_ag = """
 AAAAAAAG
   """
 
-  text_protein="""
+    text_protein = """
 >4a17.pdb|Chain=A
 GRVIRAQRKGRANGVYKSHKSGRIAPAQYRVYDFAERQGYIRGCIRDIVHEPGRGAPLAEVAFRDPYRYKTNKEHFIAAE
 GQYSGQYVYCGLKAQIAVGNVLPINRIPEGTVVCNVEEKVGDRGTFSRASGCYATIIGHSEDGDKTRIRLPSGARKTIPG
 SCRATVGIVAGGGRTDKPILKAGNQFHKYARKRKSWPRVRGVAMNPVDHPHGGGNHQHIGHPATVSKWASAGQKVGLRAA
 RRTGLVRGGQKEKMAMK
   """
-  text_dna="""
+    text_dna = """
 >4a17.pdb|Chain=B
 GATCCCTTTCCC
   """
-  text_misc="""
+    text_misc = """
 UGGAGAGUUUGAUCCU
 
 asdfaafasdfafsdea
 """
-  text_misc_2="""
+    text_misc_2 = """
 >> chain 1
 UGGAGAGUUUGAUCCU
 
 >> chain 2
 asdfaafasdfafsdea
 """
-  text_misc_3="""
+    text_misc_3 = """
 >> chain 1
 UGGAGAGUUUGAUCCU
 
@@ -1846,8 +1637,7 @@ UGGAGAGUUUGAUCCU
 
 """
 
-  text_protein_pdb = \
-"""
+    text_protein_pdb = """
 ATOM      2  CA  GLY A 511      12.652  44.232  24.646  1.00 31.14      A    C
 ATOM      6  CA  ASP A 512       9.025  45.287  24.299  1.00 36.73      A    C
 ATOM     14  CA  PRO A 513       7.666  41.856  25.348  1.00 32.96      A    C
@@ -1859,8 +1649,7 @@ ATOM     53  CA  LEU A 518       4.292  43.291  33.052  1.00 27.54      A    C
 ATOM     61  CA  ASP A 519       1.537  45.543  31.676  1.00 29.63      A    C
 ATOM     69  CA  ASP A 520      -0.827  42.633  30.996  1.00 31.79      A    C
 """
-  text_rna_pdb = \
-"""
+    text_rna_pdb = """
 ATOM     23  P     G U   1      13.063  22.026  11.420  1.00  0.00
 ATOM     43  P     U U   2      18.716  21.164  10.071  1.00  0.00
 ATOM     66  P     G U   3      22.765  18.088   7.789  1.00  0.00
@@ -1873,8 +1662,7 @@ ATOM    200  P     C V   4      10.409   4.550  10.972  1.00  0.00
 ATOM    222  P     A V   5      15.160   3.698  14.124  1.00  0.00
 ATOM    242  P     C V   6      19.171   5.322  17.832  1.00  0.00
 """
-  text_rna_pdb_o_two = \
-"""
+    text_rna_pdb_o_two = """
 ATOM     23  P     G U   1      13.063  22.026  11.420  1.00  0.00
 ATOM     24  O2'   G U   1      14.063  23.026  12.420  1.00  0.00
 ATOM     43  P     U U   2      18.716  21.164  10.071  1.00  0.00
@@ -1888,8 +1676,7 @@ ATOM    200  P     C V   4      10.409   4.550  10.972  1.00  0.00
 ATOM    222  P     A V   5      15.160   3.698  14.124  1.00  0.00
 ATOM    242  P     C V   6      19.171   5.322  17.832  1.00  0.00
 """
-  text_dna_pdb = \
-"""
+    text_dna_pdb = """
 ATOM     23  P     G U   1      13.063  22.026  11.420  1.00  0.00
 ATOM     43  P     T U   2      18.716  21.164  10.071  1.00  0.00
 ATOM     66  P     G U   3      22.765  18.088   7.789  1.00  0.00
@@ -1902,8 +1689,7 @@ ATOM    200  P     C V   4      10.409   4.550  10.972  1.00  0.00
 ATOM    222  P     A V   5      15.160   3.698  14.124  1.00  0.00
 ATOM    242  P     C V   6      19.171   5.322  17.832  1.00  0.00
 """
-  text_dna_pdb_lc = \
-"""
+    text_dna_pdb_lc = """
 ATOM     23  P     g U   1      13.063  22.026  11.420  1.00  0.00
 ATOM     43  P     t U   2      18.716  21.164  10.071  1.00  0.00
 ATOM     66  P     g U   3      22.765  18.088   7.789  1.00  0.00
@@ -1917,145 +1703,177 @@ ATOM    222  P     a V   5      15.160   3.698  14.124  1.00  0.00
 ATOM    242  P     c V   6      19.171   5.322  17.832  1.00  0.00
 """
 
-  assert get_sequence_from_pdb(text=text_protein_pdb)=='GDPVTRVLDD'
-  assert get_sequence_from_pdb(text=text_rna_pdb).replace("\n","").replace(" ","").strip()=='GUGGUGACCAC'
-  assert get_sequence_from_pdb(text=text_rna_pdb_o_two).replace("\n","").replace(" ","").strip()=='GUGGUGACCAC'
-  assert get_sequence_from_pdb(text=text_dna_pdb).replace("\n","").replace(" ","").strip()=='GTGGTGACCAC'
-  get_sequence_from_pdb(text=text_dna_pdb_lc).replace("\n","").replace(" ","").strip().upper()=='GTGGTGACCAC'
-  assert get_sequence_from_pdb(text=text_dna_pdb_lc).replace("\n","").replace(" ","").strip().upper()=='GTGGTGACCAC'
-  assert guess_chain_types_from_sequences(text=text_protein)==["PROTEIN"]
-  assert guess_chain_types_from_sequences(text=text_dna)==["DNA"]
-  assert guess_chain_types_from_sequences(text=text_rna)==["RNA"]
-  assert guess_chain_types_from_sequences(
-    text=text_protein+text_rna)==["PROTEIN","RNA"]
-  assert guess_chain_types_from_sequences(
-    text=text_protein+text_dna)==["DNA","PROTEIN"]
-  assert guess_chain_types_from_sequences(
-    text=text_rna+text_protein+text_dna)==["DNA","PROTEIN","RNA"]
-  assert guess_chain_types_from_sequences(
-    text=text_rna+text_dna)==["DNA","RNA"]
-  assert guess_chain_types_from_sequences(text="XX")==[]
-  assert guess_chain_types_from_sequences(text=text_misc)==["PROTEIN","RNA"]
-  assert guess_chain_types_from_sequences(text=text_misc_2)==["PROTEIN","RNA"]
-  assert guess_chain_types_from_sequences(text=text_misc_3)==["RNA"]
+    assert get_sequence_from_pdb(text=text_protein_pdb) == "GDPVTRVLDD"
+    assert (
+        get_sequence_from_pdb(text=text_rna_pdb)
+        .replace("\n", "")
+        .replace(" ", "")
+        .strip()
+        == "GUGGUGACCAC"
+    )
+    assert (
+        get_sequence_from_pdb(text=text_rna_pdb_o_two)
+        .replace("\n", "")
+        .replace(" ", "")
+        .strip()
+        == "GUGGUGACCAC"
+    )
+    assert (
+        get_sequence_from_pdb(text=text_dna_pdb)
+        .replace("\n", "")
+        .replace(" ", "")
+        .strip()
+        == "GTGGTGACCAC"
+    )
+    get_sequence_from_pdb(text=text_dna_pdb_lc).replace("\n", "").replace(
+        " ", ""
+    ).strip().upper() == "GTGGTGACCAC"
+    assert (
+        get_sequence_from_pdb(text=text_dna_pdb_lc)
+        .replace("\n", "")
+        .replace(" ", "")
+        .strip()
+        .upper()
+        == "GTGGTGACCAC"
+    )
+    assert guess_chain_types_from_sequences(text=text_protein) == ["PROTEIN"]
+    assert guess_chain_types_from_sequences(text=text_dna) == ["DNA"]
+    assert guess_chain_types_from_sequences(text=text_rna) == ["RNA"]
+    assert guess_chain_types_from_sequences(text=text_protein + text_rna) == [
+        "PROTEIN",
+        "RNA",
+    ]
+    assert guess_chain_types_from_sequences(text=text_protein + text_dna) == [
+        "DNA",
+        "PROTEIN",
+    ]
+    assert guess_chain_types_from_sequences(
+        text=text_rna + text_protein + text_dna
+    ) == ["DNA", "PROTEIN", "RNA"]
+    assert guess_chain_types_from_sequences(text=text_rna + text_dna) == ["DNA", "RNA"]
+    assert guess_chain_types_from_sequences(text="XX") == []
+    assert guess_chain_types_from_sequences(text=text_misc) == ["PROTEIN", "RNA"]
+    assert guess_chain_types_from_sequences(text=text_misc_2) == ["PROTEIN", "RNA"]
+    assert guess_chain_types_from_sequences(text=text_misc_3) == ["RNA"]
 
-  assert guess_chain_types_from_sequences(text=
-    text_from_chains_matching_chain_type(text=text_misc_2))==["PROTEIN","RNA"]
-  assert guess_chain_types_from_sequences(text=
-    text_from_chains_matching_chain_type(text=text_misc_3))==["RNA"]
-  assert guess_chain_types_from_sequences(text=
-    text_from_chains_matching_chain_type(text=text_protein))==["PROTEIN"]
-  assert guess_chain_types_from_sequences(text=
-    text_from_chains_matching_chain_type(text=text_ambiguous))==['DNA']
-  assert guess_chain_types_from_sequences(text=
-    text_from_chains_matching_chain_type(text=text_ambiguous_a))==['PROTEIN']
-  assert guess_chain_types_from_sequences(text=
-    text_from_chains_matching_chain_type(text=text_ambiguous_ag))==['PROTEIN']
+    assert guess_chain_types_from_sequences(
+        text=text_from_chains_matching_chain_type(text=text_misc_2)
+    ) == ["PROTEIN", "RNA"]
+    assert guess_chain_types_from_sequences(
+        text=text_from_chains_matching_chain_type(text=text_misc_3)
+    ) == ["RNA"]
+    assert guess_chain_types_from_sequences(
+        text=text_from_chains_matching_chain_type(text=text_protein)
+    ) == ["PROTEIN"]
+    assert guess_chain_types_from_sequences(
+        text=text_from_chains_matching_chain_type(text=text_ambiguous)
+    ) == ["DNA"]
+    assert guess_chain_types_from_sequences(
+        text=text_from_chains_matching_chain_type(text=text_ambiguous_a)
+    ) == ["PROTEIN"]
+    assert guess_chain_types_from_sequences(
+        text=text_from_chains_matching_chain_type(text=text_ambiguous_ag)
+    ) == ["PROTEIN"]
 
-  assert guess_chain_types_from_sequences(text=
-    text_from_chains_matching_chain_type(text=text_ambiguous_a),
-       likely_chain_types=['RNA'])==['RNA']
-  assert guess_chain_types_from_sequences(text=text_ambiguous,
-       likely_chain_types=['PROTEIN','RNA']) == ['PROTEIN']
-  assert text_from_chains_matching_chain_type(
-      text=text_ambiguous,chain_type='PROTEIN')=="""
+    assert guess_chain_types_from_sequences(
+        text=text_from_chains_matching_chain_type(text=text_ambiguous_a),
+        likely_chain_types=["RNA"],
+    ) == ["RNA"]
+    assert guess_chain_types_from_sequences(
+        text=text_ambiguous, likely_chain_types=["PROTEIN", "RNA"]
+    ) == ["PROTEIN"]
+    assert (
+        text_from_chains_matching_chain_type(text=text_ambiguous, chain_type="PROTEIN")
+        == """
 >
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
  """
+    )
 
-  print("OK")
+    print("OK")
+
+
 def exercise_random_sequences():
-  import random
-  random.seed(71231)
-  seq=bioinformatics.random_sequence(n_residues=100,
-     residue_basket=residue_basket)
-  # random number generator is not consistent between Python 2 and 3
-  assert len(seq) == 100
-  assert seq.count('E') > seq.count('D')
-  assert seq.count('D') > seq.count('C')
-  assert seq.count('C') > seq.count('A')
-  seq=bioinformatics.random_sequence(n_residues=100, chain_type = 'PROTEIN')
-  assert len(seq) == 100
-  seq=bioinformatics.random_sequence(n_residues=100, chain_type = 'RNA')
-  assert len(seq) == 100
-  seq=bioinformatics.random_sequence(n_residues=100, chain_type = 'DNA')
-  assert len(seq) == 100
-  seq=bioinformatics.random_sequence(n_residues=100)
-  assert len(seq) == 100
+    import random
+
+    random.seed(71231)
+    seq = bioinformatics.random_sequence(n_residues=100, residue_basket=residue_basket)
+    # random number generator is not consistent between Python 2 and 3
+    assert len(seq) == 100
+    assert seq.count("E") > seq.count("D")
+    assert seq.count("D") > seq.count("C")
+    assert seq.count("C") > seq.count("A")
+    seq = bioinformatics.random_sequence(n_residues=100, chain_type="PROTEIN")
+    assert len(seq) == 100
+    seq = bioinformatics.random_sequence(n_residues=100, chain_type="RNA")
+    assert len(seq) == 100
+    seq = bioinformatics.random_sequence(n_residues=100, chain_type="DNA")
+    assert len(seq) == 100
+    seq = bioinformatics.random_sequence(n_residues=100)
+    assert len(seq) == 100
+
 
 def exercise_merge_sequences():
-  print("Testing merge_sequences ...", end=' ')
-  with open("tmp_iotbx_bioinfo.fa", "w") as f:
-    f.write("""\
+    print("Testing merge_sequences ...", end=" ")
+    with open("tmp_iotbx_bioinfo.fa", "w") as f:
+        f.write(
+            """\
 > 9zzz
 ARGLYS
 > 8xxx
-PHETYR""")
-  output_file = "tmp_iotbx_bioinfo_merged.fa"
-  bioinformatics.merge_sequence_files(
-    file_names=["tmp_iotbx_bioinfo.fa"],
-    output_file=output_file,
-    sequences=["SERTHR"])
-  seq_in, nc = bioinformatics.any_sequence_format(output_file)
-  assert (len(seq_in) == 3) and (len(nc) == 0)
-  print("OK")
-
-suite_sequence = unittest.TestLoader().loadTestsFromTestCase(
-  test_sequence
-  )
-suite_fasta_sequence = unittest.TestLoader().loadTestsFromTestCase(
-  test_fasta_sequence
-  )
-suite_pir_sequence = unittest.TestLoader().loadTestsFromTestCase(
-  test_pir_sequence
-  )
-suite_midline = unittest.TestLoader().loadTestsFromTestCase(
-  test_midline
-  )
-suite_alignment = unittest.TestLoader().loadTestsFromTestCase(
-  test_alignment
-  )
-suite_fasta_alignment = unittest.TestLoader().loadTestsFromTestCase(
-  test_fasta_alignment
-  )
-suite_pir_alignment = unittest.TestLoader().loadTestsFromTestCase(
-  test_pir_alignment
-  )
-suite_clustal_alignment = unittest.TestLoader().loadTestsFromTestCase(
-  test_clustal_alignment
-  )
-suite_sequence_parse = unittest.TestLoader().loadTestsFromTestCase(
-    test_sequence_parse
+PHETYR"""
+        )
+    output_file = "tmp_iotbx_bioinfo_merged.fa"
+    bioinformatics.merge_sequence_files(
+        file_names=["tmp_iotbx_bioinfo.fa"],
+        output_file=output_file,
+        sequences=["SERTHR"],
     )
+    seq_in, nc = bioinformatics.any_sequence_format(output_file)
+    assert (len(seq_in) == 3) and (len(nc) == 0)
+    print("OK")
+
+
+suite_sequence = unittest.TestLoader().loadTestsFromTestCase(test_sequence)
+suite_fasta_sequence = unittest.TestLoader().loadTestsFromTestCase(test_fasta_sequence)
+suite_pir_sequence = unittest.TestLoader().loadTestsFromTestCase(test_pir_sequence)
+suite_midline = unittest.TestLoader().loadTestsFromTestCase(test_midline)
+suite_alignment = unittest.TestLoader().loadTestsFromTestCase(test_alignment)
+suite_fasta_alignment = unittest.TestLoader().loadTestsFromTestCase(
+    test_fasta_alignment
+)
+suite_pir_alignment = unittest.TestLoader().loadTestsFromTestCase(test_pir_alignment)
+suite_clustal_alignment = unittest.TestLoader().loadTestsFromTestCase(
+    test_clustal_alignment
+)
+suite_sequence_parse = unittest.TestLoader().loadTestsFromTestCase(test_sequence_parse)
 suite_alignment_parse = unittest.TestLoader().loadTestsFromTestCase(
     test_alignment_parse
-    )
+)
 suite_hhsearch_parser = unittest.TestLoader().loadTestsFromTestCase(
     test_hhsearch_parser
-    )
-suite_hhalign_parser = unittest.TestLoader().loadTestsFromTestCase(
-    test_hhalign_parser
-    )
+)
+suite_hhalign_parser = unittest.TestLoader().loadTestsFromTestCase(test_hhalign_parser)
 
 alltests = unittest.TestSuite(
-  [
-    suite_sequence,
-    suite_fasta_sequence,
-    suite_pir_sequence,
-    suite_midline,
-    suite_alignment,
-    suite_fasta_alignment,
-    suite_pir_alignment,
-    suite_clustal_alignment,
-    suite_sequence_parse,
-    suite_alignment_parse,
-    suite_hhsearch_parser,
-    suite_hhalign_parser,
+    [
+        suite_sequence,
+        suite_fasta_sequence,
+        suite_pir_sequence,
+        suite_midline,
+        suite_alignment,
+        suite_fasta_alignment,
+        suite_pir_alignment,
+        suite_clustal_alignment,
+        suite_sequence_parse,
+        suite_alignment_parse,
+        suite_hhsearch_parser,
+        suite_hhalign_parser,
     ]
-  )
+)
 
 if __name__ == "__main__":
-  exercise_guess_chain_types()
-  exercise_merge_sequences()
-  exercise_random_sequences()
-  unittest.TextTestRunner( stream=sys.stdout, verbosity = 2 ).run( alltests )
+    exercise_guess_chain_types()
+    exercise_merge_sequences()
+    exercise_random_sequences()
+    unittest.TextTestRunner(stream=sys.stdout, verbosity=2).run(alltests)

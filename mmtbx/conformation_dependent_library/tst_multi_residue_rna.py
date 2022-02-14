@@ -1,9 +1,11 @@
 from __future__ import absolute_import, division, print_function
 from iotbx import pdb
-from mmtbx.conformation_dependent_library.testing_utils import get_geometry_restraints_manager
+from mmtbx.conformation_dependent_library.testing_utils import (
+    get_geometry_restraints_manager,
+)
 
-#This is a very basic test of generate_residue_tuples for RNA/DNA
-#sample structure lines are taken from 1ehz.pdb and have been modified at
+# This is a very basic test of generate_residue_tuples for RNA/DNA
+# sample structure lines are taken from 1ehz.pdb and have been modified at
 #  The P atom of residue 3 to introduce a chain break
 
 pdblines = """ATOM      1  OP3   G A   1      50.193  51.190  50.534  1.00 99.85           O
@@ -74,68 +76,74 @@ ATOM     65  N2    G A   3      61.512  40.873  49.479  1.00 48.16           N
 ATOM     66  N3    G A   3      61.312  42.605  50.983  1.00 56.69           N
 ATOM     67  C4    G A   3      60.666  43.774  51.193  1.00 61.76           C"""
 
+
 def main():
-  pdb_inp = pdb.input(lines=pdblines, source_info='rna_test_1ehz')
-  pdb_hierarchy = pdb_inp.construct_hierarchy()
-  geometry_restraints_manager = get_geometry_restraints_manager(raw_records=pdblines)
-  pdb_hierarchy.reset_i_seq_if_necessary()
-  from mmtbx.conformation_dependent_library import generate_residue_tuples
+    pdb_inp = pdb.input(lines=pdblines, source_info="rna_test_1ehz")
+    pdb_hierarchy = pdb_inp.construct_hierarchy()
+    geometry_restraints_manager = get_geometry_restraints_manager(raw_records=pdblines)
+    pdb_hierarchy.reset_i_seq_if_necessary()
+    from mmtbx.conformation_dependent_library import generate_residue_tuples
 
-  #P of G 3 has been changed from x=60.184 to x=600.184
-  #Check that this breaks connectivity
-  rna_residue_pairs = []
-  for pair in generate_residue_tuples(hierarchy=pdb_hierarchy,
-                                    geometry=geometry_restraints_manager,
-                                    length=2,
-                                    dna_rna_residues=True,
-                                    include_non_linked=False, #default behavior
-                                    backbone_only=False,
-                                    include_non_standard_residues=False,
-                                    verbose=False):
-    residue1 = pair[0]
-    residue2 = pair[1]
+    # P of G 3 has been changed from x=60.184 to x=600.184
+    # Check that this breaks connectivity
+    rna_residue_pairs = []
+    for pair in generate_residue_tuples(
+        hierarchy=pdb_hierarchy,
+        geometry=geometry_restraints_manager,
+        length=2,
+        dna_rna_residues=True,
+        include_non_linked=False,  # default behavior
+        backbone_only=False,
+        include_non_standard_residues=False,
+        verbose=False,
+    ):
+        residue1 = pair[0]
+        residue2 = pair[1]
 
-    #sample output so you can see the pairs
-    chain1 = residue1.parent().parent().id
-    resname1 = residue1.resname
-    resseq1 = residue1.resseq+residue1.icode
-    resid1 = ":".join([chain1,resname1,resseq1])
-    chain2 = residue2.parent().parent().id
-    resname2 = residue2.resname
-    resseq2 = residue2.resseq+residue2.icode
-    resid2 = ":".join([chain2,resname2,resseq2])
-    #print(residue1.id_str(), "---", residue2.id_str())
-    #print(resid1,"---",resid2)
-    rna_residue_pairs.append(resid1+"---"+resid2)
-  assert len(rna_residue_pairs)==1
+        # sample output so you can see the pairs
+        chain1 = residue1.parent().parent().id
+        resname1 = residue1.resname
+        resseq1 = residue1.resseq + residue1.icode
+        resid1 = ":".join([chain1, resname1, resseq1])
+        chain2 = residue2.parent().parent().id
+        resname2 = residue2.resname
+        resseq2 = residue2.resseq + residue2.icode
+        resid2 = ":".join([chain2, resname2, resseq2])
+        # print(residue1.id_str(), "---", residue2.id_str())
+        # print(resid1,"---",resid2)
+        rna_residue_pairs.append(resid1 + "---" + resid2)
+    assert len(rna_residue_pairs) == 1
 
-  #Check that generate residue_tuples can find two total pairs
-  rna_residue_pairs = []
-  for pair in generate_residue_tuples(hierarchy=pdb_hierarchy,
-                                    geometry=geometry_restraints_manager,
-                                    length=2,
-                                    dna_rna_residues=True,
-                                    include_non_linked=True, #chnged for this test
-                                    backbone_only=False,
-                                    include_non_standard_residues=False,
-                                    verbose=False):
-    residue1 = pair[0]
-    residue2 = pair[1]
+    # Check that generate residue_tuples can find two total pairs
+    rna_residue_pairs = []
+    for pair in generate_residue_tuples(
+        hierarchy=pdb_hierarchy,
+        geometry=geometry_restraints_manager,
+        length=2,
+        dna_rna_residues=True,
+        include_non_linked=True,  # chnged for this test
+        backbone_only=False,
+        include_non_standard_residues=False,
+        verbose=False,
+    ):
+        residue1 = pair[0]
+        residue2 = pair[1]
 
-    #sample output so you can see the pairs
-    chain1 = residue1.parent().parent().id
-    resname1 = residue1.resname
-    resseq1 = residue1.resseq+residue1.icode
-    resid1 = ":".join([chain1,resname1,resseq1])
-    chain2 = residue2.parent().parent().id
-    resname2 = residue2.resname
-    resseq2 = residue2.resseq+residue2.icode
-    resid2 = ":".join([chain2,resname2,resseq2])
-    #print(residue1.id_str(), "---", residue2.id_str())
-    #print(resid1,"---",resid2)
-    rna_residue_pairs.append(resid1+"---"+resid2)
-  assert len(rna_residue_pairs)==2
-  print("OK")
+        # sample output so you can see the pairs
+        chain1 = residue1.parent().parent().id
+        resname1 = residue1.resname
+        resseq1 = residue1.resseq + residue1.icode
+        resid1 = ":".join([chain1, resname1, resseq1])
+        chain2 = residue2.parent().parent().id
+        resname2 = residue2.resname
+        resseq2 = residue2.resseq + residue2.icode
+        resid2 = ":".join([chain2, resname2, resseq2])
+        # print(residue1.id_str(), "---", residue2.id_str())
+        # print(resid1,"---",resid2)
+        rna_residue_pairs.append(resid1 + "---" + resid2)
+    assert len(rna_residue_pairs) == 2
+    print("OK")
 
-if __name__ == '__main__':
-  main()
+
+if __name__ == "__main__":
+    main()

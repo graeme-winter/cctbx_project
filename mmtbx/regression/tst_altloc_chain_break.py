@@ -49,27 +49,32 @@ HETATM 1517  O  CHOH  2043      43.481   3.315 -12.617  0.33 10.33           O
 END
 """
 
+
 def exercise(args):
-  assert len(args) == 0
-  open("tmp_altloc_chain_break.pdb", "w").write(pdb1exr_fragment)
-  command = " ".join([
-    "phenix.geometry_minimization",
-    "cdl=False",
-    "tmp_altloc_chain_break.pdb",
-    "pdb_interpretation.nonbonded_weight=16",
-    ">tmp_altloc_chain_break.zlog"])
-  easy_run.call(command=command)
-  target_values = []
-  for line in open("tmp_altloc_chain_break.zlog","r").readlines():
-    line = line.strip()
-    if (line.startswith("target: ")):
-      target_values.append(float(line.split()[-1]))
-  print(target_values)
+    assert len(args) == 0
+    open("tmp_altloc_chain_break.pdb", "w").write(pdb1exr_fragment)
+    command = " ".join(
+        [
+            "phenix.geometry_minimization",
+            "cdl=False",
+            "tmp_altloc_chain_break.pdb",
+            "pdb_interpretation.nonbonded_weight=16",
+            ">tmp_altloc_chain_break.zlog",
+        ]
+    )
+    easy_run.call(command=command)
+    target_values = []
+    for line in open("tmp_altloc_chain_break.zlog", "r").readlines():
+        line = line.strip()
+        if line.startswith("target: "):
+            target_values.append(float(line.split()[-1]))
+    print(target_values)
 
-  assert len(target_values) == 6
-  assert target_values[0] > 100
-  assert target_values[5] < 7
-  print("OK")
+    assert len(target_values) == 6
+    assert target_values[0] > 100
+    assert target_values[5] < 7
+    print("OK")
 
-if (__name__ == "__main__"):
-  exercise(sys.argv[1:])
+
+if __name__ == "__main__":
+    exercise(sys.argv[1:])

@@ -3,7 +3,8 @@ from __future__ import absolute_import, division, print_function
 from PySide2.QtCore import QTimer
 
 from PySide2.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-#from PySide2.QtWidgets import QApplication
+
+# from PySide2.QtWidgets import QApplication
 import sys, os
 
 
@@ -56,7 +57,6 @@ else
 """
 
 
-
 htmlstr1 = """
 
 <html lang="en">
@@ -77,49 +77,54 @@ This is a test for webgl
 """
 
 
-
-
-os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--single-process" # necessary for detecting webgl abilities on Mac
+os.environ[
+    "QTWEBENGINE_CHROMIUM_FLAGS"
+] = "--single-process"  # necessary for detecting webgl abilities on Mac
 
 
 class MyQWebEnginePage(QWebEnginePage):
-  def __init__(self, *args, **kwargs):
-    #print('in MyQWebEnginePage')
-    QWebEnginePage.__init__(self, *args, **kwargs)
-    self.webglsupport = None
-  def javaScriptConsoleMessage(self,level, message, lineNumber, sourceID):
-    print(message)
-    self.webglsupport = True
-    if message == 'WebGL error':
-      self.webglsupport = False
-    return super(MyQWebEnginePage,self).javaScriptConsoleMessage(level, message, lineNumber, sourceID)
-  def javaScriptAlert(self,securityOrigin,msg):
-    print(msg)
-    return super(MyQWebEnginePage,self).javaScriptAlert(securityOrigin,msg)
+    def __init__(self, *args, **kwargs):
+        # print('in MyQWebEnginePage')
+        QWebEnginePage.__init__(self, *args, **kwargs)
+        self.webglsupport = None
+
+    def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
+        print(message)
+        self.webglsupport = True
+        if message == "WebGL error":
+            self.webglsupport = False
+        return super(MyQWebEnginePage, self).javaScriptConsoleMessage(
+            level, message, lineNumber, sourceID
+        )
+
+    def javaScriptAlert(self, securityOrigin, msg):
+        print(msg)
+        return super(MyQWebEnginePage, self).javaScriptAlert(securityOrigin, msg)
 
 
-if (__name__ == "__main__") :
-  from PySide2.QtWidgets import QApplication
-  app1 = QApplication(sys.argv)
-  app1.aboutToQuit.connect(lambda :print("about to quit"))
+if __name__ == "__main__":
+    from PySide2.QtWidgets import QApplication
 
-  # give the browser time to instatiate and then close down gracefully
-  QTimer.singleShot(10000, app1.quit ) # in case pageloadFinished() is never executed
-  browser = QWebEngineView()
-  webpage = MyQWebEnginePage(browser)
-  browser.setPage(webpage)
+    app1 = QApplication(sys.argv)
+    app1.aboutToQuit.connect(lambda: print("about to quit"))
 
-  def pageloadFinished( ok):
-    #print('webpage load has finished: ' + str(ok))
-    browser.page().runJavaScript(jsstr)
-    # give the script time to run and then close us down gracefully
-    QTimer.singleShot(1000, app1.quit )
+    # give the browser time to instatiate and then close down gracefully
+    QTimer.singleShot(10000, app1.quit)  # in case pageloadFinished() is never executed
+    browser = QWebEngineView()
+    webpage = MyQWebEnginePage(browser)
+    browser.setPage(webpage)
 
-  webpage.loadFinished.connect(pageloadFinished)
-  webpage.setHtml(htmlstr1)
-  browser.hide() # show() or hide() is necessary for loading the html page
-  #import code, traceback; code.interact(local=locals(), banner="".join( traceback.format_stack(limit=10) ) )
-  #print('WebGL=' + str(webpage.webglsupport),)
+    def pageloadFinished(ok):
+        # print('webpage load has finished: ' + str(ok))
+        browser.page().runJavaScript(jsstr)
+        # give the script time to run and then close us down gracefully
+        QTimer.singleShot(1000, app1.quit)
 
-  app1.exec_()
-  print("app has quit")
+    webpage.loadFinished.connect(pageloadFinished)
+    webpage.setHtml(htmlstr1)
+    browser.hide()  # show() or hide() is necessary for loading the html page
+    # import code, traceback; code.interact(local=locals(), banner="".join( traceback.format_stack(limit=10) ) )
+    # print('WebGL=' + str(webpage.webglsupport),)
+
+    app1.exec_()
+    print("app has quit")

@@ -807,7 +807,7 @@ TER
 END
 """
 
-sec_h = '''
+sec_h = """
 CRYST1   14.413   13.247   13.703  90.00  90.00  90.00 P 1
 ATOM      1  N   SEC A   1       5.325   7.374   5.793  1.00 20.00      A    N
 ATOM      2  CA  SEC A   1       6.781   7.356   5.843  1.00 20.00      A    C
@@ -821,9 +821,9 @@ ATOM      9  HA  SEC A   1       7.108   8.130   5.423  1.00 20.00      A    H
 ATOM     10  HB2 SEC A   1       6.720   6.820   7.820  1.00 20.00      A    H
 ATOM     11  HB3 SEC A   1       7.248   8.247   7.624  1.00 20.00      A    H
 ATOM     12  HE  SEC A   1       9.413   7.295   8.703  1.00 20.00      A    H
-'''
+"""
 
-sec = '''
+sec = """
 CRYST1   14.413   13.247   13.703  90.00  90.00  90.00 P 1
 ATOM      1  N   SEC A   1       5.325   7.374   5.793  1.00 20.00      A    N
 ATOM      2  CA  SEC A   1       6.781   7.356   5.843  1.00 20.00      A    C
@@ -831,9 +831,9 @@ ATOM      3  C   SEC A   1       7.326   6.134   5.114  1.00 20.00      A    C
 ATOM      4  O   SEC A   1       6.958   5.000   5.422  1.00 20.00      A    O
 ATOM      5  CB  SEC A   1       7.262   7.371   7.286  1.00 20.00      A    C
 ATOM      6 SE   SEC A   1       9.115   6.677   7.432  1.00 20.00      A   Se
-'''
+"""
 
-pyl_h = '''
+pyl_h = """
 CRYST1   17.576   16.310   22.096  90.00  90.00  90.00 P 1
 ATOM      1  N   PYL A   1      12.160   9.689   6.621  1.00 20.00      A    N
 ATOM      2  CA  PYL A   1      10.780   9.317   6.332  1.00 20.00      A    C
@@ -872,9 +872,9 @@ ATOM     34  HE2 PYL A   1      10.302   7.145  11.044  1.00 20.00      A    H
 ATOM     35 HE22 PYL A   1       8.761   7.319  17.096  1.00 20.00      A    H
 ATOM     36  HE3 PYL A   1       9.075   6.458  10.373  1.00 20.00      A    H
 ATOM     37  HZ  PYL A   1       8.115   8.238  12.051  1.00 20.00      A    H
-'''
+"""
 
-pyl = '''
+pyl = """
 CRYST1   17.576   16.310   22.096  90.00  90.00  90.00 P 1
 ATOM      1  N   PYL A   1      12.160   9.689   6.621  1.00 20.00      A    N
 ATOM      2  CA  PYL A   1      10.780   9.317   6.332  1.00 20.00      A    C
@@ -893,18 +893,20 @@ ATOM     14  C2  PYL A   1       8.548   6.671  13.020  1.00 20.00      A    C
 ATOM     15  CA2 PYL A   1       7.668   7.073  14.199  1.00 20.00      A    C
 ATOM     16  N2  PYL A   1       8.406   7.731  15.274  1.00 20.00      A    N
 ATOM     17  O2  PYL A   1       9.157   5.629  13.065  1.00 20.00      A    O
-'''
+"""
+
 
 def residue_dict():
-  from mmtbx.monomer_library import idealized_aa as iaa
-  aac = iotbx.pdb.amino_acid_codes.one_letter_given_three_letter
-  result = {}
-  for aa_name in aac.keys():
-    aanl = aa_name.lower()
-    aanlh= aanl+"_h"
-    for aanl_ in [aanl, aanlh]:
-      pdb_inp = iotbx.pdb.input(source_info=None, lines=iaa.__dict__[aanl_])
-      h = pdb_inp.construct_hierarchy()
-      h.atoms().reset_i_seq()
-      result.setdefault(aanl_, h)
-  return result
+    from mmtbx.monomer_library import idealized_aa as iaa
+
+    aac = iotbx.pdb.amino_acid_codes.one_letter_given_three_letter
+    result = {}
+    for aa_name in aac.keys():
+        aanl = aa_name.lower()
+        aanlh = aanl + "_h"
+        for aanl_ in [aanl, aanlh]:
+            pdb_inp = iotbx.pdb.input(source_info=None, lines=iaa.__dict__[aanl_])
+            h = pdb_inp.construct_hierarchy()
+            h.atoms().reset_i_seq()
+            result.setdefault(aanl_, h)
+    return result

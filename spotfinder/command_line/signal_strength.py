@@ -1,10 +1,13 @@
 from __future__ import absolute_import, division, print_function
+
 # LIBTBX_SET_DISPATCHER_NAME distl.signal_strength
 import spotfinder
 import libtbx.phil
 from libtbx.utils import Sorry
 import sys, os
-additional_spotfinder_phil_defs ="""
+
+additional_spotfinder_phil_defs = (
+    """
 distl {
   minimum_spot_area = None
     .type = int
@@ -71,9 +74,12 @@ distl {
     .short_caption = Number of processes
     .help="Number of processes to be used when processing multiple images."
 }
-""" % spotfinder.inner_phil_str
+"""
+    % spotfinder.inner_phil_str
+)
 
-master_params_defs = """\
+master_params_defs = (
+    """\
 distl {
   image = None
     .type = str
@@ -109,12 +115,16 @@ distl {
 }
 
 %s
-"""%(spotfinder.labelit_related_commands)+additional_spotfinder_phil_defs
+"""
+    % (spotfinder.labelit_related_commands)
+    + additional_spotfinder_phil_defs
+)
 
 master_params = libtbx.phil.parse(master_params_defs)
 
+
 def run(args, command_name="distl.signal_strength"):
-  help_str="""explanation:
+    help_str = """explanation:
 Local background and background standard deviation are determined.
 Pixels are classified as signal if > minimum_signal_height sigmas above background.
 Signals are chosen as spot maxima if > minimum_spot_height sigmas above background.
@@ -134,57 +144,73 @@ Very verbose output is available by setting distl.verbose=True
 Full documentation: http://cci.lbl.gov/publications/download/ccn_jul2010_page18.pdf
 """
 
-  if (len(args) == 0 or args[0] in ["H","h","-H","-h","help","--help","-help"]):
-    print("usage:   %s image_filename [parameter=value ...]" % command_name)
-    print("example: %s lysozyme_001.img distl.res.outer=2.0 distl.res.inner=6.0 distl.minimum_spot_area=8"%command_name)
-    master_params.show(attributes_level=1,expert_level=1)
-    print(help_str)
-    return
+    if len(args) == 0 or args[0] in ["H", "h", "-H", "-h", "help", "--help", "-help"]:
+        print("usage:   %s image_filename [parameter=value ...]" % command_name)
+        print(
+            "example: %s lysozyme_001.img distl.res.outer=2.0 distl.res.inner=6.0 distl.minimum_spot_area=8"
+            % command_name
+        )
+        master_params.show(attributes_level=1, expert_level=1)
+        print(help_str)
+        return
 
-  print("%s: characterization of candidate Bragg spots"%command_name)
+    print("%s: characterization of candidate Bragg spots" % command_name)
 
-  phil_objects = []
-  argument_interpreter = master_params.command_line_argument_interpreter(
-    home_scope="distl")
-  image_file_name = None
-  moving_pdb_file_name = None
-  for arg in args:
-    if (os.path.isfile(arg)):
-      if (image_file_name is None): image_file_name = arg
-      else: raise Sorry("Too many file names.")
-    else:
-      try: command_line_params = argument_interpreter.process(arg=arg)
-      except KeyboardInterrupt: raise
-      except Exception: raise Sorry("Unknown file or keyword: %s" % arg)
-      else: phil_objects.append(command_line_params)
+    phil_objects = []
+    argument_interpreter = master_params.command_line_argument_interpreter(
+        home_scope="distl"
+    )
+    image_file_name = None
+    moving_pdb_file_name = None
+    for arg in args:
+        if os.path.isfile(arg):
+            if image_file_name is None:
+                image_file_name = arg
+            else:
+                raise Sorry("Too many file names.")
+        else:
+            try:
+                command_line_params = argument_interpreter.process(arg=arg)
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                raise Sorry("Unknown file or keyword: %s" % arg)
+            else:
+                phil_objects.append(command_line_params)
 
-  working_params = master_params.fetch(sources=phil_objects)
-  params = working_params.extract()
+    working_params = master_params.fetch(sources=phil_objects)
+    params = working_params.extract()
 
-  def raise_missing(what):
-      raise Sorry("""\
+    def raise_missing(what):
+        raise Sorry(
+            """\
 Missing file name for %(what)s structure:
   Please add
     %(what)s=file_name
-  to the command line to specify the %(what)s structure.""" % vars())
+  to the command line to specify the %(what)s structure."""
+            % vars()
+        )
 
-  if (image_file_name is None):
-    if (params.distl.image is None): raise_missing("file name")
-  else:
-    params.distl.image = image_file_name
+    if image_file_name is None:
+        if params.distl.image is None:
+            raise_missing("file name")
+    else:
+        params.distl.image = image_file_name
 
-  print("#Parameters used:")
-  print("#phil __ON__")
-  print()
-  working_params = master_params.format(python_object=params)
-  working_params.show(expert_level=1)
-  print()
-  print("#phil __OFF__")
-  print()
+    print("#Parameters used:")
+    print("#phil __ON__")
+    print()
+    working_params = master_params.format(python_object=params)
+    working_params.show(expert_level=1)
+    print()
+    print("#phil __OFF__")
+    print()
 
-  #Now actually run the program logic
-  from spotfinder.applications import signal_strength
-  return signal_strength.run_signal_strength(working_params.extract())
+    # Now actually run the program logic
+    from spotfinder.applications import signal_strength
 
-if (__name__ == "__main__"):
-  run(args=sys.argv[1:])
+    return signal_strength.run_signal_strength(working_params.extract())
+
+
+if __name__ == "__main__":
+    run(args=sys.argv[1:])

@@ -6,126 +6,124 @@ from libtbx.utils import null_out
 from libtbx.test_utils import approx_equal
 
 
-
 def compare_XH_bond_length_to_ideal(model):
-  geometry = model.get_restraints_manager().geometry
-  atoms = model.get_hierarchy().atoms()
-  sites_cart = model.get_sites_cart()
-  bond_proxies_simple, asu = \
-    geometry.get_all_bond_proxies(sites_cart = sites_cart)
-  hd_selection = model.get_hd_selection()
-  for bp in bond_proxies_simple:
-    i, j = bp.i_seqs
-    if hd_selection[i] or hd_selection[j]:
-      assert approx_equal(atoms[i].distance(atoms[j]),
-                          bp.distance_ideal,
-                          eps=0.001)
+    geometry = model.get_restraints_manager().geometry
+    atoms = model.get_hierarchy().atoms()
+    sites_cart = model.get_sites_cart()
+    bond_proxies_simple, asu = geometry.get_all_bond_proxies(sites_cart=sites_cart)
+    hd_selection = model.get_hd_selection()
+    for bp in bond_proxies_simple:
+        i, j = bp.i_seqs
+        if hd_selection[i] or hd_selection[j]:
+            assert approx_equal(
+                atoms[i].distance(atoms[j]), bp.distance_ideal, eps=0.001
+            )
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
+
 
 def tst_1():
-  '''
-  input model: bond lengths close to neutron but not quite
-  input grm: neutron bond lengths
-  '''
-  pdb_inp = iotbx.pdb.input(lines=pdb_str1.split("\n"), source_info=None)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.use_neutron_distances = True
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(pdb_interpretation_params=params,
-    make_restraints=True)
-  # request neutron bond lengths
-  model.set_hydrogen_bond_length(use_neutron_distances=True,
-                                 show=False,
-                                 log=sys.stdout)
-  compare_XH_bond_length_to_ideal(model = model)
-  #STOP()
-  # request X-ray bond lengths
-  pdb_inp = iotbx.pdb.input(lines=pdb_str1.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=False)
-  model.set_hydrogen_bond_length(use_neutron_distances=False,
-                                 show=False,
-                                 log=sys.stdout)
-  compare_XH_bond_length_to_ideal(model = model)
-#-------------------------------------------------------------------------------
+    """
+    input model: bond lengths close to neutron but not quite
+    input grm: neutron bond lengths
+    """
+    pdb_inp = iotbx.pdb.input(lines=pdb_str1.split("\n"), source_info=None)
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.use_neutron_distances = True
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    # request neutron bond lengths
+    model.set_hydrogen_bond_length(
+        use_neutron_distances=True, show=False, log=sys.stdout
+    )
+    compare_XH_bond_length_to_ideal(model=model)
+    # STOP()
+    # request X-ray bond lengths
+    pdb_inp = iotbx.pdb.input(lines=pdb_str1.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=False)
+    model.set_hydrogen_bond_length(
+        use_neutron_distances=False, show=False, log=sys.stdout
+    )
+    compare_XH_bond_length_to_ideal(model=model)
+
+
+# -------------------------------------------------------------------------------
+
 
 def tst_2():
-  '''
-  input model: bond lengths close to neutron but not quite
-  input grm: X-ray bond lengths
-  '''
-  pdb_inp = iotbx.pdb.input(lines=pdb_str1.split("\n"), source_info=None)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.use_neutron_distances = False
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(pdb_interpretation_params = params)
-  #
-  # Check if selected individual bond lengths are correct
-  atoms = model.get_hierarchy().atoms()
-  assert (atoms[4].id_str() == 'pdb=" CB  ARG A  74 "')
-  assert (atoms[18].id_str() == 'pdb=" HB2 ARG A  74 "')
-  assert approx_equal(atoms[4].distance(atoms[18]), 1.08, eps = 0.005)
-  assert (atoms[10].id_str() == 'pdb=" NH2 ARG A  74 "')
-  assert (atoms[15].id_str() == 'pdb="DH21 ARG A  74 "')
-  assert approx_equal(atoms[10].distance(atoms[15]), 0.99, eps = 0.005)
-  # request neutron bond lengths
-  model.set_hydrogen_bond_length(use_neutron_distances=True,
-                                 show=False,
-                                 log=sys.stdout)
-  # Check if bond lengths are equal to ideal
-  compare_XH_bond_length_to_ideal(model = model)
-  # Check if selected individual bond lengths are correct
-  atoms = model.get_hierarchy().atoms()
-  assert approx_equal(atoms[4].distance(atoms[18]), 1.09, eps = 0.005)
-  assert approx_equal(atoms[10].distance(atoms[15]), 1.02, eps = 0.005)
-  # request X-ray bond lengths
-  model.set_hydrogen_bond_length(use_neutron_distances=False,
-                                 show=False,
-                                 log=sys.stdout)
-  compare_XH_bond_length_to_ideal(model = model)
-  # Check if selected individual bond lengths are correct
-  atoms = model.get_hierarchy().atoms()
-  assert approx_equal(atoms[4].distance(atoms[18]), 0.97, eps = 0.005)
-  assert approx_equal(atoms[10].distance(atoms[15]), 0.86, eps = 0.005)
+    """
+    input model: bond lengths close to neutron but not quite
+    input grm: X-ray bond lengths
+    """
+    pdb_inp = iotbx.pdb.input(lines=pdb_str1.split("\n"), source_info=None)
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.use_neutron_distances = False
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params)
+    #
+    # Check if selected individual bond lengths are correct
+    atoms = model.get_hierarchy().atoms()
+    assert atoms[4].id_str() == 'pdb=" CB  ARG A  74 "'
+    assert atoms[18].id_str() == 'pdb=" HB2 ARG A  74 "'
+    assert approx_equal(atoms[4].distance(atoms[18]), 1.08, eps=0.005)
+    assert atoms[10].id_str() == 'pdb=" NH2 ARG A  74 "'
+    assert atoms[15].id_str() == 'pdb="DH21 ARG A  74 "'
+    assert approx_equal(atoms[10].distance(atoms[15]), 0.99, eps=0.005)
+    # request neutron bond lengths
+    model.set_hydrogen_bond_length(
+        use_neutron_distances=True, show=False, log=sys.stdout
+    )
+    # Check if bond lengths are equal to ideal
+    compare_XH_bond_length_to_ideal(model=model)
+    # Check if selected individual bond lengths are correct
+    atoms = model.get_hierarchy().atoms()
+    assert approx_equal(atoms[4].distance(atoms[18]), 1.09, eps=0.005)
+    assert approx_equal(atoms[10].distance(atoms[15]), 1.02, eps=0.005)
+    # request X-ray bond lengths
+    model.set_hydrogen_bond_length(
+        use_neutron_distances=False, show=False, log=sys.stdout
+    )
+    compare_XH_bond_length_to_ideal(model=model)
+    # Check if selected individual bond lengths are correct
+    atoms = model.get_hierarchy().atoms()
+    assert approx_equal(atoms[4].distance(atoms[18]), 0.97, eps=0.005)
+    assert approx_equal(atoms[10].distance(atoms[15]), 0.86, eps=0.005)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
+
 
 def tst_3():
-  '''
-  Test if the modification works also when cif_objects are supplied
-  (meaning there is a ligand cif file)
-  '''
-  pdb_inp = iotbx.pdb.input(lines=pdb_str2.split("\n"), source_info=None)
-  cif_object = iotbx.cif.reader(input_string = cif_str2).model()
-  # bla.cif does not exist, but cif_objects needs a filename in first position
-  # of the tuple
-  cif_objects = [('bla.cif', cif_object)]
-  params = mmtbx.model.manager.get_default_pdb_interpretation_params()
-  params.pdb_interpretation.use_neutron_distances = False
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    restraint_objects = cif_objects,
-    log         = null_out())
-  model.process(pdb_interpretation_params = params)
-  # request neutron bond lengths
-  model.set_hydrogen_bond_length(use_neutron_distances=True,
-                                 show=False,
-                                 log=sys.stdout)
-  compare_XH_bond_length_to_ideal(model = model)
-  # request X-ray bond lengths
-  model.set_hydrogen_bond_length(use_neutron_distances=False,
-                                 show=False,
-                                 log=sys.stdout)
-  compare_XH_bond_length_to_ideal(model = model)
+    """
+    Test if the modification works also when cif_objects are supplied
+    (meaning there is a ligand cif file)
+    """
+    pdb_inp = iotbx.pdb.input(lines=pdb_str2.split("\n"), source_info=None)
+    cif_object = iotbx.cif.reader(input_string=cif_str2).model()
+    # bla.cif does not exist, but cif_objects needs a filename in first position
+    # of the tuple
+    cif_objects = [("bla.cif", cif_object)]
+    params = mmtbx.model.manager.get_default_pdb_interpretation_params()
+    params.pdb_interpretation.use_neutron_distances = False
+    model = mmtbx.model.manager(
+        model_input=pdb_inp, restraint_objects=cif_objects, log=null_out()
+    )
+    model.process(pdb_interpretation_params=params)
+    # request neutron bond lengths
+    model.set_hydrogen_bond_length(
+        use_neutron_distances=True, show=False, log=sys.stdout
+    )
+    compare_XH_bond_length_to_ideal(model=model)
+    # request X-ray bond lengths
+    model.set_hydrogen_bond_length(
+        use_neutron_distances=False, show=False, log=sys.stdout
+    )
+    compare_XH_bond_length_to_ideal(model=model)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 pdb_str1 = """
 CRYST1   17.692   14.832   14.146  90.00  90.00  90.00 P 1
 SCALE1      0.056523  0.000000  0.000000        0.00000
@@ -157,19 +155,19 @@ ATOM     23  HD2 ARG A  74       9.163   5.000   5.580  1.00 36.76           H
 ATOM     24  HD3 ARG A  74       9.184   6.659   5.000  1.00 36.58           H
 """
 # i_seqs for X-H bonds
-#0 11 pdb=" N   ARG A  74 " pdb=" D   ARG A  74 "
-#1 17 pdb=" CA  ARG A  74 " pdb=" HA  ARG A  74 "
-#4 18 pdb=" CB  ARG A  74 " pdb=" HB2 ARG A  74 "
-#4 19 pdb=" CB  ARG A  74 " pdb=" HB3 ARG A  74 "
-#5 20 pdb=" CG  ARG A  74 " pdb=" HG2 ARG A  74 "
-#5 21 pdb=" CG  ARG A  74 " pdb=" HG3 ARG A  74 "
-#6 22 pdb=" CD  ARG A  74 " pdb=" HD2 ARG A  74 "
-#6 23 pdb=" CD  ARG A  74 " pdb=" HD3 ARG A  74 "
-#7 12 pdb=" NE  ARG A  74 " pdb=" DE  ARG A  74 "
-#9 13 pdb=" NH1 ARG A  74 " pdb="DH11 ARG A  74 "
-#9 14 pdb=" NH1 ARG A  74 " pdb="DH12 ARG A  74 "
-#10 15 pdb=" NH2 ARG A  74 " pdb="DH21 ARG A  74 "
-#10 16 pdb=" NH2 ARG A  74 " pdb="DH22 ARG A  74 "
+# 0 11 pdb=" N   ARG A  74 " pdb=" D   ARG A  74 "
+# 1 17 pdb=" CA  ARG A  74 " pdb=" HA  ARG A  74 "
+# 4 18 pdb=" CB  ARG A  74 " pdb=" HB2 ARG A  74 "
+# 4 19 pdb=" CB  ARG A  74 " pdb=" HB3 ARG A  74 "
+# 5 20 pdb=" CG  ARG A  74 " pdb=" HG2 ARG A  74 "
+# 5 21 pdb=" CG  ARG A  74 " pdb=" HG3 ARG A  74 "
+# 6 22 pdb=" CD  ARG A  74 " pdb=" HD2 ARG A  74 "
+# 6 23 pdb=" CD  ARG A  74 " pdb=" HD3 ARG A  74 "
+# 7 12 pdb=" NE  ARG A  74 " pdb=" DE  ARG A  74 "
+# 9 13 pdb=" NH1 ARG A  74 " pdb="DH11 ARG A  74 "
+# 9 14 pdb=" NH1 ARG A  74 " pdb="DH12 ARG A  74 "
+# 10 15 pdb=" NH2 ARG A  74 " pdb="DH21 ARG A  74 "
+# 10 16 pdb=" NH2 ARG A  74 " pdb="DH22 ARG A  74 "
 
 
 pdb_str2 = """
@@ -356,9 +354,9 @@ _chem_comp_plane_atom.dist_esd
 3HA plan-3  C2     0.020
 """
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  tst_1()
-  tst_2()
-  tst_3()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    tst_1()
+    tst_2()
+    tst_3()
+    print("OK. Time: %8.3f" % (time.time() - t0))

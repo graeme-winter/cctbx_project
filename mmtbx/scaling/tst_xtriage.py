@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.scaling import data_statistics as ds
 from mmtbx.scaling import xtriage
@@ -21,7 +20,7 @@ from six.moves import range
 
 # synthetic data
 def exercise_1():
-  pdb_raw = """\
+    pdb_raw = """\
 CRYST1   23.000    6.666   25.000  90.00 107.08  90.00 P 1 21 1      2
 ATOM      1  N   GLY A   1      -9.009   4.612   6.102  1.00 16.77           N
 ATOM      2  CA  GLY A   1      -9.052   4.207   4.651  1.00 16.57           C
@@ -91,65 +90,68 @@ HETATM   65  O   HOH A  13      -2.749   3.429  10.024  1.00 39.15           O
 HETATM   66  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 END
 """
-  pdb_file = "tst_xtriage_in.pdb"
-  open(pdb_file, "w").write(pdb_raw)
-  fmodel_args = [
-    pdb_file,
-    "high_resolution=1.5",
-    "k_sol=0.35",
-    "b_sol=20",
-    "wavelength=1.54",
-    "add_random_error_to_amplitudes_percent=3",
-    "random_seed=12345",
-    "output.type=real",
-    "output.label=F",
-    "output.file_name=tst_xtriage_fmodel.mtz",
-  ]
+    pdb_file = "tst_xtriage_in.pdb"
+    open(pdb_file, "w").write(pdb_raw)
+    fmodel_args = [
+        pdb_file,
+        "high_resolution=1.5",
+        "k_sol=0.35",
+        "b_sol=20",
+        "wavelength=1.54",
+        "add_random_error_to_amplitudes_percent=3",
+        "random_seed=12345",
+        "output.type=real",
+        "output.label=F",
+        "output.file_name=tst_xtriage_fmodel.mtz",
+    ]
 
-  #  read it instead so python3 will be the same
-  #  fmodel.run(args=fmodel_args, log=null_out())
-  hkl_file = libtbx.env.find_in_repositories(
-    relative_path="mmtbx/regression/mtz/tst_xtriage_fmodel.mtz",
-    test=os.path.isfile)
-  mtz_in = file_reader.any_file(
-    hkl_file).assert_file_type("hkl")
-  f_obs = mtz_in.file_server.miller_arrays[0].remove_cone(0.1)
-  data = f_obs.data()
-  # add some outliers
-  #data[17] = 20
-  #data[334] = 26
-  #data[1908] = 13
-  # and sigmas
-  sigf = flex.double(f_obs.size(), 0.1) + (f_obs.data() * 0.03)
-  f_obs = f_obs.customized_copy(sigmas=sigf)
-  mtz_file = "tst_xtriage_in.mtz"
-  f_obs.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
-  seq_file = "tst_xtriage_in.fa"
-  open(seq_file, "w").write("> tst_xtriage\nGNNMQNY")
+    #  read it instead so python3 will be the same
+    #  fmodel.run(args=fmodel_args, log=null_out())
+    hkl_file = libtbx.env.find_in_repositories(
+        relative_path="mmtbx/regression/mtz/tst_xtriage_fmodel.mtz", test=os.path.isfile
+    )
+    mtz_in = file_reader.any_file(hkl_file).assert_file_type("hkl")
+    f_obs = mtz_in.file_server.miller_arrays[0].remove_cone(0.1)
+    data = f_obs.data()
+    # add some outliers
+    # data[17] = 20
+    # data[334] = 26
+    # data[1908] = 13
+    # and sigmas
+    sigf = flex.double(f_obs.size(), 0.1) + (f_obs.data() * 0.03)
+    f_obs = f_obs.customized_copy(sigmas=sigf)
+    mtz_file = "tst_xtriage_in.mtz"
+    f_obs.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
+    seq_file = "tst_xtriage_in.fa"
+    open(seq_file, "w").write("> tst_xtriage\nGNNMQNY")
 
-  # check with completeness_as_non_anomalous=True
+    # check with completeness_as_non_anomalous=True
 
-  xtriage_args = [
-    mtz_file,
-    pdb_file,
-    seq_file,
-    "log=tst_xtriage_1.log",
-    "l_test_dhkl=2,2,2",
-    "completeness_as_non_anomalous=True",
-  ]
-  result = xtriage.run(args=xtriage_args, out=null_out())
-  test_pickle_consistency_and_size(result)
-  assert (result.matthews.n_copies == 1)
-  assert (str(result.matthews.table) == """\
+    xtriage_args = [
+        mtz_file,
+        pdb_file,
+        seq_file,
+        "log=tst_xtriage_1.log",
+        "l_test_dhkl=2,2,2",
+        "completeness_as_non_anomalous=True",
+    ]
+    result = xtriage.run(args=xtriage_args, out=null_out())
+    test_pickle_consistency_and_size(result)
+    assert result.matthews.n_copies == 1
+    assert (
+        str(result.matthews.table)
+        == """\
 Solvent content analysis
 Copies             Solvent content    Matthews coeff.    P(solvent content)
 1                  0.472              2.33               1.000
-""")
-  data_strength = result.data_strength_and_completeness
-  assert approx_equal(data_strength.data_strength.resolution_cut, 1.5351,
-    eps=0.001)
-  out1 = data_strength.low_resolution_completeness.format()
-  assert (out1 == """\
+"""
+    )
+    data_strength = result.data_strength_and_completeness
+    assert approx_equal(data_strength.data_strength.resolution_cut, 1.5351, eps=0.001)
+    out1 = data_strength.low_resolution_completeness.format()
+    assert (
+        out1
+        == """\
 ---------------------------------------------------------
 | Resolution range  | N(obs)/N(possible) | Completeness |
 ---------------------------------------------------------
@@ -163,43 +165,57 @@ Copies             Solvent content    Matthews coeff.    P(solvent content)
 |  5.6337 -  5.3922 | [5/5]              | 1.000        |
 |  5.3922 -  5.1874 | [4/4]              | 1.000        |
 |  5.1874 -  5.0106 | [4/4]              | 1.000        |
----------------------------------------------------------"""), out1
-  # ANOMALOUS SIGNAL
-  a_meas = result.anomalous_info.measurability
-  #assert approx_equal(a_meas.high_d_cut, 4.7636, eps=0.0001) # Why it's None?
-  assert approx_equal(a_meas.low_d_cut, 2.3566, eps=0.0001)
-  # ABSOLUTE SCALING
-  ws = result.wilson_scaling
-  assert ("%.2f" % ws.iso_p_scale) == "0.65",ws.iso_p_scale
-  assert ("%.2f" % ws.iso_b_wilson) == "14.42", ws.iso_b_wilson
-  # FIXME these may need to be adjusted for different hardware/OS
-  assert approx_equal(ws.aniso_p_scale, 0.64723, eps=0.001)
-  assert approx_equal(ws.aniso_u_star, [0.00034229, 0.00475982, 0.000285989,
-                                        -0.0, 8.95386085999e-05, 0.0])
-  assert approx_equal(ws.aniso_b_cart, (13.218423, 16.840142, 12.948426,
-    1.0354e-15, -0.0685311, -7.92862e-16), 0.3)
-  # convenience methods for GUI
-  assert approx_equal(result.aniso_b_min, 12.895580)
-  assert approx_equal(result.aniso_range_of_b, 3.804215)
-  #
-  assert approx_equal(ws.outlier_shell_table.data[0], # d_spacing
-    [9.865131, 8.369653, 4.648634])
-  assert approx_equal(ws.outlier_shell_table.data[1], # z_score
-    [5.306713, 18.068284, 5.319230])
-  assert (len(ws.outliers.acentric_outliers_table.data[0]) == 2)
-  assert (ws.outliers.acentric_outliers_table.data[1] == [(0,-1,-1), (0,1,1)])
-  assert approx_equal(ws.outliers.acentric_outliers_table.data[2],
-    [3.507247, 3.315550])
-  assert (ws.outliers.centric_outliers_table.data is None)
-  assert (len(ws.ice_rings.table._rows) == 10)
-  assert (ws.ice_rings.table._rows[0] ==
-          ['    3.897', '     1.000', '   0.76', '   1.00']), \
-          ws.ice_rings.table._rows[0]
-  tw = result.twin_results
-  wm = tw.wilson_moments
-  out = StringIO()
-  wm.show(out)
-  assert not show_diff(out.getvalue(), """
+---------------------------------------------------------"""
+    ), out1
+    # ANOMALOUS SIGNAL
+    a_meas = result.anomalous_info.measurability
+    # assert approx_equal(a_meas.high_d_cut, 4.7636, eps=0.0001) # Why it's None?
+    assert approx_equal(a_meas.low_d_cut, 2.3566, eps=0.0001)
+    # ABSOLUTE SCALING
+    ws = result.wilson_scaling
+    assert ("%.2f" % ws.iso_p_scale) == "0.65", ws.iso_p_scale
+    assert ("%.2f" % ws.iso_b_wilson) == "14.42", ws.iso_b_wilson
+    # FIXME these may need to be adjusted for different hardware/OS
+    assert approx_equal(ws.aniso_p_scale, 0.64723, eps=0.001)
+    assert approx_equal(
+        ws.aniso_u_star,
+        [0.00034229, 0.00475982, 0.000285989, -0.0, 8.95386085999e-05, 0.0],
+    )
+    assert approx_equal(
+        ws.aniso_b_cart,
+        (13.218423, 16.840142, 12.948426, 1.0354e-15, -0.0685311, -7.92862e-16),
+        0.3,
+    )
+    # convenience methods for GUI
+    assert approx_equal(result.aniso_b_min, 12.895580)
+    assert approx_equal(result.aniso_range_of_b, 3.804215)
+    #
+    assert approx_equal(
+        ws.outlier_shell_table.data[0], [9.865131, 8.369653, 4.648634]  # d_spacing
+    )
+    assert approx_equal(
+        ws.outlier_shell_table.data[1], [5.306713, 18.068284, 5.319230]  # z_score
+    )
+    assert len(ws.outliers.acentric_outliers_table.data[0]) == 2
+    assert ws.outliers.acentric_outliers_table.data[1] == [(0, -1, -1), (0, 1, 1)]
+    assert approx_equal(
+        ws.outliers.acentric_outliers_table.data[2], [3.507247, 3.315550]
+    )
+    assert ws.outliers.centric_outliers_table.data is None
+    assert len(ws.ice_rings.table._rows) == 10
+    assert ws.ice_rings.table._rows[0] == [
+        "    3.897",
+        "     1.000",
+        "   0.76",
+        "   1.00",
+    ], ws.ice_rings.table._rows[0]
+    tw = result.twin_results
+    wm = tw.wilson_moments
+    out = StringIO()
+    wm.show(out)
+    assert not show_diff(
+        out.getvalue(),
+        """
                   ----------Wilson ratio and moments----------
 
 Acentric reflections:
@@ -216,45 +232,50 @@ Centric reflections:
    <F>^2/<F^2>    :0.628   (untwinned: 0.637; perfect twin 0.785)
    <|E^2 - 1|>    :0.999   (untwinned: 0.968; perfect twin 0.736)
 
-""")
-  # XXX PDB validation server
-  assert approx_equal(result.iso_b_wilson, 14.51, eps=0.1)
-  assert approx_equal(result.aniso_b_ratio, 0.271, eps=0.1)
-  assert (result.number_of_wilson_outliers == 2)
-  assert approx_equal(result.l_test_mean_l, 0.481, eps=0.1)
-  assert approx_equal(result.l_test_mean_l_squared, 0.322, eps=0.1)
-  assert approx_equal(result.i_over_sigma_outer_shell, 10.71, eps=0.01)
-  assert ("indicating pseudo-translationa" in result.patterson_verdict)
-  # check relative Wilson
-  # FIXME
-  #result.relative_wilson.show()
-  #assert (result.relative_wilson.n_outliers() == 0)
-  #show_pickled_object_sizes(result)
-  #
+""",
+    )
+    # XXX PDB validation server
+    assert approx_equal(result.iso_b_wilson, 14.51, eps=0.1)
+    assert approx_equal(result.aniso_b_ratio, 0.271, eps=0.1)
+    assert result.number_of_wilson_outliers == 2
+    assert approx_equal(result.l_test_mean_l, 0.481, eps=0.1)
+    assert approx_equal(result.l_test_mean_l_squared, 0.322, eps=0.1)
+    assert approx_equal(result.i_over_sigma_outer_shell, 10.71, eps=0.01)
+    assert "indicating pseudo-translationa" in result.patterson_verdict
+    # check relative Wilson
+    # FIXME
+    # result.relative_wilson.show()
+    # assert (result.relative_wilson.n_outliers() == 0)
+    # show_pickled_object_sizes(result)
+    #
 
-  # check with completeness_as_non_anomalous=False
+    # check with completeness_as_non_anomalous=False
 
-  xtriage_args = [
-    mtz_file,
-    pdb_file,
-    seq_file,
-    "log=tst_xtriage_1.log",
-    "l_test_dhkl=2,2,2",
-    "completeness_as_non_anomalous=False",
-  ]
-  result = xtriage.run(args=xtriage_args, out=null_out())
-  test_pickle_consistency_and_size(result)
-  assert (result.matthews.n_copies == 1)
-  assert (str(result.matthews.table) == """\
+    xtriage_args = [
+        mtz_file,
+        pdb_file,
+        seq_file,
+        "log=tst_xtriage_1.log",
+        "l_test_dhkl=2,2,2",
+        "completeness_as_non_anomalous=False",
+    ]
+    result = xtriage.run(args=xtriage_args, out=null_out())
+    test_pickle_consistency_and_size(result)
+    assert result.matthews.n_copies == 1
+    assert (
+        str(result.matthews.table)
+        == """\
 Solvent content analysis
 Copies             Solvent content    Matthews coeff.    P(solvent content)
 1                  0.472              2.33               1.000
-""")
-  data_strength = result.data_strength_and_completeness
-  assert approx_equal(data_strength.data_strength.resolution_cut, 1.5351,
-    eps=0.001)
-  out1 = data_strength.low_resolution_completeness.format()
-  assert (out1 == """\
+"""
+    )
+    data_strength = result.data_strength_and_completeness
+    assert approx_equal(data_strength.data_strength.resolution_cut, 1.5351, eps=0.001)
+    out1 = data_strength.low_resolution_completeness.format()
+    assert (
+        out1
+        == """\
 ---------------------------------------------------------
 | Resolution range  | N(obs)/N(possible) | Completeness |
 ---------------------------------------------------------
@@ -268,43 +289,52 @@ Copies             Solvent content    Matthews coeff.    P(solvent content)
 |  5.6337 -  5.3922 | [ 7/7 ]            | 1.000        |
 |  5.3922 -  5.1874 | [ 6/6 ]            | 1.000        |
 |  5.1874 -  5.0106 | [ 7/7 ]            | 1.000        |
----------------------------------------------------------"""), out1
-  # ANOMALOUS SIGNAL
-  a_meas = result.anomalous_info.measurability
-  #assert approx_equal(a_meas.high_d_cut, 4.7636, eps=0.0001) # Why?
-  assert approx_equal(a_meas.low_d_cut, 2.3565, eps=0.0001)
-  # ABSOLUTE SCALING
-  ws = result.wilson_scaling
-  assert ("%.2f" % ws.iso_p_scale) == "0.65", ws.iso_p_scale
-  assert ("%.2f" % ws.iso_b_wilson) == "14.42", ws.iso_b_wilson
-  # FIXME these may need to be adjusted for different hardware/OS
-  assert approx_equal(ws.aniso_p_scale, 0.64723, eps=0.001)
-  assert approx_equal(ws.aniso_u_star, [0.00034473, 0.00479983, 0.000287162,
-                                        -0.0, 9.00962e-05, 0.0], 6.e-5)
-  assert approx_equal(ws.aniso_b_cart, [13.12, 16.69, 12.89,
-    0, -0.08, 0], 0.01)
-  # convenience methods for GUI
-  assert approx_equal(result.aniso_b_min, 12.9, 0.1)
-  assert approx_equal(result.aniso_range_of_b, 3.8, 0.1)
-  #
-  assert approx_equal(ws.outlier_shell_table.data[0], # d_spacing
-    [9.86, 8.36, 4.64], 0.02)
-  assert approx_equal(ws.outlier_shell_table.data[1], # z_score
-    [5.30, 18.06, 5.31], 0.01)
-  assert (len(ws.outliers.acentric_outliers_table.data[0]) == 2)
-  assert (ws.outliers.acentric_outliers_table.data[1] == [(0,-1,-1), (0,1,1)])
-  assert approx_equal(ws.outliers.acentric_outliers_table.data[2],
-    [3.5, 3.3], 0.1)
-  assert (ws.outliers.centric_outliers_table.data is None)
-  assert (len(ws.ice_rings.table._rows) == 10)
-  assert (ws.ice_rings.table._rows[0] ==
-          ['    3.897', '     1.000', '   0.76', '   1.00']), \
-          ws.ice_rings.table._rows[0]
-  tw = result.twin_results
-  wm = tw.wilson_moments
-  out = StringIO()
-  wm.show(out)
-  assert not show_diff(out.getvalue(), """
+---------------------------------------------------------"""
+    ), out1
+    # ANOMALOUS SIGNAL
+    a_meas = result.anomalous_info.measurability
+    # assert approx_equal(a_meas.high_d_cut, 4.7636, eps=0.0001) # Why?
+    assert approx_equal(a_meas.low_d_cut, 2.3565, eps=0.0001)
+    # ABSOLUTE SCALING
+    ws = result.wilson_scaling
+    assert ("%.2f" % ws.iso_p_scale) == "0.65", ws.iso_p_scale
+    assert ("%.2f" % ws.iso_b_wilson) == "14.42", ws.iso_b_wilson
+    # FIXME these may need to be adjusted for different hardware/OS
+    assert approx_equal(ws.aniso_p_scale, 0.64723, eps=0.001)
+    assert approx_equal(
+        ws.aniso_u_star,
+        [0.00034473, 0.00479983, 0.000287162, -0.0, 9.00962e-05, 0.0],
+        6.0e-5,
+    )
+    assert approx_equal(ws.aniso_b_cart, [13.12, 16.69, 12.89, 0, -0.08, 0], 0.01)
+    # convenience methods for GUI
+    assert approx_equal(result.aniso_b_min, 12.9, 0.1)
+    assert approx_equal(result.aniso_range_of_b, 3.8, 0.1)
+    #
+    assert approx_equal(
+        ws.outlier_shell_table.data[0], [9.86, 8.36, 4.64], 0.02  # d_spacing
+    )
+    assert approx_equal(
+        ws.outlier_shell_table.data[1], [5.30, 18.06, 5.31], 0.01  # z_score
+    )
+    assert len(ws.outliers.acentric_outliers_table.data[0]) == 2
+    assert ws.outliers.acentric_outliers_table.data[1] == [(0, -1, -1), (0, 1, 1)]
+    assert approx_equal(ws.outliers.acentric_outliers_table.data[2], [3.5, 3.3], 0.1)
+    assert ws.outliers.centric_outliers_table.data is None
+    assert len(ws.ice_rings.table._rows) == 10
+    assert ws.ice_rings.table._rows[0] == [
+        "    3.897",
+        "     1.000",
+        "   0.76",
+        "   1.00",
+    ], ws.ice_rings.table._rows[0]
+    tw = result.twin_results
+    wm = tw.wilson_moments
+    out = StringIO()
+    wm.show(out)
+    assert not show_diff(
+        out.getvalue(),
+        """
                   ----------Wilson ratio and moments----------
 
 Acentric reflections:
@@ -321,245 +351,263 @@ Centric reflections:
    <F>^2/<F^2>    :0.628   (untwinned: 0.637; perfect twin 0.785)
    <|E^2 - 1|>    :0.999   (untwinned: 0.968; perfect twin 0.736)
 
-""")
-  # XXX PDB validation server
-  assert approx_equal(result.iso_b_wilson, 14.51, eps=0.1)
-  assert approx_equal(result.aniso_b_ratio, 0.271, eps=0.1)
-  assert (result.number_of_wilson_outliers == 2)
-  assert approx_equal(result.l_test_mean_l, 0.481, eps=0.1)
-  assert approx_equal(result.l_test_mean_l_squared, 0.322, eps=0.1)
-  assert approx_equal(result.i_over_sigma_outer_shell, 10.71, eps=0.01)
-  assert ("indicating pseudo-translationa" in result.patterson_verdict)
-  # check relative Wilson
-  # FIXME
-  #result.relative_wilson.show()
-  #assert (result.relative_wilson.n_outliers() == 0)
-  #show_pickled_object_sizes(result)
-  #
-  # test without sigmas
-  f_obs_2 = f_obs.customized_copy(sigmas=None)
-  mtz_file = "tst_xtriage_in_2.mtz"
-  f_obs_2.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
-  xtriage_args = [
-    mtz_file,
-    pdb_file,
-    seq_file,
-    "log=tst_xtriage_1.log",
-  ]
+""",
+    )
+    # XXX PDB validation server
+    assert approx_equal(result.iso_b_wilson, 14.51, eps=0.1)
+    assert approx_equal(result.aniso_b_ratio, 0.271, eps=0.1)
+    assert result.number_of_wilson_outliers == 2
+    assert approx_equal(result.l_test_mean_l, 0.481, eps=0.1)
+    assert approx_equal(result.l_test_mean_l_squared, 0.322, eps=0.1)
+    assert approx_equal(result.i_over_sigma_outer_shell, 10.71, eps=0.01)
+    assert "indicating pseudo-translationa" in result.patterson_verdict
+    # check relative Wilson
+    # FIXME
+    # result.relative_wilson.show()
+    # assert (result.relative_wilson.n_outliers() == 0)
+    # show_pickled_object_sizes(result)
+    #
+    # test without sigmas
+    f_obs_2 = f_obs.customized_copy(sigmas=None)
+    mtz_file = "tst_xtriage_in_2.mtz"
+    f_obs_2.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
+    xtriage_args = [
+        mtz_file,
+        pdb_file,
+        seq_file,
+        "log=tst_xtriage_1.log",
+    ]
 
+    result = xtriage.run(args=xtriage_args, out=null_out())
+    result.summarize_issues()
+    # test in lower symmetry
+    f_obs_3 = f_obs.expand_to_p1()
+    mtz_file = "tst_xtriage_in_3.mtz"
+    f_obs_3.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
+    xtriage_args = [
+        mtz_file,
+        seq_file,
+        "log=tst_xtriage_2.log",
+    ]
+    result = xtriage.run(args=xtriage_args, out=null_out())
+    assert (
+        1,
+        "One or more symmetry operators suggest that the data has a higher crystallographic symmetry (P 2 1 1).",
+        "Point group and R-factor analysis",
+    ) in result.summarize_issues()._issues
+    # test with elliptical truncation
+    f_obs_3 = f_obs.customized_copy(
+        crystal_symmetry=crystal.symmetry((23, 5, 20, 90, 107.8, 90), "P 21")
+    )
+    f_obs_3 = f_obs_3.resolution_filter(d_min=1.5)
+    f_obs_3 = f_obs_3.customized_copy(crystal_symmetry=f_obs.crystal_symmetry())
+    reso = ds.analyze_resolution_limits(f_obs_3)
+    out = StringIO()
+    reso.show(out=out)
+    assert "max. difference between axes = 0.652" in out.getvalue(), out.getvalue()
+    assert "elliptically truncated" in out.getvalue()
+    # make sure the elliptical truncation detection still works in higher space
+    # groups - we only need a miller.set for this
+    miller_set = miller.build_set(
+        crystal_symmetry=crystal.symmetry((20, 20, 20, 90, 90, 90), "P422"),
+        d_min=1.5,
+        anomalous_flag=False,
+    )
+    reso = ds.analyze_resolution_limits(miller_set)
+    out = StringIO()
+    reso.show(out=out)
+    assert "Resolution limits are within expected tolerances" in out.getvalue()
+    # log binning
+    out = StringIO()
+    log_binned = ds.log_binned_completeness(f_obs_3)
+    log_binned.show(out=out)
+    assert (
+        """| 1.9724 - 1.5094  | 368/1230    | 29.9%        |""" in out.getvalue()
+    ), out.getvalue()
+    # test with no acentrics
+    cf = f_obs.centric_flags().data()
+    centrics = f_obs.select(cf)
+    acentrics = f_obs.select(~cf)
+    mtz_file = "tst_xtriage_in_3.mtz"
+    centrics.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
+    args = [
+        mtz_file,
+        pdb_file,
+        seq_file,
+        "log=tst_xtriage_3.log",
+    ]
+    try:
+        xtriage.run(args=args, out=null_out())
+    except Sorry:
+        pass
+    else:
+        raise Exception_expected
+    # with only a handful of acentrics
+    sel = flex.bool(acentrics.size(), False)
+    for i in range(10):
+        sel[i] = True
+    f_obs_4 = centrics.concatenate(acentrics.select(sel))
+    f_obs_4.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
+    try:
+        xtriage.run(args=args, out=null_out())
+    except Sorry:
+        pass
+    else:
+        raise Exception_expected
 
-  result = xtriage.run(args=xtriage_args, out=null_out())
-  result.summarize_issues()
-  # test in lower symmetry
-  f_obs_3 = f_obs.expand_to_p1()
-  mtz_file = "tst_xtriage_in_3.mtz"
-  f_obs_3.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
-  xtriage_args = [
-    mtz_file,
-    seq_file,
-    "log=tst_xtriage_2.log",
-  ]
-  result = xtriage.run(args=xtriage_args, out=null_out())
-  assert ((1, 'One or more symmetry operators suggest that the data has a higher crystallographic symmetry (P 2 1 1).', 'Point group and R-factor analysis') in result.summarize_issues()._issues)
-  # test with elliptical truncation
-  f_obs_3 = f_obs.customized_copy(
-    crystal_symmetry=crystal.symmetry((23,5,20,90,107.8,90), "P 21"))
-  f_obs_3 = f_obs_3.resolution_filter(d_min=1.5)
-  f_obs_3 = f_obs_3.customized_copy(crystal_symmetry=f_obs.crystal_symmetry())
-  reso = ds.analyze_resolution_limits(f_obs_3)
-  out = StringIO()
-  reso.show(out=out)
-  assert ("max. difference between axes = 0.652" in out.getvalue()), \
-    out.getvalue()
-  assert ("elliptically truncated" in out.getvalue())
-  # make sure the elliptical truncation detection still works in higher space
-  # groups - we only need a miller.set for this
-  miller_set = miller.build_set(
-    crystal_symmetry=crystal.symmetry((20,20,20,90,90,90), "P422"),
-    d_min=1.5,
-    anomalous_flag=False)
-  reso = ds.analyze_resolution_limits(miller_set)
-  out = StringIO()
-  reso.show(out=out)
-  assert ("Resolution limits are within expected tolerances" in out.getvalue())
-  # log binning
-  out = StringIO()
-  log_binned = ds.log_binned_completeness(f_obs_3)
-  log_binned.show(out=out)
-  assert ("""| 1.9724 - 1.5094  | 368/1230    | 29.9%        |""" in
-          out.getvalue()), out.getvalue()
-  # test with no acentrics
-  cf = f_obs.centric_flags().data()
-  centrics = f_obs.select(cf)
-  acentrics = f_obs.select(~cf)
-  mtz_file = "tst_xtriage_in_3.mtz"
-  centrics.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
-  args = [
-    mtz_file,
-    pdb_file,
-    seq_file,
-    "log=tst_xtriage_3.log",
-  ]
-  try :
-    xtriage.run(args=args, out=null_out())
-  except Sorry :
-    pass
-  else :
-    raise Exception_expected
-  # with only a handful of acentrics
-  sel = flex.bool(acentrics.size(), False)
-  for i in range(10):
-    sel[i] = True
-  f_obs_4 = centrics.concatenate(acentrics.select(sel))
-  f_obs_4.as_mtz_dataset(column_root_label="F").mtz_object().write(mtz_file)
-  try :
-    xtriage.run(args=args, out=null_out())
-  except Sorry :
-    pass
-  else :
-    raise Exception_expected
 
 # XXX code for debugging pickle size issues
 def show_pickled_object_sizes(result):
-  result_pkl = dumps(result)
-  print("result", len(result_pkl))
-  show_pickle_sizes(result, "  ")
+    result_pkl = dumps(result)
+    print("result", len(result_pkl))
+    show_pickle_sizes(result, "  ")
+
 
 # test consistency of output after pickling and unpickling
 def test_pickle_consistency_and_size(result):
-  all_out = StringIO()
-  result.show(out=all_out)
-  result_pkl_str = dumps(result)
-  pkl_size = len(result_pkl_str)
-  if (pkl_size >= 100000):
-    print("Oversized pickle:", pkl_size)
-    show_pickled_object_sizes(result)
-    raise OverflowError()
-  assert (pkl_size < 100000), pkl_size # limit pickle size
-  result_pkl = loads(result_pkl_str)
-  all_out_pkl = StringIO()
-  result_pkl.show(out=all_out_pkl)
-  assert not show_diff(all_out.getvalue(), all_out_pkl.getvalue())
+    all_out = StringIO()
+    result.show(out=all_out)
+    result_pkl_str = dumps(result)
+    pkl_size = len(result_pkl_str)
+    if pkl_size >= 100000:
+        print("Oversized pickle:", pkl_size)
+        show_pickled_object_sizes(result)
+        raise OverflowError()
+    assert pkl_size < 100000, pkl_size  # limit pickle size
+    result_pkl = loads(result_pkl_str)
+    all_out_pkl = StringIO()
+    result_pkl.show(out=all_out_pkl)
+    assert not show_diff(all_out.getvalue(), all_out_pkl.getvalue())
+
 
 def exercise_analyze_resolution_limits():
-  for x in range(1, 231):
-    sg = sgtbx.space_group_info(number=x)
-    #sg = sgtbx.space_group_info("P222")
-    uc = sg.any_compatible_unit_cell(80000)
-    ms = miller.build_set(
-      crystal_symmetry=crystal.symmetry(
-        space_group_info=sg,
-        unit_cell=uc),
-      anomalous_flag=True,
-      d_min=1.5)
-    arl = ds.analyze_resolution_limits(ms)
-    if (x > 2):
-      assert (arl.max_d_min_delta() < 0.1)
+    for x in range(1, 231):
+        sg = sgtbx.space_group_info(number=x)
+        # sg = sgtbx.space_group_info("P222")
+        uc = sg.any_compatible_unit_cell(80000)
+        ms = miller.build_set(
+            crystal_symmetry=crystal.symmetry(space_group_info=sg, unit_cell=uc),
+            anomalous_flag=True,
+            d_min=1.5,
+        )
+        arl = ds.analyze_resolution_limits(ms)
+        if x > 2:
+            assert arl.max_d_min_delta() < 0.1
+
 
 # real data
 def exercise_2():
-  hkl_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/wizards/data/p9_se_w2.sca",
-    test=os.path.isfile)
-  if (hkl_file is None):
-    warnings.warn("phenix_regression not available, skipping test")
-    return
-  hkl_in = file_reader.any_file(hkl_file).assert_file_type("hkl")
-  i_obs_raw = hkl_in.file_object.as_miller_arrays(
-    merge_equivalents=False,
-    crystal_symmetry=crystal.symmetry(
-      space_group_symbol="I4",
-      unit_cell=(113.949,113.949,32.474,90,90,90)))[0]
-  i_obs = i_obs_raw.merge_equivalents().array()
-  # completeness and data strength
-  cstats = ds.i_sigi_completeness_stats(i_obs)
-  d_min_cut = cstats.resolution_cut
-  assert approx_equal(d_min_cut, 2.150815)
-  ws = ds.wilson_scaling(
-    miller_array=i_obs,
-    n_residues=120)
-  # outliers - this shouldn't actually work, since it requires additional
-  # processing steps on the input data
-  try :
-    outliers = ds.possible_outliers(i_obs)
-  except AssertionError :
-    pass
-  else :
-    raise Exception_expected
-  ######################################################################
-  # OVERALL ANALYSIS
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_examples/p9-build/p9.pdb",
-    test=os.path.isfile)
-  f_calc = None
-  if (pdb_file is not None):
-    pdb_in = file_reader.any_file(pdb_file).assert_file_type("pdb")
-    hierarchy = pdb_in.file_object.hierarchy
-    xrs = pdb_in.file_object.xray_structure_simple(
-      crystal_symmetry=i_obs)
-    f_calc = xrs.structure_factors(d_min=i_obs.d_min()).f_calc()
-    f_calc = abs(f_calc).generate_bijvoet_mates()
-    f_calc = f_calc.set_observation_type_xray_amplitude()
-    i_obs, f_calc = i_obs.common_sets(other=f_calc)
-    open("tmp_xtriage.pdb", "w").write(hierarchy.as_pdb_string(
-      crystal_symmetry=i_obs))
-    pdb_file = "tmp_xtriage.pdb"
-  params = xtriage.master_params.extract()
-  params.scaling.input.asu_contents.n_residues = 141
-  result = xtriage.xtriage_analyses(
-    miller_obs=i_obs,
-    miller_calc=f_calc,
-    params=params,
-    unmerged_obs=i_obs_raw,
-    text_out=open("logfile3.log", "w"))#sys.stdout)
-  # XXX there appears to be some system-dependence here, hence sloppy limits
-  assert (15.5 < result.aniso_b_min < 15.9)
-  assert (10 < result.aniso_range_of_b < 11)
-  # check relative Wilson
-  if (pdb_file is not None):
-    assert (result.relative_wilson is not None)
-    # FIXME
-    #assert (result.relative_wilson.n_outliers() == 34)
-  #show_pickled_object_sizes(result)
-  test_pickle_consistency_and_size(result)
-  # XXX PDB validation server
-  assert approx_equal(result.iso_b_wilson, 18.33, eps=0.1)
-  assert approx_equal(result.aniso_b_ratio, 0.546, eps=0.1)
-  assert (result.number_of_wilson_outliers == 0)
-  assert approx_equal(result.l_test_mean_l, 0.493, eps=0.1)
-  assert approx_equal(result.l_test_mean_l_squared, 0.326, eps=0.1)
-  assert approx_equal(result.i_over_sigma_outer_shell, 3.25, eps=0.1)
-  assert approx_equal(result.overall_i_sig_i,10.34,eps=0.1)
-  assert approx_equal(result.anomalous_info.plan_sad_experiment_stats.get_overall(
-      item="i_over_sigma_dict"),10.61,eps=0.1)
-  assert approx_equal(result.anomalous_info.plan_sad_experiment_stats.get_overall(
-      item="anom_signal_dict"),15.35,eps=0.1)
-  assert ("No significant pseudotranslation is detected" in
-          result.patterson_verdict)
-  # test consistency of output after pickling and unpickling
-  try :
-    from phenix_dev.phenix_cloud import xtriage_json
-  except ImportError :
-    pass
-  else :
-    json_out = xtriage_json.json_output("p9.sca")
-    result.show(out=json_out)
-    open("xtriage.json", "w").write(json_out.export())
-  # unmerged data
-  assert result.merging_stats is not None
-  out = StringIO()
-  result.merging_stats.show(out=out)
-  assert ("R-merge: 0.073" in out.getvalue())
-  assert approx_equal(result.estimate_d_min(min_i_over_sigma=10), 1.9645,
-    eps=0.001)
-  # FIXME PDB doesn't actually have unit cell!
-  # test detection of symmetry in reference file
-  if (pdb_file is not None):
-    args = [hkl_file, pdb_file]
-    result = xtriage.run(args=args, out=null_out())
+    hkl_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/wizards/data/p9_se_w2.sca", test=os.path.isfile
+    )
+    if hkl_file is None:
+        warnings.warn("phenix_regression not available, skipping test")
+        return
+    hkl_in = file_reader.any_file(hkl_file).assert_file_type("hkl")
+    i_obs_raw = hkl_in.file_object.as_miller_arrays(
+        merge_equivalents=False,
+        crystal_symmetry=crystal.symmetry(
+            space_group_symbol="I4", unit_cell=(113.949, 113.949, 32.474, 90, 90, 90)
+        ),
+    )[0]
+    i_obs = i_obs_raw.merge_equivalents().array()
+    # completeness and data strength
+    cstats = ds.i_sigi_completeness_stats(i_obs)
+    d_min_cut = cstats.resolution_cut
+    assert approx_equal(d_min_cut, 2.150815)
+    ws = ds.wilson_scaling(miller_array=i_obs, n_residues=120)
+    # outliers - this shouldn't actually work, since it requires additional
+    # processing steps on the input data
+    try:
+        outliers = ds.possible_outliers(i_obs)
+    except AssertionError:
+        pass
+    else:
+        raise Exception_expected
+    ######################################################################
+    # OVERALL ANALYSIS
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_examples/p9-build/p9.pdb", test=os.path.isfile
+    )
+    f_calc = None
+    if pdb_file is not None:
+        pdb_in = file_reader.any_file(pdb_file).assert_file_type("pdb")
+        hierarchy = pdb_in.file_object.hierarchy
+        xrs = pdb_in.file_object.xray_structure_simple(crystal_symmetry=i_obs)
+        f_calc = xrs.structure_factors(d_min=i_obs.d_min()).f_calc()
+        f_calc = abs(f_calc).generate_bijvoet_mates()
+        f_calc = f_calc.set_observation_type_xray_amplitude()
+        i_obs, f_calc = i_obs.common_sets(other=f_calc)
+        open("tmp_xtriage.pdb", "w").write(
+            hierarchy.as_pdb_string(crystal_symmetry=i_obs)
+        )
+        pdb_file = "tmp_xtriage.pdb"
+    params = xtriage.master_params.extract()
+    params.scaling.input.asu_contents.n_residues = 141
+    result = xtriage.xtriage_analyses(
+        miller_obs=i_obs,
+        miller_calc=f_calc,
+        params=params,
+        unmerged_obs=i_obs_raw,
+        text_out=open("logfile3.log", "w"),
+    )  # sys.stdout)
+    # XXX there appears to be some system-dependence here, hence sloppy limits
+    assert 15.5 < result.aniso_b_min < 15.9
+    assert 10 < result.aniso_range_of_b < 11
+    # check relative Wilson
+    if pdb_file is not None:
+        assert result.relative_wilson is not None
+        # FIXME
+        # assert (result.relative_wilson.n_outliers() == 34)
+    # show_pickled_object_sizes(result)
+    test_pickle_consistency_and_size(result)
+    # XXX PDB validation server
+    assert approx_equal(result.iso_b_wilson, 18.33, eps=0.1)
+    assert approx_equal(result.aniso_b_ratio, 0.546, eps=0.1)
+    assert result.number_of_wilson_outliers == 0
+    assert approx_equal(result.l_test_mean_l, 0.493, eps=0.1)
+    assert approx_equal(result.l_test_mean_l_squared, 0.326, eps=0.1)
+    assert approx_equal(result.i_over_sigma_outer_shell, 3.25, eps=0.1)
+    assert approx_equal(result.overall_i_sig_i, 10.34, eps=0.1)
+    assert approx_equal(
+        result.anomalous_info.plan_sad_experiment_stats.get_overall(
+            item="i_over_sigma_dict"
+        ),
+        10.61,
+        eps=0.1,
+    )
+    assert approx_equal(
+        result.anomalous_info.plan_sad_experiment_stats.get_overall(
+            item="anom_signal_dict"
+        ),
+        15.35,
+        eps=0.1,
+    )
+    assert "No significant pseudotranslation is detected" in result.patterson_verdict
+    # test consistency of output after pickling and unpickling
+    try:
+        from phenix_dev.phenix_cloud import xtriage_json
+    except ImportError:
+        pass
+    else:
+        json_out = xtriage_json.json_output("p9.sca")
+        result.show(out=json_out)
+        open("xtriage.json", "w").write(json_out.export())
+    # unmerged data
+    assert result.merging_stats is not None
+    out = StringIO()
+    result.merging_stats.show(out=out)
+    assert "R-merge: 0.073" in out.getvalue()
+    assert approx_equal(result.estimate_d_min(min_i_over_sigma=10), 1.9645, eps=0.001)
+    # FIXME PDB doesn't actually have unit cell!
+    # test detection of symmetry in reference file
+    if pdb_file is not None:
+        args = [hkl_file, pdb_file]
+        result = xtriage.run(args=args, out=null_out())
 
-if (__name__ == "__main__"):
-  #exercise_2()
-  exercise_1()
-  exercise_analyze_resolution_limits()
-  print("OK")
+
+if __name__ == "__main__":
+    # exercise_2()
+    exercise_1()
+    exercise_analyze_resolution_limits()
+    print("OK")

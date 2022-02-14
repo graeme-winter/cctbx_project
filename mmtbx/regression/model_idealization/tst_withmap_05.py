@@ -94,48 +94,52 @@ ATOM   1478  NH2 ARG A 105      57.160  68.439  68.341  1.00 18.02           N
 END
 """
 
-def exercise_04(prefix="tst_mi_map_test_05"):
-  """
-  Actually will try to CCD.
-  Should include actual check for success.
-  """
-  # without cryst
-  pdb_file = open("%s_start.pdb" % prefix, "w")
-  pdb_file.write(pdb_str)
-  pdb_file.close()
-  cmd = " ".join([
-      "phenix.model_idealization",
-      "%s_start.pdb" % prefix,
-      "use_map_for_reference=True",
-      "run_minimization_first=False",
-      "run_minimization_last=False",
-      "loop_idealization.minimize_whole=False",
-      "loop_idealization.number_of_ccd_trials=1",
-      "number_of_refinement_cycles=1",
-      "n_macro=1",
-      "debug=True",
-      # ">%s.log" % prefix,
-      ])
-  print(cmd)
-  assert not easy_run.call(cmd)
-  # assert os.path.isfile("%s_start.pdb_all_idealized.pdb" % prefix)
-  # res_log = open("%s.log" % prefix, "r")
-  # log_lines = res_log.readlines()
-  # # NCS constraints with map are not implemented yet
-  # for l in [
-  #     # "Using ncs\n",
-  #     "Using map as reference\n",
-  #     "  Minimizing... (NCS)\n",
-  #     # "Ramachandran outliers:      0.00      0.00      0.00      0.00      0.00\n",
-  #     "All done.\n"]:
-  #   assert l in log_lines, "'%s' not in log file." % l
-  # res_log.close()
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  if (not libtbx.env.has_module(name="probe")):
-    print("Skipping: probe not configured")
-  else:
-    exercise_04()
-  print("Time: %.2f" % (time.time() - t0))
-  print("OK")
+def exercise_04(prefix="tst_mi_map_test_05"):
+    """
+    Actually will try to CCD.
+    Should include actual check for success.
+    """
+    # without cryst
+    pdb_file = open("%s_start.pdb" % prefix, "w")
+    pdb_file.write(pdb_str)
+    pdb_file.close()
+    cmd = " ".join(
+        [
+            "phenix.model_idealization",
+            "%s_start.pdb" % prefix,
+            "use_map_for_reference=True",
+            "run_minimization_first=False",
+            "run_minimization_last=False",
+            "loop_idealization.minimize_whole=False",
+            "loop_idealization.number_of_ccd_trials=1",
+            "number_of_refinement_cycles=1",
+            "n_macro=1",
+            "debug=True",
+            # ">%s.log" % prefix,
+        ]
+    )
+    print(cmd)
+    assert not easy_run.call(cmd)
+    # assert os.path.isfile("%s_start.pdb_all_idealized.pdb" % prefix)
+    # res_log = open("%s.log" % prefix, "r")
+    # log_lines = res_log.readlines()
+    # # NCS constraints with map are not implemented yet
+    # for l in [
+    #     # "Using ncs\n",
+    #     "Using map as reference\n",
+    #     "  Minimizing... (NCS)\n",
+    #     # "Ramachandran outliers:      0.00      0.00      0.00      0.00      0.00\n",
+    #     "All done.\n"]:
+    #   assert l in log_lines, "'%s' not in log file." % l
+    # res_log.close()
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    if not libtbx.env.has_module(name="probe"):
+        print("Skipping: probe not configured")
+    else:
+        exercise_04()
+    print("Time: %.2f" % (time.time() - t0))
+    print("OK")

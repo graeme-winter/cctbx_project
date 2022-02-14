@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import, division, print_function
 from mmtbx.disorder import backbone
 import iotbx.pdb.hierarchy
@@ -102,17 +101,17 @@ HETATM   67  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 END
 """
 
-def exercise():
-  pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
-  open("tmp.pdb", "w").write(pdb_in.hierarchy.as_pdb_string())
-  backrubs = backbone.find_backrubs(
-    pdb_hierarchy=pdb_in.hierarchy)
-  assert (len(backrubs) == 1)
-  out = StringIO()
-  backrubs[0].show(out=out)
-  assert (out.getvalue() == """backrub  A   4  (A,B): angle=-26.0\n"""), \
-    out.getvalue()
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+def exercise():
+    pdb_in = iotbx.pdb.hierarchy.input(pdb_string=pdb_raw)
+    open("tmp.pdb", "w").write(pdb_in.hierarchy.as_pdb_string())
+    backrubs = backbone.find_backrubs(pdb_hierarchy=pdb_in.hierarchy)
+    assert len(backrubs) == 1
+    out = StringIO()
+    backrubs[0].show(out=out)
+    assert out.getvalue() == """backrub  A   4  (A,B): angle=-26.0\n""", out.getvalue()
+
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

@@ -1,22 +1,26 @@
 from __future__ import absolute_import, division, print_function
+
 # LIBTBX_SET_DISPATCHER_NAME cctbx.xfel.mpi_integrate
 from libtbx.phil import parse
 
 default_steps = [
-  'input',
-  'balance', # balance input load
-  'integrate',
+    "input",
+    "balance",  # balance input load
+    "integrate",
 ]
 
 from xfel.merging.application.input.file_loader import simple_file_loader
-#class noprune_file_loader(simple_file_loader):
+
+# class noprune_file_loader(simple_file_loader):
 def prune_reflection_table_keys(self, reflections):
-  return reflections # noop
-#import xfel.merging.application.input.file_loader
-#xfel.merging.application.input.file_loader.simple_file_loader = noprune_file_loader
+    return reflections  # noop
+
+
+# import xfel.merging.application.input.file_loader
+# xfel.merging.application.input.file_loader.simple_file_loader = noprune_file_loader
 simple_file_loader.prune_reflection_table_keys = prune_reflection_table_keys
 
-integrate_phil_str = '''
+integrate_phil_str = """
   include scope dials.algorithms.integration.integrator.phil_scope
   include scope dials.algorithms.profile_model.factory.phil_scope
   include scope dials.algorithms.spot_prediction.reflection_predictor.phil_scope
@@ -78,21 +82,33 @@ integrate_phil_str = '''
       }
     }
   }
-'''
+"""
 
 program_defaults_phil_str = """
 input.keep_imagesets=True
 input.parallel_file_load.reset_experiment_id_column = True
 """
 
-from dials.command_line.stills_process import program_defaults_phil_str as dials_program_defaults_phil_str
+from dials.command_line.stills_process import (
+    program_defaults_phil_str as dials_program_defaults_phil_str,
+)
 from xfel.merging.application.phil.phil import dispatch_phil, input_phil, output_phil
-phil_scope = parse(integrate_phil_str + dispatch_phil + input_phil + output_phil, process_includes=True).fetch(parse(dials_program_defaults_phil_str)).fetch(parse(program_defaults_phil_str))
+
+phil_scope = (
+    parse(
+        integrate_phil_str + dispatch_phil + input_phil + output_phil,
+        process_includes=True,
+    )
+    .fetch(parse(dials_program_defaults_phil_str))
+    .fetch(parse(program_defaults_phil_str))
+)
 import xfel.merging.application.phil.phil
+
 xfel.merging.application.phil.phil.phil_scope = phil_scope
 
-if __name__ == '__main__':
-  from xfel.merging.command_line.merge import Script
-  script = Script()
+if __name__ == "__main__":
+    from xfel.merging.command_line.merge import Script
 
-  result = script.run()
+    script = Script()
+
+    result = script.run()

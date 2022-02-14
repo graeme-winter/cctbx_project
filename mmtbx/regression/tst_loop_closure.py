@@ -3,8 +3,9 @@ import iotbx.pdb
 from mmtbx.building import loop_idealization
 import mmtbx.model
 
+
 def exercise_ligand_after_chain():
-  tst_pdb_1 = """\
+    tst_pdb_1 = """\
 ATOM      1  N   MET A   1    -159.943 -66.661-130.499  1.00 48.44           N
 ATOM      2  CA  MET A   1    -160.787 -67.832-130.110  1.00 48.44           C
 ATOM      3  C   MET A   1    -159.910 -69.027-129.841  1.00 48.44           C
@@ -98,25 +99,25 @@ HETATM 9822  O5  NAG A 501    -145.851-132.118-125.159  1.00105.75           O
 HETATM 9823  O6  NAG A 501    -148.610-133.860-123.650  1.00105.75           O
 HETATM 9824  O7  NAG A 501    -143.325-131.114-129.200  1.00105.75           O
   """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_1)
-  model = mmtbx.model.manager(pdb_inp)
-  model.process(make_restraints=True)
-  loop_ideal_params = loop_idealization.master_phil.extract()
-  loop_ideal_params.loop_idealization.enabled=True
-  loop_ideal_params.loop_idealization.variant_search_level=1
-  loop_ideal_params.loop_idealization.variant_number_cutoff=10
-  loop_ideal_params.loop_idealization.number_of_ccd_trials=1
-  loop_ideal_params.loop_idealization.minimize_whole=False
-  loop_ideal = loop_idealization.loop_idealization(
-      model,
-      params = loop_ideal_params,
-      verbose=False)
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_1)
+    model = mmtbx.model.manager(pdb_inp)
+    model.process(make_restraints=True)
+    loop_ideal_params = loop_idealization.master_phil.extract()
+    loop_ideal_params.loop_idealization.enabled = True
+    loop_ideal_params.loop_idealization.variant_search_level = 1
+    loop_ideal_params.loop_idealization.variant_number_cutoff = 10
+    loop_ideal_params.loop_idealization.number_of_ccd_trials = 1
+    loop_ideal_params.loop_idealization.minimize_whole = False
+    loop_ideal = loop_idealization.loop_idealization(
+        model, params=loop_ideal_params, verbose=False
+    )
+
 
 def exercise_nonstd_residue():
-  """ When loop closure need to put back side chain for non-standard residue,
-  here is TPO
-  """
-  tst_pdb_2 = """\
+    """When loop closure need to put back side chain for non-standard residue,
+    here is TPO
+    """
+    tst_pdb_2 = """\
 CRYST1  114.270  114.270  170.840  90.00  90.00 120.00 P 32 2 1      6
 ATOM   2808  N   GLY A 495     -21.779  41.479 -17.193  1.00 99.35           N
 ATOM   2809  CA  GLY A 495     -21.593  42.735 -17.896  1.00 99.35           C
@@ -193,32 +194,32 @@ ATOM   2879  OG1 THR A 504     -45.797  39.194 -13.793  1.00 94.96           O
 ATOM   2880  CG2 THR A 504     -47.899  40.185 -13.187  1.00 94.96           C
 END
 """
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_2)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp)
-  model.process(make_restraints=True)
-  model.get_hierarchy().write_pdb_file("tst_loop_closure_2_start.pdb")
-  assert model.get_hierarchy().atoms_size() == 73
-  loop_ideal_params = loop_idealization.master_phil.extract()
-  loop_ideal_params.loop_idealization.enabled=True
-  loop_ideal_params.loop_idealization.variant_search_level=1
-  loop_ideal_params.loop_idealization.variant_number_cutoff=10
-  loop_ideal_params.loop_idealization.number_of_ccd_trials=1
-  loop_ideal_params.loop_idealization.minimize_whole=False
-  loop_ideal = loop_idealization.loop_idealization(
-      model = model,
-      params = loop_ideal_params,
-      verbose=False)
-  model.get_hierarchy().write_pdb_file("tst_loop_closure_2_result.pdb")
-  assert model.get_hierarchy().atoms_size() == 73
-  sel = model.selection("resname TPO")
-  assert model.get_hierarchy().select(sel).atoms_size() == 11
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=tst_pdb_2)
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    model.get_hierarchy().write_pdb_file("tst_loop_closure_2_start.pdb")
+    assert model.get_hierarchy().atoms_size() == 73
+    loop_ideal_params = loop_idealization.master_phil.extract()
+    loop_ideal_params.loop_idealization.enabled = True
+    loop_ideal_params.loop_idealization.variant_search_level = 1
+    loop_ideal_params.loop_idealization.variant_number_cutoff = 10
+    loop_ideal_params.loop_idealization.number_of_ccd_trials = 1
+    loop_ideal_params.loop_idealization.minimize_whole = False
+    loop_ideal = loop_idealization.loop_idealization(
+        model=model, params=loop_ideal_params, verbose=False
+    )
+    model.get_hierarchy().write_pdb_file("tst_loop_closure_2_result.pdb")
+    assert model.get_hierarchy().atoms_size() == 73
+    sel = model.selection("resname TPO")
+    assert model.get_hierarchy().select(sel).atoms_size() == 11
+
 
 def exercise():
-  exercise_ligand_after_chain()
-  print("OK")
-  exercise_nonstd_residue()
-  print("OK")
+    exercise_ligand_after_chain()
+    print("OK")
+    exercise_nonstd_residue()
+    print("OK")
 
-if (__name__ == "__main__"):
-  exercise()
+
+if __name__ == "__main__":
+    exercise()

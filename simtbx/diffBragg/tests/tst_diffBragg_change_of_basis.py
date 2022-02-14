@@ -8,13 +8,19 @@ from dxtbx.model import Crystal
 from simtbx.nanoBragg.nanoBragg_crystal import NBcrystal
 import numpy as np
 import sys
+
 if "--cuda" in sys.argv:
     import os
-    os.environ["DIFFBRAGG_USE_CUDA"]="1"
+
+    os.environ["DIFFBRAGG_USE_CUDA"] = "1"
 
 ucell = (70, 60, 50, 90.0, 110, 90.0)
 symbol = "C121"
-a_real, b_real, c_real = sqr(uctbx.unit_cell(ucell).orthogonalization_matrix()).transpose().as_list_of_lists()
+a_real, b_real, c_real = (
+    sqr(uctbx.unit_cell(ucell).orthogonalization_matrix())
+    .transpose()
+    .as_list_of_lists()
+)
 C = Crystal(a_real, b_real, c_real, symbol)
 
 nbr = NBcrystal()

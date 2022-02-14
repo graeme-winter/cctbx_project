@@ -1,8 +1,8 @@
 from __future__ import absolute_import, division, print_function
-import re,time,copy
+import re, time, copy
 
-#------------------ALS-----------------------
-'''
+# ------------------ALS-----------------------
+"""
 Prior to March 2004:
 Beamline 5.0.1 ADSC Q4U  s/n 401
 Beamline 5.0.2 ADSC Q210 s/n 447
@@ -29,44 +29,52 @@ As of March 2012:
 8.2.1 s/n 925
 8.2.2 s/n 905
 8.3.1 s/n 907;
-'''
+"""
+
 
 def known_als_detectors(iobj):
-  #new implementation.  Return [iobj.serial_number] if detector is at ALS
-  sn = iobj.serial_number
-  if sn in [401,423,445,905,913,923,925,913]:  return [sn]
-  if sn == 447 and ADSC447_at_ALS(iobj): return [sn]
-  else: return []
+    # new implementation.  Return [iobj.serial_number] if detector is at ALS
+    sn = iobj.serial_number
+    if sn in [401, 423, 445, 905, 913, 923, 925, 913]:
+        return [sn]
+    if sn == 447 and ADSC447_at_ALS(iobj):
+        return [sn]
+    else:
+        return []
 
-known_als831_detectors = [907,442,926]
 
-def als_beam_rules(iobj): #take an ADSC image object
+known_als831_detectors = [907, 442, 926]
 
-  beam_center_convention = 1
-  #The only use for this default of 1 is for the swap_beam simulation
-  # in the pipeline server.  All other known ALS images will adhere to
-  # the convention of 0, if the following DENZO overrides are used:
 
-  for tag,search,datatype in [
-          ('BEAM_CENTER_X','DENZO_BEAM_CENTER_X',float),
-          ('BEAM_CENTER_Y','DENZO_BEAM_CENTER_Y',float),
-          ('BEAM_CENTER_X','DENZO_XBEAM',float),
-          ('BEAM_CENTER_Y','DENZO_YBEAM',float),
-          ]:
-          bytes_encoded_search = (search+'='+r'(.*);').encode()
-          pattern = re.compile(bytes_encoded_search) # python3 compatible
-          matches = pattern.findall(iobj.header)
-          if len(matches)>0:
+def als_beam_rules(iobj):  # take an ADSC image object
+
+    beam_center_convention = 1
+    # The only use for this default of 1 is for the swap_beam simulation
+    # in the pipeline server.  All other known ALS images will adhere to
+    # the convention of 0, if the following DENZO overrides are used:
+
+    for tag, search, datatype in [
+        ("BEAM_CENTER_X", "DENZO_BEAM_CENTER_X", float),
+        ("BEAM_CENTER_Y", "DENZO_BEAM_CENTER_Y", float),
+        ("BEAM_CENTER_X", "DENZO_XBEAM", float),
+        ("BEAM_CENTER_Y", "DENZO_YBEAM", float),
+    ]:
+        bytes_encoded_search = (search + "=" + r"(.*);").encode()
+        pattern = re.compile(bytes_encoded_search)  # python3 compatible
+        matches = pattern.findall(iobj.header)
+        if len(matches) > 0:
             beam_center_convention = 0
             iobj.parameters[tag] = datatype(matches[-1])
-  return beam_center_convention
+    return beam_center_convention
+
 
 def als_beamline831_rules(iobj):
-  beam_center_convention = 5
-  return beam_center_convention
+    beam_center_convention = 5
+    return beam_center_convention
 
-#-------------------Other synchrotrons-------------------------
-'''
+
+# -------------------Other synchrotrons-------------------------
+"""
 Denzo = header has special records for Denzo beam
 Beam = 0 is LABELIT default
 Regression = there is a corresponding entry in LABELIT regression suite
@@ -132,192 +140,283 @@ detector serial numbes listed at
 http://www.esrf.fr/UsersAndScience/Experiments/MX/Software/PXSOFT/Denzo/
 ID23-2 Mar 225, serial #5
 ID13   Mar 133, serial #8
-'''
+"""
+
 
 def ADSC910_at_BioCARS(iobj):
-  if iobj.serial_number != 910: return False
-  record_date = iobj.parameters["DATE"]
-  record_tse = time.mktime(time.strptime(record_date))
-  #pending further information, assume 910 at BioCARS beginning in 2007
-  cutoff_this = time.mktime(time.strptime("Mon Jan 01 00:00:00 2007"))
-  return record_tse > cutoff_this
+    if iobj.serial_number != 910:
+        return False
+    record_date = iobj.parameters["DATE"]
+    record_tse = time.mktime(time.strptime(record_date))
+    # pending further information, assume 910 at BioCARS beginning in 2007
+    cutoff_this = time.mktime(time.strptime("Mon Jan 01 00:00:00 2007"))
+    return record_tse > cutoff_this
+
 
 def ADSC447_at_ALS(iobj):
-  if iobj.serial_number != 447: raise Exception("wrong sn")
-  record_date = iobj.parameters["DATE"]
-  try:
-    record_tse = time.mktime(time.strptime(record_date))
-  except ValueError:
-    record_tse = time.mktime(time.strptime(record_date,"%a %b %d %H:%M:%S %Z %Y"))
-  cutoff_447 = time.mktime(time.strptime("Sun Nov 01 00:00:00 2009"))
-  return record_tse < cutoff_447
+    if iobj.serial_number != 447:
+        raise Exception("wrong sn")
+    record_date = iobj.parameters["DATE"]
+    try:
+        record_tse = time.mktime(time.strptime(record_date))
+    except ValueError:
+        record_tse = time.mktime(time.strptime(record_date, "%a %b %d %H:%M:%S %Z %Y"))
+    cutoff_447 = time.mktime(time.strptime("Sun Nov 01 00:00:00 2009"))
+    return record_tse < cutoff_447
 
-def other_beamlines(iobj,passthru_convention):
-  beam5 = [402,403,406,409,410,411,414,418,441,446,448,471,901,902,903,908]
-  beam0 = [413,415,420,428,429,443,444,457,458,904,914,916,917,918,919,924,928]
-  KEK = [474,912,449,472]
-  AichiSR = [933]
 
-  if iobj.serial_number == 447:
-    if not ADSC447_at_ALS(iobj):
-      KEK.append(447)
+def other_beamlines(iobj, passthru_convention):
+    beam5 = [
+        402,
+        403,
+        406,
+        409,
+        410,
+        411,
+        414,
+        418,
+        441,
+        446,
+        448,
+        471,
+        901,
+        902,
+        903,
+        908,
+    ]
+    beam0 = [
+        413,
+        415,
+        420,
+        428,
+        429,
+        443,
+        444,
+        457,
+        458,
+        904,
+        914,
+        916,
+        917,
+        918,
+        919,
+        924,
+        928,
+    ]
+    KEK = [474, 912, 449, 472]
+    AichiSR = [933]
 
-  alld = beam5+beam0+known_als_detectors(iobj)+known_als831_detectors+KEK+AichiSR
-  if iobj.serial_number in beam5:
-    beam_center_convention = 5
-  elif ADSC910_at_BioCARS(iobj):
-    beam_center_convention = 0
-  elif iobj.serial_number not in alld:
-    print("WARNING (possibly fatal): new beamline; coordinate system unknown. Please contact the authors")
-    beam_center_convention = passthru_convention
-  else:
-    beam_center_convention = passthru_convention
-  return beam_center_convention
+    if iobj.serial_number == 447:
+        if not ADSC447_at_ALS(iobj):
+            KEK.append(447)
+
+    alld = (
+        beam5
+        + beam0
+        + known_als_detectors(iobj)
+        + known_als831_detectors
+        + KEK
+        + AichiSR
+    )
+    if iobj.serial_number in beam5:
+        beam_center_convention = 5
+    elif ADSC910_at_BioCARS(iobj):
+        beam_center_convention = 0
+    elif iobj.serial_number not in alld:
+        print(
+            "WARNING (possibly fatal): new beamline; coordinate system unknown. Please contact the authors"
+        )
+        beam_center_convention = passthru_convention
+    else:
+        beam_center_convention = passthru_convention
+    return beam_center_convention
+
 
 reference_information_ADSC_detectors = [
-{'type':'Q4U', 'pixels_unbinned':10616832, 'pixels_binned':2654208},
-{'type':'Q4R', 'pixels_unbinned':10616832, 'pixels_binned':2654208},
-{'type':'Q210', 'pixels_unbinned':33554432, 'pixels_binned':8388608},
-{'type':'Q315', 'pixels_unbinned':75497472, 'pixels_binned':18874368},
+    {"type": "Q4U", "pixels_unbinned": 10616832, "pixels_binned": 2654208},
+    {"type": "Q4R", "pixels_unbinned": 10616832, "pixels_binned": 2654208},
+    {"type": "Q210", "pixels_unbinned": 33554432, "pixels_binned": 8388608},
+    {"type": "Q315", "pixels_unbinned": 75497472, "pixels_binned": 18874368},
 ]
 
-def set_convention(value,phil_params):
-  if phil_params.convention_override != None:
-     phil_params.spot_convention = copy.copy(
-      phil_params.convention_override)
-  else:
-    phil_params.spot_convention = value
 
-def beam_center_convention_from_image_object(imageobject,phil_params):
+def set_convention(value, phil_params):
+    if phil_params.convention_override != None:
+        phil_params.spot_convention = copy.copy(phil_params.convention_override)
+    else:
+        phil_params.spot_convention = value
+
+
+def beam_center_convention_from_image_object(imageobject, phil_params):
 
     if imageobject.vendortype == "ADSC":
-      if imageobject.serial_number in known_als_detectors(imageobject):
-        beam_center_convention = als_beam_rules(imageobject)
-      else:
-        beam_center_convention = 0
-      set_convention(0,phil_params)
-      if imageobject.serial_number in known_als831_detectors:
-        beam_center_convention = als_beamline831_rules(imageobject)
+        if imageobject.serial_number in known_als_detectors(imageobject):
+            beam_center_convention = als_beam_rules(imageobject)
+        else:
+            beam_center_convention = 0
+        set_convention(0, phil_params)
+        if imageobject.serial_number in known_als831_detectors:
+            beam_center_convention = als_beamline831_rules(imageobject)
 
-      beam_center_convention = other_beamlines(imageobject,
-        passthru_convention = beam_center_convention)
+        beam_center_convention = other_beamlines(
+            imageobject, passthru_convention=beam_center_convention
+        )
 
     elif imageobject.vendortype == "SMV(Generic)":
-      beam_center_convention = 0
-      set_convention(0,phil_params)
+        beam_center_convention = 0
+        set_convention(0, phil_params)
 
     elif imageobject.vendortype == "CBF":
-      beam_center_convention = 0
-      set_convention(0,phil_params)
+        beam_center_convention = 0
+        set_convention(0, phil_params)
 
     elif imageobject.vendortype == "MacScience":
-      beam_center_convention = 0
-      set_convention(0,phil_params)
+        beam_center_convention = 0
+        set_convention(0, phil_params)
 
     elif imageobject.vendortype == "Bruker Proteus CCD":
-      beam_center_convention = 0
-      set_convention(0,phil_params)
+        beam_center_convention = 0
+        set_convention(0, phil_params)
 
     elif imageobject.vendortype == "RigakuSaturn":
-      beam_center_convention = 5
-      set_convention(0,phil_params)
+        beam_center_convention = 5
+        set_convention(0, phil_params)
 
-    elif imageobject.vendortype=="MARCCD":
-      '''Explanation: there are only two test datasets:
-         /net/adder/raid1/sauter/marccd/brunzelle  4 5 6 (serial#=='1')
-         /net/adder/raid1/sauter/marccd/flav  1 3 (no serial #)
-           For orientation, When looking at the detector from the source,
-           the beamstop shadow comes in from the right of the image
-           and the beam is about 15 pixels below the center.
-           This is a mosaic image from our 225cm 3x3 detector - It is 3072x3072
-           pixels.The format is exactly the same as the 2k marCCD images -
-           just more pixels. The crystals is flavodoxin and the images were
-           taken at the ESRF BM14 by Martin Walsh
-         ...listed with the beam_center conventions that support these data.
-         Have to choose one, so choose 1.  Later figure out if these
-         were collected at different beamlines'''
-      beam_center_convention = 1
-      set_convention(0,phil_params)
+    elif imageobject.vendortype == "MARCCD":
+        """Explanation: there are only two test datasets:
+        /net/adder/raid1/sauter/marccd/brunzelle  4 5 6 (serial#=='1')
+        /net/adder/raid1/sauter/marccd/flav  1 3 (no serial #)
+          For orientation, When looking at the detector from the source,
+          the beamstop shadow comes in from the right of the image
+          and the beam is about 15 pixels below the center.
+          This is a mosaic image from our 225cm 3x3 detector - It is 3072x3072
+          pixels.The format is exactly the same as the 2k marCCD images -
+          just more pixels. The crystals is flavodoxin and the images were
+          taken at the ESRF BM14 by Martin Walsh
+        ...listed with the beam_center conventions that support these data.
+        Have to choose one, so choose 1.  Later figure out if these
+        were collected at different beamlines"""
+        beam_center_convention = 1
+        set_convention(0, phil_params)
 
-      '''For SSRL's MarCCD, serial number 11, there is a different beam
+        """For SSRL's MarCCD, serial number 11, there is a different beam
       convention.  We assume here SSRL has the only MarCCD with this
       serial number.  There isn't any information from other beamlines
-      to tell if the SSRL convention is general.'''
-      try:
-        from labelit.detectors.mar import CompleteMarHeader
-        C = CompleteMarHeader(imageobject)
-        #C.dumpHeader()
-        if C.get_serial_number() in ['11']:
-          beam_center_convention = 5
-          #print "Using SSRL Mar CCD beam_center system"
-      except Exception:pass
+      to tell if the SSRL convention is general."""
+        try:
+            from labelit.detectors.mar import CompleteMarHeader
 
-    elif imageobject.vendortype=="MARIP":
-      beam_center_convention = 0
-      set_convention(0,phil_params)
-      #but note coordinate transformation going to mosflm
-    elif imageobject.vendortype=="RAXIS":
-      beam_center_convention = 2
-      set_convention(2,phil_params)
+            C = CompleteMarHeader(imageobject)
+            # C.dumpHeader()
+            if C.get_serial_number() in ["11"]:
+                beam_center_convention = 5
+                # print "Using SSRL Mar CCD beam_center system"
+        except Exception:
+            pass
+
+    elif imageobject.vendortype == "MARIP":
+        beam_center_convention = 0
+        set_convention(0, phil_params)
+        # but note coordinate transformation going to mosflm
+    elif imageobject.vendortype == "RAXIS":
+        beam_center_convention = 2
+        set_convention(2, phil_params)
 
     # XXX This is completely fictional!
-    elif imageobject.vendortype=="npy_raw":
-      beam_center_convention = 2
-      set_convention(0,phil_params)
+    elif imageobject.vendortype == "npy_raw":
+        beam_center_convention = 2
+        set_convention(0, phil_params)
 
     # CBF format images are in EIGER test sets currently
-    elif imageobject.vendortype=="EIGER":
-      beam_center_convention = 0
-      set_convention(0,phil_params)
+    elif imageobject.vendortype == "EIGER":
+        beam_center_convention = 0
+        set_convention(0, phil_params)
 
-    elif imageobject.vendortype=="Pilatus Single Module": # provisional support for EDF; refactor for upcoming dxtbx migration
-      beam_center_convention = 0
-      set_convention(0,phil_params)
+    elif (
+        imageobject.vendortype == "Pilatus Single Module"
+    ):  # provisional support for EDF; refactor for upcoming dxtbx migration
+        beam_center_convention = 0
+        set_convention(0, phil_params)
 
     elif imageobject.vendortype == "ADSC-HF4M":
-       beam_center_convention = 0
-       set_convention(0,phil_params)
+        beam_center_convention = 0
+        set_convention(0, phil_params)
 
-    else: beam_center_convention = None
+    else:
+        beam_center_convention = None
 
-    if imageobject.vendortype == "CBF" and \
-       imageobject.size1==2527 and imageobject.size2==2463:
-       imageobject.vendortype = "Pilatus-6M"
-    if imageobject.vendortype == "Pilatus" and \
-       imageobject.size1==1679 and imageobject.size2==1475:
-       imageobject.vendortype = "Pilatus-2M"
-    if imageobject.vendortype == "Pilatus" and \
-       imageobject.size1==619 and imageobject.size2==487:
-       imageobject.vendortype = "Pilatus-300K"
-    if imageobject.vendortype == "Pilatus" and \
-       imageobject.size1==195 and imageobject.size2==487:
-       imageobject.vendortype = "Pilatus-100K"
-    if imageobject.vendortype == "Pilatus" and \
-       imageobject.size1==407 and imageobject.size2==487:
-       imageobject.vendortype = "Pilatus-200K"
-    if imageobject.vendortype in ["Pilatus-6M","Pilatus-2M","Pilatus-300K","Pilatus-100K",]:
-       beam_center_convention = 0
-       set_convention(0,phil_params)
-       if phil_params.distl.minimum_signal_height==None:
-          phil_params.distl.minimum_signal_height=2.5
-       if phil_params.distl.minimum_spot_area==None or \
-          phil_params.distl.minimum_spot_area > 5:
-          phil_params.distl.minimum_spot_area=5
-    if imageobject.vendortype in ["Eiger-16M","Eiger-9M","Eiger-4M","Eiger-1M","Eiger-500K",
-                                  "Eiger2-16M","Eiger2-9M","Eiger2-4M","Eiger2-1M","Eiger2-500K"]:
-       beam_center_convention = 0
-       set_convention(0,phil_params)
-       if phil_params.distl.minimum_signal_height==None:
-          phil_params.distl.minimum_signal_height=4.0
-       if phil_params.distl.minimum_spot_area==None:
-          phil_params.distl.minimum_spot_area=5
+    if (
+        imageobject.vendortype == "CBF"
+        and imageobject.size1 == 2527
+        and imageobject.size2 == 2463
+    ):
+        imageobject.vendortype = "Pilatus-6M"
+    if (
+        imageobject.vendortype == "Pilatus"
+        and imageobject.size1 == 1679
+        and imageobject.size2 == 1475
+    ):
+        imageobject.vendortype = "Pilatus-2M"
+    if (
+        imageobject.vendortype == "Pilatus"
+        and imageobject.size1 == 619
+        and imageobject.size2 == 487
+    ):
+        imageobject.vendortype = "Pilatus-300K"
+    if (
+        imageobject.vendortype == "Pilatus"
+        and imageobject.size1 == 195
+        and imageobject.size2 == 487
+    ):
+        imageobject.vendortype = "Pilatus-100K"
+    if (
+        imageobject.vendortype == "Pilatus"
+        and imageobject.size1 == 407
+        and imageobject.size2 == 487
+    ):
+        imageobject.vendortype = "Pilatus-200K"
+    if imageobject.vendortype in [
+        "Pilatus-6M",
+        "Pilatus-2M",
+        "Pilatus-300K",
+        "Pilatus-100K",
+    ]:
+        beam_center_convention = 0
+        set_convention(0, phil_params)
+        if phil_params.distl.minimum_signal_height == None:
+            phil_params.distl.minimum_signal_height = 2.5
+        if (
+            phil_params.distl.minimum_spot_area == None
+            or phil_params.distl.minimum_spot_area > 5
+        ):
+            phil_params.distl.minimum_spot_area = 5
+    if imageobject.vendortype in [
+        "Eiger-16M",
+        "Eiger-9M",
+        "Eiger-4M",
+        "Eiger-1M",
+        "Eiger-500K",
+        "Eiger2-16M",
+        "Eiger2-9M",
+        "Eiger2-4M",
+        "Eiger2-1M",
+        "Eiger2-500K",
+    ]:
+        beam_center_convention = 0
+        set_convention(0, phil_params)
+        if phil_params.distl.minimum_signal_height == None:
+            phil_params.distl.minimum_signal_height = 4.0
+        if phil_params.distl.minimum_spot_area == None:
+            phil_params.distl.minimum_spot_area = 5
 
     elif imageobject.vendortype == "Hamamatsu":
-      beam_center_convention = 0
-      set_convention(0,phil_params)
+        beam_center_convention = 0
+        set_convention(0, phil_params)
 
     if phil_params.distl.minimum_spot_area == None:
-      phil_params.distl.minimum_spot_area = 10 # last-resort default formerly set in signal_strength.py
+        phil_params.distl.minimum_spot_area = (
+            10  # last-resort default formerly set in signal_strength.py
+        )
 
     assert beam_center_convention != None
     return beam_center_convention

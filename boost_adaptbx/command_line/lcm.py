@@ -3,8 +3,10 @@ import gcd
 from boost_adaptbx.boost.rational import lcm
 import sys
 
-def run(args):
-  gcd.run(args=args, func=lcm)
 
-if (__name__ == "__main__"):
-  run(sys.argv[1:])
+def run(args):
+    gcd.run(args=args, func=lcm)
+
+
+if __name__ == "__main__":
+    run(sys.argv[1:])

@@ -11,7 +11,7 @@ from six.moves import zip
 
 def exercise1():
 
-  pdb_str = """
+    pdb_str = """
 CRYST1   21.850   24.325   24.603  90.00  90.00  90.00 P 1
 SCALE1      0.045767  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.041110  0.000000        0.00000
@@ -168,7 +168,7 @@ TER
 END
   """
 
-  edits = """
+    edits = """
 geometry_restraints.edits {
   bond {
     atom_selection_1 = chain D and resseq 40 and name SG
@@ -220,72 +220,108 @@ geometry_restraints.edits {
 }
   """
 
-  gm_phil = iotbx.phil.parse(
-      input_string     = grand_master_phil_str,
-      process_includes = True)
-  edits_phil = iotbx.phil.parse(edits)
-  working_phil = gm_phil.fetch(edits_phil)
-  params = working_phil.extract()
+    gm_phil = iotbx.phil.parse(
+        input_string=grand_master_phil_str, process_includes=True
+    )
+    edits_phil = iotbx.phil.parse(edits)
+    working_phil = gm_phil.fetch(edits_phil)
+    params = working_phil.extract()
 
-  # Make sure the angle edit is present
-  assert (params.geometry_restraints.edits.angle[3].atom_selection_1 == \
-    "chain D and resseq 1001 and name HAB")
+    # Make sure the angle edit is present
+    assert (
+        params.geometry_restraints.edits.angle[3].atom_selection_1
+        == "chain D and resseq 1001 and name HAB"
+    )
 
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
 
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(pdb_interpretation_params=params,
-    make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  atoms = pdb_hierarchy.atoms()
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    atoms = pdb_hierarchy.atoms()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  h_para = riding_h_manager.h_parameterization
+    h_para = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart = sites_cart,
-    threshold  = 0.05)
-  h_distances   = diagnostics.h_distances
-  type_list     = diagnostics.type_list
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
+    h_distances = diagnostics.h_distances
+    type_list = diagnostics.type_list
 
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_para) - h_para.count(None)
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_para) - h_para.count(None)
 
-  for rc in h_para:
-    if rc:
-      assert(rc.ih != 61), 'Wrong atom not recognized.'
+    for rc in h_para:
+        if rc:
+            assert rc.ih != 61, "Wrong atom not recognized."
 
-# Test if number of paramterized H atoms is correct
-  assert (number_h == number_h_para + 1), 'Not all H atoms are parameterized'
+    # Test if number of paramterized H atoms is correct
+    assert number_h == number_h_para + 1, "Not all H atoms are parameterized"
 
-  type_list_known = ['3neigbs', '2tetra', '2tetra', '3neigbs',
-    '2tetra', '2tetra', '3neigbs', 'flat_2neigbs', 'flat_2neigbs',
-    'flat_2neigbs', 'flat_2neigbs', '2tetra', '2tetra', '2tetra', '2tetra',
-    '2tetra', '2tetra', 'prop', 'prop', 'prop', 'prop', 'prop', 'prop',
-    '2tetra', '2tetra', 'prop', 'prop', 'prop', 'prop', 'prop', 'prop',
-    'prop', 'prop', 'prop', 'prop', 'prop', 'prop']
+    type_list_known = [
+        "3neigbs",
+        "2tetra",
+        "2tetra",
+        "3neigbs",
+        "2tetra",
+        "2tetra",
+        "3neigbs",
+        "flat_2neigbs",
+        "flat_2neigbs",
+        "flat_2neigbs",
+        "flat_2neigbs",
+        "2tetra",
+        "2tetra",
+        "2tetra",
+        "2tetra",
+        "2tetra",
+        "2tetra",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "2tetra",
+        "2tetra",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+        "prop",
+    ]
 
-  for ih in h_distances:
-    # One H atom is expected to be far (HAC)
-    if (ih == 62):
-      continue
-    labels = atoms[ih].fetch_labels()
-    if (h_distances[ih] > 0.1):
-      assert (h_distances[ih] < 0.1), \
-        'distance too large: %s  atom: %s (%s) residue: %s ' \
-        % (h_para[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
-#
-  for type1, type2 in zip(type_list, type_list_known):
-    assert (type1 == type2)
-    #print "'%s'," % type1,
+    for ih in h_distances:
+        # One H atom is expected to be far (HAC)
+        if ih == 62:
+            continue
+        labels = atoms[ih].fetch_labels()
+        if h_distances[ih] > 0.1:
+            assert (
+                h_distances[ih] < 0.1
+            ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+                h_para[ih].htype,
+                atoms[ih].name,
+                ih,
+                labels.resseq.strip(),
+            )
+    #
+    for type1, type2 in zip(type_list, type_list_known):
+        assert type1 == type2
+        # print "'%s'," % type1,
+
 
 def exercise2():
-  pdb_str = """
+    pdb_str = """
 CRYST1   16.660   12.742   18.240  90.00  90.00  90.00 P 1
 SCALE1      0.060024  0.000000  0.000000        0.00000
 SCALE2      0.000000  0.078481  0.000000        0.00000
@@ -316,7 +352,7 @@ TER
 END
   """
 
-  edits = """
+    edits = """
 geometry_restraints.edits {
   bond {
     atom_selection_1 = chain A and resseq 7 and name HH
@@ -327,68 +363,79 @@ geometry_restraints.edits {
 }
   """
 
-  type_list_known = ['3neigbs', '2tetra', '2tetra', 'flat_2neigbs',
-    'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs', 'alg1b']
+    type_list_known = [
+        "3neigbs",
+        "2tetra",
+        "2tetra",
+        "flat_2neigbs",
+        "flat_2neigbs",
+        "flat_2neigbs",
+        "flat_2neigbs",
+        "alg1b",
+    ]
+
+    gm_phil = iotbx.phil.parse(
+        input_string=grand_master_phil_str, process_includes=True
+    )
+    edits_phil = iotbx.phil.parse(edits)
+    working_phil = gm_phil.fetch(edits_phil)
+    params = working_phil.extract()
+
+    # Make sure the angle edit is present
+    assert (
+        params.geometry_restraints.edits.bond[0].atom_selection_1
+        == "chain A and resseq 7 and name HH"
+    )
+
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    atoms = pdb_hierarchy.atoms()
+
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
+
+    h_para = riding_h_manager.h_parameterization
+
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
+    h_distances = diagnostics.h_distances
+    type_list = diagnostics.type_list
+
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_para) - h_para.count(None)
+
+    connectivity_manager = connectivity.determine_connectivity(
+        pdb_hierarchy=pdb_hierarchy,
+        geometry_restraints=model.get_restraints_manager().geometry,
+    )
+    double_H = connectivity_manager.double_H
+
+    # Test if number of paramterized H atoms is correct
+    assert number_h == number_h_para, "Not all H atoms are parameterized"
+    assert double_H[19] == [11, 20], "H bound to two atoms wrongly recognized"
+    assert number_h_para == 8, "Not all H atoms are parameterized"
+
+    for ih in h_distances:
+        labels = atoms[ih].fetch_labels()
+        if h_distances[ih] > 0.1:
+            assert (
+                h_distances[ih] < 0.1
+            ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+                h_para[ih].htype,
+                atoms[ih].name,
+                ih,
+                labels.resseq.strip(),
+            )
+
+    for type1, type2 in zip(type_list, type_list_known):
+        assert type1 == type2
 
 
-  gm_phil = iotbx.phil.parse(
-      input_string     = grand_master_phil_str,
-      process_includes = True)
-  edits_phil = iotbx.phil.parse(edits)
-  working_phil = gm_phil.fetch(edits_phil)
-  params = working_phil.extract()
-
-  # Make sure the angle edit is present
-  assert (params.geometry_restraints.edits.bond[0].atom_selection_1 == \
-    "chain A and resseq 7 and name HH")
-
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(pdb_interpretation_params=params,
-    make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  atoms = pdb_hierarchy.atoms()
-
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
-
-  h_para = riding_h_manager.h_parameterization
-
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart = sites_cart,
-    threshold  = 0.05)
-  h_distances   = diagnostics.h_distances
-  type_list     = diagnostics.type_list
-
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_para) - h_para.count(None)
-
-  connectivity_manager = connectivity.determine_connectivity(
-    pdb_hierarchy       = pdb_hierarchy,
-    geometry_restraints = model.get_restraints_manager().geometry)
-  double_H = connectivity_manager.double_H
-
-# Test if number of paramterized H atoms is correct
-  assert (number_h == number_h_para), 'Not all H atoms are parameterized'
-  assert (double_H[19] == [11, 20]), 'H bound to two atoms wrongly recognized'
-  assert (number_h_para == 8), 'Not all H atoms are parameterized'
-
-  for ih in h_distances:
-   labels = atoms[ih].fetch_labels()
-   if (h_distances[ih] > 0.1):
-     assert (h_distances[ih] < 0.1), \
-       'distance too large: %s  atom: %s (%s) residue: %s ' \
-       % (h_para[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
-
-  for type1, type2 in zip(type_list, type_list_known):
-    assert (type1 == type2)
-
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise1()
-  exercise2()
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise1()
+    exercise2()
+    print("OK. Time: %8.3f" % (time.time() - t0))

@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import iotbx.pdb
 from cctbx.array_family import flex
-from cctbx import adp_restraints # import dependency
+from cctbx import adp_restraints  # import dependency
 import random
 from libtbx import group_args
 from mmtbx.refinement.real_space import individual_sites
@@ -12,9 +12,9 @@ from cctbx import maptbx
 import mmtbx.model
 from six.moves import zip
 
-if(1):
-  random.seed(0)
-  flex.set_random_seed(0)
+if 1:
+    random.seed(0)
+    flex.set_random_seed(0)
 
 pdb_str = """\
 CRYST1   16.960   19.455   19.841  90.00  90.00  90.00 P 1
@@ -94,180 +94,227 @@ TER
 END
 """
 
+
 def get_pdb_inputs(pdb_str):
-  pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str.split('\n'))
-  model = mmtbx.model.manager(model_input = pdb_inp)
-  model.process(make_restraints=True)
-  return group_args(
-    ph  = model.get_hierarchy(),
-    grm = model.get_restraints_manager(),
-    xrs = model.get_xray_structure())
+    pdb_inp = iotbx.pdb.input(source_info=None, lines=pdb_str.split("\n"))
+    model = mmtbx.model.manager(model_input=pdb_inp)
+    model.process(make_restraints=True)
+    return group_args(
+        ph=model.get_hierarchy(),
+        grm=model.get_restraints_manager(),
+        xrs=model.get_xray_structure(),
+    )
+
 
 def get_tmo(inp, d_min):
-  sel = inp.ph.atom_selection_cache().selection(
-    string = "name CA or name CB or name N or name O or name C")
-  f_calc = inp.xrs.select(
-    selection=sel).structure_factors(d_min=d_min).f_calc()
-  fft_map = f_calc.fft_map(resolution_factor = 0.25)
-  fft_map.apply_sigma_scaling()
-  target_map = fft_map.real_map_unpadded()
-  return group_args(
-    data             = target_map,
-    miller_array     = f_calc,
-    crystal_gridding = fft_map)
+    sel = inp.ph.atom_selection_cache().selection(
+        string="name CA or name CB or name N or name O or name C"
+    )
+    f_calc = inp.xrs.select(selection=sel).structure_factors(d_min=d_min).f_calc()
+    fft_map = f_calc.fft_map(resolution_factor=0.25)
+    fft_map.apply_sigma_scaling()
+    target_map = fft_map.real_map_unpadded()
+    return group_args(data=target_map, miller_array=f_calc, crystal_gridding=fft_map)
+
 
 def shake_sites(xrs, random, shift, grm=None):
-  from mmtbx.dynamics import cartesian_dynamics
-  if(random):
-    xrs.shake_sites_in_place(mean_distance = shift)
-  else:
-    grad_calc = cartesian_dynamics.gradients_calculator_geometry_restraints(
-      restraints_manager = grm)
-    cartesian_dynamics.run(
-      xray_structure       = xrs,
-      gradients_calculator = grad_calc,
-      temperature          = 1000,
-      n_steps              = 100000,
-      time_step            = 0.0005,
-      stop_cm_motion       = True,
-      stop_at_diff         = shift)
-  return xrs
+    from mmtbx.dynamics import cartesian_dynamics
+
+    if random:
+        xrs.shake_sites_in_place(mean_distance=shift)
+    else:
+        grad_calc = cartesian_dynamics.gradients_calculator_geometry_restraints(
+            restraints_manager=grm
+        )
+        cartesian_dynamics.run(
+            xray_structure=xrs,
+            gradients_calculator=grad_calc,
+            temperature=1000,
+            n_steps=100000,
+            time_step=0.0005,
+            stop_cm_motion=True,
+            stop_at_diff=shift,
+        )
+    return xrs
+
 
 def compute_map(target_map, xray_structure):
-  mc = target_map.miller_array.structure_factors_from_scatterers(
-    xray_structure = xray_structure).f_calc()
-  fft_map = miller.fft_map(
-    crystal_gridding     = target_map.crystal_gridding,
-    fourier_coefficients = mc)
-  fft_map.apply_sigma_scaling()
-  return fft_map.real_map_unpadded()
+    mc = target_map.miller_array.structure_factors_from_scatterers(
+        xray_structure=xray_structure
+    ).f_calc()
+    fft_map = miller.fft_map(
+        crystal_gridding=target_map.crystal_gridding, fourier_coefficients=mc
+    )
+    fft_map.apply_sigma_scaling()
+    return fft_map.real_map_unpadded()
+
 
 def show(pdb_hierarchy, tm, xrs, grm, prefix):
-  map = compute_map(target_map=tm, xray_structure=xrs)
-  cc = flex.linear_correlation(
-    x=map.as_1d(),
-    y=tm.data.as_1d()).coefficient()
-  es = grm.energies_sites(sites_cart = xrs.sites_cart())
-  rmsd_a = es.angle_deviations()[2]
-  rmsd_b = es.bond_deviations()[2]
-  print("%s: overall CC: %6.4f rmsd_bonds=%6.3f rmsd_angles=%6.3f"%(
-    prefix, cc, rmsd_b, rmsd_a))
-  pdb_hierarchy.adopt_xray_structure(xrs)
-  rotamer_manager = RotamerEval()
-  for model in pdb_hierarchy.models():
-    for chain in model.chains():
-      for residue in chain.residues():
-        sites_cart = residue.atoms().extract_xyz()
-        sel = maptbx.grid_indices_around_sites(
-          unit_cell  = xrs.unit_cell(),
-          fft_n_real = map.focus(),
-          fft_m_real = map.all(),
-          sites_cart = sites_cart,
-          site_radii = flex.double(sites_cart.size(), 2))
-        ccr = flex.linear_correlation(
-          x=map.select(sel).as_1d(),
-          y=tm.data.select(sel).as_1d()).coefficient()
-        fmt = "%s: %4s %10s CC: %6.4f"
-        print(fmt%(prefix, residue.resname, rotamer_manager.evaluate_residue(residue),ccr))
+    map = compute_map(target_map=tm, xray_structure=xrs)
+    cc = flex.linear_correlation(x=map.as_1d(), y=tm.data.as_1d()).coefficient()
+    es = grm.energies_sites(sites_cart=xrs.sites_cart())
+    rmsd_a = es.angle_deviations()[2]
+    rmsd_b = es.bond_deviations()[2]
+    print(
+        "%s: overall CC: %6.4f rmsd_bonds=%6.3f rmsd_angles=%6.3f"
+        % (prefix, cc, rmsd_b, rmsd_a)
+    )
+    pdb_hierarchy.adopt_xray_structure(xrs)
+    rotamer_manager = RotamerEval()
+    for model in pdb_hierarchy.models():
+        for chain in model.chains():
+            for residue in chain.residues():
+                sites_cart = residue.atoms().extract_xyz()
+                sel = maptbx.grid_indices_around_sites(
+                    unit_cell=xrs.unit_cell(),
+                    fft_n_real=map.focus(),
+                    fft_m_real=map.all(),
+                    sites_cart=sites_cart,
+                    site_radii=flex.double(sites_cart.size(), 2),
+                )
+                ccr = flex.linear_correlation(
+                    x=map.select(sel).as_1d(), y=tm.data.select(sel).as_1d()
+                ).coefficient()
+                fmt = "%s: %4s %10s CC: %6.4f"
+                print(
+                    fmt
+                    % (
+                        prefix,
+                        residue.resname,
+                        rotamer_manager.evaluate_residue(residue),
+                        ccr,
+                    )
+                )
+
 
 def exercise(d_min=5, random_seed=1111111):
-  inp = get_pdb_inputs(pdb_str=pdb_str)
-  xrs_good = inp.xrs.deep_copy_scatterers()
-  target_map = get_tmo(inp=inp, d_min = d_min)
-  inp.ph.write_pdb_file(file_name="start.pdb")
-  show(prefix="GOOD",
-      pdb_hierarchy = inp.ph,
-      tm=target_map,
-      xrs=xrs_good,
-      grm=inp.grm.geometry)
-  #
-  sites_cart_reference = []
-  selections_reference = []
-  pdb_hierarchy_reference = inp.ph.deep_copy()
-  pdb_hierarchy_reference.reset_i_seq_if_necessary()
-  for model in inp.ph.models():
-    for chain in model.chains():
-      for residue in chain.residues():
-        sites_cart_reference.append(residue.atoms().extract_xyz())
-        selections_reference.append(residue.atoms().extract_i_seq())
-  #
-  sites_cart_reference_for_chi_only = []
-  selections_reference_for_chi_only = []
-  for model in inp.ph.models():
-    for chain in model.chains():
-      for residue in chain.residues():
-        s1 = flex.vec3_double()
-        s2 = flex.size_t()
-        for atom in residue.atoms():
-          if(not atom.name.strip().upper() in ["O"]):
-            s1.append(atom.xyz)
-            s2.append(atom.i_seq)
-        sites_cart_reference_for_chi_only.append(s1)
-        selections_reference_for_chi_only.append(s2)
-  #
-  xrs_poor = shake_sites(xrs=xrs_good.deep_copy_scatterers(), random=False,
-    shift=2.0, grm=inp.grm)
-  inp.ph.adopt_xray_structure(xrs_poor)
-  inp.ph.write_pdb_file(file_name="poor.pdb")
-  #
-  for use_reference_torsion in ["no", "yes_add_once", "yes_add_per_residue",
-                                "yes_manual"]:
-    es = inp.grm.energies_sites(sites_cart = xrs_good.sites_cart()) # it's essential to update grm
+    inp = get_pdb_inputs(pdb_str=pdb_str)
+    xrs_good = inp.xrs.deep_copy_scatterers()
+    target_map = get_tmo(inp=inp, d_min=d_min)
+    inp.ph.write_pdb_file(file_name="start.pdb")
+    show(
+        prefix="GOOD",
+        pdb_hierarchy=inp.ph,
+        tm=target_map,
+        xrs=xrs_good,
+        grm=inp.grm.geometry,
+    )
+    #
+    sites_cart_reference = []
+    selections_reference = []
+    pdb_hierarchy_reference = inp.ph.deep_copy()
+    pdb_hierarchy_reference.reset_i_seq_if_necessary()
+    for model in inp.ph.models():
+        for chain in model.chains():
+            for residue in chain.residues():
+                sites_cart_reference.append(residue.atoms().extract_xyz())
+                selections_reference.append(residue.atoms().extract_i_seq())
+    #
+    sites_cart_reference_for_chi_only = []
+    selections_reference_for_chi_only = []
+    for model in inp.ph.models():
+        for chain in model.chains():
+            for residue in chain.residues():
+                s1 = flex.vec3_double()
+                s2 = flex.size_t()
+                for atom in residue.atoms():
+                    if not atom.name.strip().upper() in ["O"]:
+                        s1.append(atom.xyz)
+                        s2.append(atom.i_seq)
+                sites_cart_reference_for_chi_only.append(s1)
+                selections_reference_for_chi_only.append(s2)
+    #
+    xrs_poor = shake_sites(
+        xrs=xrs_good.deep_copy_scatterers(), random=False, shift=2.0, grm=inp.grm
+    )
     inp.ph.adopt_xray_structure(xrs_poor)
-    random.seed(random_seed)
-    flex.set_random_seed(random_seed)
-    print("*"*79)
-    print("use_reference_torsion:", use_reference_torsion)
-    print("*"*79)
-    show(prefix="START",pdb_hierarchy = inp.ph, tm=target_map, xrs=xrs_poor, grm=inp.grm.geometry)
+    inp.ph.write_pdb_file(file_name="poor.pdb")
     #
-    if(use_reference_torsion == "yes_add_per_residue"):
-      inp.grm.geometry.remove_chi_torsion_restraints_in_place()
-      for sites_cart, selection in zip(sites_cart_reference, selections_reference):
-        inp.grm.geometry.add_chi_torsion_restraints_in_place(
-          pdb_hierarchy   = pdb_hierarchy_reference,
-          sites_cart      = sites_cart,
-          selection       = selection,
-          chi_angles_only = True,
-          sigma           = 1)
-    if(use_reference_torsion == "yes_add_once"):
-      inp.grm.geometry.remove_chi_torsion_restraints_in_place()
-      inp.grm.geometry.add_chi_torsion_restraints_in_place(
-        pdb_hierarchy   = pdb_hierarchy_reference,
-        sites_cart      = xrs_good.sites_cart(),
-        chi_angles_only = True,
-        sigma           = 1)
-    if(use_reference_torsion == "yes_manual"):
-      inp.grm.geometry.remove_chi_torsion_restraints_in_place()
-      for sites_cart, selection in zip(sites_cart_reference_for_chi_only,
-                                       selections_reference_for_chi_only):
-        inp.grm.geometry.add_chi_torsion_restraints_in_place(
-          pdb_hierarchy   = pdb_hierarchy_reference,
-          sites_cart      = sites_cart,
-          selection       = selection,
-          chi_angles_only = True,
-          sigma           = 1)
-    #
-    tmp = xrs_poor.deep_copy_scatterers()
-    rsr_simple_refiner = individual_sites.simple(
-      target_map                  = target_map.data,
-      selection                   = flex.bool(tmp.scatterers().size(), True),
-      real_space_gradients_delta  = d_min/4,
-      max_iterations              = 500,
-      geometry_restraints_manager = inp.grm.geometry)
-    refined = individual_sites.refinery(
-      refiner          = rsr_simple_refiner,
-      optimize_weight  = True,
-      xray_structure   = tmp,
-      start_trial_weight_value = 50,
-      rms_bonds_limit  = 0.02,
-      rms_angles_limit = 2.0)
-    assert refined.sites_cart_result is not None
-    tmp = tmp.replace_sites_cart(refined.sites_cart_result)
-    inp.ph.adopt_xray_structure(tmp)
-    show(prefix="FINAL",pdb_hierarchy = inp.ph, tm=target_map, xrs=tmp, grm=inp.grm.geometry)
-    inp.ph.write_pdb_file(file_name="final_%s.pdb"%str(use_reference_torsion))
+    for use_reference_torsion in [
+        "no",
+        "yes_add_once",
+        "yes_add_per_residue",
+        "yes_manual",
+    ]:
+        es = inp.grm.energies_sites(
+            sites_cart=xrs_good.sites_cart()
+        )  # it's essential to update grm
+        inp.ph.adopt_xray_structure(xrs_poor)
+        random.seed(random_seed)
+        flex.set_random_seed(random_seed)
+        print("*" * 79)
+        print("use_reference_torsion:", use_reference_torsion)
+        print("*" * 79)
+        show(
+            prefix="START",
+            pdb_hierarchy=inp.ph,
+            tm=target_map,
+            xrs=xrs_poor,
+            grm=inp.grm.geometry,
+        )
+        #
+        if use_reference_torsion == "yes_add_per_residue":
+            inp.grm.geometry.remove_chi_torsion_restraints_in_place()
+            for sites_cart, selection in zip(
+                sites_cart_reference, selections_reference
+            ):
+                inp.grm.geometry.add_chi_torsion_restraints_in_place(
+                    pdb_hierarchy=pdb_hierarchy_reference,
+                    sites_cart=sites_cart,
+                    selection=selection,
+                    chi_angles_only=True,
+                    sigma=1,
+                )
+        if use_reference_torsion == "yes_add_once":
+            inp.grm.geometry.remove_chi_torsion_restraints_in_place()
+            inp.grm.geometry.add_chi_torsion_restraints_in_place(
+                pdb_hierarchy=pdb_hierarchy_reference,
+                sites_cart=xrs_good.sites_cart(),
+                chi_angles_only=True,
+                sigma=1,
+            )
+        if use_reference_torsion == "yes_manual":
+            inp.grm.geometry.remove_chi_torsion_restraints_in_place()
+            for sites_cart, selection in zip(
+                sites_cart_reference_for_chi_only, selections_reference_for_chi_only
+            ):
+                inp.grm.geometry.add_chi_torsion_restraints_in_place(
+                    pdb_hierarchy=pdb_hierarchy_reference,
+                    sites_cart=sites_cart,
+                    selection=selection,
+                    chi_angles_only=True,
+                    sigma=1,
+                )
+        #
+        tmp = xrs_poor.deep_copy_scatterers()
+        rsr_simple_refiner = individual_sites.simple(
+            target_map=target_map.data,
+            selection=flex.bool(tmp.scatterers().size(), True),
+            real_space_gradients_delta=d_min / 4,
+            max_iterations=500,
+            geometry_restraints_manager=inp.grm.geometry,
+        )
+        refined = individual_sites.refinery(
+            refiner=rsr_simple_refiner,
+            optimize_weight=True,
+            xray_structure=tmp,
+            start_trial_weight_value=50,
+            rms_bonds_limit=0.02,
+            rms_angles_limit=2.0,
+        )
+        assert refined.sites_cart_result is not None
+        tmp = tmp.replace_sites_cart(refined.sites_cart_result)
+        inp.ph.adopt_xray_structure(tmp)
+        show(
+            prefix="FINAL",
+            pdb_hierarchy=inp.ph,
+            tm=target_map,
+            xrs=tmp,
+            grm=inp.grm.geometry,
+        )
+        inp.ph.write_pdb_file(file_name="final_%s.pdb" % str(use_reference_torsion))
 
-if (__name__ == "__main__"):
-  exercise()
-  print("OK")
+
+if __name__ == "__main__":
+    exercise()
+    print("OK")

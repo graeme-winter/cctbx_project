@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 # absolute bare-minimum diffraction image simulation
 
 from simtbx.nanoBragg import nanoBragg
@@ -11,7 +12,7 @@ SIM.default_F = 1
 SIM.F000 = 10
 
 # default is one unit cell, lets to 125
-SIM.Ncells_abc = (5,5,5)
+SIM.Ncells_abc = (5, 5, 5)
 
 # default orientation is with a axis down the beam, lets pick a random one
 SIM.randomize_orientation()
@@ -30,11 +31,11 @@ SIM.add_nanoBragg_spots()
 SIM.to_smv_format(fileout="intimage_001.img")
 
 # now apply a scale to get more than 1 photon/pixel and add noise
-SIM.raw_pixels*=2000
+SIM.raw_pixels *= 2000
 SIM.add_noise()
 
 SIM.to_smv_format(fileout="noiseimage_001.img")
 
 
-if __name__=="__main__":
-  print("OK")
+if __name__ == "__main__":
+    print("OK")

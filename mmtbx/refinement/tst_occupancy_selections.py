@@ -14,574 +14,930 @@ import os
 import sys
 from six.moves import zip
 
+
 def extract_serials(atoms, occ_groups):
-  r = []
-  # for atom in atoms:
-  #   assert atom.serial == atom.i_seq, "%s %d" % (atom.serial, atom.i_seq)
-  for i in occ_groups:
-    ri = []
-    for j in i:
-      ri.append([int(atoms[k].serial) for k in j])
-    r.append(ri)
-  return r
+    r = []
+    # for atom in atoms:
+    #   assert atom.serial == atom.i_seq, "%s %d" % (atom.serial, atom.i_seq)
+    for i in occ_groups:
+        ri = []
+        for j in i:
+            ri.append([int(atoms[k].serial) for k in j])
+        r.append(ri)
+    return r
+
 
 def make_up_other_constrained_groups_obj(selections):
-  result = []
-  class foo:
-    def __init__(self, selection):
-      self.selection=selection
-  for sel in selections:
-    result.append( foo(selection = sel) )
-  return result
+    result = []
+
+    class foo:
+        def __init__(self, selection):
+            self.selection = selection
+
+    for sel in selections:
+        result.append(foo(selection=sel))
+    return result
+
 
 def get_model(file_name, log):
-  pdb_interpretation_params = iotbx.phil.parse(
-          input_string=pdb_interpretation.grand_master_phil_str, process_includes=True).extract()
-  pdb_interpretation_params.pdb_interpretation.sort_atoms=False
-  pdb_inp = iotbx.pdb.input(file_name=file_name)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp,
-      stop_for_unknowns = False,
-      log=log)
-  model.process(pdb_interpretation_params=pdb_interpretation_params)
-  return model
+    pdb_interpretation_params = iotbx.phil.parse(
+        input_string=pdb_interpretation.grand_master_phil_str, process_includes=True
+    ).extract()
+    pdb_interpretation_params.pdb_interpretation.sort_atoms = False
+    pdb_inp = iotbx.pdb.input(file_name=file_name)
+    model = mmtbx.model.manager(model_input=pdb_inp, stop_for_unknowns=False, log=log)
+    model.process(pdb_interpretation_params=pdb_interpretation_params)
+    return model
+
 
 def get_model_str(strings, log):
-  pdb_interpretation_params = iotbx.phil.parse(
-          input_string=pdb_interpretation.grand_master_phil_str, process_includes=True).extract()
-  pdb_interpretation_params.pdb_interpretation.sort_atoms=False
-  pdb_inp = iotbx.pdb.input(lines=strings, source_info=None)
-  model = mmtbx.model.manager(
-      model_input = pdb_inp,
-      stop_for_unknowns = False,
-      log=log)
-  model.process(pdb_interpretation_params=pdb_interpretation_params)
-  return model
+    pdb_interpretation_params = iotbx.phil.parse(
+        input_string=pdb_interpretation.grand_master_phil_str, process_includes=True
+    ).extract()
+    pdb_interpretation_params.pdb_interpretation.sort_atoms = False
+    pdb_inp = iotbx.pdb.input(lines=strings, source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, stop_for_unknowns=False, log=log)
+    model.process(pdb_interpretation_params=pdb_interpretation_params)
+    return model
+
 
 def exercise_00(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  base = [ [[2],[3]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[24,25,26,27],[28,29,30,31]] ]
-  # default
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  res = extract_serials(model.get_atoms(), res)
-  target = base[:]
-  target.insert(3, [[21]])
-  target.insert(4, [[23]])
-  assert approx_equal(res, target)
-  # default + add water
-  res = occupancy_selections(
-    model = model,
-    add_water         = True,
-    as_flex_arrays    = False)
-  res = extract_serials(model.get_atoms(), res)
-  base_21_23 = target[:]
-  target.extend([[[18]], [[19]], [[20]], [[22]]])
-  assert approx_equal(res, target)
-  # 1
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False,
-    other_individual_selection_strings = ['resseq 0 and not (altloc A or altloc B)'])
-  res = extract_serials(model.get_atoms(), res)
-  target = base_21_23[:]
-  target.extend([[[0]], [[1]], [[4]], [[5]]])
-  assert approx_equal(res, target)
-  res = occupancy_selections(
-    model = model,
-    add_water         = True,
-    as_flex_arrays    = False,
-    other_individual_selection_strings = ['resseq 0 and not (altloc A or altloc B)'])
-  res = extract_serials(model.get_atoms(), res)
-  target.extend([[[18]], [[19]], [[20]], [[22]]])
-  assert approx_equal(res, target)
-  # 2
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [ ['resseq 0 and (name S or name O1)'], ['resseq 0 and (name O3 or name O4)'] ])
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False,
-    other_constrained_groups = other_constrained_groups)
-  res = extract_serials(model.get_atoms(), res)
-  target = base_21_23[:]
-  target.extend([[[0, 1]], [[4, 5]]])
-  assert approx_equal(res, target)
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [ ['resseq 0 and (name S or name O1)'], ['resseq 0 and (name O3 or name O4)'] ])
-  res = occupancy_selections(
-    model = model,
-    add_water         = True,
-    as_flex_arrays    = False,
-    other_constrained_groups = other_constrained_groups)
-  res = extract_serials(model.get_atoms(), res)
-  target.extend([[[18]], [[19]], [[20]], [[22]]])
-  assert approx_equal(res, target)
-  # 3
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [ ['resseq 0 and (name O3 or name O4)'] ])
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False,
-    other_individual_selection_strings = ['resseq 0 and (name S or name O1)'],
-    other_constrained_groups = other_constrained_groups)
-  res = extract_serials(model.get_atoms(), res)
-  target = base_21_23[:]
-  target.extend([[[0]], [[1]], [[4, 5]]])
-  assert approx_equal(res, target)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    base = [
+        [[2], [3]],
+        [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+        [[16], [17]],
+        [[24, 25, 26, 27], [28, 29, 30, 31]],
+    ]
+    # default
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    target = base[:]
+    target.insert(3, [[21]])
+    target.insert(4, [[23]])
+    assert approx_equal(res, target)
+    # default + add water
+    res = occupancy_selections(model=model, add_water=True, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    base_21_23 = target[:]
+    target.extend([[[18]], [[19]], [[20]], [[22]]])
+    assert approx_equal(res, target)
+    # 1
+    res = occupancy_selections(
+        model=model,
+        as_flex_arrays=False,
+        other_individual_selection_strings=["resseq 0 and not (altloc A or altloc B)"],
+    )
+    res = extract_serials(model.get_atoms(), res)
+    target = base_21_23[:]
+    target.extend([[[0]], [[1]], [[4]], [[5]]])
+    assert approx_equal(res, target)
+    res = occupancy_selections(
+        model=model,
+        add_water=True,
+        as_flex_arrays=False,
+        other_individual_selection_strings=["resseq 0 and not (altloc A or altloc B)"],
+    )
+    res = extract_serials(model.get_atoms(), res)
+    target.extend([[[18]], [[19]], [[20]], [[22]]])
+    assert approx_equal(res, target)
+    # 2
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            ["resseq 0 and (name S or name O1)"],
+            ["resseq 0 and (name O3 or name O4)"],
+        ]
+    )
+    res = occupancy_selections(
+        model=model,
+        as_flex_arrays=False,
+        other_constrained_groups=other_constrained_groups,
+    )
+    res = extract_serials(model.get_atoms(), res)
+    target = base_21_23[:]
+    target.extend([[[0, 1]], [[4, 5]]])
+    assert approx_equal(res, target)
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            ["resseq 0 and (name S or name O1)"],
+            ["resseq 0 and (name O3 or name O4)"],
+        ]
+    )
+    res = occupancy_selections(
+        model=model,
+        add_water=True,
+        as_flex_arrays=False,
+        other_constrained_groups=other_constrained_groups,
+    )
+    res = extract_serials(model.get_atoms(), res)
+    target.extend([[[18]], [[19]], [[20]], [[22]]])
+    assert approx_equal(res, target)
+    # 3
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[["resseq 0 and (name O3 or name O4)"]]
+    )
+    res = occupancy_selections(
+        model=model,
+        as_flex_arrays=False,
+        other_individual_selection_strings=["resseq 0 and (name S or name O1)"],
+        other_constrained_groups=other_constrained_groups,
+    )
+    res = extract_serials(model.get_atoms(), res)
+    target = base_21_23[:]
+    target.extend([[[0]], [[1]], [[4, 5]]])
+    assert approx_equal(res, target)
+
 
 def exercise_01(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/ala_h.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  #
-  base = [ [[0,1,2,3,4,10,12,14,16,18,20,22], [5,6,7,8,9,11,13,15,17,19,21,23]] ]
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  res = extract_serials(model.get_atoms(), res)
-  assert approx_equal(res, base)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/ala_h.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    #
+    base = [
+        [
+            [0, 1, 2, 3, 4, 10, 12, 14, 16, 18, 20, 22],
+            [5, 6, 7, 8, 9, 11, 13, 15, 17, 19, 21, 23],
+        ]
+    ]
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    assert approx_equal(res, base)
+
 
 def exercise_02(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/occ_mix1.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  #
-  base = [ [[0,1,2,3,4,5,6,7,8,9,10,11,12], [14,15,16,17,18,19,20,21,22,23,24,25,26]], [[13],[27]] ]
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  res = extract_serials(model.get_atoms(), res)
-  assert approx_equal(res, base)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/occ_mix1.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    #
+    base = [
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
+        ],
+        [[13], [27]],
+    ]
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    assert approx_equal(res, base)
+
 
 def exercise_03(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/ala_hd.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  #
-  base = [ [[7]], [[8]], [[9],[12]], [[10],[13]], [[11],[14]] ]
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  res = extract_serials(model.get_atoms(), res)
-  assert approx_equal(res, base)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/ala_hd.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    #
+    base = [[[7]], [[8]], [[9], [12]], [[10], [13]], [[11], [14]]]
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    assert approx_equal(res, base)
+
 
 def exercise_05(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/ala_lys_arg_ser_tyr_neutron_hd.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  #
-  base = [ [[9],[12]],  [[10],[13]], [[11],[14]], [[33],[37]], [[34],[38]],
-           [[35],[39]], [[36],[40]], [[59],[65]], [[60],[66]], [[61],[67]],
-           [[62],[68]], [[63],[69]], [[64],[70]], [[80],[82]], [[81],[83]],
-           [[103],[105]], [[104],[106]]]
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays      = False)
-  res = extract_serials(model.get_atoms(), res)
-  assert approx_equal(res, base)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/ala_lys_arg_ser_tyr_neutron_hd.pdb",
+        test=os.path.isfile,
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    #
+    base = [
+        [[9], [12]],
+        [[10], [13]],
+        [[11], [14]],
+        [[33], [37]],
+        [[34], [38]],
+        [[35], [39]],
+        [[36], [40]],
+        [[59], [65]],
+        [[60], [66]],
+        [[61], [67]],
+        [[62], [68]],
+        [[63], [69]],
+        [[64], [70]],
+        [[80], [82]],
+        [[81], [83]],
+        [[103], [105]],
+        [[104], [106]],
+    ]
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    assert approx_equal(res, base)
+
 
 def exercise_06(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/NAD_594_HD.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  #
-  base = [ [[62]], [[113]], [[65],[77]],  [[66],[78]],  [[67],[79]], [[68],[80]],
-                            [[69],[81]],  [[70],[82]],  [[71],[83]], [[72],[84]],
-                            [[73],[85]],  [[74],[86]],  [[75],[87]], [[76],[88]],
-                            [[124],[127]],[[125],[128]],[[126],[129]]]
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays      = False)
-  assert approx_equal(res, base)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/NAD_594_HD.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    #
+    base = [
+        [[62]],
+        [[113]],
+        [[65], [77]],
+        [[66], [78]],
+        [[67], [79]],
+        [[68], [80]],
+        [[69], [81]],
+        [[70], [82]],
+        [[71], [83]],
+        [[72], [84]],
+        [[73], [85]],
+        [[74], [86]],
+        [[75], [87]],
+        [[76], [88]],
+        [[124], [127]],
+        [[125], [128]],
+        [[126], [129]],
+    ]
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    assert approx_equal(res, base)
+
 
 def exercise_07(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr_1.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[0, 1, 2, 3, 4]] ]
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [ ['resseq 0'] ])
-  result = occupancy_selections(
-    model = model,
-    other_constrained_groups = other_constrained_groups,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr_1.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[0, 1, 2, 3, 4]]]
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[["resseq 0"]]
+    )
+    result = occupancy_selections(
+        model=model,
+        other_constrained_groups=other_constrained_groups,
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+
 
 def exercise_08(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr_2.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answers = [
-    [ [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[0,1,2,3,4,5]] ],
-    [ [[4],[5]], [[16],[17]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[6,7,8,9,10,11,12,13,14,15]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[16,17]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[18,19,20]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[23]], [[24,25,26,27],[28,29,30,31]], [[21]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[22]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[21]], [[23,24,25,26,27,28,29,30,31]] ],
-    [ [[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]] ]
-  ]
-  group_selections = ['resseq 0',
-                      'resseq 1',
-                      'resseq 2',
-                      'resseq 3',
-                      'resseq 4',
-                      'resseq 5',
-                      'resseq 6',
-                      'resseq 0:6']
-  for group_selection, answer in zip(group_selections, answers):
-    other_constrained_groups = make_up_other_constrained_groups_obj(
-      selections = [ [group_selection] ])
-    result = occupancy_selections(
-      model = model,
-      other_constrained_groups = other_constrained_groups,
-      as_flex_arrays    = False)
-    assert approx_equal(result, answer)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr_2.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answers = [
+        [
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[0, 1, 2, 3, 4, 5]],
+        ],
+        [
+            [[4], [5]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[6, 7, 8, 9, 10, 11, 12, 13, 14, 15]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[16, 17]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[18, 19, 20]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[21]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[22]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[21]],
+            [[23, 24, 25, 26, 27, 28, 29, 30, 31]],
+        ],
+        [
+            [
+                [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25,
+                    26,
+                    27,
+                    28,
+                    29,
+                    30,
+                    31,
+                ]
+            ]
+        ],
+    ]
+    group_selections = [
+        "resseq 0",
+        "resseq 1",
+        "resseq 2",
+        "resseq 3",
+        "resseq 4",
+        "resseq 5",
+        "resseq 6",
+        "resseq 0:6",
+    ]
+    for group_selection, answer in zip(group_selections, answers):
+        other_constrained_groups = make_up_other_constrained_groups_obj(
+            selections=[[group_selection]]
+        )
+        result = occupancy_selections(
+            model=model,
+            other_constrained_groups=other_constrained_groups,
+            as_flex_arrays=False,
+        )
+        assert approx_equal(result, answer)
+
 
 def exercise_09(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr_2.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answers = [
-    [ [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[0]], [[1]], [[2]], [[3]], [[4]], [[5]] ],
-    [ [[4],[5]], [[16],[17]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[6]], [[7]], [[8]], [[9]], [[10]], [[11]], [[12]], [[13]], [[14]], [[15]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[16]], [[17]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[18]], [[19]], [[20]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[23]], [[24,25,26,27],[28,29,30,31]], [[21]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[21]], [[23]], [[24,25,26,27],[28,29,30,31]], [[22]] ],
-    [ [[4],[5]], [[6,7,8,9,10],[11,12,13,14,15]], [[16],[17]], [[21]], [[23]], [[24]], [[25]], [[26]], [[27]], [[28]], [[29]], [[30]], [[31]] ]
-  ]
-  individual_selections = ['resseq 0',
-                           'resseq 1',
-                           'resseq 2',
-                           'resseq 3',
-                           'resseq 4',
-                           'resseq 5',
-                           'resseq 6',
-                           'resseq 0:6']
-  for individual_selection, answer in zip(individual_selections, answers):
-    result = occupancy_selections(
-      model = model,
-      other_individual_selection_strings = [individual_selection],
-      as_flex_arrays    = False)
-    assert approx_equal(result, answer)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr_2.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answers = [
+        [
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[0]],
+            [[1]],
+            [[2]],
+            [[3]],
+            [[4]],
+            [[5]],
+        ],
+        [
+            [[4], [5]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[6]],
+            [[7]],
+            [[8]],
+            [[9]],
+            [[10]],
+            [[11]],
+            [[12]],
+            [[13]],
+            [[14]],
+            [[15]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[16]],
+            [[17]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[18]],
+            [[19]],
+            [[20]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[21]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24, 25, 26, 27], [28, 29, 30, 31]],
+            [[22]],
+        ],
+        [
+            [[4], [5]],
+            [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+            [[16], [17]],
+            [[21]],
+            [[23]],
+            [[24]],
+            [[25]],
+            [[26]],
+            [[27]],
+            [[28]],
+            [[29]],
+            [[30]],
+            [[31]],
+        ],
+    ]
+    individual_selections = [
+        "resseq 0",
+        "resseq 1",
+        "resseq 2",
+        "resseq 3",
+        "resseq 4",
+        "resseq 5",
+        "resseq 6",
+        "resseq 0:6",
+    ]
+    for individual_selection, answer in zip(individual_selections, answers):
+        result = occupancy_selections(
+            model=model,
+            other_individual_selection_strings=[individual_selection],
+            as_flex_arrays=False,
+        )
+        assert approx_equal(result, answer)
+
 
 def exercise_10(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  e = None
-  try:
-    other_constrained_groups = make_up_other_constrained_groups_obj(
-      selections = [ ['resseq 0'] ])
-    result = occupancy_selections(
-      model = model,
-      other_constrained_groups = other_constrained_groups,
-      other_individual_selection_strings = ['resseq 0'],
-      as_flex_arrays    = False)
-  except Exception as e:
-    assert str(e) == "Duplicate selection: same atoms selected for individual and group occupancy refinement."
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    e = None
+    try:
+        other_constrained_groups = make_up_other_constrained_groups_obj(
+            selections=[["resseq 0"]]
+        )
+        result = occupancy_selections(
+            model=model,
+            other_constrained_groups=other_constrained_groups,
+            other_individual_selection_strings=["resseq 0"],
+            as_flex_arrays=False,
+        )
+    except Exception as e:
+        assert (
+            str(e)
+            == "Duplicate selection: same atoms selected for individual and group occupancy refinement."
+        )
+
 
 def exercise_11(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  e = None
-  try:
-    result = occupancy_selections(
-      model = model,
-      remove_selection = ['resseq 0'],
-      other_individual_selection_strings = ['resseq 0'],
-      as_flex_arrays    = False)
-  except Exception as e:
-    assert str(e) == "Duplicate selection: occupancies of same atoms selected to be fixed and to be refined."
-  e = None
-  try:
-    other_constrained_groups = make_up_other_constrained_groups_obj(
-      selections = [ ['resseq 0'] ])
-    result = occupancy_selections(
-      model = model,
-      other_constrained_groups = other_constrained_groups,
-      remove_selection = ['resseq 0'],
-      as_flex_arrays    = False)
-  except Exception as e:
-    assert str(e) == "Duplicate selection: occupancies of same atoms selected to be fixed and to be refined."
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    e = None
+    try:
+        result = occupancy_selections(
+            model=model,
+            remove_selection=["resseq 0"],
+            other_individual_selection_strings=["resseq 0"],
+            as_flex_arrays=False,
+        )
+    except Exception as e:
+        assert (
+            str(e)
+            == "Duplicate selection: occupancies of same atoms selected to be fixed and to be refined."
+        )
+    e = None
+    try:
+        other_constrained_groups = make_up_other_constrained_groups_obj(
+            selections=[["resseq 0"]]
+        )
+        result = occupancy_selections(
+            model=model,
+            other_constrained_groups=other_constrained_groups,
+            remove_selection=["resseq 0"],
+            as_flex_arrays=False,
+        )
+    except Exception as e:
+        assert (
+            str(e)
+            == "Duplicate selection: occupancies of same atoms selected to be fixed and to be refined."
+        )
+
 
 def exercise_12(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr_2.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[4],[5]], [[16],[17]], [[21]], [[23,24,25,26,27,28,29,30,31]] ]
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [ ['resseq 6'] ])
-  result = occupancy_selections(
-    model = model,
-    remove_selection = ['resseq 1'],
-    other_constrained_groups = other_constrained_groups,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
-  #
-  answer = [ [[4],[5]], [[16],[17]], [[21]], [[23]], [[24]], [[25]], [[26]], [[27]], [[28]], [[29]], [[30]], [[31]] ]
-  result = occupancy_selections(
-    model = model,
-    remove_selection = ['resseq 1'],
-    other_individual_selection_strings = ['resseq 6'],
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr_2.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[4], [5]], [[16], [17]], [[21]], [[23, 24, 25, 26, 27, 28, 29, 30, 31]]]
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[["resseq 6"]]
+    )
+    result = occupancy_selections(
+        model=model,
+        remove_selection=["resseq 1"],
+        other_constrained_groups=other_constrained_groups,
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+    #
+    answer = [
+        [[4], [5]],
+        [[16], [17]],
+        [[21]],
+        [[23]],
+        [[24]],
+        [[25]],
+        [[26]],
+        [[27]],
+        [[28]],
+        [[29]],
+        [[30]],
+        [[31]],
+    ]
+    result = occupancy_selections(
+        model=model,
+        remove_selection=["resseq 1"],
+        other_individual_selection_strings=["resseq 6"],
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+
 
 def exercise_13(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/lys_1.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[8],[9]], [[10]], [[0],[1]], [[2],[3]] ]
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [ ['chain A and resseq 1 and name N','chain A and resseq 1 and name CA'],
-                   ['chain A and resseq 1 and name C','chain A and resseq 1 and name O'] ]
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/lys_1.pdb", test=os.path.isfile
     )
-  result = occupancy_selections(
-    model = model,
-    other_constrained_groups = other_constrained_groups,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[8], [9]], [[10]], [[0], [1]], [[2], [3]]]
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            ["chain A and resseq 1 and name N", "chain A and resseq 1 and name CA"],
+            ["chain A and resseq 1 and name C", "chain A and resseq 1 and name O"],
+        ]
+    )
+    result = occupancy_selections(
+        model=model,
+        other_constrained_groups=other_constrained_groups,
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+
 
 def exercise_14(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/lys_1.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[8],[9]], [[10]], [[0,1,2],[3,4]], [[5],[6]], [[7]] ]
-
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [ ['chain A and resseq 1 and (name N or name CA or name C)', 'chain A and resseq 1 and (name O or name CB)'],
-                   ['chain A and resseq 1 and name CG','chain A and resseq 1 and name CD'],
-                   ['chain A and resseq 1 and name CE'] ]
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/lys_1.pdb", test=os.path.isfile
     )
-  result = occupancy_selections(
-    model = model,
-    other_constrained_groups = other_constrained_groups,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[8], [9]], [[10]], [[0, 1, 2], [3, 4]], [[5], [6]], [[7]]]
+
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            [
+                "chain A and resseq 1 and (name N or name CA or name C)",
+                "chain A and resseq 1 and (name O or name CB)",
+            ],
+            ["chain A and resseq 1 and name CG", "chain A and resseq 1 and name CD"],
+            ["chain A and resseq 1 and name CE"],
+        ]
+    )
+    result = occupancy_selections(
+        model=model,
+        other_constrained_groups=other_constrained_groups,
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+
 
 def exercise_15(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/lys_1.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[8],[9]], [[0,1,2],[10]], [[5,7]] ]
-
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [ ['chain A and resseq 1 and (name N or name CA or name C)', 'chain S and resseq 1'],
-                   ['chain A and resseq 1 and name CG or chain A and resseq 1 and name CE'] ]
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/lys_1.pdb", test=os.path.isfile
     )
-  result = occupancy_selections(
-    model = model,
-    other_constrained_groups = other_constrained_groups,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[8], [9]], [[0, 1, 2], [10]], [[5, 7]]]
+
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            [
+                "chain A and resseq 1 and (name N or name CA or name C)",
+                "chain S and resseq 1",
+            ],
+            ["chain A and resseq 1 and name CG or chain A and resseq 1 and name CE"],
+        ]
+    )
+    result = occupancy_selections(
+        model=model,
+        other_constrained_groups=other_constrained_groups,
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+
 
 def exercise_16(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/lys_1.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[8],[9],[10]] ]
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [
-      ['chain A and resseq 1 and name NZ and altloc A', 'chain A and resseq 1 and name NZ and altloc B', 'chain S and resseq 1'] ]
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/lys_1.pdb", test=os.path.isfile
     )
-  result = occupancy_selections(
-    model = model,
-    other_constrained_groups = other_constrained_groups,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[8], [9], [10]]]
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            [
+                "chain A and resseq 1 and name NZ and altloc A",
+                "chain A and resseq 1 and name NZ and altloc B",
+                "chain S and resseq 1",
+            ]
+        ]
+    )
+    result = occupancy_selections(
+        model=model,
+        other_constrained_groups=other_constrained_groups,
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+
 
 def exercise_17(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/lys_1.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[8,9,10]] ]
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [
-      ['chain A and resseq 1 and name NZ and altloc A or chain A and resseq 1 and name NZ and altloc B or chain S and resseq 1'] ]
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/lys_1.pdb", test=os.path.isfile
     )
-  result = occupancy_selections(
-    model = model,
-    other_constrained_groups = other_constrained_groups,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[8, 9, 10]]]
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            [
+                "chain A and resseq 1 and name NZ and altloc A or chain A and resseq 1 and name NZ and altloc B or chain S and resseq 1"
+            ]
+        ]
+    )
+    result = occupancy_selections(
+        model=model,
+        other_constrained_groups=other_constrained_groups,
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+
 
 def exercise_18(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/lys_2.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[8],[9],[10]] ]
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-   selections = [
-    ['chain A and resseq 1 and name NZ and altloc A','chain A and resseq 1 and name NZ and altloc B','chain S and resseq 1 and altloc C']]
-  )
-  result = occupancy_selections(
-    model = model,
-    other_constrained_groups = other_constrained_groups,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/lys_2.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[8], [9], [10]]]
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            [
+                "chain A and resseq 1 and name NZ and altloc A",
+                "chain A and resseq 1 and name NZ and altloc B",
+                "chain S and resseq 1 and altloc C",
+            ]
+        ]
+    )
+    result = occupancy_selections(
+        model=model,
+        other_constrained_groups=other_constrained_groups,
+        as_flex_arrays=False,
+    )
+    assert approx_equal(result, answer)
+
 
 def exercise_19(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/lys_1.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[8],[9],[10]] ]
-  tmp = "chain A and resseq 1 and name XX and altloc A"
-  other_constrained_groups = make_up_other_constrained_groups_obj(
-    selections = [[
-      tmp,
-      'chain A and resseq 1 and name NZ and altloc B',
-      'chain S and resseq 1']])
-  try:
-    result = occupancy_selections(
-      model = model,
-      other_constrained_groups = other_constrained_groups,
-      as_flex_arrays    = False)
-  except Exception as e:
-    assert str(e) == \
-      'Selection string results in empty selection (selects no atoms): "%s"' \
-      % tmp
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/lys_1.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [[[8], [9], [10]]]
+    tmp = "chain A and resseq 1 and name XX and altloc A"
+    other_constrained_groups = make_up_other_constrained_groups_obj(
+        selections=[
+            [
+                tmp,
+                "chain A and resseq 1 and name NZ and altloc B",
+                "chain S and resseq 1",
+            ]
+        ]
+    )
+    try:
+        result = occupancy_selections(
+            model=model,
+            other_constrained_groups=other_constrained_groups,
+            as_flex_arrays=False,
+        )
+    except Exception as e:
+        assert (
+            str(e)
+            == 'Selection string results in empty selection (selects no atoms): "%s"'
+            % tmp
+        )
+
 
 def exercise_20(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/ile_2conf_h.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  answer = [ [[4,5,6,7,8,9,10,11,12,13,14,15,16,17,18], [19,20,21,22,23,24,25,26,27,28,29,30,31,32,33]] ]
-  result = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  assert approx_equal(result, answer)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/ile_2conf_h.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    answer = [
+        [
+            [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+            [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33],
+        ]
+    ]
+    result = occupancy_selections(model=model, as_flex_arrays=False)
+    assert approx_equal(result, answer)
+
 
 def exercise_21(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr_3.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  #
-  base = [[[2], [3]],
-         [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
-         [[16], [17]],
-         [[21]],
-         [[23]],
-         [[24, 25, 26, 27], [28, 29, 30, 31]],
-         [[36]],
-         [[47]],
-         [[48]],
-         [[49]],
-         [[50]],
-         [[51]],
-         [[53]],
-         [[56, 57, 58, 59]],
-         [[60, 61, 62, 63]],
-         [[64, 65, 66, 67, 68]],
-         [[37], [40]],
-         [[38], [41]],
-         [[39], [42]],
-         [[43, 44, 45, 46]]]
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  res = extract_serials(model.get_atoms(), res)
-  assert approx_equal(res, base)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr_3.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    #
+    base = [
+        [[2], [3]],
+        [[6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+        [[16], [17]],
+        [[21]],
+        [[23]],
+        [[24, 25, 26, 27], [28, 29, 30, 31]],
+        [[36]],
+        [[47]],
+        [[48]],
+        [[49]],
+        [[50]],
+        [[51]],
+        [[53]],
+        [[56, 57, 58, 59]],
+        [[60, 61, 62, 63]],
+        [[64, 65, 66, 67, 68]],
+        [[37], [40]],
+        [[38], [41]],
+        [[39], [42]],
+        [[43, 44, 45, 46]],
+    ]
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    assert approx_equal(res, base)
+
 
 def exercise_22(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr_4.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  #
-  base = [[[0, 1, 2, 3, 8, 9, 10, 11, 12], [4, 5, 6, 7, 13, 14, 15, 16, 17]]]
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  res = extract_serials(model.get_atoms(), res)
-  assert approx_equal(res, base)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr_4.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    #
+    base = [[[0, 1, 2, 3, 8, 9, 10, 11, 12], [4, 5, 6, 7, 13, 14, 15, 16, 17]]]
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    assert approx_equal(res, base)
+
 
 def exercise_23(verbose):
-  pdb_file = libtbx.env.find_in_repositories(
-    relative_path="phenix_regression/pdb/gocr_5.pdb",
-    test=os.path.isfile)
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model(pdb_file, log)
-  #
-  base = [[[1, 2, 3, 4, 5, 6]], [[7, 8, 9, 10, 11], [12, 13, 14, 15, 16]]]
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  res = extract_serials(model.get_atoms(), res)
-  assert approx_equal(res, base)
+    pdb_file = libtbx.env.find_in_repositories(
+        relative_path="phenix_regression/pdb/gocr_5.pdb", test=os.path.isfile
+    )
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model(pdb_file, log)
+    #
+    base = [[[1, 2, 3, 4, 5, 6]], [[7, 8, 9, 10, 11], [12, 13, 14, 15, 16]]]
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    res = extract_serials(model.get_atoms(), res)
+    assert approx_equal(res, base)
+
 
 def exercise_24(verbose):
-  pdb_str1="""\
+    pdb_str1 = """\
 CRYST1   10.707   11.101   13.552  90.00  90.00  90.00 P 1
 ATOM      0  N  AALA A   9       3.452   6.807   3.508  0.19  9.33      A    N
 ATOM      1  CA AALA A   9       4.572   6.204   4.211  0.19  9.82      A    C
@@ -655,7 +1011,7 @@ ATOM     68  H  DVAL A  10       5.903   5.349   6.260  0.25 11.13      A    H
 TER
 END
 """
-  pdb_str2="""\
+    pdb_str2 = """\
 CRYST1   10.707   11.101   13.552  90.00  90.00  90.00 P 1
 ATOM      0  N  AALA A   9       3.452   6.807   3.508  0.19  9.33      A    N
 ATOM      1  CA AALA A   9       4.572   6.204   4.211  0.19  9.82      A    C
@@ -729,24 +1085,30 @@ ATOM     68  D  DVAL A  10       5.903   5.349   6.260  0.25 11.13      A    D
 TER
 END
 """
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  for pdb_str in [pdb_str1, pdb_str2]:
-    model = get_model_str(pdb_str, log)
-    res = occupancy_selections(
-      model = model,
-      as_flex_arrays    = False)
-    answer = \
-      [[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 48],
-        [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 59],
-        [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 67],
-        [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 68]],
-       [[45, 46, 47, 49, 50, 51, 52, 53, 54, 55],
-       [56, 57, 58, 60, 61, 62, 63, 64, 65, 66]]]
-    assert approx_equal(res, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    for pdb_str in [pdb_str1, pdb_str2]:
+        model = get_model_str(pdb_str, log)
+        res = occupancy_selections(model=model, as_flex_arrays=False)
+        answer = [
+            [
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 48],
+                [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 59],
+                [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 67],
+                [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 68],
+            ],
+            [
+                [45, 46, 47, 49, 50, 51, 52, 53, 54, 55],
+                [56, 57, 58, 60, 61, 62, 63, 64, 65, 66],
+            ],
+        ]
+        assert approx_equal(res, answer)
+
 
 def exercise_25(verbose):
-  pdb_str="""\
+    pdb_str = """\
 CRYST1   10.707   11.101   13.552  90.00  90.00  90.00 P 1
 ATOM      0  N   ALA A   9       3.452   6.807   3.508  1.00  9.33      A    N
 ATOM      1  CA  ALA A   9       4.572   6.204   4.211  1.00  9.82      A    C
@@ -779,17 +1141,18 @@ ATOM     27  D  BVAL A  10       5.926   5.421   6.269  0.70 11.13      A    D
 TER
 END
 """
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model_str(pdb_str, log)
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  answer = [ [[9],[10]], [[26],[27]] ]
-  assert approx_equal(res, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model_str(pdb_str, log)
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    answer = [[[9], [10]], [[26], [27]]]
+    assert approx_equal(res, answer)
+
 
 def exercise_26(verbose):
-  pdb_str="""\
+    pdb_str = """\
 CRYST1   71.040   72.017   72.362  90.00 100.48  90.00 C 1 2 1
 ATOM     96  N   PRO L   5       2.689  13.877  15.387  1.00 13.65           N
 ATOM     97  CA  PRO L   5       1.824  14.762  14.572  1.00 17.31           C
@@ -826,17 +1189,18 @@ ATOM    127 HD23 LEU L   6      -1.712  13.609  11.929  1.00 22.55           H
 ATOM    128  H  ALEU L   6       0.595  12.387  14.715  0.50 13.93           H
 ATOM    129  D  BLEU L   6       0.595  12.387  14.715  0.50 13.93           D
 """
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model_str(pdb_str, log)
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  answer = [ [[32], [33]] ]
-  assert approx_equal(res, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model_str(pdb_str, log)
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    answer = [[[32], [33]]]
+    assert approx_equal(res, answer)
+
 
 def exercise_27(verbose):
-  pdb_str="""\
+    pdb_str = """\
 CRYST1   64.714   39.225   38.645  90.00 117.38  90.00 C 1 2 1
 ATOM      0  N   SER A  -1      20.605   9.913  24.660  1.00 32.98           N
 ATOM      1  CA  SER A  -1      21.415  10.057  23.431  1.00 25.22           C
@@ -885,18 +1249,23 @@ ATOM     43  HE1BMET A   0      17.141  15.795  22.018  0.51 42.08           H
 ATOM     44  HE2BMET A   0      17.217  14.249  22.380  0.51 22.21           H
 ATOM     45  HE3BMET A   0      18.343  15.241  22.899  0.51 40.99           H
 """
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model_str(pdb_str, log)
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  answer = [[[13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
-             [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]]]
-  assert approx_equal(res, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model_str(pdb_str, log)
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    answer = [
+        [
+            [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+            [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45],
+        ]
+    ]
+    assert approx_equal(res, answer)
+
 
 def exercise_28(verbose):
-  pdb_str="""\
+    pdb_str = """\
 CRYST1   64.360   64.360   46.038  90.00  90.00 120.00 P 63
 ATOM      0  N   ASP A  48       8.896  25.394  -7.791  1.00  8.05           N
 ATOM      1  CA  ASP A  48       8.495  26.452  -6.936  1.00  8.42           C
@@ -969,19 +1338,66 @@ ATOM     67  H  BVAL A  50       8.914  22.729  -2.166  0.21  5.93           H
 TER
 END
 """
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model_str(pdb_str, log)
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  answer = [ [[11],[12]],
-             [[13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,66],
-              [32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,67]]]
-  assert approx_equal(res, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model_str(pdb_str, log)
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    answer = [
+        [[11], [12]],
+        [
+            [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                66,
+            ],
+            [
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                67,
+            ],
+        ],
+    ]
+    assert approx_equal(res, answer)
+
 
 def exercise_29(verbose):
-  pdb_str="""\
+    pdb_str = """\
 CRYST1  148.270   44.010   47.390  90.00 101.57  90.00 C 1 2 1
 ATOM      0  N   GLY A 285     -41.269  16.430  -4.458  1.00 18.77           N
 ATOM      1  CA  GLY A 285     -41.021  16.772  -5.854  1.00 20.45           C
@@ -1043,22 +1459,25 @@ ATOM     56  HA BGLU A 287     -38.799  22.245  -2.580  0.98 20.01           H
 TER
 END
 """
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model_str(pdb_str, log)
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  answer = [ [[3,4,5,6,19],
-              [7,8,9,10,33]],
-             [[11,12,13,14,15,16,17,18,20,21,22,23,24,52],
-              [25,26,27,28,29,30,31,32,34,35,36,37,38,55]],
-             [[51,53],
-              [54,56]]]
-  assert approx_equal(res, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model_str(pdb_str, log)
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    answer = [
+        [[3, 4, 5, 6, 19], [7, 8, 9, 10, 33]],
+        [
+            [11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 52],
+            [25, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 38, 55],
+        ],
+        [[51, 53], [54, 56]],
+    ]
+    assert approx_equal(res, answer)
+
 
 def exercise_30(verbose):
-  pdb_str="""\
+    pdb_str = """\
 CRYST1   42.198  121.958   37.277  90.00  90.00  90.00 P 21 21 2
 ATOM      0  CG  GLU A 115      30.700  22.521   0.401  0.55 25.56           C
 ATOM      1  CD  GLU A 115      31.809  23.320  -0.265  1.00 25.96           C
@@ -1097,24 +1516,24 @@ ATOM     33  HB BVAL A 116      26.782  20.535   5.654  0.47 23.76           H
 TER
 END
 """
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  model = get_model_str(pdb_str, log)
-  res = occupancy_selections(
-    model = model,
-    as_flex_arrays    = False)
-  answer = [ [[0]],
-             [[4, 5, 6, 7, 8, 21],
-              [9, 10, 11, 12, 13, 31]],
-             [[14, 15, 16, 17, 18, 19, 20, 22, 23],
-              [24, 25, 26, 27, 28, 29, 30, 32, 33]] ]
-  assert approx_equal(res, answer)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    model = get_model_str(pdb_str, log)
+    res = occupancy_selections(model=model, as_flex_arrays=False)
+    answer = [
+        [[0]],
+        [[4, 5, 6, 7, 8, 21], [9, 10, 11, 12, 13, 31]],
+        [[14, 15, 16, 17, 18, 19, 20, 22, 23], [24, 25, 26, 27, 28, 29, 30, 32, 33]],
+    ]
+    assert approx_equal(res, answer)
+
 
 def prepare_correlated_occupancy_inputs(
-    prefix="tst_group_correlated_occupancy",
-    create_mtz=False,
-    d_min=1.0):
-  pdb_raw = """\
+    prefix="tst_group_correlated_occupancy", create_mtz=False, d_min=1.0
+):
+    pdb_raw = """\
 CRYST1   21.937    4.866   23.477  90.00 107.08  90.00 P 1 21 1
 SCALE1      0.045585  0.000000  0.014006        0.00000
 SCALE2      0.000000  0.205508  0.000000        0.00000
@@ -1210,92 +1629,97 @@ HETATM   88  O   HOH A  13      -2.749   3.429  10.024  1.00 39.15           O
 HETATM   89  O   HOH A  14      -1.500   0.682  10.967  1.00 43.49           O
 TER
 """
-  pdb_in = "%s_in.pdb" % prefix
-  open(pdb_in, "w").write(pdb_raw)
-  if (create_mtz):
-    args = [
-      pdb_in,
-      "high_resolution=%g" % d_min,
-      "type=real",
-      "label=F",
-      "add_sigmas=True",
-      "r_free_flags_fraction=0.1",
-      "random_seed=12345",
-      "output.file_name=%s.mtz" % prefix,
-    ]
-    fmodel.run(args=args, log=null_out())
-  pdb_file = file_reader.any_file(pdb_in)
-  hierarchy = pdb_file.file_object.hierarchy
-  xrs = pdb_file.file_object.xray_structure_simple()
-  for atom in hierarchy.atoms():
-    atom.b = 5
-    if (atom.occ < 1.0):
-      atom.occ = 0.5
-  open("%s_start.pdb" % prefix, "w").write(
-    hierarchy.as_pdb_string(crystal_symmetry=xrs))
+    pdb_in = "%s_in.pdb" % prefix
+    open(pdb_in, "w").write(pdb_raw)
+    if create_mtz:
+        args = [
+            pdb_in,
+            "high_resolution=%g" % d_min,
+            "type=real",
+            "label=F",
+            "add_sigmas=True",
+            "r_free_flags_fraction=0.1",
+            "random_seed=12345",
+            "output.file_name=%s.mtz" % prefix,
+        ]
+        fmodel.run(args=args, log=null_out())
+    pdb_file = file_reader.any_file(pdb_in)
+    hierarchy = pdb_file.file_object.hierarchy
+    xrs = pdb_file.file_object.xray_structure_simple()
+    for atom in hierarchy.atoms():
+        atom.b = 5
+        if atom.occ < 1.0:
+            atom.occ = 0.5
+    open("%s_start.pdb" % prefix, "w").write(
+        hierarchy.as_pdb_string(crystal_symmetry=xrs)
+    )
+
 
 def exercise_regroup_3d(verbose):
-  if (verbose): log = sys.stdout
-  else: log = StringIO()
-  prepare_correlated_occupancy_inputs()
-  # File #1 (with homogenized occupancies) should work
-  # File #2 should fail due to inconsistent occupancies
-  pdb_files = [
-    "tst_group_correlated_occupancy_start.pdb",
-    "tst_group_correlated_occupancy_in.pdb",
-  ]
-  for i_file, pdb_file in enumerate(pdb_files):
-    model = get_model(pdb_file, log)
-    try :
-      constraint_groups = occupancy_selections(
-        model = model,
-        constrain_correlated_3d_groups=True,
-        log=null_out())
-    except Sorry as s :
-      if (i_file == 0):
-        raise
-      else :
-        assert ("Inconsistent occupancies" in str(s)), str(s)
-    else :
-      if (i_file == 1):
-        raise Exception_expected
-      else :
-        assert (len(constraint_groups) == 1)
+    if verbose:
+        log = sys.stdout
+    else:
+        log = StringIO()
+    prepare_correlated_occupancy_inputs()
+    # File #1 (with homogenized occupancies) should work
+    # File #2 should fail due to inconsistent occupancies
+    pdb_files = [
+        "tst_group_correlated_occupancy_start.pdb",
+        "tst_group_correlated_occupancy_in.pdb",
+    ]
+    for i_file, pdb_file in enumerate(pdb_files):
+        model = get_model(pdb_file, log)
+        try:
+            constraint_groups = occupancy_selections(
+                model=model, constrain_correlated_3d_groups=True, log=null_out()
+            )
+        except Sorry as s:
+            if i_file == 0:
+                raise
+            else:
+                assert "Inconsistent occupancies" in str(s), str(s)
+        else:
+            if i_file == 1:
+                raise Exception_expected
+            else:
+                assert len(constraint_groups) == 1
+
 
 def run():
-  verbose = "--verbose" in sys.argv[1:]
-  exercise_00(verbose=verbose)
-  exercise_01(verbose=verbose)
-  exercise_02(verbose=verbose)
-  exercise_03(verbose=verbose)
-  exercise_05(verbose=verbose)
-  exercise_06(verbose=verbose)
-  exercise_07(verbose=verbose)
-  exercise_08(verbose=verbose)
-  exercise_09(verbose=verbose)
-  exercise_10(verbose=verbose)
-  exercise_11(verbose=verbose)
-  exercise_12(verbose=verbose)
-  exercise_13(verbose=verbose)
-  exercise_14(verbose=verbose)
-  exercise_15(verbose=verbose)
-  exercise_16(verbose=verbose)
-  exercise_17(verbose=verbose)
-  exercise_18(verbose=verbose)
-  exercise_19(verbose=verbose)
-  exercise_20(verbose=verbose)
-  exercise_21(verbose=verbose)
-  exercise_22(verbose=verbose)
-  exercise_23(verbose=verbose)
-  exercise_24(verbose=verbose)
-  exercise_25(verbose=verbose)
-  exercise_26(verbose=verbose)
-  exercise_27(verbose=verbose)
-  exercise_28(verbose=verbose)
-  exercise_29(verbose=verbose)
-  exercise_30(verbose=verbose)
-  exercise_regroup_3d(verbose=verbose)
-  print(format_cpu_times())
+    verbose = "--verbose" in sys.argv[1:]
+    exercise_00(verbose=verbose)
+    exercise_01(verbose=verbose)
+    exercise_02(verbose=verbose)
+    exercise_03(verbose=verbose)
+    exercise_05(verbose=verbose)
+    exercise_06(verbose=verbose)
+    exercise_07(verbose=verbose)
+    exercise_08(verbose=verbose)
+    exercise_09(verbose=verbose)
+    exercise_10(verbose=verbose)
+    exercise_11(verbose=verbose)
+    exercise_12(verbose=verbose)
+    exercise_13(verbose=verbose)
+    exercise_14(verbose=verbose)
+    exercise_15(verbose=verbose)
+    exercise_16(verbose=verbose)
+    exercise_17(verbose=verbose)
+    exercise_18(verbose=verbose)
+    exercise_19(verbose=verbose)
+    exercise_20(verbose=verbose)
+    exercise_21(verbose=verbose)
+    exercise_22(verbose=verbose)
+    exercise_23(verbose=verbose)
+    exercise_24(verbose=verbose)
+    exercise_25(verbose=verbose)
+    exercise_26(verbose=verbose)
+    exercise_27(verbose=verbose)
+    exercise_28(verbose=verbose)
+    exercise_29(verbose=verbose)
+    exercise_30(verbose=verbose)
+    exercise_regroup_3d(verbose=verbose)
+    print(format_cpu_times())
 
-if (__name__ == "__main__"):
-  run()
+
+if __name__ == "__main__":
+    run()

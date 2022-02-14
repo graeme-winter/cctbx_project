@@ -8,53 +8,57 @@ import unittest
 from six.moves import zip
 from six.moves import map
 
-__author__ = 'Youval'
+__author__ = "Youval"
+
 
 class TestMinimizationFunctions(unittest.TestCase):
-  """ Test NCS constraints minimization function
-  exclude_selection have to be used because NAG is not included into NCS
-  search procedure by default anymore"""
+    """Test NCS constraints minimization function
+    exclude_selection have to be used because NAG is not included into NCS
+    search procedure by default anymore"""
 
-  def test_grads_one_ncs_to_asu(self):
-    # No more NAGs in NCS selection
-    # print sys._getframe().f_code.co_name
-    pdb_inp = iotbx.pdb.input(lines=test_pdb_1,source_info=None)
-    p = ncs.input.get_default_params()
-    p.ncs_search.exclude_selection=None
-    ncs_inp = ncs.input(
-        hierarchy=pdb_inp.construct_hierarchy(),
-        params=p.ncs_search)
-    pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_1)
-    ph = pdb_inp.construct_hierarchy()
-    xrs =  pdb_inp.xray_structure_simple()
-    #
-    nrgl = ncs_inp.get_ncs_restraints_group_list()
-    asu_length = ncs_inp.truncated_hierarchy.atoms_size()
-    #
-    refine_selection = nu.get_refine_selection(number_of_atoms=asu_length)
-    extended_ncs_selection = nrgl.get_extended_ncs_selection(
-        refine_selection=refine_selection)
-    #
-    self.assertEqual(asu_length, ph.atoms_size())
-    self.assertEqual(asu_length, 18)
-    #
-    xrs_one_ncs_copy = xrs.select(extended_ncs_selection)
-    master_grad = xrs_one_ncs_copy.extract_u_iso_or_u_equiv()
-    #
-    g = grads_one_ncs_to_asu(
-      ncs_restraints_group_list=nrgl,
-      total_asu_length=asu_length,
-      extended_ncs_selection=extended_ncs_selection,
-      master_grad=master_grad)
-    #
-    self.assertEqual(g.size(),18)
-    masters = [[0,1,12],[2, 3, 13]]
-    copies = [[[4, 5, 14],[8, 9, 16]],[[6, 7, 15],[10, 11, 17]]]
-    for m,cs in zip(masters,copies):
-      ml = list(g.select(flex.size_t(m)))
-      for c in cs:
-        cl = list(g.select(flex.size_t(c)))
-        self.assertEqual(ml,cl)
+    def test_grads_one_ncs_to_asu(self):
+        # No more NAGs in NCS selection
+        # print sys._getframe().f_code.co_name
+        pdb_inp = iotbx.pdb.input(lines=test_pdb_1, source_info=None)
+        p = ncs.input.get_default_params()
+        p.ncs_search.exclude_selection = None
+        ncs_inp = ncs.input(
+            hierarchy=pdb_inp.construct_hierarchy(), params=p.ncs_search
+        )
+        pdb_inp = iotbx.pdb.input(source_info=None, lines=test_pdb_1)
+        ph = pdb_inp.construct_hierarchy()
+        xrs = pdb_inp.xray_structure_simple()
+        #
+        nrgl = ncs_inp.get_ncs_restraints_group_list()
+        asu_length = ncs_inp.truncated_hierarchy.atoms_size()
+        #
+        refine_selection = nu.get_refine_selection(number_of_atoms=asu_length)
+        extended_ncs_selection = nrgl.get_extended_ncs_selection(
+            refine_selection=refine_selection
+        )
+        #
+        self.assertEqual(asu_length, ph.atoms_size())
+        self.assertEqual(asu_length, 18)
+        #
+        xrs_one_ncs_copy = xrs.select(extended_ncs_selection)
+        master_grad = xrs_one_ncs_copy.extract_u_iso_or_u_equiv()
+        #
+        g = grads_one_ncs_to_asu(
+            ncs_restraints_group_list=nrgl,
+            total_asu_length=asu_length,
+            extended_ncs_selection=extended_ncs_selection,
+            master_grad=master_grad,
+        )
+        #
+        self.assertEqual(g.size(), 18)
+        masters = [[0, 1, 12], [2, 3, 13]]
+        copies = [[[4, 5, 14], [8, 9, 16]], [[6, 7, 15], [10, 11, 17]]]
+        for m, cs in zip(masters, copies):
+            ml = list(g.select(flex.size_t(m)))
+            for c in cs:
+                cl = list(g.select(flex.size_t(c)))
+                self.assertEqual(ml, cl)
+
 
 #
 # same chain id for HETATM at the end is valid, see
@@ -76,7 +80,7 @@ class TestMinimizationFunctions(unittest.TestCase):
 
 
 #
-test_pdb_1 = '''\
+test_pdb_1 = """\
 ATOM      1  N   ASP A   1      27.619  71.759 115.947  1.00138.20           N
 ATOM      2  CA  ASP A   1      27.294  72.259 114.616  1.00139.50           C
 TER
@@ -102,22 +106,24 @@ HETATM11968  C1  NAG D 201       2.514  47.082 114.568  1.00 93.06           C
 HETATM11982  C1  NAG E 401      54.251  53.233  81.004  1.00 53.68           C
 HETATM12108  C1  NAG F 201      49.267  35.290 114.417  1.00 93.40           C
 END
-'''
+"""
+
 
 def run_selected_tests():
-  """  Run selected tests
+    """Run selected tests
 
-  1) List in "tests" the names of the particular test you want to run
-  2) Comment out unittest.main()
-  3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
-  """
-  tests = ['test_split_groups_to_spec']
-  suite = unittest.TestSuite(list(map(TestSimpleAlignment,tests)))
-  return suite
+    1) List in "tests" the names of the particular test you want to run
+    2) Comment out unittest.main()
+    3) Un-comment unittest.TextTestRunner().run(run_selected_tests())
+    """
+    tests = ["test_split_groups_to_spec"]
+    suite = unittest.TestSuite(list(map(TestSimpleAlignment, tests)))
+    return suite
 
-if __name__=='__main__':
-  # use for individual tests
-  # unittest.TextTestRunner().run(run_selected_tests())
 
-  # Use to run all tests
-  unittest.main(verbosity=0)
+if __name__ == "__main__":
+    # use for individual tests
+    # unittest.TextTestRunner().run(run_selected_tests())
+
+    # Use to run all tests
+    unittest.main(verbosity=0)

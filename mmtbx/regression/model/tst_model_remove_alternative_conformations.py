@@ -33,13 +33,15 @@ ATOM  18945  CG  PRO L   4     196.474 237.597 268.538  1.00 33.14           C
 ATOM  18946  CD  PRO L   4     197.000 237.268 269.901  1.00 33.14           C
 """
 
+
 def exercise_1(prefix="tst_model_remove_alternative_conformations_1"):
-  """ Make sure that CA in SER3 gets to the right position. """
-  inp = iotbx.pdb.input(lines=tst_pdb_str, source_info=None)
-  model = mmtbx.model.manager(
-      model_input = inp)
-  model.remove_alternative_conformations(always_keep_one_conformer=False)
-  assert not show_diff(model.model_as_pdb(), """\
+    """Make sure that CA in SER3 gets to the right position."""
+    inp = iotbx.pdb.input(lines=tst_pdb_str, source_info=None)
+    model = mmtbx.model.manager(model_input=inp)
+    model.remove_alternative_conformations(always_keep_one_conformer=False)
+    assert not show_diff(
+        model.model_as_pdb(),
+        """\
 ATOM      1  N   PHE L   2     201.672 235.270 272.436  1.00 33.60           N
 ATOM      2  CA  PHE L   2     201.753 236.596 271.840  1.00 33.60           C
 ATOM      3  C   PHE L   2     200.597 237.520 272.192  1.00 33.60           C
@@ -66,7 +68,9 @@ ATOM     23  CG  PRO L   4     196.474 237.597 268.538  1.00 33.14           C
 ATOM     24  CD  PRO L   4     197.000 237.268 269.901  1.00 33.14           C
 TER
 END
-""")
+""",
+    )
 
-if __name__ == '__main__':
-  exercise_1()
+
+if __name__ == "__main__":
+    exercise_1()

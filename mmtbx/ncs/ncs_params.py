@@ -3,7 +3,8 @@ from __future__ import absolute_import, division, print_function
 import iotbx.phil
 import mmtbx.geometry_restraints.torsion_restraints.torsion_ncs
 
-global_ncs_params = iotbx.phil.parse("""\
+global_ncs_params = iotbx.phil.parse(
+    """\
   ncs
     .caption = Parameter controls for NCS refinement (restrained, constrained)
     .short_caption = Global NCS
@@ -53,4 +54,6 @@ global_ncs_params = iotbx.phil.parse("""\
     {
       include scope mmtbx.geometry_restraints.torsion_restraints.torsion_ncs.torsion_ncs_params
     }
-  }""",process_includes=True)
+  }""",
+    process_includes=True,
+)

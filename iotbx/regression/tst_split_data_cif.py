@@ -232,7 +232,8 @@ _refln.pdbx_PHWT
 #END OF REFLECTIONS
 """
 
-sf_5r82_mtz_results = {'r5r82sf': """\
+sf_5r82_mtz_results = {
+    "r5r82sf": """\
 Title: phenix.cif_as_mtz
 Space group symbol from file: C2
 Space group number from file: 5
@@ -279,8 +280,7 @@ Crystal 2:
     PHDELWT          33 100.00% -157.88 158.29 P: phase angle in degrees
     FOM              33 100.00%    0.00   0.74 F: amplitude
 """,
-'r5r82Asf':
-"""Title: phenix.cif_as_mtz
+    "r5r82Asf": """Title: phenix.cif_as_mtz
 Space group symbol from file: C2
 Space group number from file: 5
 Space group from matrices: C 1 2 1 (No. 5)
@@ -318,7 +318,8 @@ Crystal 2:
     R-free-flags     35 100.00%   1.00   1.00 I: integer
     FOBS              9  25.71%   1.02   1.71 F: amplitude
     SIGFOBS           9  25.71%   0.52   1.07 Q: standard deviation
-""", 'r5r82Bsf': """\
+""",
+    "r5r82Bsf": """\
 Title: phenix.cif_as_mtz
 Space group symbol from file: P1
 Space group number from file: 1
@@ -358,39 +359,37 @@ Crystal 2:
     FOBS             26 100.00%   85.03 928.82 F: amplitude
     SIGFOBS          26 100.00%    1.00   1.00 Q: standard deviation
     PHWT             26 100.00% -158.44 152.35 P: phase angle in degrees
-"""}
+""",
+}
+
 
 def tst_1(prefix="tst_split_data_cif_1"):
-  with open(prefix+'.cif', 'w') as f:
-    f.write(sf_5r82)
-  easy_run.fully_buffered('iotbx.split_data_cif %s.cif' % prefix)
-  original_model = iotbx.cif.reader(input_string=sf_5r82).model()
-  block_names = original_model.keys()
-  for bn in block_names:
-    assert os.path.isfile('%s.cif_%s_000.mtz' % (prefix, bn))
-    assert os.path.isfile('%s.cif_%s_000.cif' % (prefix, bn))
+    with open(prefix + ".cif", "w") as f:
+        f.write(sf_5r82)
+    easy_run.fully_buffered("iotbx.split_data_cif %s.cif" % prefix)
+    original_model = iotbx.cif.reader(input_string=sf_5r82).model()
+    block_names = original_model.keys()
+    for bn in block_names:
+        assert os.path.isfile("%s.cif_%s_000.mtz" % (prefix, bn))
+        assert os.path.isfile("%s.cif_%s_000.cif" % (prefix, bn))
 
-  # testing output cif
-  for bn in block_names:
-    m = iotbx.cif.reader(file_path='%s.cif_%s_000.cif' % (prefix, bn)).model()
-    for k in original_model[bn].keys():
-      assert approx_equal(m[bn][k], original_model[bn][k])
+    # testing output cif
+    for bn in block_names:
+        m = iotbx.cif.reader(file_path="%s.cif_%s_000.cif" % (prefix, bn)).model()
+        for k in original_model[bn].keys():
+            assert approx_equal(m[bn][k], original_model[bn][k])
 
-  # testing output mtz
-  for bn in block_names:
-    mtz_obj = iotbx.mtz.object('%s.cif_%s_000.mtz' % (prefix, bn))
-    # print('working with', '%s.cif_%s_000.mtz' % (prefix, bn))
-    strio = StringIO()
-    mtz_obj.show_summary(out=strio)
-    # mtz_obj.show_column_data(out=strio)
-    val = strio.getvalue()
-    assert not show_diff(val, sf_5r82_mtz_results[bn])
-
-
+    # testing output mtz
+    for bn in block_names:
+        mtz_obj = iotbx.mtz.object("%s.cif_%s_000.mtz" % (prefix, bn))
+        # print('working with', '%s.cif_%s_000.mtz' % (prefix, bn))
+        strio = StringIO()
+        mtz_obj.show_summary(out=strio)
+        # mtz_obj.show_column_data(out=strio)
+        val = strio.getvalue()
+        assert not show_diff(val, sf_5r82_mtz_results[bn])
 
 
-
-
-if __name__ == '__main__':
-  tst_1()
-  print("OK")
+if __name__ == "__main__":
+    tst_1()
+    print("OK")

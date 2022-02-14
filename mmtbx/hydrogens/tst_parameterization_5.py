@@ -5,46 +5,49 @@ import iotbx.pdb
 from libtbx.utils import null_out
 from six.moves import zip
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # This test checks the parameterization of H atoms for multiple conformations
 # These examples are from pdb and initially failed
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def exercise(pdb_str, type_list_known):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  atoms = pdb_hierarchy.atoms()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    atoms = pdb_hierarchy.atoms()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  h_para = riding_h_manager.h_parameterization
+    h_para = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart = sites_cart,
-    threshold  = 0.05)
-  h_distances   = diagnostics.h_distances
-  type_list     = diagnostics.type_list
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
+    h_distances = diagnostics.h_distances
+    type_list = diagnostics.type_list
 
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_para) - h_para.count(None)
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_para) - h_para.count(None)
 
-  assert (number_h_para == number_h), 'Not all H atoms are parameterized'
+    assert number_h_para == number_h, "Not all H atoms are parameterized"
 
-  for ih in h_distances:
-    labels = atoms[ih].fetch_labels()
-    assert (h_distances[ih] < 0.2), \
-      'distance too large: %s  atom: %s (%s) residue: %s ' \
-      % (h_para[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
+    for ih in h_distances:
+        labels = atoms[ih].fetch_labels()
+        assert (
+            h_distances[ih] < 0.2
+        ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+            h_para[ih].htype,
+            atoms[ih].name,
+            ih,
+            labels.resseq.strip(),
+        )
 
-  for type1, type2 in zip(type_list, type_list_known):
-    assert (type1 == type2)
-    #print "'%s'," % type1,
+    for type1, type2 in zip(type_list, type_list_known):
+        assert type1 == type2
+        # print "'%s'," % type1,
+
 
 # Several fragments from pdb with double conformations which caused crashes
 # There are 68 H atoms in the pdb_string, check if all of them are recognized
@@ -288,16 +291,75 @@ TER
 END
 """
 
-type_list_known1 = ['2tetra', '2tetra', 'alg1b', '3neigbs', '3neigbs',
-  '3neigbs', 'alg1b', '2tetra', '2tetra', '2tetra', '2tetra', 'alg1b',
-  '3neigbs', '2tetra', '2tetra', '3neigbs', '2tetra', '2tetra', 'flat_2neigbs',
-  '3neigbs', '2tetra', '2tetra', 'alg1b', '2tetra', '2tetra', 'alg1b',
-  '2tetra', '2tetra', 'alg1b', '3neigbs', '3neigbs', 'prop', 'prop', 'prop',
-  'prop', 'prop', 'prop', '3neigbs', 'prop', 'prop', 'prop', 'prop', 'prop',
-  'prop', '3neigbs', '2tetra', '2tetra', 'alg1b', '2tetra', '2tetra', 'alg1b',
-  'flat_2neigbs', '3neigbs', '2tetra', '2tetra', 'flat_2neigbs', 'flat_2neigbs',
-  'flat_2neigbs', 'flat_2neigbs', 'alg1b', '2tetra', '2tetra', 'flat_2neigbs',
-  'flat_2neigbs', 'flat_2neigbs', 'flat_2neigbs', 'alg1b']
+type_list_known1 = [
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "3neigbs",
+    "3neigbs",
+    "3neigbs",
+    "alg1b",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "3neigbs",
+    "3neigbs",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "3neigbs",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "prop",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "2tetra",
+    "2tetra",
+    "alg1b",
+    "flat_2neigbs",
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "alg1b",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "flat_2neigbs",
+    "alg1b",
+]
 
 pdb_str2 = """
 CRYST1   13.142   13.841   12.524  90.00  90.00  90.00 P 1
@@ -323,8 +385,16 @@ ATOM    302  HB2BALA A  25      21.142  -4.393  26.273  0.50 11.78           H
 ATOM    303  HB3BALA A  25      21.224  -4.566  24.701  0.50 11.78           H
 """
 
-type_list_known2 = ['3neigbs', 'prop', 'prop', 'prop',
-  '3neigbs', 'prop', 'prop', 'prop']
+type_list_known2 = [
+    "3neigbs",
+    "prop",
+    "prop",
+    "prop",
+    "3neigbs",
+    "prop",
+    "prop",
+    "prop",
+]
 
 
 # This fragment is from PDB model 1qjh
@@ -367,50 +437,63 @@ ATOM      0 HH21 ARG A  71       0.637  24.271  20.407  1.00 62.26           H
 ATOM      0 HH22 ARG A  71      -0.120  24.738  21.602  1.00 62.26           H
 """
 
-type_list_known3 = ['3neigbs', '2tetra', '2tetra', '2tetra', '2tetra',
- '2tetra', '2tetra', 'flat_2neigbs', 'alg1a', 'alg1a']
+type_list_known3 = [
+    "3neigbs",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "2tetra",
+    "flat_2neigbs",
+    "alg1a",
+    "alg1a",
+]
+
 
 def exercise3(pdb_str, type_list_known):
-  pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
-  params = mmtbx.model.manager.get_default_pdb_interpretation_scope().extract()
-  params.pdb_interpretation.allow_polymer_cross_special_position=True
-  model = mmtbx.model.manager(
-    model_input = pdb_inp,
-    log         = null_out())
-  model.process(pdb_interpretation_params=params, make_restraints=True)
-  pdb_hierarchy = model.get_hierarchy()
-  sites_cart = model.get_sites_cart()
-  atoms = pdb_hierarchy.atoms()
+    pdb_inp = iotbx.pdb.input(lines=pdb_str.split("\n"), source_info=None)
+    params = mmtbx.model.manager.get_default_pdb_interpretation_scope().extract()
+    params.pdb_interpretation.allow_polymer_cross_special_position = True
+    model = mmtbx.model.manager(model_input=pdb_inp, log=null_out())
+    model.process(pdb_interpretation_params=params, make_restraints=True)
+    pdb_hierarchy = model.get_hierarchy()
+    sites_cart = model.get_sites_cart()
+    atoms = pdb_hierarchy.atoms()
 
-  model.setup_riding_h_manager()
-  riding_h_manager = model.get_riding_h_manager()
+    model.setup_riding_h_manager()
+    riding_h_manager = model.get_riding_h_manager()
 
-  h_para = riding_h_manager.h_parameterization
+    h_para = riding_h_manager.h_parameterization
 
-  diagnostics = riding_h_manager.diagnostics(
-    sites_cart = sites_cart,
-    threshold  = 0.05)
-  h_distances   = diagnostics.h_distances
-  type_list     = diagnostics.type_list
+    diagnostics = riding_h_manager.diagnostics(sites_cart=sites_cart, threshold=0.05)
+    h_distances = diagnostics.h_distances
+    type_list = diagnostics.type_list
 
-  number_h = model.get_hd_selection().count(True)
-  number_h_para = len(h_para) - h_para.count(None)
+    number_h = model.get_hd_selection().count(True)
+    number_h_para = len(h_para) - h_para.count(None)
 
-  assert (number_h_para == number_h-2), 'Not all H atoms are parameterized'
+    assert number_h_para == number_h - 2, "Not all H atoms are parameterized"
 
-  for ih in h_distances:
-    labels = atoms[ih].fetch_labels()
-    assert (h_distances[ih] < 0.2), \
-      'distance too large: %s  atom: %s (%s) residue: %s ' \
-      % (h_para[ih].htype, atoms[ih].name, ih, labels.resseq.strip())
+    for ih in h_distances:
+        labels = atoms[ih].fetch_labels()
+        assert (
+            h_distances[ih] < 0.2
+        ), "distance too large: %s  atom: %s (%s) residue: %s " % (
+            h_para[ih].htype,
+            atoms[ih].name,
+            ih,
+            labels.resseq.strip(),
+        )
 
-  for type1, type2 in zip(type_list, type_list_known):
-    assert (type1 == type2)
+    for type1, type2 in zip(type_list, type_list_known):
+        assert type1 == type2
 
-if (__name__ == "__main__"):
-  t0 = time.time()
-  exercise(pdb_str = pdb_str1, type_list_known = type_list_known1)
-  exercise(pdb_str = pdb_str2, type_list_known = type_list_known2)
-  exercise3(pdb_str = pdb_str3, type_list_known = type_list_known3)
 
-  print("OK. Time: %8.3f"%(time.time()-t0))
+if __name__ == "__main__":
+    t0 = time.time()
+    exercise(pdb_str=pdb_str1, type_list_known=type_list_known1)
+    exercise(pdb_str=pdb_str2, type_list_known=type_list_known2)
+    exercise3(pdb_str=pdb_str3, type_list_known=type_list_known3)
+
+    print("OK. Time: %8.3f" % (time.time() - t0))
